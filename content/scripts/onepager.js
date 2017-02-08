@@ -78,11 +78,11 @@
         }, true);
     });
     
-    document.querySelector('div.search').addEventListener('click', function() {
-        var searchField = document.querySelector('.search-field');
-        
-        toggle(searchField, searchField.className.indexOf('active') === -1 , 'active');
-    });
+//    document.querySelector('div.search').addEventListener('click', function() {
+//        var searchField = document.querySelector('.search-field');
+//        
+//        toggle(searchField, searchField.className.indexOf('active') === -1 , 'active');
+//    });
 
     var animForward = function (startPos, endPos) {
         var incrementer = .1,
