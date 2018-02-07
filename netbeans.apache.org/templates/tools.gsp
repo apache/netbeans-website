@@ -28,6 +28,6 @@
         <li><a title="JIRA" href="https://issues.apache.org/jira/projects/NETBEANS/summary"><i class="fa fa-mf fa-bug"></i></a></li>
     </ul>
     <ul class="menu align-center">
-        <li><a href='https://github.com/apache/incubator-netbeans-website/blob/master/${content.file}' title="See this file @ github"><i class="fa fa-md fa-edit"></i> Edit</a></li>
+        <li><a href="https://github.com/vieiro/incubator-netbeans-website/blob/multi-site-test/netbeans.apache.org/content/${content.file}" title="See this file @ github"><i class="fa fa-md fa-edit"></i> Edit</a></li>
     </ul>
 </section>

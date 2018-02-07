@@ -1,0 +1,113 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= DevFaqRemoveStatusBar
+:jbake-type: wiki
+:jbake-tags: wiki, devfaq, needsreview
+:jbake-status: published
+:keywords: Apache NetBeans wiki DevFaqRemoveStatusBar
+:description: Apache NetBeans wiki DevFaqRemoveStatusBar
+:toc: left
+:toc-title:
+:syntax: true
+
+=== How do I remove the status bar?
+
+Never be afraid to read the code  :-)   Looking at org.netbeans.core.windows.view.ui.MainWindow, there is getCustomStatusLine(), and it does this:
+
+[source,java]
+----
+
+   private static JComponent getCustomStatusLine() {
+       try {
+           String fileName = Constants.CUSTOM_STATUS_LINE_PATH;
+           if (fileName == null) {
+               return null;
+           }
+           FileObject fo = FileUtil.getConfigFile(fileName);
+           if (fo != null) {
+               DataObject dobj = DataObject.find(fo);
+               InstanceCookie ic = (InstanceCookie)dobj.getCookie(InstanceCookie.class);
+               if (ic != null) {
+                   return (JComponent)ic.instanceCreate();
+               }
+           }
+       } catch (Exception e) {
+           Exceptions.printStackTrace(e);
+       }
+       return null;
+   }
+----
+
+Constants.CUSTOM_STATUS_LINE_PATH is defined as
+System.getProperty("netbeans.winsys.status_line.path");
+
+So, have a module which, in its ModuleInstall (or as a command-line parameter in their myApp.conf), does
+
+System.setProperty("netbeans.winsys.status_line.path", "com/foo/com-foo-MyStatusBar.instance");
+
+and in its layer file, does something like
+
+<folder name="com">
+
+[source,xml]
+----
+
+<folder name="foo">
+  <file name="com-foo-MyStatusBar.instance"/>
+</folder>
+----
+
+</folder>
+
+and then a class
+
+package com.foo;
+public class MyStatusBar extends JLabel {
+
+[source,java]
+----
+
+ public Dimension getPreferredSize() { return new Dimension(0,0); }
+ public Dimension getMaximumSize() { return new Dimension(0,0); } //may not be necessary
+----
+
+}
+
+and you should get a status bar whose preferred size is to have no size at all.  
+
+Note you will probably want to provide your own instance of StatusDisplayer in the default lookup so there is *some* way for things to display status unless you really don't need it.
+
+Another option (exception on Mac OS) is to move the status line to the main menu (it will use the space to the right of the last menu item) -
+
+netbeans -Dnetbeans.winsys.statusLine.in.menuBar=true
+
+or the equivalent System.setProperty() from a ModuleInstall
+
+=== Apache Migration Information
+
+The content in this page was kindly donated by Oracle Corp. to the
+Apache Software Foundation.
+
+This page was exported from link:http://wiki.netbeans.org/DevFaqRemoveStatusBar[http://wiki.netbeans.org/DevFaqRemoveStatusBar] , 
+that was last modified by NetBeans user Geertjan 
+on 2010-02-17T20:05:05Z.
+
+
+*NOTE:* This document was automatically converted to the AsciiDoc format on 2018-02-07, and needs to be reviewed.
