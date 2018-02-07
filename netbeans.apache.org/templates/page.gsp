@@ -46,7 +46,9 @@
         <div class='grid-container main-content'>
             <%include "tools.gsp"%>
             <%include "news.gsp"%>
-            ${content.body}
+            <div class='content'>
+                ${content.body}
+            </div>
         </div>
         <%include "footer.gsp"%>
 

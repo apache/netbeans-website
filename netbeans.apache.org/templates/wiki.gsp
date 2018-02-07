@@ -46,7 +46,7 @@
         <div class='grid-container main-content'>
             <%include "tools.gsp"%>
             <%include "wiki-index.gsp"%>
-            <div class='wiki-content'>
+            <div class='content'>
                 ${content.body}
             </div>
         </div>
