@@ -19,5 +19,5 @@
 
 */%>
 <div class='aside' style='text-align: center; padding: 20px;'>
-    <a href="/wiki" title="Apache NetBeans WIKI">Apache NetBeans Wiki Index</a>
+    <a href="/wiki/index.asciidoc" title="Apache NetBeans WIKI">Apache NetBeans Wiki Index</a>
 </div>
