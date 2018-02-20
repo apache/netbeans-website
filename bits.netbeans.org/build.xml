@@ -1,0 +1,50 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!--
+     A simple ant file that:
+        - checkouts out ${netbeans.branch} into ${netbeans.src.dir}
+        - runs 'ant 
+                -f ${netbeans.src.dir}/nbbuild/javadoctools/build.xml 
+                -Djavadoc.web.root=http://bits.netbeans.apache.org/${netbeans.branch}/javadoc 
+                build-javadoc '
+-->
+<project name="bits.netbeans.org" default="help">
+
+    <!-- Default branch to checkout -->
+    <property name="netbeans.branch">master</property>
+
+    <!-- Base url for the final javadoc -->
+    <property name="netbeans.url">http://bits.netbeans.apache.org/${netbeans.branch}/javadoc</property>
+
+    <!-- Help message -->
+    <target name="help">
+        <echo>
+ant javadoc - Builds the NetBeans javadoc.
+Mandatory properties:
+-Dnetbeans.src.dir=Directory with a clone of https://github.com/apache/incubator-netbeans
+-Dnetbeans.branch=Branch ('master' if unset)
+        </echo>
+    </target>
+
+    <!-- Property checking -->
+    <target name="-prepare">
+        <fail unless="netbeans.branch">Please specify a -Dnetbeans.branch value</fail>
+        <fail unless="netbeans.src.dir">Please specify a -Dnetbeans.src.dir</fail>
+    </target>
+
+    <!-- Javadoc target -->
+    <target name="javadoc" depends="-prepare">
+        <echo message="Checking out branch ${netbeans.branch}..." />
+        <exec executable="git" failifexecutionfails="true" dir="${netbeans.src.dir}">
+            <arg value="checkout" />
+            <arg value="${netbeans.branch}" />
+        </exec>
+        <echo message="Building javadoc..." />
+        <echo message="  Using base ${netbeans.url}" />
+        <ant
+            dir="${netbeans.src.dir}/nbbuild/javadoctools"
+            antfile="build.xml"
+            target="build-javadoc">
+            <property name="javadoc.web.root">${netbeans.url}</property>
+        </ant>
+    </target>
+</project>
