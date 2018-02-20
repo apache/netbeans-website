@@ -29,25 +29,11 @@
     </div>
     <div class="top-bar-right">
         <ul class="vertical medium-horizontal menu" data-responsive-menu="drilldown medium-dropdown">
-            <li>
-                <a href="/community/index.html">Community</a>
-                <ul class="vertical menu">
-                    <li><a href="/community/mailing_lists.html">Mailing lists</a></li>
-                    <li><a href="/community/contributing.html">Contributing</a></li>
-                    <li><a href="/community/team.html">The Team</a></li>
-                    <li><a href="/community/support.html">Issues and Support</a></li>
-                </ul>
-            </li>
-            <li><a href="https://netbeans.org/features/index.html">IDE</a></li>
-            <li>
-                <a href="#0">Platform</a>
-                <ul class="vertical menu">
-                    <li><a href="https://netbeans.org/features/platform/features.html">Features</a></li>
-                    <li><a href="https://netbeans.org/features/platform/all-docs.html">Documentation</a></li>
-                    <li><a href="https://netbeans.org/features/platform/showcase.html">Showcase</a></li>
-                </ul>
-            </li>
-            <%/* <li><a href="#0">Three</a></li> */ %>
+            <li> <a href="/participate/index.html">Participate</a> </li>
+            <li> <a href="https://blogs.apache.org/netbeans/">Blog</a></li>
+            <li> <a href="/help/index.html">Get Help</a> </li>
+            <li> <a href="/plugins/index.html">Plugins</a> </li>
+            <li> <a href="/download/index.html">Download</a> </li>
         </ul>
     </div>
 </div>

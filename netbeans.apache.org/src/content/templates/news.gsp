@@ -18,7 +18,13 @@
     under the License.
 
 */%>
-<div class='aside' style='text-align: center; padding: 20px;'>
-    <p>Apache NetBeans 9.0 RC3 voting is ongoing on the dev mailing list.</p>
-    <a href="/community/mailing_lists.html">Join the list and vote now.</a>
-</div>
+<!-- src/templates/news -->
+<section class="hero news alternate" style='margin-bottom: 2em'>
+    <div class='grid-container'>
+        <div class='cell'>
+            <div class="annotation">Just released!</div>
+            <h1>Apache NetBeans 9.0 Beta</h1>
+            <p><a href="https://www.apache.org/dyn/closer.cgi/incubator/netbeans/incubating-netbeans-java/incubating-9.0-beta/">Download from an Apache mirror close to you</a></p>
+        </div>
+    </div>
+</section>

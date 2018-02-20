@@ -28,21 +28,7 @@
     <%include "head.gsp"%>
     <body>
         <%include "menu.gsp"%>
-        <%if (content.herosubtitle != null || content.herotitle != null) {%>
-        <section class="hero">
-            <div class='grid-container'>
-                <div class='cell hero'>
-                    <div class="annotation">${content.herotop}</div>
-                    <h1>${content.herotitle}</h1>
-                    <h2>${content.herosubtitle}</h2>
-                    <div class="down-arrow"><a class="smooth-scroll" href="#learn-more" target="_self"><i class="fa fa-angle-down fa-2x red"></i></a></div>
-                </div>
-            </div>
-        </section>
-        <div class='top-spacer'></div>
-        <%} else {%>
-        <div class='top-spacer'></div>
-        <%}%>
+        <%include "slider.gsp"%>
         <div class='grid-container'>
             ${content.body}
         </div>
