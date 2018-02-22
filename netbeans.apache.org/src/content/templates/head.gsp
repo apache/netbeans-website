@@ -27,9 +27,7 @@
     <meta name="author" content="Apache NetBeans">
     <meta name="keywords" content="${content.keywords}">
     <meta name="generator" content="Apache NetBeans">
-    <link rel="stylesheet" href="/css/foundation.min.css">
     <link rel="stylesheet" href="/css/font-awesome.min.css">
-    <link rel="stylesheet" href="/css/foundation.min.css">
     <link rel="stylesheet" href="/css/netbeans.css">
     <link href="https://fonts.googleapis.com/css?family=Lato:400,700" rel="stylesheet"> 
     <!--
