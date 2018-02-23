@@ -24,7 +24,7 @@
         <div class='cell'>
             <div class="annotation">Just released!</div>
             <h1>Apache NetBeans 9.0 Beta</h1>
-            <p><a href="https://www.apache.org/dyn/closer.cgi/incubator/netbeans/incubating-netbeans-java/incubating-9.0-beta/">Download from an Apache mirror close to you</a></p>
+            <p><a class="button success" href="/download/nb90-beta.html">Read more</a></p>
         </div>
     </div>
 </section>
