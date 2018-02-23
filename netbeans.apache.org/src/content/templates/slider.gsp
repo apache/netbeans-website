@@ -37,7 +37,7 @@
                         of the NetBeans Java SE IDE.<br>With support for <b>Java 9</b>, <b>JShell</b>, <b>JLink</b>,
                         <b>Jigsaw</b> and more!
                       </p>
-                      <p><a class='button success' href="https://www.apache.org/dyn/closer.cgi/incubator/netbeans/incubating-netbeans-java/incubating-9.0-beta/">Download</a></p>
+                      <p><a class='button success' href="/download/nb90-beta.html">Read more</a></p>
                   </div>
               </div>
           </section>

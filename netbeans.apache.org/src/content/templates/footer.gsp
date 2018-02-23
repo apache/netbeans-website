@@ -80,7 +80,7 @@
             <div class="large-auto cell">
                 <h1><a href="/download/index.html">Download</a></h1>
                 <ul>
-                    <li><a href="/download/index.html">Binary downloads</a></li>
+                    <li><a href="/download/index.html#releases">Releases</a></li>
                     <li><a href="/plugins/index.html">Plugins</a></li>
                     <li><a href="/download/index.html#source">Building from source</a></li>
                     <li><a href="/download/index.html#previous">Previous releases</a></li>
