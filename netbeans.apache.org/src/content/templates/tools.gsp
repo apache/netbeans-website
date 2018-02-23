@@ -28,6 +28,18 @@
         <li><a title="JIRA" href="https://issues.apache.org/jira/projects/NETBEANS/summary"><i class="fa fa-mf fa-bug"></i></a></li>
     </ul>
     <ul class="menu align-center">
-        <li><a href="https://github.com/apache/incubator-netbeans-website/netbeans.apache.org/${content.file}" title="See this file @ github"><i class="fa fa-md fa-edit"></i> Edit</a></li>
+        <%
+            /* 
+                jbake's "content.file' has this structure: "/home/user/directory/of/the/clone/incubator-netbeans-website/netbeans.apache.org/build/generated-bake/content/plugins/index.asciidoc"
+                we're interested in the part after "generated-bake"
+            */
+            String file="/";
+            if (content != null) {
+                String content_file = content.get("file");
+                int i = content_file.lastIndexOf("build/generated-bake");
+                file = content_file.substring(i + "build/generated-bake".length());
+            }
+        %>
+        <li><a href="https://github.com/apache/incubator-netbeans-website/blob/master/netbeans.apache.org/src${file}" title="See this page in github"><i class="fa fa-md fa-edit"></i> See this page in github.</a></li>
     </ul>
 </section>

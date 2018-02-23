@@ -102,9 +102,8 @@
         </div>
         <%
             /* This is used for debugging the website rendering */
-             debug=false;
-             if (debug) {
-                 out.println("<pre>");
+             if (content.debug != null) {
+                 out.println("<pre style='background: #777; color: #eee;'>");
                  for (String key: content.keySet()) {
                      if (! key.equals("body")) {
                          out.println(key + ":" + content.get(key));
