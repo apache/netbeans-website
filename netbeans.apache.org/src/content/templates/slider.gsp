@@ -27,7 +27,7 @@
     </div>
     <ul class="orbit-container">
       <li class="orbit-slide">
-          <section class='hero alternate'>
+          <section class='hero alternate netbeans-bg'>
               <div class='grid-container'>
                   <div class='cell'>
                       <div class='annotation'>Apache Transition News</div>
@@ -41,7 +41,7 @@
           </section>
       </li>
       <li class="orbit-slide">
-          <section class='hero alternate'>
+          <section class='hero alternate netbeans-bg-1'>
               <div class='grid-container'>
                   <div class='cell'>
                       <div class='annotation'>Apache Transition News</div>
@@ -55,7 +55,7 @@
           </section>
       </li>
       <li class="is-active orbit-slide">
-          <section class='hero alternate'>
+          <section class='hero alternate netbeans-bg'>
               <div class='grid-container'>
                   <div class='cell'>
                       <div class='annotation'>Apache Transition News</div>
@@ -71,5 +71,6 @@
   <nav class="orbit-bullets">
     <button class="is-active" data-slide="0"><span class="show-for-sr">First slide details.</span><span class="show-for-sr">Current Slide</span></button>
     <button data-slide="1"><span class="show-for-sr">Second slide details.</span></button>
+    <button data-slide="2"><span class="show-for-sr">Third slide details.</span></button>
   </nav>
 </div>
