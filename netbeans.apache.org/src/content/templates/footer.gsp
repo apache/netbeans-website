@@ -21,13 +21,8 @@
 <%/*
 
     The Apache NetBeans site must comply with the 
-    "Apache Website Navigation Links Policy"
-    available at 
-    https://www.apache.org/foundation/marks/pmcs#navigation
-    and with the
-    "Incubator Branding Guide"
-    available at
-    http://incubator.apache.org/guides/branding.html
+    "Apache Website Navigation Links Policy" https://www.apache.org/foundation/marks/pmcs#navigation
+    "Incubator Branding Guide" http://incubator.apache.org/guides/branding.html
 
     This seems to be a good place to comply with the policy.
 
@@ -48,6 +43,7 @@
                     <li><a href="http://www.apache.org/foundation/thanks.html">Thanks</a></li>
                     <li><a href="http://www.apache.org/foundation/sponsorship.html">Sponsorship</a></li>
                     <li><a href="http://www.apache.org/security/">Security</a></li>
+                    <li><a href="http://incubator.apache.org/projects/netbeans.html">Incubation Status</a></li>
                 </ul>
             </div>
             <div class="large-auto cell">
@@ -64,7 +60,7 @@
                 <ul>
                     <li><a href="/participate/submit-pr.html">Submitting Pull Requests</a></li>
                     <li><a href="/participate/report-issue.html">Reporting Issues</a></li>
-                    <li><a href="/participate/social.html">NetCAT - Community Acceptance Testing</a></li>
+                    <li><a href="/participate/netcat.html">NetCAT - Community Acceptance Testing</a></li>
                     <li><a href="/participate/index.html#documentation">Improving the documentation</a></li>
                 </ul>
             </div>
@@ -102,9 +98,11 @@
             <p>Incubation is required of all newly accepted projects until a further review indicates that the infrastructure, communications, and decision making process have stabilized in a manner
             consistent with other successful ASF projects.</p>
             <p>While incubation status is not necessarily a reflection of the completeness or stability of the code, it does indicate that the project has yet to be fully endorsed by the Apache Software Foundation.</p>
+            <p>Apache Incubator, Apache, the Apache feather logo, and the Apache Incubator project logo are trademarks of <a href="//www.apache.org">The Apache Software Foundation</a>.</p>
+            <p>Oracle and Java are registered trademarks of Oracle and/or its affiliates.</p>
         </div>
         <%
-            /* This is used for debugging the website rendering */
+            /* This is used for debugging the website rendering, it displays the 'content' variable. Just set the "debug" metadata to a not null value (in asciidoc documents add ":debug: yes") to render this area. */
              if (content.debug != null) {
                  out.println("<pre style='background: #777; color: #eee;'>");
                  for (String key: content.keySet()) {

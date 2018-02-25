@@ -27,7 +27,21 @@
     </div>
     <ul class="orbit-container">
       <li class="orbit-slide">
-          <section class='hero alternate'>
+          <section class='hero alternate netbeans-bg'>
+              <div class='grid-container'>
+                  <div class='cell'>
+                      <div class='annotation'>Apache Transition News</div>
+                      <h1>Apache NetBeans 9.0 Features</h1>
+                      <p>
+                        Full Java 9 Support, including <b>Jigsaw</b>, <b>JShell</b>, <b>JLink</b> and more.
+                      </p>
+                      <p><a class='button success' href="/download/nb90/index.html">Features</a></p>
+                  </div>
+              </div>
+          </section>
+      </li>
+      <li class="orbit-slide">
+          <section class='hero alternate netbeans-bg-1'>
               <div class='grid-container'>
                   <div class='cell'>
                       <div class='annotation'>Apache Transition News</div>
@@ -55,7 +69,7 @@
           </section>
       </li>
       <li class="is-active orbit-slide">
-          <section class='hero alternate'>
+          <section class='hero alternate netbeans-bg'>
               <div class='grid-container'>
                   <div class='cell'>
                       <div class='annotation'>Apache Transition News</div>
@@ -71,5 +85,6 @@
   <nav class="orbit-bullets">
     <button class="is-active" data-slide="0"><span class="show-for-sr">First slide details.</span><span class="show-for-sr">Current Slide</span></button>
     <button data-slide="1"><span class="show-for-sr">Second slide details.</span></button>
+    <button data-slide="2"><span class="show-for-sr">Third slide details.</span></button>
   </nav>
 </div>
