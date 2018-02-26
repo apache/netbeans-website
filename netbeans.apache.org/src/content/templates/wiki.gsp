@@ -40,6 +40,7 @@
         <script src="/js/vendor/what-input.js"></script>
         <script src="/js/vendor/foundation.min.js"></script>
         <script src="/js/netbeans.js"></script>
+        <script src="/js/vendor/jquery.colorbox-min.js"></script>
         <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
         <script>
             <% // NOTE: Plain jquery stuff needs to be quoted in gsp pages %>

@@ -17,13 +17,10 @@
     specific language governing permissions and limitations
     under the License.
 
-*/%>
-<%/*
-
     page.gsp: A main area with a right aside for TOCs.
 
 */%>
-<!doctype html>
+<!DOCTYPE html>
 <html class="no-js" lang="en" dir="ltr">
     <%include "head.gsp"%>
     <body>
@@ -37,6 +34,7 @@
 
         <script src="/js/vendor/jquery-3.2.1.min.js"></script>
         <script src="/js/vendor/what-input.js"></script>
+        <script src="/js/vendor/jquery.colorbox-min.js"></script>
         <script src="/js/vendor/foundation.min.js"></script>
         <script src="/js/netbeans.js"></script>
         <script>
