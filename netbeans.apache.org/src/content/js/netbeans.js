@@ -24,6 +24,6 @@ $(document).ready(function() {
     $('.openblock.feature a.image').each(function (index) {
         'use strict'
         var title = $(this).children('img').attr('title');
-        $(this).colorbox({opacity: 0.5, title : title});
+        $(this).colorbox({opacity: 0.7, title : title, scalePhotos: true, maxWidth: "98%", maxHeight: "98%" });
     });
 });
