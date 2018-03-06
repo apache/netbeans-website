@@ -1,0 +1,508 @@
+
+
+<!doctype html>
+<html class="no-js" lang="en" dir="ltr">
+    
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>DevFaqEditorTopComponent</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Apache NetBeans wiki DevFaqEditorTopComponent">
+    <meta name="author" content="Apache NetBeans">
+    <meta name="keywords" content="Apache NetBeans wiki DevFaqEditorTopComponent">
+    <meta name="generator" content="Apache NetBeans">
+    <link rel="stylesheet" href="/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/css/netbeans.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#ffc40d">
+    <meta name="theme-color" content="#ffffff">
+    <link href="https://fonts.googleapis.com/css?family=Lato:400,700" rel="stylesheet"> 
+    <!--
+        Licensed to the Apache Software Foundation (ASF) under one
+        or more contributor license agreements.  See the NOTICE file
+        distributed with this work for additional information
+        regarding copyright ownership.  The ASF licenses this file
+        to you under the Apache License, Version 2.0 (the
+        "License"); you may not use this file except in compliance
+        with the License.  You may obtain a copy of the License at
+        http://www.apache.org/licenses/LICENSE-2.0
+        Unless required by applicable law or agreed to in writing,
+        software distributed under the License is distributed on an
+        "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+        KIND, either express or implied.  See the License for the
+        specific language governing permissions and limitations
+        under the License.
+    -->
+</head>
+
+
+    <body>
+        
+
+<div class="title-bar" data-responsive-toggle="responsive-menu" data-hide-for="medium">
+    <button type="button" data-toggle="responsive-menu"><i style='font-size: 32px; color: #fff; padding: 8px' class='fa fa-bars'></i></button>
+    <div class="title-bar-title">Apache NetBeans</div>
+</div>
+<div class="top-bar" id="responsive-menu">
+    <div class='top-bar-left'>
+        <a class='title' href="/"><img src='/images/apache-netbeans.svg' style='padding: 8px; height: 48px;'></img> Apache NetBeans</a>
+    </div>
+    <div class="top-bar-right">
+        <ul class="vertical medium-horizontal menu" data-responsive-menu="drilldown medium-dropdown">
+            <li> <a href="/community/index.html">Community</a> </li>
+            <li> <a href="/participate/index.html">Participate</a> </li>
+            <li> <a href="https://blogs.apache.org/netbeans/">Blog</a></li>
+            <li> <a href="/help/index.html">Get Help</a> </li>
+            <li> <a href="/plugins/index.html">Plugins</a> </li>
+            <li> <a href="/download/index.html">Download</a> </li>
+        </ul>
+    </div>
+</div>
+
+
+        
+<!-- src/templates/news -->
+<section class="hero news alternate" style='margin-bottom: 2em'>
+    <div class='grid-container'>
+        <div class='cell'>
+            <div class="annotation">Just released!</div>
+            <h1>Apache NetBeans 9.0 Beta</h1>
+            <p><a class="button success" href="/download/nb90/nb90-beta.html">Read more</a></p>
+        </div>
+    </div>
+</section>
+
+        <div class='grid-container main-content'>
+            
+<div class='aside' style='text-align: center; padding: 20px;'>
+    <a href="/wiki/index.asciidoc" title="Apache NetBeans WIKI">Apache NetBeans Wiki Index</a>
+    <p><b>Note:</b> These pages are being reviewed.</p>
+</div>
+
+            <div id="toc" class="toc">
+<div id="toctitle"></div>
+<ul class="sectlevel3">
+<li><a href="#_i_want_to_create_a_topcomponent_class_to_use_as_an_editor_not_a_singleton">I want to create a TopComponent class to use as an editor, not a singleton</a></li>
+<li><a href="#_implementing_a_very_simple_dataobject_for_our_very_simple_editor">Implementing A Very Simple DataObject For Our Very Simple Editor</a></li>
+<li><a href="#_caveats_for_production_use">Caveats For Production Use</a></li>
+<li><a href="#_apache_migration_information">Apache Migration Information</a></li>
+</ul>
+</div>
+<div class="sect3">
+<h4 id="_i_want_to_create_a_topcomponent_class_to_use_as_an_editor_not_a_singleton">I want to create a TopComponent class to use as an editor, not a singleton</h4>
+<div class="paragraph">
+<p>This entry is about creating non-text-editor (e.g. graphical) editors for files or other objects.  If you want a text editor, NetBeans has a lot of built-in support for text editors and you will probably want to use <code><a href="http://bits.netbeans.org/dev/javadoc/org-openide-loaders/org/openide/text/DataEditorSupport.html#create(org.openide.loaders.DataObject,%20org.openide.loaders.MultiDataObject.Entry,%20org.openide.nodes.CookieSet)">DataEditorSupport.create()</a></code> and its relatives (hint: <strong>New &gt; File Type</strong> will get you basic text editor support which you can build on).</p>
+</div>
+<div class="paragraph">
+<p>If you want to create some other kind of editor, you will probably want to start by creating a <a href="DevFaqNonSingletonTopComponents.asciidoc">non-singleton TopComponent</a> - a logical window, or tab, that can be opened in the editor area and can show your file or object in some way.</p>
+</div>
+<div class="paragraph">
+<p>Our editor component will be fairly simple.  It will have two constructors, one which takes a <code><a href="http://bits.netbeans.org/dev/javadoc/org-openide-loaders/org/openide/loaders/DataObject.html">DataObject</a></code> (the file) and one which has no arguments:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">  public MyEditor() {
+  }
+
+  MyEditor(FooDataObject ob) throws IOException {
+    init(ob);
+  }</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>and it will have an initialization method.  In our case, since this is a simple example, we will use a <code>JTextArea</code>.  Our <code>DataObject</code> subclass will have a method <code>setContent(String)</code> which is passed the updated text if the user types into the text area.  The <code>DataObject</code> will take care of marking the file modified and saving it when the user invokes the Save action.  So we will just pass the text the user changed to the <code>DataObject</code> and update the tab name of the editor to show if the file is modified in-memory or not:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">  void init(final FooDataObject file) throws IOException {
+    associateLookup(file.getLookup());
+    setDisplayName(file.getName());
+    setLayout(new BorderLayout());
+    add(new JLabel(getDisplayName()), BorderLayout.NORTH);
+    //If you expect large files, load the file in a background thread
+    //and set the field's text under its Document's lock
+    final JTextField field = new JTextField(file.getPrimaryFile().asText());
+    add(field, BorderLayout.CENTER);
+    field.getDocument().addDocumentListener(new DocumentListener() {
+
+      @Override
+      public void insertUpdate(DocumentEvent e) {
+        changedUpdate(e);
+      }
+
+      @Override
+      public void removeUpdate(DocumentEvent e) {
+        changedUpdate(e);
+      }
+
+      @Override
+      public void changedUpdate(DocumentEvent e) {
+        FooDataObject foo = getLookup().lookup(FooDataObject.class);
+        foo.setContent(field.getText());
+      }
+    });
+    file.addPropertyChangeListener(new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        if (DataObject.PROP_MODIFIED.equals(evt.getPropertyName())) {
+          //fire a dummy event
+          setDisplayName(Boolean.TRUE.equals(evt.getNewValue()) ? file.getName() + "*" : file.getName());
+        }
+      }
+    });
+  }</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>As of NetBeans 6.8, modified files are usually shown with a <strong>boldface</strong> tab name, so for consistency we should too:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java"> @Override
+ public String getHtmlDisplayName() {
+   DataObject dob = getLookup().lookup(DataObject.class);
+   if (dob != null &amp;amp;&amp;amp; dob.isModified()) {
+     return &amp;quot;&lt;html&gt;*&amp;quot; + dob.getName();
+   }
+   return super.getHtmlDisplayName();
+ }</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The persistence code (described <a href="DevFaqNonSingletonTopComponents.asciidoc">here</a>) will save the file&#8217;s path on disk, and on restart, reinitialize the editor (if the file still exists).</p>
+</div>
+<div class="paragraph">
+<p>The code to do this is actually quite simple - it can be boiled down to loading:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">init (DataObject.find(FileUtil.toFileObject(FileUtil.normalizeFile(new File(properties.getProperty("path"))));</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>and saving</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java"> properties.setProperty (FileUtil.toFile(dataObject.getPrimaryFile()).getAbsolutePath());</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>That is, all we are doing is saving a path on shutdown, and on restart looking that file up, transforming it into a NetBeans <a href="DevFaqFileObject.asciidoc">FileObject</a>, and initializing with the <a href="DevFaqDataObject.asciidoc">DataObject</a> for that.  It just happens that we have to handle a few corner cases involving missing files and checked exceptions:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>The file never really existed on disk (editing a template)</p>
+</li>
+<li>
+<p>The file was deleted</p>
+</li>
+<li>
+<p>The file cannot be read for some reason</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>So our persistence code looks like this:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java"> private static final String KEY_FILE_PATH = "path";
+ void readProperties(java.util.Properties p) {
+   String path = p.getProperty(KEY_FILE_PATH);
+   try {
+     File f = new File(path);
+     if (f.exists()) {
+       FileObject fileObject = FileUtil.toFileObject(FileUtil.normalizeFile(f));
+       DataObject dob = DataObject.find(fileObject);
+       //A DataObject always has itself in its Lookup, so do this to cast
+       FooDataObject fooDob = dob.getLookup().lookup(FooDataObject.class);
+       if (fooDob == null) {
+         throw new IOException("Wrong file type");
+       }
+       init(fooDob);
+       //Ensure Open does not create another editor by telling the DataObject about this editor
+       fooDob.editorInitialized(this);
+     } else {
+       throw new IOException(path + " does not exist");
+     }
+   } catch (IOException ex) {
+     //Could not load the file for some reason
+     throw new IllegalStateException(ex);
+   }
+ }</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java"> void writeProperties(java.util.Properties p) {
+   FooDataObject dob = getLookup().lookup(FooDataObject.class);
+   if (dob != null) {
+     File file = FileUtil.toFile(dob.getPrimaryFile());
+     if (file != null) { //could be a virtual template file not really on disk
+       String path = file.getAbsolutePath();
+       p.setProperty(KEY_FILE_PATH, path);
+     }
+   }
+ }</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_implementing_a_very_simple_dataobject_for_our_very_simple_editor">Implementing A Very Simple DataObject For Our Very Simple Editor</h4>
+<div class="paragraph">
+<p>The skeleton of our DataObject class is generated from the <strong>New &gt; File Type</strong> template - this includes registering our DataObject subclass and associating it with a file extension.  What we need to do is</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Modify it so that <strong>Open</strong> on it will open our editor TopComponent, not a normal text editor</p>
+</li>
+<li>
+<p>We will implement our own subclass of <code><a href="http://bits.netbeans.org/dev/javadoc/org-openide-nodes/org/openide/cookies/OpenCookie.html">OpenCookie</a></code>, which can create and open an instance of our editor, and remember and reuse that editor on subsequent invocations</p>
+</li>
+<li>
+<p>Modify it so that we can pass the text the user typed to it, and it will mark itself modified and become savable (causing <strong>File &gt; Save</strong> and <strong>File &gt; Save All</strong> to become enabled)</p>
+</li>
+<li>
+<p>We will implement the setContent(String) method to</p>
+</li>
+<li>
+<p>Make a <code><a href="http://bits.netbeans.org/dev/javadoc/org-openide-nodes/org/openide/cookies/SaveCookie.html">SaveCookie</a></code> available, which is what the various built-in Save actions operate on</p>
+</li>
+<li>
+<p>Call <code>DataObject.setModified()</code>&mdash;this guarantees that the user will be given a chance to save the file if they shut down the application before saving.</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>public class FooDataObject extends MultiDataObject {
+  private String content;
+  private final Saver saver = new Saver();
+  public FooDataObject(FileObject pf, MultiFileLoader loader) throws DataObjectExistsException, IOException {
+    super(pf, loader);
+    CookieSet cookies = getCookieSet();
+    cookies.add(new Opener());
+  }
+
+  @Override
+  public Lookup getLookup() {
+    return getCookieSet().getLookup();
+  }
+
+  synchronized void setContent(String text) {
+    this.content = text;
+    if (text != null) {
+      setModified(true);
+      getCookieSet().add(saver);
+    } else {
+      setModified(false);
+      getCookieSet().remove(saver);
+    }
+  }
+
+  void editorInitialized(MyEditor ed) {
+    Opener op = getLookup().lookup(Opener.class);
+    op.editor = ed;
+  }
+
+  private class Opener implements OpenCookie {
+    private MyEditor editor;
+    @Override
+    public void open() {
+      if (editor == null) {
+        try {
+          editor = new MyEditor(FooDataObject.this);
+        } catch (IOException ex) {
+          Exceptions.printStackTrace(ex);
+        }
+      }
+      editor.open();
+      editor.requestActive();
+    }
+  }
+
+  private class Saver implements SaveCookie {
+    @Override
+    public void save() throws IOException {
+      String txt;
+      synchronized (FooDataObject.this) {
+        //synchronize access to the content field
+        txt = content;
+        setContent(null);
+      }
+      FileObject fo = getPrimaryFile();
+      OutputStream out = new BufferedOutputStream(fo.getOutputStream());
+      PrintWriter writer = new PrintWriter(out);
+      try {
+        writer.print(txt);
+      } finally {
+        writer.close();
+        out.close();
+      }
+    }
+  }
+}</pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_caveats_for_production_use">Caveats For Production Use</h4>
+<div class="paragraph">
+<p>A few things may be worth considering if you want to use code like this in a production environment:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>File loading should usually happen on a background thread - put up some sort of progress bar <em>inside</em> the editor component, and replace its contents on the event thread after the load is completed - use RequestProcessor and EventQueue.invokeLater().</p>
+</li>
+<li>
+<p>If it is expected that there will be a lot of FooDataObjects, Opener should instead keep a WeakReference to the editor component so that closed editors can be garbage collected.  The following other changes would need to be made:</p>
+</li>
+<li>
+<p>MyEditor should implement PropertyChangeListener directly</p>
+</li>
+<li>
+<p>Use WeakListeners.propertyChange (this, file) rather than directly adding the editor as a listener to the DataObject</p>
+</li>
+<li>
+<p>As of 6.9, the <code>Openable</code> interface is preferred to <code>OpenCookie</code>;  a similar <code>Savable</code> interface is probably on the horizon to replace <code>SaveCookie</code></p>
+</li>
+<li>
+<p>The DataObject&#8217;s lookup could alternately be implemented <a href="DevFaqNodesCustomLookup.asciidoc">using ProxyLookup and AbstractLookup</a> and this will probably be the preferred way in the future</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_apache_migration_information">Apache Migration Information</h3>
+<div class="paragraph">
+<p>The content in this page was kindly donated by Oracle Corp. to the
+Apache Software Foundation.</p>
+</div>
+<div class="paragraph">
+<p>This page was exported from <a href="http://wiki.netbeans.org/DevFaqEditorTopComponent">http://wiki.netbeans.org/DevFaqEditorTopComponent</a> ,
+that was last modified by NetBeans user Tboudreau
+on 2010-03-13T07:34:06Z.</p>
+</div>
+<div class="paragraph">
+<p><strong>NOTE:</strong> This document was automatically converted to the AsciiDoc format on 2018-02-07, and needs to be reviewed.</p>
+</div>
+</div>
+            
+<section class='tools'>
+    <ul class="menu align-center">
+        <li><a title="Facebook" href="https://www.facebook.com/NetBeans"><i class="fa fa-md fa-facebook"></i></a></li>
+        <li><a title="Twitter" href="https://twitter.com/netbeans"><i class="fa fa-md fa-twitter"></i></a></li>
+        <li><a title="Github" href="https://github.com/apache/incubator-netbeans"><i class="fa fa-md fa-github"></i></a></li>
+        <li><a title="YouTube" href="https://www.youtube.com/user/netbeansvideos"><i class="fa fa-md fa-youtube"></i></a></li>
+        <li><a title="Slack" href="https://netbeans.signup.team/"><i class="fa fa-md fa-slack"></i></a></li>
+        <li><a title="JIRA" href="https://issues.apache.org/jira/projects/NETBEANS/summary"><i class="fa fa-mf fa-bug"></i></a></li>
+    </ul>
+    <ul class="menu align-center">
+        
+        <li><a href="https://github.com/apache/incubator-netbeans-website/blob/master/netbeans.apache.org/src/content/wiki/DevFaqEditorTopComponent.asciidoc" title="See this page in github"><i class="fa fa-md fa-edit"></i> See this page in github.</a></li>
+    </ul>
+</section>
+
+        </div>
+        
+
+<div class='grid-container incubator-area'>
+    <div class='grid-x grid-padding-x'>
+        <div class='large-auto cell'>
+        </div>
+    </div>
+</div>
+<footer>
+    <div class="grid-container">
+        <div class="grid-x grid-padding-x">
+            <div class="large-auto cell">
+                
+                <h1>About</h1>
+                <ul>
+                    <li><a href="http://www.apache.org/foundation/thanks.html">Thanks</a></li>
+                    <li><a href="http://www.apache.org/foundation/sponsorship.html">Sponsorship</a></li>
+                    <li><a href="http://www.apache.org/security/">Security</a></li>
+                    <li><a href="http://incubator.apache.org/projects/netbeans.html">Incubation Status</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/community/index.html">Community</a></h1>
+                <ul>
+                    <li><a href="/community/mailing-lists.html">Mailing lists</a></li>
+                    <li><a href="/community/committer.html">Becoming a commiter</a></li>
+                    <li><a href="/community/events.html">NetBeans Events</a></li>
+                    <li><a href="/community/who.html">Who is who</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/participate/index.html">Participate</a></h1>
+                <ul>
+                    <li><a href="/participate/submit-pr.html">Submitting Pull Requests</a></li>
+                    <li><a href="/participate/report-issue.html">Reporting Issues</a></li>
+                    <li><a href="/participate/netcat.html">NetCAT - Community Acceptance Testing</a></li>
+                    <li><a href="/participate/index.html#documentation">Improving the documentation</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/help/index.html">Get Help</a></h1>
+                <ul>
+                    <li><a href="/help/index.html#documentation">Documentation</a></li>
+                    <li><a href="/wiki/index.asciidoc">Wiki</a></li>
+                    <li><a href="/help/index.html#support">Community Support</a></li>
+                    <li><a href="/help/commercial-support.html">Commercial Support</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/download/index.html">Download</a></h1>
+                <ul>
+                    <li><a href="/download/index.html#releases">Releases</a></li>
+                    <ul>
+                        <li><a href="/download/nb90/index.html">Apache NetBeans 9.0 (beta)</a></li>
+                    </ul>
+                    <li><a href="/plugins/index.html">Plugins</a></li>
+                    <li><a href="/download/index.html#source">Building from source</a></li>
+                    <li><a href="/download/index.html#previous">Previous releases</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</footer>
+<div class='footer-disclaimer'>
+    <div class="footer-disclaimer-content">
+        <p>Copyright &copy; 2017-2018 the <a href="//www.apache.org">The Apache Software Foundation</a>.</p>
+        <p>Licensed under the <a href="//www.apache.org/licenses/">Apache Software License, version 2.0.</a></p>
+        <p><a href="https://incubator.apache.org/" alt="Apache Incubator"><img src='/images/incubator_feather_egg_logo_bw_crop.png' title='Apache Incubator'></img></a></p>
+        <div style='max-width: 40em; margin: 0 auto'>
+            <p>Apache NetBeans is an effort undergoing incubation at The Apache Software Foundation</a> (ASF).</p>
+            <p>Incubation is required of all newly accepted projects until a further review indicates that the infrastructure, communications, and decision making process have stabilized in a manner
+            consistent with other successful ASF projects.</p>
+            <p>While incubation status is not necessarily a reflection of the completeness or stability of the code, it does indicate that the project has yet to be fully endorsed by the Apache Software Foundation.</p>
+            <p>Apache Incubator, Apache, the Apache feather logo, and the Apache Incubator project logo are trademarks of <a href="//www.apache.org">The Apache Software Foundation</a>.</p>
+            <p>Oracle and Java are registered trademarks of Oracle and/or its affiliates.</p>
+        </div>
+        
+    </div>
+</div>
+
+
+        <script src="/js/vendor/jquery-3.2.1.min.js"></script>
+        <script src="/js/vendor/what-input.js"></script>
+        <script src="/js/vendor/foundation.min.js"></script>
+        <script src="/js/netbeans.js"></script>
+        <script src="/js/vendor/jquery.colorbox-min.js"></script>
+        <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
+        <script>
+            
+            $(function(){ $(document).foundation(); });
+        </script>
+    </body>
+</html>
