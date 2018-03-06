@@ -45,20 +45,6 @@
               <div class='grid-container'>
                   <div class='cell'>
                       <div class='annotation'>Apache Transition News</div>
-                      <h1>Apache NetBeans 9.0 Features</h1>
-                      <p>
-                        Full Java 9 Support, including <b>Jigsaw</b>, <b>JShell</b>, <b>JLink</b> and more.
-                      </p>
-                      <p><a class='button success' href="/download/nb90/index.html">Features</a></p>
-                  </div>
-              </div>
-          </section>
-      </li>
-      <li class="orbit-slide">
-          <section class='hero alternate'>
-              <div class='grid-container'>
-                  <div class='cell'>
-                      <div class='annotation'>Apache Transition News</div>
                       <h1>Apache NetBeans 9.0 Beta released!</h1>
                       <p>
                         Download the 9.0 beta from an Apache mirror near you.
