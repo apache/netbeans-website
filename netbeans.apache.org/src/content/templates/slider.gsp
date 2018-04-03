@@ -30,10 +30,10 @@
           <section class='hero alternate netbeans-bg'>
               <div class='grid-container'>
                   <div class='cell'>
-                      <div class='annotation'>Apache Transition News</div>
+                      <div class='annotation'>Apache NetBeans Transition News</div>
                       <h1>Apache NetBeans 9.0 Features</h1>
                       <p>
-                        Full Java 9 Support, including <b>Jigsaw</b>, <b>JShell</b>, <b>JLink</b> and more.
+                        Full Java 9 Support, including <b>Jigsaw</b>, <b>JShell</b>, <b>JLink</b>, and more.
                       </p>
                       <p><a class='button success' href="/download/nb90/index.html">Features</a></p>
                   </div>
@@ -44,10 +44,10 @@
           <section class='hero alternate netbeans-bg-1'>
               <div class='grid-container'>
                   <div class='cell'>
-                      <div class='annotation'>Apache Transition News</div>
-                      <h1>Apache NetBeans 9.0 Beta released!</h1>
+                      <div class='annotation'>Apache NetBeans Transition News</div>
+                      <h1>Apache NetBeans 9.0 Beta Released!</h1>
                       <p>
-                        Download the 9.0 beta from an Apache mirror near you.
+                        Download Apache NetBeans 9.0 Beta from an Apache mirror near you.
                       </p>
                       <p><a class='button success' href="/download/nb90/nb90-beta.html">Download</a></p>
                   </div>
@@ -58,7 +58,7 @@
           <section class='hero alternate netbeans-bg'>
               <div class='grid-container'>
                   <div class='cell'>
-                      <div class='annotation'>Apache Transition News</div>
+                      <div class='annotation'>Apache NetBeans Transition News</div>
                       <h1>Join the Apache NetBeans Community</h1>
                       <p>You can now be part of Apache NetBeans.</p>
                       <p><a class="button success" href="/participate/index.html">Join us!!</a></p>
