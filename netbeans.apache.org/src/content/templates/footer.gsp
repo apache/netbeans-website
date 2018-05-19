@@ -50,7 +50,7 @@
                 <h1><a href="/community/index.html">Community</a></h1>
                 <ul>
                     <li><a href="/community/mailing-lists.html">Mailing lists</a></li>
-                    <li><a href="/community/committer.html">Becoming a commiter</a></li>
+                    <li><a href="/community/committer.html">Becoming a committer</a></li>
                     <li><a href="/community/events.html">NetBeans Events</a></li>
                     <li><a href="/community/who.html">Who is who</a></li>
                 </ul>
