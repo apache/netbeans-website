@@ -90,7 +90,7 @@
 </footer>
 <div class='footer-disclaimer'>
     <div class="footer-disclaimer-content">
-        <p>Copyright &copy; 2017-2018 the <a href="//www.apache.org">The Apache Software Foundation</a>.</p>
+        <p>Copyright &copy; 2017-2018 <a href="//www.apache.org">The Apache Software Foundation</a>.</p>
         <p>Licensed under the <a href="//www.apache.org/licenses/">Apache Software License, version 2.0.</a></p>
         <p><a href="https://incubator.apache.org/" alt="Apache Incubator"><img src='/images/incubator_feather_egg_logo_bw_crop.png' title='Apache Incubator'></img></a></p>
         <div style='max-width: 40em; margin: 0 auto'>
