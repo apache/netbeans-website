@@ -27,11 +27,16 @@
     This seems to be a good place to comply with the policy.
 
 */%>
-<div class='grid-container incubator-area'>
+<div class='grid-container incubator-area' style='margin-top: 64px'>
     <div class='grid-x grid-padding-x'>
-        <div class='large-auto cell' style="text-align: center; margin-top: 64px">
+        <div class='large-auto cell text-center'>
             <a href="https://www.apache.org/">
                 <img style="width: 320px" title="Apache Software Foundation" src="/images/asf_logo_wide.svg" />
+            </a>
+        </div>
+        <div class='large-auto cell text-center'>
+            <a href="https://www.apache.org/events/current-event.html">
+               <img style="width:234px; height: 60px;" title="Apache Software Foundation current event" src="https://www.apache.org/events/current-event-234x60.png"/>
             </a>
         </div>
     </div>
@@ -55,6 +60,7 @@
                     <li><a href="/community/mailing-lists.html">Mailing lists</a></li>
                     <li><a href="/community/committer.html">Becoming a committer</a></li>
                     <li><a href="https://netbeans.apache.org/events/current-event/">NetBeans Events</a></li>
+                    <li><a href="https://https://www.apache.org/events/current-event.html">Apache Events</a></li>
                     <li><a href="/community/who.html">Who is who</a></li>
                 </ul>
             </div>
