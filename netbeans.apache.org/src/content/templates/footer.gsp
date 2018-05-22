@@ -60,7 +60,7 @@
                     <li><a href="/community/mailing-lists.html">Mailing lists</a></li>
                     <li><a href="/community/committer.html">Becoming a committer</a></li>
                     <li><a href="https://netbeans.apache.org/events/current-event/">NetBeans Events</a></li>
-                    <li><a href="https://https://www.apache.org/events/current-event.html">Apache Events</a></li>
+                    <li><a href="https://www.apache.org/events/current-event.html">Apache Events</a></li>
                     <li><a href="/community/who.html">Who is who</a></li>
                 </ul>
             </div>
