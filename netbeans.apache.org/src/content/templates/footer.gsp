@@ -27,9 +27,17 @@
     This seems to be a good place to comply with the policy.
 
 */%>
-<div class='grid-container incubator-area'>
+<div class='grid-container incubator-area' style='margin-top: 64px'>
     <div class='grid-x grid-padding-x'>
-        <div class='large-auto cell'>
+        <div class='large-auto cell text-center'>
+            <a href="https://www.apache.org/">
+                <img style="width: 320px" title="Apache Software Foundation" src="/images/asf_logo_wide.svg" />
+            </a>
+        </div>
+        <div class='large-auto cell text-center'>
+            <a href="https://www.apache.org/events/current-event.html">
+               <img style="width:234px; height: 60px;" title="Apache Software Foundation current event" src="https://www.apache.org/events/current-event-234x60.png"/>
+            </a>
         </div>
     </div>
 </div>
@@ -40,10 +48,10 @@
                 <% /* See https://www.apache.org/foundation/marks/pmcs#navigation */ %>
                 <h1>About</h1>
                 <ul>
-                    <li><a href="http://www.apache.org/foundation/thanks.html">Thanks</a></li>
-                    <li><a href="http://www.apache.org/foundation/sponsorship.html">Sponsorship</a></li>
-                    <li><a href="http://www.apache.org/security/">Security</a></li>
-                    <li><a href="http://incubator.apache.org/projects/netbeans.html">Incubation Status</a></li>
+                    <li><a href="https://www.apache.org/foundation/thanks.html">Thanks</a></li>
+                    <li><a href="https://www.apache.org/foundation/sponsorship.html">Sponsorship</a></li>
+                    <li><a href="https://www.apache.org/security/">Security</a></li>
+                    <li><a href="https://incubator.apache.org/projects/netbeans.html">Incubation Status</a></li>
                 </ul>
             </div>
             <div class="large-auto cell">
@@ -52,6 +60,7 @@
                     <li><a href="/community/mailing-lists.html">Mailing lists</a></li>
                     <li><a href="/community/committer.html">Becoming a committer</a></li>
                     <li><a href="/community/events.html">NetBeans Events</a></li>
+                    <li><a href="https://www.apache.org/events/current-event.html">Apache Events</a></li>
                     <li><a href="/community/who.html">Who is who</a></li>
                 </ul>
             </div>
@@ -90,15 +99,12 @@
 </footer>
 <div class='footer-disclaimer'>
     <div class="footer-disclaimer-content">
-        <p>Copyright &copy; 2017-2018 <a href="//www.apache.org">The Apache Software Foundation</a>.</p>
-        <p>Licensed under the <a href="//www.apache.org/licenses/">Apache Software License, version 2.0.</a></p>
+        <p>Copyright &copy; 2017-2018 <a href="https://www.apache.org">The Apache Software Foundation</a>.</p>
+        <p>Licensed under the <a href="https://www.apache.org/licenses/">Apache Software License, version 2.0.</a></p>
         <p><a href="https://incubator.apache.org/" alt="Apache Incubator"><img src='/images/incubator_feather_egg_logo_bw_crop.png' title='Apache Incubator'></img></a></p>
         <div style='max-width: 40em; margin: 0 auto'>
-            <p>Apache NetBeans is an effort undergoing incubation at The Apache Software Foundation</a> (ASF).</p>
-            <p>Incubation is required of all newly accepted projects until a further review indicates that the infrastructure, communications, and decision making process have stabilized in a manner
-            consistent with other successful ASF projects.</p>
-            <p>While incubation status is not necessarily a reflection of the completeness or stability of the code, it does indicate that the project has yet to be fully endorsed by the Apache Software Foundation.</p>
-            <p>Apache Incubator, Apache, the Apache feather logo, and the Apache Incubator project logo are trademarks of <a href="//www.apache.org">The Apache Software Foundation</a>.</p>
+            <p>Apache NetBeans is an effort undergoing incubation at The Apache Software Foundation (ASF), sponsored by the Apache Incubator. Incubation is required of all newly accepted projects until a further review indicates that the infrastructure, communications, and decision making process have stabilized in a manner consistent with other successful ASF projects. While incubation status is not necessarily a reflection of the completeness or stability of the code, it does indicate that the project has yet to be fully endorsed by the ASF.</p>
+            <p>Apache Incubator, Apache, the Apache feather logo, the Apache NetBeans logo, and the Apache Incubator project logo are trademarks of <a href="https://www.apache.org">The Apache Software Foundation</a>.</p>
             <p>Oracle and Java are registered trademarks of Oracle and/or its affiliates.</p>
         </div>
         <%
