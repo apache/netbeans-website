@@ -47,7 +47,7 @@
                       <div class='annotation'>Apache NetBeans Transition News</div>
                       <h1>Apache NetBeans 9.0 Released!</h1>
                       <p>
-                        Download Apache NetBeans 9.RC1 from an Apache mirror near you.
+                        Download Apache NetBeans 9.0 from an Apache mirror near you.
                       </p>
                       <p><a class='button success' href="/download/nb90/nb90.html">Download</a></p>
                   </div>
