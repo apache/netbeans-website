@@ -62,6 +62,7 @@
                     <li><a href="/community/events.html">NetBeans Events</a></li>
                     <li><a href="https://www.apache.org/events/current-event.html">Apache Events</a></li>
                     <li><a href="/community/who.html">Who is who</a></li>
+                    <li><a href="/community/nekobean.html">NekoBean</a></li>
                 </ul>
             </div>
             <div class="large-auto cell">
