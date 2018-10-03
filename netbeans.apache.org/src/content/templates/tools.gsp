@@ -24,7 +24,7 @@
         <li><a title="Twitter" href="https://twitter.com/netbeans"><i class="fa fa-md fa-twitter"></i></a></li>
         <li><a title="Github" href="https://github.com/apache/incubator-netbeans"><i class="fa fa-md fa-github"></i></a></li>
         <li><a title="YouTube" href="https://www.youtube.com/user/netbeansvideos"><i class="fa fa-md fa-youtube"></i></a></li>
-        <li><a title="Slack" href="https://netbeans.signup.team/"><i class="fa fa-md fa-slack"></i></a></li>
+        <li><a title="Slack" href="https://tinyurl.com/netbeans-slack-signup/"><i class="fa fa-md fa-slack"></i></a></li>
         <li><a title="JIRA" href="https://issues.apache.org/jira/projects/NETBEANS/summary"><i class="fa fa-mf fa-bug"></i></a></li>
     </ul>
     <ul class="menu align-center">
