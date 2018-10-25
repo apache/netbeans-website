@@ -30,6 +30,21 @@
           <section class='hero alternate netbeans-bg'>
               <div class='grid-container'>
                   <div class='cell'>
+                      <div class='annotation'>Duke's Choice Award</div>
+                      <h1>Apache NetBeans - A 2018 Winner!</h1>
+                      <p>
+                        In keeping with its 16-year history, the 2018 Duke's
+                        Choice Award winners were announced at the Groundbreakers Hub at Code One.
+                        Apache NetBeans is one of the winners!  </p>
+                      <p><a class='button success' href="https://blogs.oracle.com/java/announcing-2018-dukes-choice-award-winners">Read more</a></p>
+                  </div>
+              </div>
+          </section>
+      </li>
+      <li class="orbit-slide">
+          <section class='hero alternate netbeans-bg'>
+              <div class='grid-container'>
+                  <div class='cell'>
                       <div class='annotation'>Apache NetBeans Transition News</div>
                       <h1>Apache NetBeans 9.0 Features</h1>
                       <p>
@@ -72,5 +87,6 @@
     <button class="is-active" data-slide="0"><span class="show-for-sr">First slide details.</span><span class="show-for-sr">Current Slide</span></button>
     <button data-slide="1"><span class="show-for-sr">Second slide details.</span></button>
     <button data-slide="2"><span class="show-for-sr">Third slide details.</span></button>
+    <button data-slide="3"><span class="show-for-sr">Fourth slide details.</span></button>
   </nav>
 </div>
