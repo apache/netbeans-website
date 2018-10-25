@@ -31,10 +31,9 @@
               <div class='grid-container'>
                   <div class='cell'>
                       <div class='annotation'>Duke's Choice Award</div>
-		      <h1>Apache NetBeans - A 2018 Winner!</h1>
+                      <h1>Apache NetBeans - A 2018 Winner!</h1>
                       <p>
-			In keeping with its 16-year history, the 2018 Duke's Choice Award winners were
-			announced at the Groundbreakers Hub at Code One. Apache NetBeans is one of the winners!
+                        In keeping with its 16-year history, the 2018 Duke's Choice Award winners were announced at the Groundbreakers Hub at Code One.  Apache NetBeans is one of the winners!  
                       </p>
                       <p><a class='button success' href="https://blogs.oracle.com/java/announcing-2018-dukes-choice-award-winners">Read more</a></p>
                   </div>
