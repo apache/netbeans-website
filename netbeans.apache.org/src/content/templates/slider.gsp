@@ -26,7 +26,7 @@
       <button class="orbit-next"><span class="show-for-sr">Next Slide</span>&#9654;&#xFE0E;</button>
     </div>
     <ul class="orbit-container">
-      <li class="orbit-slide">
+      <li class="is-active orbit-slide">
           <section class='hero alternate netbeans-bg'>
               <div class='grid-container'>
                   <div class='cell'>
@@ -46,11 +46,11 @@
               <div class='grid-container'>
                   <div class='cell'>
                       <div class='annotation'>Apache NetBeans Transition News</div>
-                      <h1>Apache NetBeans 9.0 Features</h1>
+                      <h1>Apache NetBeans 10.0 Features</h1>
                       <p>
-                        Full Java 9 Support, including <b>Jigsaw</b>, <b>JShell</b>, <b>JLink</b>, and more.
+                        Java 11, PHP, JUnit 5, JavaScript, Groovy, and more.
                       </p>
-                      <p><a class='button success' href="/download/nb90/index.html">Features</a></p>
+                      <p><a class='button success' href="/download/nb100/index.html">Features</a></p>
                   </div>
               </div>
           </section>
@@ -60,16 +60,16 @@
               <div class='grid-container'>
                   <div class='cell'>
                       <div class='annotation'>Apache NetBeans Transition News</div>
-                      <h1>Apache NetBeans 9.0 Released!</h1>
+                      <h1>Apache NetBeans 10.0 Released!</h1>
                       <p>
-                        Download Apache NetBeans 9.0 from an Apache mirror near you.
+                        Download Apache NetBeans 10.0 from an Apache mirror near you.
                       </p>
-                      <p><a class='button success' href="/download/nb90/nb90.html">Download</a></p>
+                      <p><a class='button success' href="/download/nb100/nb100.html">Download</a></p>
                   </div>
               </div>
           </section>
       </li>
-      <li class="is-active orbit-slide">
+      <li class="orbit-slide">
           <section class='hero alternate netbeans-bg'>
               <div class='grid-container'>
                   <div class='cell'>
