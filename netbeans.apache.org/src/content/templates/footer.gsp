@@ -85,13 +85,12 @@
                 </ul>
             </div>
             <div class="large-auto cell">
-                <h1><a href="/download/index.html">Download</a></h1>
+                <h1><a href="/download/nb100/nb100.html">Download</a></h1>
                 <ul>
                     <li><a href="/download/index.html#releases">Releases</a></li>
                     <ul>
+                        <li><a href="/download/nb100/nb100.html">Apache NetBeans 10.0</a></li>
                         <li><a href="/download/nb90/nb90.html">Apache NetBeans 9.0</a></li>
-                        <li><a href="/download/nb90/nb90-rc1.html">Apache NetBeans 9.0 (RC1)</a></li>
-                        <li><a href="/download/nb90/nb90-beta.html">Apache NetBeans 9.0 (beta)</a></li>
                     </ul>
                     <li><a href="/plugins/index.html">Plugins</a></li>
                     <li><a href="/download/index.html#source">Building from source</a></li>

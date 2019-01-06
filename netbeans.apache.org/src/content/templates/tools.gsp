@@ -40,6 +40,6 @@
                 file = content_file.substring(i + "build/generated-bake".length());
             }
         %>
-        <li><a href="https://github.com/apache/incubator-netbeans-website/blob/master/netbeans.apache.org/src${file}" title="See this page in github"><i class="fa fa-md fa-edit"></i> See this page in github.</a></li>
+        <li><a href="https://github.com/apache/incubator-netbeans-website/blob/master/netbeans.apache.org/src${file}" title="See this page in github"><i class="fa fa-md fa-edit"></i> See this page in GitHub.</a></li>
     </ul>
 </section>
