@@ -1,0 +1,262 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= 在 NetBeans IDE 中调试多线程应用程序
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: 在 NetBeans IDE 中调试多线程应用程序 - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, 在 NetBeans IDE 中调试多线程应用程序
+
+本文档将介绍如何使用 NetBeans IDE 中的 "Debugging"（调试）窗口调试多线程应用程序。本教程还将演示如何使用 IDE 检测应用程序中的死锁。
+
+"Debugging"（调试）窗口将与调试会话、应用程序线程和线程调用堆栈相关的消息都集成到了一个窗口中，这种方式简化了调试过程。通过 "Debugging"（调试）窗口，您可以很方便地看到各个应用程序线程的状态，并可挂起和恢复会话中的任意线程。
+
+本教程将使用两个样例项目来演示如何使用 "Debugging"（调试）窗口。要完成本教程，您必须先下载 Gallery 和 Deadlock 项目。
+
+观看link:debug-multithreaded-screencast.html[+在 NetBeans IDE 中调试多线程应用程序的视频+]。
+
+
+image::images/netbeans-stamp-80-74-73.png[title="此页上的内容适用于 NetBeans IDE 7.2、7.3、7.4 和 8.0"]
+
+
+*要学习本教程，您需要具备以下软件和资源。*
+
+|===
+|软件或资源 |要求的版本 
+
+|link:https://netbeans.org/downloads/index.html[+NetBeans IDE+] |7.2, 7.3, 7.4, 8.0 
+
+|link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+Java 开发工具包 (JDK)+] |版本 7 或 8 
+
+|link:https://netbeans.org/projects/samples/downloads/download/Samples/Java/debugging-samples.zip[+Gallery 项目和 Deadlock 项目+] |  
+|===
+
+
+== 下载样例项目
+
+您可以采用下列方法下载本教程中使用的样例项目。
+
+* 下载link:https://netbeans.org/projects/samples/downloads/download/Samples/Java/debugging-samples.zip[+已完成项目的 zip 档案文件+]。
+* 通过执行以下步骤从 NetBeans 样例检出项目源代码：
+1. 从主菜单中选择 "Team"（团队开发）> "Subversion" > "Checkout"（检出）。
+2. 在 "Checkout"（检出）对话框中，输入以下资源库 URL：
+ ``https://svn.netbeans.org/svn/samples~samples-source-code`` 
+单击 "Next"（下一步）。
+3. 单击 "Browse"（浏览）以打开 "Browse Repository Folders"（浏览资源库文件夹）对话框。
+4. 展开根节点，然后选择 *samples/java/debugging-samples*。单击 "OK"（确定）。
+5. 指定用于存储源代码的本地文件夹（本地文件夹必须为空）。
+6. 单击 "Finish"（完成）。
+
+单击 "Finish"（完成），此时 IDE 会将本地文件夹初始化为 Subversion 资源库，并检出项目源代码。
+
+7. 在完成检出操作后将会显示一个对话框，在该对话框中单击 "Open Project"（打开项目）。
+
+*注：*有关使用 Subversion 检出源的详细信息，请参见 link:../ide/subversion.html[+NetBeans IDE 中的 Subversion 指南+]中有关link:../ide/subversion.html#settingUp[+设置 Subversion+] 的部分。
+
+
+== 打开项目
+
+在本教程中，您将使用两个应用程序来演示 IDE 如何为多线程应用程序的调试提供支持。在本练习中，您将在 IDE 中打开两个项目，然后运行它们。运行这两个项目后，您将对每个项目进行测试。
+
+
+=== 运行 Gallery 项目
+
+Gallery 应用程序是一个简单的 Java Swing 应用程序，它可以播放动画图像。该应用程序有两个按钮，您可以使用这两个按钮来添加和删除动画图像。在本练习中，您将运行 Gallery 应用程序。
+
+1. 将 link:https://netbeans.org/projects/samples/downloads/download/Samples/Java/debugging-samples.zip[+ ``debugging-samples.zip`` +] 档案下载并解压缩到您的本地系统。
+2. 从主菜单中选择 "File"（文件）> "Open"（打开）。
+3. 找到并选择 debugging-samples 目录中的 Gallery 项目。单击 "Open"（打开）。
+
+单击 "Open"（打开）之后，IDE 将在 "Projects"（项目）窗口中打开并显示该项目。如果在 "Projects"（项目）窗口中展开该节点，您可以看到该项目是一个简单的 Java Swing 应用程序。
+
+4. 右键单击该项目节点并选择 "Run"（运行）以启动 Gallery 应用程序。
+5. 在 Gallery 应用程序中，单击 "More"（更多）可添加图像，单击 "Less"（更少）可删除图像。
+image::images/debugging-gallery-app.png[title="Gallery 应用程序"]
+6. 关闭 Gallery 应用程序窗口。
+
+Gallery 项目是一个简单的多线程应用程序，在本教程中，您将对其进行调试。
+
+
+=== 运行 Deadlock 项目
+
+Deadlock 应用程序包含一个  ``main``  方法，该方法可启动一个运行时长为 500000 毫秒的线程。 ``main``  方法将启动两个线程，这两个线程在完成时会向 "Output"（输出）窗口输出消息。
+
+1. 从主菜单中选择 "File"（文件）> "Open"（打开）。
+2. 找到并选择 debugging-samples 目录中的 Deadlock 项目。单击 "Open"（打开）。
+
+单击 "Open"（打开）之后，IDE 将在 "Projects"（项目）窗口中打开并显示该项目。如果在 "Projects"（项目）窗口中展开该节点，您可以看到该项目是一个简单的 Java 应用程序。
+
+3. 右键单击该项目节点并选择 "Run"（运行）以启动 Deadlock 应用程序。
+
+单击 "Run"（运行）之后，"Output"（输出）窗口将打开并显示以下输出。
+
+
+[source,java]
+----
+
+run:
+Application started
+MyThread2 successfully finished.
+MyThread1 successfully finished
+----
+4. 等待应用程序正常结束（五分钟）。
+
+当 Deadlock 应用程序结束时，您将在 "Output"（输出）窗口中看到以下内容。
+
+
+[source,java]
+----
+
+Main thread finished
+----
+
+Deadlock 项目是一个简单的 Java 应用程序，它有两个线程。在调试该应用程序时，您将创建一个死锁，使用该死锁来说明 IDE 如何帮助您检测死锁。
+
+
+== 调试样例项目
+
+Gallery 项目是一个简单的 Java Swing 应用程序，它可以播放动画图像。在该应用程序中，您可以通过单击按钮来添加和删除图像。单击 "More"（更多）按钮将启动一个新线程，该线程将显示一个图像并实现该图像的动画效果。单击 "Less"（更少）按钮将停止最近的线程，停止动画并删除图像。
+
+
+=== 挂起线程
+
+在本练习中，您将开始调试 Gallery 应用程序，并添加一些图像以启动一些应用程序线程。启动调试会话之后，IDE 将在左侧窗格中打开 "Debugging"（调试）窗口。"Debugging"（调试）窗口显示会话中的线程列表。
+
+1. 在 "Projects"（项目）窗口中右键单击 Gallery 项目，然后选择 "Debug"（调试）。
+
+单击 "Debug"（调试）之后，IDE 将启动 Gallery 应用程序并打开默认的调试窗口。IDE 会自动在主窗口的左侧打开 "Debugging"（调试）窗口，并在 "Output"（输出）窗口中打开调试器控制台。
+
+2. 在 Gallery 应用程序中单击 "More"（更多）三次以启动显示动画图像的三个线程。
+
+查看 "Debugging"（调试）窗口，您可看到为每个动画都启动了一个新线程。
+
+image::images/debugging-start.png[title=""Debugging"（调试）窗口"]
+3. 通过单击 "Debugging"（调试）窗口中线程右侧的 "'Suspend thread"（挂起线程）按钮挂起两个线程。
+
+当线程挂起之后，该线程的图标会相应变化以指示新的状态。您可以展开线程节点查看线程的调用堆栈。您可以右键单击 "Debugging"（调试）窗口中的条目以打开一个带调试命令的弹出式菜单。
+
+image::images/debugging-start-suspend.png[title="具有两个已挂起线程的 "Debugging"（调试）窗口"]
+
+查看 Gallery 应用程序，可看到在您挂起线程后，这些线程的动画停止了。
+
+使用 "Debugging"（调试）窗口，您可以快速查看和更改会话中的线程状态。默认情况下，"Debugging"（调试）窗口在窗口的右侧显示 "Resume"（恢复）和 "Suspend"（挂起）按钮。您可以使用 "Debugging"（调试）窗口底部的工具栏隐藏这两个按钮，还可以进一步对 "Debugging"（调试）窗口的显示进行定制。如果您在运行多个调试会话，则可以使用 "Debugging"（调试）窗口顶部的下拉列表选择要在窗口中显示哪个线程。
+
+image::images/debugging-window-toolbar.png[title=""Debugging"（调试）窗口工具栏"] 
+
+
+=== 切换线程
+
+本练习展示了在您对某个应用程序进行单步调试期间如果另一个应用程序线程遇到断点将发生的情况。在本练习中，您将设置一个方法断点，并启动对应用程序的单步调试。在您对应用程序进行单步调试时，您还将启动一个新的线程，该线程也将遇到断点。当新线程遇到断点时，IDE 会在 "Debugging"（调试）窗口中显示通知，以告诉您所发生的情况。然后，您可以在线程之间进行切换。
+
+1. 在 Gallery 应用程序窗口中，单击 "Less"（更少）或 "More"（更多），直至只有两个或三个动画显示在该窗口中。
+2. 在 IDE 的 "Projects"（项目）窗口中展开  ``gallery``  包，并双击  ``Gallery.java``  以在编辑器中打开该文件。
+3. 通过单击第 175 行的左旁注，在  ``run``  方法的开头中的  ``Gallery.java``  中插入一个方法断点。
+4. 在 Gallery 应用程序中单击 "More"（更多）以启动一个将遇到该方法断点的新线程。
+5. 单击 "Step Over"（步过）（F8 键），开始逐步执行方法，直到程序计数器到达第 191 行为止。
+
+单步调试该方法时，您可以看到编辑器旁注中的程序计数器指示了您的位置。
+
+6. 在 Gallery 应用程序中单击 "More"（更多）以启动一个将遇到该方法断点的新线程。
+
+当新线程遇到方法断点时，"Debugging"（调试）窗口中会显示一个 "New Breakpoint Hit"（遇到新断点）通知，告诉您在单步调试该方法时另一个线程遇到了断点。
+
+image::images/debugging-newbreakpointhit.png[title="遇到新断点通知"]
+
+当您单步调试某个线程时如果另一个线程遇到了断点，IDE 会让您选择是切换到另一个线程还是继续单步调试当前的线程。您可以单击 "New Breakpoint Hit"（遇到新断点）通知中的箭头按钮切换到遇到断点的线程。您随时都可以通过在通知窗口中选择新线程来切换到新线程。单步调试当前断点线程将继续当前线程，但其他应用程序线程的状态保持不变。
+
+*注：*在 "Debugging"（调试）窗口中，使用旁注中的绿色栏指示当前线程 (Thread_Jirka)。因为遇到断点而调用通知的线程 (Thread_Roman) 由一个黄色条指示，该线程图标表示线程因一个断点而挂起。
+
+image::images/debugging-current-suspended.png[title="遇到新断点通知"]
+7. 单击 "New Breakpoint Hit"（遇到新断点）通知中的箭头可从当前线程切换到新线程 (Thread_Roman)。
+
+切换到新线程后，您可以看到以下变化：
+
+* 程序计数器的位置移动到了新的当前线程 (Thread_Roman) 的第 175 行。
+* 现在，可以在第 191 行的旁注中看到一个 "suspended thread"（挂起的线程）标注，表示一个线程 (Thread_Jirka) 在该行挂起。
+image::images/debugging-editor-suspendedannot.png[title="显示调试标注的编辑器"]
+8. 多次单击 "Step Over"（步过）以单步调试新的当前线程 (Thread_Roman)。
+9. 右键单击编辑器旁注中的 "suspended thread"（挂起的线程）标注并选择 "Set as Current Thread"（设置为当前线程）> "Thread_Jirka" 切换回挂起的线程。
+image::images/debugging-editor-setcurrent.png[title="显示 "Set as Current Thread"（设置为当前线程）弹出窗口的编辑器"]
+
+此外，您也可以调用 "Current Thread Chooser"（当前线程选择器）（Alt+Shift+T 组合键；在 Mac 上为 Ctrl+Shift+T 组合键）并切换到应用程序的任意线程。
+
+image::images/debugging-thread-chooser.png[title="Gallery 应用程序"]
+
+当您切换回 Thread_Jirka 时，"suspended thread"（挂起的线程）标注将出现在 Thread_Roman 挂起时所处的行旁边。您可以通过单击 "Debugging"（调试）窗口中的 "Resume"（恢复）来恢复 Thread_Roman。
+
+image::images/debugging-editor-suspendedannot2.png[title="显示调试标注的编辑器"]
+
+使用 "Debugging"（调试）窗口，您可以非常精确地查看和控制线程状态。调试器对应用程序线程进行管理以简化调试工作流并防止调试进程造成死锁。在本练习中，在 IDE 中调试应用程序时，您看到了以下行为。
+
+* 当某个线程遇到一个断点时，只有该断点线程将被挂起。
+* 在单步调试应用程序时，如果应用程序的其他线程遇到断点，当前线程不受影响。
+* 单步调试仅会继续执行当前线程。单步调试完成时，只有当前线程将被挂起。
+
+现在可以退出 Gallery 应用程序。在下一个练习中，您将测试 Deadlock 应用程序并使用 IDE 来帮助您检测死锁。
+
+
+=== 检测死锁
+
+IDE 可以自动在所有挂起的线程间搜索死锁，因而可以帮助您识别潜在的死锁情况。检测到死锁后，IDE 会在 "Debugging"（调试）窗口中显示一个通知并标识出所涉及的线程。
+
+为了演示 IDE 的死锁检测，您将在调试器中运行一个样例项目 Deadlock 并制造一种死锁情况。
+
+1. 展开  ``myapplication``  包并在源代码编辑器中打开  ``Thread1.java``  和  ``Thread2.java`` 。
+2. 在  ``Thread1.java``  的第 20 行和  ``Thread2.java``  的第 20 行分别设置一个断点。
+
+要设置断点，请在源代码编辑器中单击您要设置断点的行旁边的旁注。断点标注将出现在旁注中该行的左侧。打开 "Breakpoints"（断点）窗口（Alt-Shift-5 组合键；在 Mac 上为 Ctrl+Shift+5 组合键），可以看到已经设置并启用了两个断点。
+
+image::images/debug-deadlock-setbkpt.png[title="显示在第 20 行设置断点的编辑器"]
+3. 在 "Projects"（项目）窗口中右键单击 Deadlock 项目，然后选择 "Debug"（调试）。
+
+ ``main``  方法将运行两个线程，这两个线程都将在其中一个断点处挂起。您可以在 "Debugging"（调试）窗口中看到由断点挂起的线程。
+
+4. 在 "Debugging"（调试）窗口中，可以通过单击挂起的线程右侧的 "Resume"（恢复）按钮来恢复挂起的线程（ ``MyThread1``  和  ``MyThread2`` ）。
+image::images/debug-deadlock-resume.png[title="恢复 "Debugging"（调试）窗口中挂起的线程"]
+
+恢复线程  ``MyThread1``  和  ``MyThread2``  将造成死锁状况。
+
+5. 从主菜单中选择 "Debug\Check for Deadlock"（调试\检查死锁）可检查挂起的线程以查找死锁。
+image::images/debug-deadlock-detected.png[title="恢复 "Debugging"（调试）窗口中挂起的线程"]
+
+如果您在应用程序中检测到死锁，则 "Debugging"（调试）窗口中会出现一条消息告诉您有关死锁的情况。您可以看到，在 "Debugging"（调试）窗口的左侧旁注中，死锁由红色条指示。
+
+本教程对 IDE 中的一些调试功能进行了初步介绍。使用 "Debugging"（调试）窗口，您在调试应用程序时可以很方便地挂起和恢复线程。在调试多线程应用程序时，这非常有用。
+
+
+link:https://netbeans.org/about/contact_form.html?to=3&subject=Feedback:%20Debugging%20Multithreaded%20Applications[+发送有关此教程的反馈意见+]
+
+
+
+== 另请参见
+
+有关在 NetBeans IDE 中开发和测试 Java 应用程序的更多信息，请参见以下资源：
+
+* 演示：link:debug-multithreaded-screencast.html[+在 NetBeans IDE 中调试多线程应用程序+]
+* 演示：link:debug-stepinto-screencast.html[+NetBeans 调试器中的可视“步入”操作+]
+* 演示：link:debug-deadlock-screencast.html[+使用 NetBeans 调试器进行死锁检测+]
+* 演示：link:debug-evaluator-screencast.html[+在 NetBeans 调试器中使用代码片段计算器+]
+* link:../../trails/java-se.html[+基本 IDE 和 Java 编程学习资源+]
+* link:junit-intro.html[+编写 JUnit 测试+]
+* link:profiler-intro.html[+分析 Java 应用程序简介+]

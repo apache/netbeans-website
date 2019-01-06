@@ -1,0 +1,384 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= Estabelecendo Conexão ao Oracle Database por meio do NetBeans IDE
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: Estabelecendo Conexão ao Oracle Database por meio do NetBeans IDE - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, Estabelecendo Conexão ao Oracle Database por meio do NetBeans IDE
+
+O NetBeans IDE inclui um suporte integrado para o Oracle Database. É possível estabelecer facilmente uma conexão de dentro do IDE e começar a trabalhar com o banco de dados. Este tutorial demonstra como usar uma instalação local do Oracle Database 10_g_ Express Edition (Oracle Database XE), um banco de dados base que é gratuito para desenvolvimento, implantação e distribuição.
+
+Este documento mostra como <<connect,configurar uma conexão para a instalação local>> do Oracle Database XE a partir do NetBeans IDE, usar o editor SQL integrado do IDE para <<createuser,manipular os dados de banco de dados>> e como <<oci8,ativar a extensão PHP OCI 8>> para escrever o código PHP que se conecta a um banco de dados Oracle.
+
+
+image::images/netbeans-stamp-80-74-73.png[title="O conteúdo desta página se aplica ao NetBeans IDE 7.2, 7.3, 7.4 e 8.0"]
+
+
+*Para seguir este tutorial, os recursos e softwares a seguir são necessários.*
+
+|===
+|Software ou Recurso |Versão Necessária 
+
+|link:https://netbeans.org/downloads/index.html[+NetBeans IDE+] |Pacote Java EE 7.2, 7.3, 7.4, 8.0 
+
+|link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+JDK (Java Development Kit)+] |Versão 7 ou 8 
+
+|link:http://www.oracle.com/technetwork/database/express-edition/overview/index.html[+Oracle Database XE +] |10 _g_ Express Edition 
+
+|link:http://www.oracle.com/technetwork/database/enterprise-edition/jdbc-112010-090769.html[+Driver do Oracle JDBC+] |link:http://download.oracle.com/otn/utilities_drivers/jdbc/11202/ojdbc6.jar[+ojdbc6.jar+] 
+|===
+
+
+== Antes de Começar
+
+Antes de começar a percorrer este tutorial, considere o seguinte:
+
+* Esse tutorial demonstra como se conectar a uma instância do Oracle Database XE instalada no seu sistema local, mas as etapas também se aplicam a quando você está se conectando a uma instância remota. Se você estiver se conectando a uma instância local, você precisará link:http://www.oracle.com/technetwork/database/express-edition/overview/index.html[+efetuar download+] e instalar o Oracle Database XE. O processo de instalação é simples e intuitivo, mas caso haja dúvidas, consulte o link:http://www.oracle.com/pls/xe102/homepage[+Guia de Instalação do Oracle Database XE+] para a sua plataforma.
+* Existem duas categorias dos drivers Oracle JDBC: OCI e DJBC Thin.
+* O driver JDBC Thin da Oracle tem como base Java e é independente de plataforma. Esse driver standalone não requer a presença de outras bibliotecas Oracle e permite uma conexão direta com um Oracle Database. Este tutorial usa esse drive para mostrar como se conectar ao Oracle Database. Antes de percorrer o tutorial, você deve link:http://www.oracle.com/technetwork/database/enterprise-edition/jdbc-112010-090769.html[+efetuar download+] do arquivo  ``ojdbc6.jar``  e salvá-lo no sistema.
+
+*Observação para usuários do Windows:* O Windows pode alterar a extensão do arquivo submetido a download de .jar para .zip. Ainda assim ele permanece como um arquivo.jar. É possível renomear o arquivo para .jar.
+
+* O driver OCI da Oracle usa as bibliotecas nativas de cliente da Oracle para se comunicar com os bancos de dados. Essas bibliotecas são obtidas como parte do Oracle Instant Client. Mesmo que o driver Thin seja o suficiente na maioria dos casos, você pode desejar usar o driver OCI seguindo as seguintes etapas em <<oci,Usando o Driver OCI JDBC com o NetBeans IDE>>. 
+Um bom exemplo do uso do driver OCI é acessar um banco de dados Oracle remoto de uma aplicação PHP usando as bibliotecas do Oracle Instant Client. Consulte a seção <<oci8,OCI 8 e o NetBeans IDE para PHP>> neste tutorial para obter informações de como ativar a extensão OCI8 para PHP.
+* Se você nunca usou o Oracle Database XE, acesse o link:http://download.oracle.com/docs/cd/B25329_01/doc/admin.102/b25610/toc.htm[+Tutorial de Introdução+] do Oracle Database XE.
+
+*Advertência aos Usuários do GlassFish:* A página do Oracle Database XE, que é usada para administrar o banco de dados, usa a porta 8080 por default. O Oracle GlassFish Application Server também usa a porta 8080 por default. Se os dois programas forem executados ao mesmo tempo, o Oracle Database XE bloqueará os browsers de acessarem o GlassFish em localhost:8080. Todas as aplicações implantadas no GlassFish retornarão 404, nesse caso. A solução simples é fechar o Oracle Database XE, caso não precise dele ao executar o GlassFish. Caso precise executar ambos ao mesmo tempo, altere a porta default que o Oracle Database XE usa. Isso é mais fácil do que alterar a porta default do GlassFish. Existem várias instruções na Internet sobre como mudar a porta default do Oracle Database XE, inclusive nos link:https://forums.oracle.com/forums/thread.jspa?threadID=336855[+Fóruns da Oracle+].
+
+
+== Estabelecendo uma Conexão com o Oracle Database
+
+Neste exercício, você testará e criará uma nova conexão com o banco de dados.
+
+1. Inicie o Oracle database.
+2. Abra a janela Serviços (Janela > Serviços ou Ctrl-5;⌘-5 no Mac). Na janela Serviços, clique com o botão direito do mouse no nó Bancos de Dados e escolha Nova Conexão. 
+image::images/new-connection.png[]
+3. No assistente Nova Conexão, selecione Oracle Thin na lista drop-down Driver.
+4. Clique em Adicionar e encontre o arquivo  ``ojdbc6.jar``  que foi submetido a download anteriormente. Clique em Próximo.
+5. No painel Personalizar Conexão do assistente, insira os seguintes valores e clique em Próximo. 
+|===
+
+|Nome |Valor 
+
+|Nome do Driver |Oracle Thin (com ID de Serviço - SID) 
+
+|Host | ``localhost``  ou 127.0.0.1. 
+_Observação:_ No caso de uma conexão remota, forneça um endereço IP ou nome de host resolvível da máquina onde o banco de dados está instalado. 
+
+|Porta |1521 (default) 
+
+|ID do Serviço (SID) | ``XE``  (SID default para Oracle Database XE).
+_Observação_: Se você estiver se conectando a um banco de dados remoto, peça ao administrador do banco de dados que forneça o SID do banco de dados. 
+
+|Nome do usuário |
+
+Indique o nome do usuário. 
+Para os fins do nosso tutorial, insira  ``system``  (a conta default de administrador de banco de dados) e a senha que foi usada durante a instalação do banco de dados.
+
+ 
+
+|Password |Insira a senha para o nome de usuário selecionado. 
+|===
+6. Clique em Testar Conexão para confirmar que o IDE pode se conectar ao banco de dados. Clique em Próximo.
+
+Se a tentativa obtiver êxito, a mensagem "Conexão com êxito" será exibida no assistente.
+
+image::images/customize-conn.png[]
+7. Selecione  ``HR``  na lista drop-down Selecionar Esquema. Clique em Finalizar.
+
+*Observação:* É necessário desbloquear o esquema HR antes de poder acessá-lo no NetBeans. O desbloqueio do banco de dados HR é descrito no link:http://download.oracle.com/docs/cd/B25329_01/doc/admin.102/b25610/toc.htm[+Tutorial de Introdução+] do Oracle Database XE.
+
+Uma nova conexão aparecerá no nó dos Bancos de Dados na janela Serviços. É possível expandi-la e começar a navegar a estrutura do objeto do banco de dados. 
+Altere o nome de exibição do nó de conexão: selecione Propriedades no menu pop-up do nó e clique no botão de elipses para acessar a propriedade Nome de Exibição. Digite Oracle DB como o Nome de Exibição e clique em OK.
+
+image::images/connection.png[]
+
+*Observação.* Embora as etapas acima demonstrem o exemplo de estabelecer conexão a uma instância do banco de dados local, as etapas para estabelecer conexão com um banco de dados _remoto_ são iguais. A única diferença é que em vez de especificar o  ``localhost``  como um nome de host, é necessário inserir o endereço IP ou nome de host da máquina remota onde o Oracle Database está instalado.
+
+
+== Manipulando os Dados no Oracle Database
+
+Uma forma comum de interagir com bancos de dados executando comandos em um editor SQL ou usando interfaces de gerenciamento de banco de dados. Por exemplo, o Oracle Database XE tem uma interface com base em browser pela é possível administrar o banco de dados, gerenciar objetos de banco de dados e manipular dados.
+
+Mesmo que você possa executar a maioria das tarefas relacionadas com o banco de dados através da interface de gerenciamento do Oracle Database, neste tutorial, nós demonstramos como o Editor SQL no NetBeans IDE pode ser usado para executar algumas dessas tarefas. Os seguintes exercícios demonstram como criar um novo usuário, recriar uma tabela rapidamente e copiar os dados da tabela.
+
+
+=== Criando um Usuário
+
+Vamos criar uma nova conta de usuário de banco de dados para manipular tabelas e dados no banco de dados. Para criar um novo usuário, você precisa estar conectado em uma conta de administrador de banco de dados, no nosso caso, a conta default  ``system``  criada durante a instalação do banco de dados.
+
+1. Na janela Serviços, clique com o botão direito no nó de conexão OracleDB e selecione Executar Comando. É aberto o editor de SQL do NetBeans IDE, no qual é possível inserir comandos SQL que serão enviados ao banco de dados.
+image::images/execute.png[]
+2. Para criar um novo usuário, insira o seguinte comando na janela Editor SQL e clique no botão Executar SQL na barra de ferramentas. 
+image::images/create-user.png[]
+
+[source,java]
+----
+
+create user jimidentified by mypassworddefault tablespace userstemporary tablespace tempquota unlimited on users;
+----
+
+Esse comando cria um novo usuário  ``jim``  com a senha  ``mypassword`` . O tablespace default é  ``users``  e o espaço alocado é ilimitado.
+
+3. A próxima etapa é conceder privilégios à conta de usuário  ``jim``  para executar ações no banco de dados. Precisamos permitir que o usuário se conecte ao banco de dados, crie e modifique tabelas no espaço de tabela default do usuário e acesse a tabela  ``Employees``  na amostra do banco de dados  ``hr`` .
+
+Em um contexto real, um administrador de banco de dados cria atribuições personalizadas e privilégios de ajuste para cada atribuição. No entanto, para o propósito do nosso tutorial, podemos usar uma atribuição predefinida, como  ``CONNECT`` . Para obter mais informações sobre atribuições e privilégios, consulte o link:http://download.oracle.com/docs/cd/E11882_01/network.112/e16543/toc.htm[+Oracle Database Security Guide+].
+
+
+[source,java]
+----
+
+grant connect to jim;
+grant create table to jim;
+grant select on hr.departments to jim;
+----
+
+
+=== Tablespaces no Oracle Databases
+
+Um tablespace é uma unidade de armazenamento do banco de dados lógico de qualquer banco de dados Oracle. Na realidade, todos os dados do banco de dados são armazenados em tablespaces. Você cria tabelas dentro de espaços de tabela alocados. Se um espaço de tabela default não for explicitamente designado a um usuário, o tablespace do sistema é usado por default (é melhor evitar essa situação)
+
+Para obter mais informações sobre o conceito de espaço de tabela, consulte link:http://www.orafaq.com/wiki/Tablespace[+FAQ da Oracle: Tablespace+]
+
+
+
+=== Criando uma Tabela
+
+Existem diversas maneiras de criar uma tabela no banco de dados usando o NetBeans IDE. Por exemplo, é possível executar um arquivo SQL (clique com o botão direito do mouse no arquivo e selecione Executar Arquivo), executar um Comando SQL (clique com o botão direito do mouse no nó de conexão e selecione Executar Comando) ou usar a caixa de diálogo Criar Tabela (clique com o botão direito do mouse no nó Tabelas e selecione Criar Tabela). Neste exercício, você recriará uma tabela usando a estrutura de outra tabela.
+
+Neste exemplo, se você deseja que o usuário  ``jim``  crie uma cópia da tabela  ``Departamentos``  em seu esquema ao recriar a tabela no banco de dados  ``hr`` . Antes de criar a tabela você precisa se desconectar do servidor e efetuar log-in como o usuário  ``jim`` .
+
+1. Clique com o botão direito do mouse no modo de conexão  ``OracleDB``  na janela Serviços e selecione Desconectar.
+2. Clique com o botão direito do mouse no nó de conexão  ``OracleDB``  e selecione Conectar e efetue log-in como  ``jim`` .
+3. Expanda o nó Tabelas no esquema HR e confirme que somente a tabela  ``Departamentos``  está acessível ao usuário  ``jim`` .
+
+Quando o usuário  ``jim``  foi criado, o privilégio Selecionar foi limitado à tabela  ``Departamentos`` .
+
+image::images/hr-view.png[]
+4. Clique com o botão direito do mouse no nó da tabela  ``Departamentos``  e selecione Obter Estrutura. Salve o arquivo  ``.grab``  no disco.
+5. Expanda o esquema  ``JIM`` , clique com o botão direito do mouse no nó  ``Tabelas``  e escolha Recriar Tabela. 
+Aponte para o arquivo  ``.grab``  que você criou. 
+image::images/recreate.png[]
+6. Revise o documento SQL que será usado para criar a tabela. Clique em OK. 
+image::images/nametable.png[]
+Quando você clica em OK, a nova tabela  ``DEPARTAMENTOS``  é criada e aparece sob o nó do esquema  ``JIM`` . Se clicar com o botão direito do mouse no nó da tabela e selecionar Exibir Dados, você verá que a tabela está vazia.
+
+Se você deseja copiar os dados da tabela  ``Departamentos``  original para a nova tabela, é possível inserir os dados manualmente no editor de tabela ou executar um script SQL na nova tabela para preencher a tabela.
+
+*Para inserir os dados manualmente, execute as seguintes etapas.*
+
+1. Clique com o botão direito do mouse na tabela  ``DEPARTAMENTOS``  no esquema  ``JIM``  e selecione Exibir Dados.
+2. Clique no ícone Inserir Registros na barra de ferramentas Exibir Dados e abra a janela Inserir Registro. 
+image::images/insert-rec.png[]
+3. Digite nos campos para inserir os dados. Clique em OK.
+
+Por exemplo, é possível inserir os seguintes valores retirados da tabela  ``DEPARTAMENTOS``  original.
+
+|===
+|Coluna |Valor 
+
+|DEPARTMENT_ID |10 
+
+|DEPARTMENT_NAME |Administração 
+
+|MANAGER_ID |200 
+
+|LOCATION_ID |1700 
+|===
+
+*Para preencher a tabela usando um script SQL, execute as seguintes etapas.*
+
+1. Clique com o botão direito do mouse na tabela  ``DEPARTAMENTOS``  no esquema  ``JIM``  e selecione Executar Comando.
+2. Insira o script na guia Comando SQL. Clique no botão Executar na barra de ferramentas.
+
+O seguinte script preencherá a primeira linha da nova tabela com os dados da tabela original.
+
+
+[source,java]
+----
+
+INSERT INTO JIM.DEPARTMENTS (DEPARTMENT_ID, DEPARTMENT_NAME, MANAGER_ID, LOCATION_ID) VALUES (10, 'Administration', 200, 1700);
+----
+
+É possível recuperar o script SQL para preencher a tabela a partir da tabela original executando as etapas a seguir.
+
+1. Clique com o botão direito do mouse na tabela  ``DEPARTAMENTOS``  no esquema  ``HR``  e selecione Exibir Dados.
+2. Selecione todas as linhas na janela Exibir Dados e clique com o botão direito do mouse na tabela e selecione Mostrar Script SQL para INSERT no menu pop-up para abrir a caixa de diálogo Exibir SQL que contém o script.
+
+É possível então copiar o script e modificá-lo, conforme necessário para inserir os dados na sua tabela.
+
+Consulte <<tips,Dicas>> para obter mais informações sobre como trabalhar no Editor SQL.
+
+
+=== Trabalhando com os Dados da Tabela
+
+Para trabalhar com dados da tabela, você pode usar o Editor SQL no NetBeans IDE. Ao executar consultas SQL, você pode adicionar, modificar e deletar dados mantidos em estruturas de bancos de dados.
+
+Inicialmente, crie uma segunda tabela chamada Localizações no esquema  ``jim``  (mantenha-se conectado com a conta de usuário do jim). Desta vez, simplesmente executaremos o arquivo SQL pronto no IDE:
+
+1. Faça o download e salve o arquivo link:https://netbeans.org/project_downloads/samples/Samples/Java/locations.sql[+locations.sql+] no diretório _USER_HOME_ do seu computador.
+2. Abra a janela Favoritos do IDE e localize o arquivo  ``locations.sql`` .
+
+Para abrir a janela Favoritos, clique em Janela > Favoritos no menu principal (pressione Ctrl-3). O diretório _USER_HOME_ está listado na janela Favoritos por default.
+
+3. Clique com o botão direito do mouse no arquivo  ``locations.sql``  e selecione Executar Arquivo.
+image::images/run-file.png[]
+
+*Observação.* Se mais de uma conexão de banco de dados estiver registrada no IDE, o IDE pode solicitar que você selecionar a conexão correta.
+
+4. Na janela Serviços, clique com o botão direito no nó Tabelas e selecione Atualizar no menu pop-up.
+
+É possível ver que a tabela  ``Localizações``  com os dados foi adicionada ao esquema  ``JIM`` .
+
+image::images/second-table.png[]
+5. Clique com o botão direito do mouse no nó da tabela Localizações e selecione Exibir Dados para ver o conteúdo da tabela. Você verá o conteúdo da tabela Localizações.
+É possível inserir novos registros e modificar os dados existentes diretamente nessa janela. 
+image::images/view-data1.png[]
+6. Em seguida, executamos uma consulta para exibir informações de duas tabelas: Departamentos e Localizações.
+
+No nosso caso, usaremos uma “junção natural” simples, pois ambas tabelas têm a mesma coluna “location_id” que guarda valores do mesmo tipo de dados. Essa junção seleciona somente as linhas que possuem valores iguais na coluna location_id correspondente.
+
+Abra a janela Comando SQL (clique com o botão direito do mouse no nó  ``Tabelas``  no esquema  ``JIM``  e selecione Executar Comando), insira a seguinte Instrução SQL e clique no ícone Executar SQL.
+
+
+[source,java]
+----
+
+SELECT DEPARTMENT_NAME, MANAGER_ID, LOCATION_ID, STREET_ADDRESS, POSTAL_CODE, CITY, STATE_PROVINCE 
+FROM departments NATURAL JOIN locations
+ORDER by DEPARTMENT_NAME;
+----
+
+Essa consulta SQL retorna as linhas da tabela Departamentos da qual os valores de location_id são iguais aos valores na coluna correspondente da tabela Localizações, com os resultados sendo perdidos pelo nome do departamento. Observe que não é possível inserir novos registros diretamente nos resultados dessa consulta, como poderia ser feito na representação de uma tabela única.
+
+image::images/join.png[]
+
+É possível salvar a consulta de junção SQL como uma View (clique com o botão direito do mouse no nó View e selecione Criar View) e execute quando desejar. Para isso, o usuário do banco de dados deve ter o privilégio concedido de Criar View, o que nosso usuário do exemplo não tem. É possível efetuar log-in na conta do sistema, conceder ao  ``jim``  o privilégio de Criar Exibição (com a instrução SQL: “grant create view to jim;”) e tentar criar sua própria exibição.
+
+
+=== Dicas para trabalhar no Editor SQL do NetBeans IDE
+
+Se você está acompanhando este tutorial, você já usou os recursos do Editor SQL do NetBeans IDE. Nós listamos aqui várias outros recursos do Editor SQL do NetBeans IDE que podem ser úteis a você.
+
+1. *View da GUI das Tabelas de Bancos de Dados*. Quando você clica com o botão direito do mouse em um nó de tabela na janela Serviços e seleciona Exibir Dados, o IDE exibe uma representação visual da tabela e de seus dados (como mostrado na figura acima). Também é possível adicionar, modificar e deletar dados da tabela diretamente dessa view.
+* Para adicionar um registro, clique no ícone Inserir Registros image::images/row-add.png[] e insira novos dados na janela Inserir Registros que é aberta. Clique no botão Exibir SQL para ver o código SQL para essa operação. A tabela será atualizada automaticamente com os novos registros.
+* Para modificar um registro, clique duas vezes diretamente dentro de qualquer célula na View da GUI de uma tabela e digite o novo valor. Até que a modificação seja confirmada, o texto modificado é mostrado em verde. Para confirmar suas alterações, clique no ícone Confirmar Alteraçõesimage::images/row-commit.png[]. Para cancelar as alterações, clique no ícone Cancelar Ediçõesimage::images/row-commit.png[].
+* Para deletar uma linha, selecione-a e clique no ícone Deletar Registros Selecionados image::images/row-commit.png[].
+2. *Manter Guias Anteriores*. Clique no ícone Manter Guias Anteriores image::images/keepoldresulttabs.png[] na barra de ferramentas do Editor de SQL para manter as janelas com os resultados de consultas anteriores abertas. Isso pode ser útil caso deseje comparar os resultados de várias consultas.
+3. *Histórico SQL* (Ctrl-Alt-Shift-H). Usar o ícone do Histórico SQL image::images/sql-history.png[] na barra de ferramentas do Editor de SQL para exibir todas as instruções SQL que você executou para cada uma das conexões de banco de dados. Escolha a conexão na lista drop-down, encontre a instrução SQL que você precisa e clique em Inserir para colocar a instrução na janela Comando SQL.
+4. *Lista de conexões*. Se você tem muitas conexões aos bancos de dados e precisa alternar rapidamente entre eles no Editor SQL, use a lista drop-down Conexões.
+5. *Executar Instruções SQL*. Para executar a instrução inteira que está atualmente na janela de Comando SQL, clique no ícone Executar SQLimage::images/runsql.png[]. Se você desejar executar somente uma parte do SQL, selecione-a na janela Comando SQL, clique com o botão direito do mouse na seleção e selecione Executar Seleção. Nesse caso, somente a parte selecionada será executada.
+
+
+
+== OCI 8 e o NetBeans IDE para PHP
+
+É possível usar a extensão PHP OCI 8 e o NetBeans IDE para PHP para escrever o código PHP que se comunica com um banco de dados Oracle. Para usar o NetBeans IDE para PHP e um banco de dados Oracle:
+
+1. Configure o ambiente PHP como descrito na seção Configurando Seu Ambiente para Desenvolvimento em PHP da link:../../trails/php.html[+Trilha de Aprendizado do PHP+]. Observe que o NetBeans IDE suporta somente PHP 5.2 ou 5.3.
+2. Abra seu arquivo  ``php.ini``  em um editor. Certifique-se de que a propriedade  ``extension_dir``  esteja definida para o diretório de extensões PHP. Normalmente, esse diretório é  ``PHP_HOME/ext`` . Por exemplo, com o PHP 5.2.9 instalado no diretório-raiz do  ``C:`` , a definição  ``extension_dir``  deveria ser  ``extension_dir="C:\php-5.2.9\ext"`` .
+3. Localize e remova o comentário da linha  ``extension=php_oci8_11g.dll``  (para Oracle 11g) ou  ``extension=php_oci8.dll``  (para Oracle 10.2 ou XE). Somente uma dessas extensões pode ser ativada por vez.
+
+*Importante: *Se não houver tal linha no  ``php.ini`` , procure na pasta de extensões pelo arquivo de extensão OCI 8. Se não houver o arquivo de extensão OCI 8 na pasta de extensões, consulte link:http://www.oracle.com/technetwork/articles/technote-php-instant-084410.html[+Instalando PHP e o Oracle Instant Client para Linux e Windows+] para obter mais informações sobre o download e a instalação do OCI 8.
+
+4. Reinicie o Apache. (Usuários do Windows devem reiniciar seus computadores.)
+5. Executar  ``phpinfo()`` . Se você ativou a extensão OCI 8 com êxito, uma seção da OCI 8 aparecerá na saída de  ``phpinfo()`` .
+
+Para obter mais informações sobre como ativar a OCI 8, e especialmente para usá-la com um servidor Oracle DB, consulte link:http://www.oracle.com/technetwork/articles/technote-php-instant-084410.html[+Instalando PHP e o Oracle Instant Client para Linux e Windows+].
+
+Quando a OCI 8 está ativada, o NetBeans IDE para PHP acessa essa extensão para autocompletar código e depuração de erros.
+
+image::images/oci-cc.png[]
+
+
+== Usando o Driver OCI JDBC com o NetBeans IDE
+
+Os pacotes do driver OCI estão disponíveis no mesmo arquivo JAR que o do driver JDBC Thin ( ``ojdbc6.jar`` ). A seleção e qual driver usar depende da interface:  ``oracle.jdbc.OracleDriver``  para o driver Thin e  ``oracle.jdbc.driver.OracleDriver``  para o driver OCI. Para usar o driver OCI, você deve instalar o Oracle Database Instant Client, pois ele contém todas as bibliotecas exigidas pelo driver OCI para se comunicar com o banco de dados.
+
+*Para estabelecer conexão com o Oracle Database com o uso do NetBeans IDE usando o driver OCI da Oracle:*
+
+1. link:http://www.oracle.com/technetwork/database/features/instant-client/index-100365.html[+Efetue download+] do pacote “Basic” do Oracle Database Instant Client para a sua plataforma. Siga as instruções de instalação link:http://www.oracle.com/technetwork/database/features/instant-client/index-100365.html[+desta página+].
+2. Na janela Serviços do IDE, clique com o botão direito do mouse no nó Bancos de Dados e selecione Nova Conexão.
+3. Na etapa Localizar Driver, selecione Oracle OCI, clique em Adicionar e especifique o arquivo  ``ojdbc6.jar`` .
+4. Na caixa de diálogo Personalizar Conexão, forneça os detalhes da conexão: endereço IP, porta, SID, nome de usuário e senha.
+Observe a diferença no URL da JDBC para os drivers OCI e Thin. 
+image::images/oci-connection.png[]
+
+
+== Solução de Problemas
+
+As dicas de diagnóstico e solução de problemas abaixo descrevem somente algumas exceções que foram encontradas. Se a sua pergunta não foi respondida aqui, faça sua própria pesquisa ou use Enviar Feedback no link Este Tutoria para fornecer feedback construtivo.
+
+* Você verá o erro parecido com o seguinte:
+
+[source,java]
+----
+
+Shutting down v3 due to startup exception : No free port within range:
+>> 8080=com.sun.enterprise.v3.services.impl.monitor.MonitorableSelectorHandler@7dedad
+----
+Isso acontece devido ao servidor de aplicações GlassFish e o Oracle Database usarem a porta 8080. Então, caso deseje usar ambas aplicações ao mesmo tempo, será necessário trocar essa porta default de um deles. Para redefinir a porta default do Oracle Database, use o seguinte comando:
+
+[source,java]
+----
+
+CONNECT SYSTEM/passwordEXEC DBMS_XDB.SETHTTPPORT(<new port number>);
+----
+* Você recebe o seguinte erro:
+
+[source,java]
+----
+
+Listener refused the connection with the following error: ORA-12505, TNS:listener does not currently know of SID given in connect descriptor.
+----
+Isso ocorre quando o ID do serviço (SID) da instância do banco de dados fornecida pelo descritor de conexão é conhecido como listener. Existem algumas causas para essa exceção. Por exemplo, ela pode ocorrer se o Oracle Database não tiver sido iniciado (caso mais simples). Ou o SID está incorreto ou não é conhecido pelo listener. Se você usa um SID default (por exemplo, para o Oracle Database Express Edition, o SID default é XE), esse problema provavelmente não aparecerá. O SID está incluído nas partes de CONNECT DATA no arquivo  ``tnsnames.ora``  (em uma máquina Windows, o arquivo está em  ``%ORACLE_HOME%\network\admin\tnsnames.ora`` ).
+* Você recebe o seguinte erro: 
+
+[source,java]
+----
+
+ORA-12705: Cannot access NLS data files or invalid environment specified.
+----
+
+De forma geral, isso significa que a variável de ambiente NLS_LANG contém um valor inválido para idioma, território ou conjunto de caracteres. Se esse for o caso, a configuração inválida de NLS_LANG deveria ser desativada no nível do seu sistema operacional. Para Windows, renomeie a subchave de NLS_LANG no registro do Windows em \HKEY_LOCAL_MACHINE\SOFTWARE\ORACLE. Para Linux/Unix, execute o comando “unset NLS_LANG”.
+
+link:/about/contact_form.html?to=3&subject=Feedback:%20Connecting%20to%20Oracle%20Database%20from%20NetBeans%20IDE[+Envie-nos Seu Feedback+]
+
+
+
+== Consulte Também
+
+Para obter mais informações sobre como administrar e trabalhar com o Oracle Database, consulte a documentação correspondente da Oracle. Abaixo, fornecemos uma breve lista das documentações comumente usadas.
+
+* link:http://download.oracle.com/docs/cd/E11882_01/server.112/e17118/toc.htm[+Referência SQL do Oracle Database+]. A descrição completa das instruções SQL usadas para manipular informações no Oracle Database.
+* link:http://download.oracle.com/docs/cd/E11882_01/network.112/e16543/toc.htm[+Oracle Database Security Guide+]. Fornece e explica conceitos importantes usados no gerenciamento de um Oracle Database.
+* link:http://st-curriculum.oracle.com/tutorial/DBXETutorial/index.htm[+Tutorial do Oracle Database 10_g_ Express Edition+]. Uma rápida, mas detalhada, introdução ao uso do Oracle Database XE.
+* link:http://www.oracle.com/technetwork/articles/technote-php-instant-084410.html[+Instalando PHP e o Oracle Instant Client para Linux e Windows+]. Um artigo direto de passo a passo sobre a instalação do PHP e o Oracle Instant Client.
+
+Para obter mais informações sobre como trabalhar com outros bancos de dados no NetBeans IDE, consulte
+
+* link:java-db.html[+Trabalhando com o Banco de Dados Java DB (Derby)+]
+* link:mysql.html[+Conectando a um Banco de Dados MySQL+]
+* link:../web/mysql-webapp.html[+Criando uma Aplicação Web Simples Usando um Banco de Dados MySQL+]

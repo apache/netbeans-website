@@ -1,0 +1,232 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= RESTful Webサービスについて
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: RESTful Webサービスについて - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, RESTful Webサービスについて
+
+REST (REpresentational State Transfer)は、World Wide Webなどの分散ハイパーメディア・システム用アーキテクチャ・スタイルです。RESTfulアーキテクチャで中心となるのは、URI (Universal Resource Identifier)によって識別されるリソースという概念です。これらのリソースはHTTPなどの標準インタフェースを使用して操作でき、情報はこれらのリソースの表現を使用して交換されます。このチュートリアルでは、最初にRESTについて少し学習した後、NetBeans IDEがこのアーキテクチャ・スタイルをサポートする方法について説明します。
+
+
+image::images/netbeans-stamp-80-74-73.png[title="このページの内容は、NetBeans IDE 7.2、7.3、7.4および8.0に適用されます"]
+
+
+*このチュートリアルに従うには、次のソフトウェアとリソースが必要です。*
+
+|===
+|ソフトウェアまたはリソース |必須バージョン 
+
+|link:https://netbeans.org/downloads/index.html[+NetBeans IDE+] |Java EEダウンロード・バンドル 
+
+|link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+Java Development Kit (JDK)+] |バージョン7または8 
+
+|Java EE互換のアプリケーション・サーバー |
+
+link:http://www.oracle.com/technetwork/middleware/weblogic/overview/index.html[+Oracle WebLogic Server 11g-12c+]、
+またはGlassFish Server Open Source Edition 3.xまたは4.x
+(EJBサポート・プラグインがTomcatにインストールされていないかぎりTomcatでは動作しません)
+
+ 
+
+|jdbc/sampleデータベース - 
+Java DB (Derby)データベース・サーバーまたはMySQL
+データベース・サーバー
+
+ |
+
+Java DB (Derby)の場合、jdbc/sampleデータベースはNetBeans IDEによって生成され、
+そのタイミングはIDEとGlassFishアプリケーション・サーバーをインストールしたときです。
+
+MySQLの場合、IDE内からMySQLサーバー上でサンプル・データベースを作成した後、IDEはサンプル・データベースにデータを生成します。
+
+ 
+|===
+
+GlassFishサーバーは、どちらもNetBeans IDEのWebおよびJava EEの配布とともにインストールできます。または、link:https://glassfish.java.net/download.html[+GlassFishサーバーのダウンロード・ページ+]にアクセスしてください。
+
+*重要: *Java EE 6およびJava EE 7プロジェクトには、GlassFish ServerまたはOracle WebLogic Server 12cが必要です。
+
+
+==  概要
+
+RESTful Webサービスは、RESTfulアーキテクチャ・スタイルを使用してビルドされたサービスです。RESTfulアプローチを使用するWebサービスのビルドは、インターネット上にサービスをデプロイするために、SOAPベースのテクノロジを使用するかわりとして幅広く使用されています。これは、軽量かつHTTP経由でデータを直接送信できるためです。
+
+IDEは、JAX-RS (JSR 311 - Java API for RESTful Web Services)およびJersey (JAX-RSのリファレンス実装)を使用する、RESTful Webサービスの迅速な開発をサポートしています。
+
+詳細は、次を参照してください。
+
+* link:http://jcp.org/en/jsr/detail?id=311[+JSR 311: JAX-RS: The Java API for RESTful Web Services+]
+* link:http://jersey.dev.java.net/[+Jersey, the open source JAX-RS (JSR 311) Reference Implementation for building RESTful Web services+]
+
+RESTful Webサービスのビルドに加え、IDEは、テスト、RESTful Webサービスにアクセスするクライアント・アプリケーションのビルド、およびWebサービスを呼び出すコードの生成(RESTfulとSOAPベースの両方)もサポートしています。
+
+IDEが提供するRESTful機能の一覧は次のとおりです。
+
+1. JPAエンティティ・クラスおよびパターンからのRESTful Webサービスの迅速な作成。
+2. 「サービス」ウィンドウのWebサービス・マネージャからコンポーネントをドラッグ・アンド・ドロップすることによる、Googleマップ、Yahoo News Search、StrikeIron WebサービスなどのWebサービスを呼び出すコードの迅速な生成。
+3. Webサービス・マネージャに登録されたサービスに対するRESTful Javaクライアントの生成。
+4. RESTful Webサービスのテスト用テスト・クライアントの生成。
+5. プロジェクト内のRESTful Webサービスの実装クラスを簡単にナビゲートする論理ビュー。
+
+このチュートリアルでは、RESTful Webサービスを生成、実装、およびテストする際、IDEがどのようなサポートを提供するのかを説明します。
+
+
+==  RESTful Webサービス、永続性およびエンティティ・クラス
+
+JavaにおけるRESTful Webサービスは、データベースと通信するためにlink:http://en.wikipedia.org/wiki/Java_Persistence_API[+Java Persistence API+]に依存しています。具体的には、RESTful WebサービスはPersistence APIに定義されるように_エンティティ・クラス_と_永続性ユニット_に依存しています。エンティティ・クラスはリレーショナル・データベース内のオブジェクトに対応するJavaクラスです。link:http://download.oracle.com/javaee/5/tutorial/doc/bnbqa.html[+Java EE5チュートリアル+]には次のように記載されています。「エンティティは軽量な永続性ドメイン・オブジェクトです。一般的に、エンティティはリレーショナル・データベースの表を表現し、各エンティティ・インスタンスはその表の行に相当します。」永続性ユニットは、 ``persistence.xml`` ファイルで定義されるように、一連のエンティティ・クラス、データ・ソース、永続性プロバイダ、および永続性ユニットの独自の名前で構成されます。
+
+NetBeans IDEを使用して、エンティティ・クラスとRESTful Webサービスを同じプロセスで作成することも、既存のエンティティ・クラスからRESTful Webサービスを作成することもできます。このチュートリアルでは、データベースからのRESTfulサービス・ウィザードを使用して、エンティティ・クラスとRESTful Webサービスを同じプロセスで生成します。ウィザードは永続性ユニットを自動的に生成します。
+
+
+== MySQLデータベース・サーバーの使用
+
+JavaDB (Derby)でなくMySQLデータベース・サーバーを使用する場合、データベース・サーバーをIDEに登録し、 ``sample`` データベースをサーバーに追加する必要があります。
+
+*このチュートリアルでMySQLデータベース・サーバーを使用するには:*
+
+1. MySQLサーバーがまだ登録されていない場合、サーバーをIDEに登録します。MySQLサーバーを登録するには、IDEの「サービス」ウィンドウに移動し、「データベース」ノードを右クリックして「MySQLサーバーを登録」を選択します。
+image::images/register-mysql-server.png[]
+2. 
+管理者のユーザー名やパスワードなどのMySQLサーバーの構成の詳細情報を入力するダイアログが開きます。link:../ide/install-and-configure-mysql-server.html[+MySQLデータベースへの接続+]のMySQLサーバー・プロパティの構成を参照してください。
+
+image::images/basic-mysql-properties.png[]
+3. MySQLサーバーを起動し、これに接続します。link:../ide/install-and-configure-mysql-server.html[+MySQLデータベースへの接続+]のMySQLサーバーの起動を参照してください。
+4. MySQLサーバーのノードを右クリックし、「データベースを作成」を選択します。「MySQLデータベースの作成」ダイアログが開きます。
+image::images/create-database.png[]
+5. 新規データベース名として「 ``sample`` 」と入力します。rootユーザーまたは選択したユーザーにフル・アクセス権を付与します。
+image::images/new-database-name.png[]
+6. 「OK」をクリックします。ダイアログが開き、 ``sample`` がサンプル・データベースの名前であることを通知し、このデータベースの表、オブジェクトおよびデータを作成するかどうかをユーザーに質問します。
+image::images/create-sample-contents.png[]
+7. 「はい」をクリックします。IDEはデータベースを作成してデータを生成し、このデータベースに接続を追加します。
+image::images/generated-db.png[]
+
+
+== データベースからのRESTful Webサービスの作成
+
+この課題の目標は、プロジェクトを作成し、データベースからエンティティ・クラスとRESTful Webサービスを生成することです。
+
+この項ではJavaDB (Derby)データベースとjdbc/sampleデータ・ソースを使用します。JavaDBはSDKに含まれています。jdbc/sampleデータ・ソースは、IDEとGlassFishを一緒にインストールするとき、NetBeans IDEによって自動的に生成されます。
+
+
+=== プロジェクトの作成
+
+RESTful Webサービスを作成するには、Java Webアプリケーション・プロジェクトが必要です。
+
+*プロジェクトを作成するには:*
+
+1. 「ファイル」>「新規プロジェクト」(LinuxおよびWindowsでは[Ctrl]-[Shift]-[N]、MacOSでは[⌘]-[Shift]-[N])を選択します。「カテゴリ」から「Java Web」を選択します。「プロジェクト」で「Webアプリケーション」を選択します。「次」をクリックします。新規Webアプリケーション・ウィザードが開きます。
+
+あるいは、Maven Webアプリケーションも作成できます。「ファイル」>「新規プロジェクト」(LinuxおよびWindowsでは[Ctrl]-[Shift]-[N]、MacOSでは[⌘]-[Shift]-[N])を選択します。「カテゴリ」から「Maven」を選択します。「プロジェクト」で「Maven Webアプリケーション」を選択して、「次」をクリックします。
+
+2. 「プロジェクト名」に「 ``CustomerDB`` 」と入力します。「次」をクリックします。
+3. 「Java EE 6 Web」または「Java EE 7 Web」を選択します。「サーバー」で使用するサーバーを選択しますが、Java EEプロジェクトには、GlassFishサーバー3.xまたは4.xが必要であることに注意してください。残りのオプションをクリックして進み、「終了」をクリックします。
+
+*Mavenプロジェクトで重要: *NetBeans IDE 7.2では、Maven Webアプリケーションを作成するときはサーバーを設定できません。ただし、永続性ユニットを作成するには、サーバーを設定する必要があります。したがって、Maven Webアプリケーションを作成した後、プロジェクトの「プロパティ」を開き、「実行」プロパティでサーバーを設定します。プロジェクトの「プロパティ」を開くには、プロジェクト・ノードを右クリックし、コンテキスト・メニューから「プロパティ」を選択します。
+
+
+=== エンティティ・クラスとRESTfulサービスの生成
+
+Java Webアプリケーションを準備した後、エンティティ・クラスとRESTful Webサービスをプロジェクトに追加します。
+
+*エンティティ・クラスとRESTful Webサービスを生成するには:*
+
+1. 「 ``CustomerDB`` 」ノードを右クリックし、「新規」>「その他」>「Webサービス」>「データベースからのRESTful Webサービス」を選択します。新規RESTful Webサービス・ウィザードの「データベース表」パネルが開きます。
+image::images/open-wizard.png[]
+2. GlassFishサーバーを使用している場合は、「データベース表」パネルの「データ・ソース」ドロップダウン・フィールドから「 ``jdbc/sample`` 」データ・ソースを選択します。
+
+Tomcatを使用している場合は、「jdbc:derby://localhost:1527/sample」を選択します。Derbyデータベース・サーバーが自動的に起動しない場合は、「サービス」ウィンドウの「データベース」タブから起動する必要があります。
+
+*MySQLユーザーへの注意:* 新規データ・ソースを作成する必要があります。「新規データ・ソース」を選択し、わかりやすい任意の名前を付け、「 ``jdbc:mysql://localhost:3306/sample`` 」データベース接続を選択します。この接続は、MySQL上にサンプル・データベースを作成したときに作成しました。
+image::images/new-mysql-datasource.png[]
+
+3. 「使用可能な表」で「CUSTOMER」を選択し、「追加」をクリックします。CUSTOMERテーブルと関連のあるDISCOUNT_CODEテーブルが自動的に「選択した表」に追加されます。MySQLデータベースまたはDerbyの一部のバージョンを使用している場合は、MICRO_MARKET表も追加されます。次のようになります(Derbyバージョン)。
+
+image::images/select-tables.png[title="データベースからの新規エンティティ・クラス・ウィザードの「データベース表」パネルでCUSTOMERおよびDISCOUNT_CODE表が選択された状態"]
+4. 「次」をクリックします。エンティティ・クラス・ページが開きます。「パッケージ名」に「 ``entities`` 」と入力します。次のようになります(Derbyバージョン)。
+
+*注意:* データベースからのRESTful Webサービス・ウィザードはJAXB注釈を自動的に生成します。Java EEアプリケーションのエンティティ・クラスを、「データベースからのエンティティ・クラス」ウィザードで生成し、後でこれらのエンティティ・クラスからRESTful Webサービスを作成する可能性がある場合は、「JAXB注釈を生成」ボックスが選択されていることを確認します。また、エンティティ・クラスからのRESTful Webサービス・ウィザードを実行する前に、JAXB注釈をエンティティ・クラスに手作業で追加することもできます。詳細は、link:http://netbeans.dzone.com/nb-generate-simpler-rest[+NetBeansによる簡易なRESTful Webサービスの生成+]を参照してください。
+
+image::../../../images_www/articles/71/websvc/rest/entity-classes.png[]
+5. 「次」をクリックします。生成したサービス・クラスおよびパッケージの名前と場所を設定できるパネルが開きます。Java EEプロジェクトの場合、RESTアプリケーション構成クラスの名前と場所を変更できます。
+
+このチュートリアルでは、デフォルトを受け入れて「終了」をクリックします。「終了」をクリックすると、IDEによってエンティティ・クラスとサービス・クラスが生成されます。Java EEプロジェクトでは、IDEによって、アプリケーションのサブクラスであるアプリケーション構成クラスも生成されます。
+
+image::images/class-name-location.png[]
+
+IDEにより、RESTful Webサービスが生成されます。IDEが終了した後、「プロジェクト」ウィンドウを見ます。生成されたエンティティ・クラスは ``entities`` パッケージ内にあり、サービスは ``service`` 内にあります。データベースからのJava EE RESTful Webサービスは、各サービス・クラスの ``EntityManager`` をインスタンス化します。これにより、JPAコントローラ・クラスが不要になり、より簡易なコードが生成されます。
+
+
+== RESTful Webサービスのテスト
+
+この課題の目標は、アプリケーションを試してみることです。テスト用に新しいWebアプリケーションを作成し、IDEのウィザードを使用して新規プロジェクトにテストを生成します。
+
+1. メイン・メニューから「ファイル」>「新規プロジェクト」を選択します。
+2. 「Java Web」カテゴリで「Webアプリケーション」プロジェクト・タイプを選択します。「次」をクリックします。
+3. プロジェクト名に*「WebServicesTest」*と入力します。「次」をクリックします。
+4. ターゲット・サーバーとして「GlassFish Server」を選択し、Java EEバージョンとして「Java EE 6 Web」または「Java EE 7 Web」を選択します。「終了」をクリックします。
+5.  ``CustomerDB`` プロジェクト・ノードを右クリックし、「RESTful Webサービスをテスト」を選択します。テスト・クライアントを生成する場所を、サービス・プロジェクト内にするか、別のJava Webプロジェクト内にするかを質問するダイアログが開きます。このオプションによって、一部のブラウザのセキュリティ制限を回避できます。CustomerDBプロジェクトと同じサーバー・ドメインにデプロイされるように構成されているかぎり、すべてのWebプロジェクトを使用できます。 
+image::../../../images_www/articles/71/websvc/rest/configure-test-client.png[]
+6. *「プロジェクト内のWebテスト・クライアント」*を選択し、「参照」をクリックします。
+7. 「プロジェクトを選択」ダイアログ・ボックスで「WebServiceTest」プロジェクトを選択します。「OK」をクリックします。
+
+IDEによって、 ``test-resbeans.html`` ファイルがWebServiceTestプロジェクトに生成されます。IDEによってサーバーの起動およびCustomerDBアプリケーションのデプロイも自動的に行われます。
+
+1つ以上のクラスが存在しておらず、プロジェクトがビルドされないというエラー・メッセージが「出力」ウィンドウに表示された場合、コンパイル時ライブラリにJerseyライブラリを追加します。プロジェクトのノードを右クリックし、「プロパティ」を選択します。「プロパティ」ツリー・メニューで、「ライブラリ」を選択します。「ライブラリの追加」をクリックし、Jerseyライブラリを参照します。
+
+8. WebServiceTestを右クリックし、「実行」を選択します。
+9. ブラウザでlink:http://localhost:8080/WebServicesTest/test-resbeans.html[+http://localhost:8080/WebServicesTest/test-resbeans.html+]を開きます。
+image::../../../images_www/articles/71/websvc/rest/test-rest1.png[title="ブラウザでのRESTful Webサービス・テスターの開始ページ"]
+
+左側にルート・リソースの組があります。ここでは、 ``entities.customer`` 、 ``entities.discountCodes`` および ``entities.microMarket`` という名前です。
+
+10. 「 ``entities.customer`` 」ノードをクリックします。「テストするメソッドを選択します」フィールドで、「GET (application/json)」または「GET (application/xml)」を選択します。「テスト」をクリックします。テスト・クライアントによってリクエストが送信され、「テスト出力」セクションに結果が表示されます。テスト・クライアントでは、デフォルトで「rawデータのビュー」が表示されます。次のイメージは、application/xmlリクエストに対するレスポンスを示しています。
+image::images/test-rest-raw.png[]
+
+「テスト出力」セクションには5つのタブがあります。
+
+* 「表形式ビュー」は、結果のドキュメントにあるすべてのURIを表示するフラットなビューです。現在このビューには、コンテナ-被コンテナ関係が許可されていないという警告のみが表示されます。
+* 「rawデータのビュー」は実際に返ってきたデータを表示します。選択したMIMEタイプ( ``application/xml`` または ``application/json`` )により、表示されるデータはそれぞれXMLまたはJSON形式です。
+* 「サブリソース」タブには、ルート・リソースとサブリソースのURLが表示されます。RESTful Webサービスはデータベースのエンティティ・クラスに基づいており、ルート・リソースはデータベース表を、サブリソースは列を表します。
+* 「ヘッダー」タブにはHTTPヘッダー情報が表示されます。
+* 「HTTPモニター」タブに、送受信された実際のHTTPリクエストおよびレスポンスが表示されます。
+
+ブラウザを閉じ、IDEに戻ります。
+
+link:/about/contact_form.html?to=3&subject=Feedback:%20Getting%20Started%20with%20REST%20Services%20in%20NetBeans%20IDE%20[+このチュートリアルに関するご意見をお寄せください+]
+
+
+
+== 関連項目
+
+NetBeans IDEを使用したJava EEアプリケーションの開発方法の詳細は、次のリソースを参照してください。
+
+* link:http://netbeans.dzone.com/nb-generate-simpler-rest[+NetBeansによる簡易なRESTful Webサービスの生成+]
+* link:../../trails/web.html[+Webサービスの学習+]
+* YouTube: link:http://www.youtube.com/watch?v=cDdfVMro99s[+RESTful Web Services, Building and Deploying (Part 1)+]
+* YouTube: link:http://www.youtube.com/watch?v=_c-CCVy4_Eo[+NetBeans RESTful Testing and Invoking RESTful Resources (Part 2)+]
+
+link:../../../community/lists/top.html[+nbj2ee@netbeans.orgメーリング・リスト+]に登録することによって、NetBeans IDE Java EE開発機能に関するご意見やご提案を送信したり、サポートを受けたり、最新の開発情報を入手したりできます。
+

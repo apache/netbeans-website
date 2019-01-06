@@ -1,0 +1,436 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= 打包和分发 Java 桌面应用程序
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: 打包和分发 Java 桌面应用程序 - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, 打包和分发 Java 桌面应用程序
+
+很多初级程序员提出的一个问题是：“既然我已经在 IDE 中创建了应用程序，如何在 IDE 外部通过命令行正常运行该应用程序呢？”。同样，有人可能会问：“如何将该应用程序分发给其他用户，而无需为其提供整个 IDE？”。
+
+这些问题的答案虽然相对简单，但也未必显而易见。本文档为您介绍了使用 IDE 来准备要分发和部署的应用程序的基础知识，从而对上述问题进行了解答。此外，本文档还提供了配置系统时可能需要用到的信息（或可能需要向应用程序用户传达的信息）。我们将介绍几种不同的应用程序部署方法，方便用户通过以下方式访问应用程序：
+
+* 双击应用程序的 Java 档案 (JAR) 文件。
+* 从命令行调用应用程序。
+* 通过脚本文件调用应用程序。
+* 使用 Java Web Start。
+
+
+image::images/netbeans-stamp.png[title="此页上的内容适用于 NetBeans IDE 8.0"]
+
+
+ 
+
+*要学完本教程，您需要具备下表所列的软件和资源。*
+
+|===
+|软件或资源 |要求的版本 
+
+|link:https://netbeans.org/downloads/index.html[+NetBeans IDE+] |版本 8.0 
+
+|link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+Java 开发工具包 (JDK)+] |
+
+版本 7 或 8
+
+ 
+
+|link:https://netbeans.org/projects/samples/downloads/download/Samples%252FJava%252FDeploymentTutorial.zip[+部署教程源文件+] |
+
+ 
+
+ 
+|===
+
+
+
+== 创建可执行的 JAR 文件
+
+此部分教程介绍了如何在 IDE 中创建可分发应用程序，然后从 IDE 外部运行该应用程序。我们将以可执行的 link:http://download.oracle.com/javase/tutorial/deployment/jar/run.html[+JAR+] 文件的形式打包应用程序。
+
+JAR 文件是一个档案文件，可能包含多个文件和文件夹。JAR 文件类似于 zip 文件，但 JAR 文件可以包含用于分发 Java 应用程序的其他属性。这些属性包括对 JAR 文件进行数字签名、额外的压缩以及多平台兼容性等。
+
+在本练习中，您将创建一个 IDE 项目，然后将两个预先编写的 Java 源文件放到该项目中。然后，您将编译类并构建可执行的 JAR 文件。此后，您将了解如何从 IDE 外部运行 JAR 文件。
+
+本教程中使用的类实现了 link:http://www.gnu.org/software/grep/[+GNU grep+] 实用程序的功能，该实用程序可用于在文本文件中搜索文本或正则表达式模式。该项目包含命令行和 GUI 版本的应用程序，方便您了解不同的应用程序运行方法。
+
+
+=== 创建基于现有源代码的项目
+
+1. 下载 link:https://netbeans.org/projects/samples/downloads/download/Samples%252FJava%252FDeploymentTutorial.zip[+DeploymentTutorial.zip+] 文件，并将其内容解压缩到您的系统上。
+该 zip 档案包含应用程序的源文件以及本教程中要使用的其他几个文件。
+
+2. 在 NetBeans IDE 中，选择“文件”>“新建项目”。
+
+3. 在“选择类别”页的 "Java" 类别中，选择“基于现有源代码的 Java 项目”，然后单击“下一步”。
+4. 在向导的“名称和位置”页中，键入  ``AnotherGrep``  作为项目名称，然后指定项目的位置。
+单击 "Next"（下一步）。
+
+项目文件夹_不必_与将要导入项目的源文件位于相同的位置。
+
+5. 在向导的“现有源代码”页中，指定项目中要包含的源文件。
+单击“源包文件夹”字段右侧的“添加文件夹”按钮。导航至刚在系统上解压缩的  ``DeploymentTutorial``  文件夹，展开该文件夹，选择  ``src``  文件夹，然后单击“打开”。此时将向“源包文件夹”字段中添加  ``src``  文件夹。
+6. 单击“完成”。
+
+*注：*举例来说，如果要在导入到项目时排除某些源文件，请单击“下一步”打开最后一个“包括和排除”窗口。在本示例中，我们希望使用  ``src``  文件夹中的所有源文件，因此，只需单击“完成”完成“新建项目”向导中的工作即可。
+
+项目将在 IDE 中打开，并显示在“项目”窗口中。您可以展开项目的“源包”节点以浏览项目内容，其中应显示名为  ``Grep``  和  ``xGrep``  的类。 ``Grep.java``  是应用程序的控制台版本。 ``xGrep.java``  是应用程序的 GUI 版本，它使用  ``Grep.java``  中定义的方法。
+
+
+=== 配置项目
+
+您需要执行几个配置步骤，例如：
+
+* 选择要用于编译源文件的 Java 平台。
+* 设置项目的主类。通过执行此操作，您可以确保在构建项目时创建的 JAR 文件是可执行文件。
+
+
+==== 验证 Java 平台
+
+我们的项目需要在 Java 7 或 Java 8 平台上进行编译和运行。因此，您需要确保将 Java 7 或 Java 8 分别用作此项目的平台。
+
+1. 右键单击项目节点，选择“属性”。
+2. 在“库”标签上，确保“Java 平台”为 "JDK 1.7"（或 "JDK 1.8"）。
+3. 在“源”标签上的“源代码/二进制格式”中，选择 "JDK 7"（或 "JDK 8"）。
+4. 单击“确定”以关闭“属性”窗口。
+
+
+==== 设置主类
+
+要使用户能够轻松运行 JAR 文件（通过双击 JAR 文件或在命令行中键入  ``java -jar AnotherGrep.jar`` ），必须在 JAR 的_清单文件_中指定一个主类。（清单是 JAR 文件的标准部分，其中包含有关 JAR 文件的信息，在要运行应用程序时，这对  ``java``  启动程序非常有用。）主类将作为  ``java``  启动程序运行应用程序的入口点。
+
+在构建项目时，IDE 将构建 JAR 文件并包含清单。在设置项目的主类时，请确保在清单中指定主类。
+
+要设置项目的主类，请执行以下操作：
+
+1. 右键单击项目节点，选择“属性”。
+2. 选择“运行”类别并在“主类”字段中输入  ``anothergrep.xGrep`` 。
+3. 单击“确定”。关闭“项目属性”对话框。
+
+在本教程后面构建项目时，将构建清单并在其中包含以下条目：
+
+
+[source,java]
+----
+
+Main-Class: anothergrep.xGrep
+----
+
+
+=== 构建项目和创建 JAR 文件
+
+现在，您已准备好源文件并配置了项目，接下来便可构建项目了。
+
+要构建项目，请执行以下操作：
+
+* 选择“运行”>“构建项目”(AnotherGrep)。
+或者，也可以在“项目”窗口中右键单击项目节点，然后选择“构建”。
+
+在构建项目时：
+
+* 将  ``build``  和  ``dist``  文件夹添加到项目文件夹（以下称为 _PROJECT_HOME_ 文件夹）中。
+* 将所有源都编译成  ``.class``  文件，并将这些文件放置在  ``_PROJECT_HOME_/build``  文件夹中。
+* 在  ``_PROJECT_HOME_/dist``  文件夹中创建包含项目的 JAR 文件。
+* 如果您已为该项目指定了任何库（除了 JDK 之外），则在  ``dist``  文件夹中将创建一个  ``lib``  文件夹。这些库将被复制到  ``dist/lib``  中。
+* 将更新 JAR 中的清单文件以包含一些条目，它们用于指定主类以及项目类路径中的任何库。
+
+*注：*您可以在 IDE 的“文件”窗口中查看清单的内容。构建了项目后，切换到“文件”窗口并导航至  ``dist/AnotherGrep.jar`` 。展开 JAR 文件的节点，展开  ``META-INF``  文件夹，然后双击  ``MANIFEST.MF``  以便在源代码编辑器中显示清单。
+
+
+[source,java]
+----
+
+Main-Class: anothergrep.xGrep
+----
+
+（要查找有关清单文件的详细信息，请参见 Java 教程中的link:http://java.sun.com/docs/books/tutorial/deployment/jar/manifestindex.html[+本章+]。）
+
+
+== 运行和分发 JAR 文件
+
+
+=== 在 IDE 中运行应用程序
+
+在 IDE 中开发应用程序时，通常需要在分发之前测试和完善这些应用程序。您可以轻松测试所开发的应用程序，只需从 IDE 中运行该应用程序即可。
+
+要在 IDE 中运行  ``AnotherGrep``  项目，请在“项目”窗口中右键单击项目节点，然后选择“运行”。
+
+此时会打开 xGrep 窗口。您可以单击“浏览”按钮，选择一个文件从中搜索文本模式。在“搜索模式”字段中，键入要匹配的文本或正则表达式模式，然后单击“搜索”。每个匹配结果将显示在 xGrep 窗口的“输出”区域中。
+
+link:http://www.gnu.org/software/grep/manual/html_node/Regular-Expressions.html#Regular-Expressions[+此处+]和很多其他地方提供了可在此应用程序中使用的正则表达式的相关信息。
+
+
+=== 在 IDE 外部运行应用程序
+
+在完成应用程序开发后，您可能需要在分发应用程序之前确保应用程序也可以在 IDE 外部正常运行。
+
+通过执行以下步骤，您可以在 IDE 外部运行应用程序：
+
+* 在系统的文件管理器中（例如，在 Windows XP 系统的“我的电脑”窗口中）导航至  ``_PROJECT_HOME_/dist`` ，然后双击  ``AnotherGrep.jar``  文件。
+
+xGrep 窗口一打开，您就知道应用程序已成功启动。
+
+如果 xGrep 窗口没有打开，则说明您的系统可能没有在 JAR 文件和 Java 运行时环境之间设置文件关联。请参见下面的 <<troubleshooting,JAR 文件关联疑难解答>>。
+
+
+=== 将应用程序分发给其他用户
+
+现在，您已验证了应用程序可以在 IDE 外部运行，接下来便可分发应用程序了。
+
+* 将应用程序的 JAR 文件发送给要使用应用程序的用户。应用程序用户应该能够通过双击 JAR 文件来运行应用程序。如果这些用户无法使用这种方法，请为他们提供下面的 <<troubleshooting,JAR 文件关联疑难解答>>部分中的信息。
+
+*注：*如果应用程序依赖于 JDK 中包含的库以外的其他库，您还需要将这些库包括在分发中（本示例不需要这样做）。在 IDE 中开发应用程序时，这些库的相对路径将添加到 JAR 清单文件的  ``classpath``  条目中。如果启动时在指定的类路径（即相对路径）中找不到这些额外的库，应用程序将无法启动。
+创建一个包含应用程序 JAR 文件和库的 zip 档案，并将该 zip 文件提供给用户。告诉用户解压缩该 zip 文件，并确保 JAR 文件和库 JAR 文件位于相同的文件夹中。运行应用程序 JAR 文件。
+
+
+== 启动 Java 应用程序
+
+本练习的目标是，介绍一些可以从命令行中启动应用程序的方法。
+
+本练习介绍了如何使用以下两种方法启动 Java 应用程序：
+
+* 从命令行中运行  ``java``  命令。
+* 使用脚本调用 JAR 文件中的类。
+
+
+=== 从命令行中启动应用程序
+
+可通过使用  ``java``  命令，从命令行中启动应用程序。如果要运行可执行的 JAR 文件，请在该命令中使用  ``-jar``  选项。
+
+例如，要运行 AnotherGrep 应用程序，您需要执行以下步骤：
+
+1. 打开一个终端窗口。在 Microsoft Windows 系统上，选择“开始”>“运行”，在“打开”字段中键入  ``cmd`` ，然后单击“确定”以完成此操作。
+2. 转至  ``_PROJECT_HOME_/dist``  文件夹（使用  ``cd``  命令）。
+3. 键入以下行以运行应用程序的主类：
+
+[source,java]
+----
+
+java -jar AnotherGrep.jar
+----
+
+如果执行了这些步骤，但应用程序没有运行，则可能需要执行以下操作之一：
+
+* 在该过程的第三步中，添加  ``java``  二进制文件的完整路径。例如，您可以键入类似下面的内容，具体取决于 JDK 或 JRE 所在位置：
+
+[source,java]
+----
+
+C:\Program Files\Java\jdk1.7.0_51\bin\java -jar AnotherGrep.jar
+----
+* 将 Java 二进制文件添加到 PATH 环境变量中，这样就不必从命令行中指定  ``java``  二进制文件的路径。请参见<<path,设置 PATH 环境变量>>。
+
+
+=== 通过脚本启动应用程序
+
+如果要分发的应用程序是控制台应用程序，您可能会发现可通过脚本方便地启动应用程序，尤其是应用程序需要较长时间才能运行并需要使用复杂参数时。在本节中，将使用 Grep 程序的控制台版本，您需要在其中将参数（搜索模式和文件列表）传递给 JAR 文件，该文件将在我们的脚本中调用。为了减少在命令行中键入的内容，将使用一个适合运行测试应用程序的简单脚本。
+
+首先，您需要将应用程序中的主类更改为控制台版本的类，然后重新构建 JAR 文件：
+
+1. 在 IDE 的“项目”窗口中，右键单击项目节点 ( ``AnotherGrep`` )，然后选择“属性”。
+2. 选择“运行”节点，然后将“主类”属性更改为  ``anothergrep.Grep`` （来自  ``anothergrep.xGrep`` ）。单击“确定”，以关闭“项目属性”窗口。
+3. 再次右键单击项目节点，然后选择“清理并构建项目”。
+
+在完成这些步骤后，将重新构建 JAR 文件，并更改 JAR 文件清单的  ``Main-Class``  属性，使之指向  ``anothergrep.Grep`` 。
+
+
+==== link:http://www.gnu.org/software/bash/bash.html[+BASH+] 脚本 -- 用于 UNIX 和 Linux 计算机
+
+在您的系统上，解压 link:https://netbeans.org/projects/samples/downloads/download/Samples%252FJava%252FDeploymentTutorial.zip[+DeploymentTutorial.zip+] 文件内容的文件夹中包含一个  ``grep.sh``  BASH 脚本。请查看该脚本：
+
+
+[source,java]
+----
+
+#!/bin/bash
+                    java -jar dist/AnotherGrep.jar $@
+----
+
+第一行声明应使用哪个 shell 解释该脚本。第二行执行 IDE 在  ``_PROJECT_HOME_/dist``  文件夹中创建的 JAR 文件。 ``$@``  仅复制所有给定参数，并用引号将每个参数引起来。
+
+该脚本假定 Java 二进制文件是 PATH 环境变量的一部分。如果该脚本无法正常运行，请参见<<path,设置 PATH 环境变量>>。
+
+可以在link:http://www.gnu.org/software/bash/manual/bashref.html[+此处+]找到有关 BASH 脚本的详细信息。
+
+
+==== 用于 Windows 计算机的 .bat 脚本
+
+在 Microsoft Windows 系统上，您每次只能将 9 个参数传递给批处理文件。如果超过 9 个参数，则需要多次执行 JAR 文件。
+
+处理这种情况的脚本可能如下所示：
+
+
+[source,java]
+----
+
+                @echo off
+                set jarpath="dist/AnotherGrep.jar"
+                set pattern="%1"
+                shift
+                :loop
+                  if "%1" == "" goto :allprocessed
+                  set files=%1 %2 %3 %4 %5 %6 %7 %8 %9
+                  java -jar %jarpath% %pattern% %files%
+                  for %%i in (0 1 2 3 4 5 6 7 8) do shift
+                goto :loop
+
+                :allprocessed
+                    
+----
+
+该脚本以  ``grep.bat``  形式包含在系统用来解压缩 link:https://netbeans.org/projects/samples/downloads/download/Samples%252FJava%252FDeploymentTutorial.zip[+DeploymentTutorial.zip+] 文件内容的文件夹中，因此，您可以试用一下该脚本。
+
+这 9 个参数在批处理文件中用  ``%<ARG_NUMBER>``  表示，其中  ``<ARG_NUMBER>``  必须在  ``<0-9>``  之间。 ``%0``  是为脚本名称保留的。
+
+您可以看到每次（一个循环）只能将 9 个参数传递给程序。 ``for``  语句以 9 为单位变换参数，以便为下一个循环准备参数。在  ``if``  语句检测到空文件参数（没有要处理的其他文件）后，将结束循环。
+
+可以在link:http://www.microsoft.com/resources/documentation/windows/xp/all/proddocs/en-us/batch.mspx[+此页+]上找到有关批处理脚本的详细信息。
+
+
+== 打包应用程序以通过 Java Web Start 进行部署
+
+Java Web Start 是一项通过单击从 Web 浏览器运行 Java 应用程序的技术。有关打包应用程序以通过 Java Web Start 进行部署的详细信息，请参见link:../../73/java/javase-jws.html[+在 NetBeans IDE 中启用 Java Web Start+]。在这里，我们只提供使应用程序可通过 Java Web Start 进行部署而需执行的基本步骤。
+
+1. 在“项目”窗口中右键单击项目节点，然后选择“属性”。
+2. 在“项目属性”窗口的 "Web Start" 标签上，选中“启用 Web Start”复选框。
+3. 从“代码库”下拉列表中选择“本地执行”（因为我们仅测试本地执行）。
+4. 单击“定制”通过在“签名”对话框中指定详细信息对应用程序进行签名。
+
+*注：*从 2013 年 4 月的 Java SE 7 Update 21 开始，鼓励使用可信证书对所有 Java 小应用程序和 Web Start 应用程序进行签名。有关详细信息，请参见 link:http://www.oracle.com/technetwork/java/javase/tech/java-code-signing-1915323.html[+Java 小应用程序和 Web Start - 代码签名+]。
+
+5. 将所有其他设置保留默认值，然后单击“确定”。
+6. 右键单击项目节点，然后选择“清理并构建”。
+此 IDE 命令将删除以前编译的所有文件和构建输出，重新编译应用程序，然后使用新设置构建项目。
+7. 在 IDE 外部，打开  ``_PROJECT_HOME_/dist``  文件夹，然后在浏览器中打开  ``launch.html``  文件。
+此时将打开包含“启动”按钮的测试 HTML 页。
+8. 单击“启动”按钮以打开应用程序。
+您可以看到已加载 Java 并启动了应用程序。
+
+*注：*某些浏览器先将您重定向到 Java 下载页。
+
+
+== 疑难解答提示
+
+
+=== 指定 JAR 文件关联
+
+在大多数系统上，您只需双击 JAR 文件即可执行可执行的 JAR 文件。如果在双击 JAR 文件时未执行任何操作，则可能是由于以下两个原因之一造成的：
+
+* JAR 文件类型可能尚未与该系统上的 Java 运行时环境 (JRE) 关联。
+
+如果 JAR 文件类型与 JRE 关联，则代表该文件的图标应包含 Java 徽标。
+
+* JAR 文件类型与 JRE 关联，但在双击该图标时传递给 JRE 的命令中不包含  ``-jar``  选项。
+
+*注：*有时，您安装的软件（例如，用于处理 zip 文件的软件）会切换 JAR 文件关联。
+
+JAR 文件类型与  ``java``  启动程序的关联方法取决于操作系统。
+
+*注：*确保在系统上安装了某个 JRE 版本。您应该使用 1.4.2 或更高版本。如果未安装 Java，则无法启动 Java 应用程序。（如果安装了 JDK，则还会安装 JRE。不过，如果将程序分发给非程序员，该用户不一定安装了 JRE 或 JDK。）
+
+* 在 Windows XP 上，可通过选择“开始”>“控制面板”>“添加/删除程序”检查安装的 Java 版本（例如，您将会看到 Java(TM) 7 Update 51）。
+* 在 Windows Vista 或 7 上，可通过选择“开始”>“控制面板”>“程序和组件”检查安装的 Java 版本（例如，您将会看到 Java(TM) 7 Update 51）。
+
+如果系统上没有 Java，则可以从 link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+Java SE 下载站点+]获取 JRE 版本的 Java。
+
+如果在系统上安装了 Java，但文件关联无效，请继续执行下面的步骤以在 Microsoft Windows 上添加 JAR 文件关联：
+
+1. 选择“开始”>“控制面板”。
+2. （仅适用于 Windows Vista。）单击“控制面板”>“程序”。
+3. 对于 Windows XP，双击“文件夹选项”，然后选择“文件类型”标签。
+对于 Windows Vista 或 Windows 7，单击“默认程序”并选择“将文件类型或协议与程序关联”。
+4. 在“已注册的文件类型”列表中，选择“JAR 文件”。
+5. （在 Windows XP 上，在对话框的详细信息部分中）单击“更改程序”。
+6. 在“打开方式”对话框中，选择 "Java Platform SE Binary"。
+7. 单击“确定”以退出“打开方式”对话框。
+8. 单击“关闭”以退出“文件夹选项”对话框（在 Windows XP 上）或“将文件类型或协议与特定程序关联”对话框（在 Windows 7 上）。
+
+*注：*如果 JAR 文件与系统上的 Java Platform SE Binary 关联，但双击时仍不执行 JAR 文件，则可能需要在文件关联中指定  ``-jar``  选项。
+
+在 Microsoft Windows XP 上的文件关联中指定  ``-jar``  选项：
+
+1. 选择“开始”>“控制面板”。
+2. 对于 Windows XP，双击“文件夹选项”，然后选择“文件类型”标签。
+3. 在“已注册的文件类型”列表中，选择“JAR 文件”。
+4. 在对话框的“详细信息”部分中，单击“高级”。
+5. 在“编辑文件类型”对话框中，单击“编辑”。
+6. 在“用于执行操作的应用程序”文本字段中，将以下内容添加到 JRE 路径末尾：
+
+[source,java]
+----
+
+ -jar "%1" %*
+----
+此时，该字段应包含类似下面的文本：
+
+[source,java]
+----
+
+"C:\Program Files\Java\jre1.7.0_51\bin\javaw.exe" -jar "%1" %*
+----
+7. 单击“确定”以退出“编辑这种类型的操作”对话框。
+8. 单击“确定”以退出“编辑文件类型”对话框。
+9. 单击“关闭”以退出“文件夹选项”对话框。
+
+*注：*从 Windows Vista 开始，可以通过 RegEdit 编辑高级文件关联。有关详细信息，请参见link:http://technet.microsoft.com/en-us/magazine/ee914604.aspx[+“文件类型”对话框有什么变化？+]一文。
+
+对于 UNIX 和 Linux 系统，更改文件关联的步骤取决于所使用的桌面环境（如 GNOME 或 KDE）。请查看桌面环境的首选项设置或查阅桌面环境文档。
+
+
+=== 设置 PATH 环境变量
+
+如果不指向系统上的 JDK 或 JRE 位置就无法在系统上运行 Java 类或 JAR 文件，则可能需要修改系统的  ``PATH``  变量值。
+
+如果要在 Microsoft Windows 系统上运行，设置 PATH 变量的步骤取决于所使用的 Windows 版本。
+
+下面是在 Windows XP 系统上设置  ``PATH``  变量的步骤：
+
+1. 选择“开始”>“控制面板”，然后双击“系统”。
+2. 在“系统属性”对话框中，单击“高级”标签。
+3. 单击“环境变量”标签。
+4. 在用户变量列表中，选择  ``PATH`` ，然后单击“编辑”。
+5. 将 JRE 位置添加到路径列表末尾。该列表中的位置以分号 (;) 分隔。
+例如，如果 JRE 位于 `C:\Program Files\Java\jdk1.7.0_51`，则需要在 PATH 变量的结尾添加以下内容：
+
+[source,java]
+----
+
+C:\Program Files\Java\jdk1.7.0_51\bin
+----
+6. 单击“确定”以退出“环境变量”对话框，然后单击“确定”以退出“系统属性”对话框。
+
+如果要在 UNIX 或 Linux 系统上运行，则如何修改 PATH 变量取决于所使用的 shell 程序。有关详细信息，请查阅所使用的 shell 的文档。
+
+link:/about/contact_form.html?to=3&subject=Feedback:%20Packaging%20and%20Distributing%20Java%20Desktop%20Applications[+发送有关此教程的反馈意见+]
+
+
+
+== 后续步骤
+
+有关使用 NetBeans IDE 的更多信息，请参见 NetBeans 网站上的link:https://netbeans.org/kb[+文档和支持+]页。
+
+要了解 Java 应用程序开发的 IDE 工作流的详细信息（包括类路径管理），请参见link:javase-intro.html[+开发常规 Java 应用程序+]。
+
+有关 NetBeans IDE 中的构建功能的信息，请参见_使用 NetBeans IDE 开发应用程序_中的link:http://www.oracle.com/pls/topic/lookup?ctx=nb8000&id=NBDAG510[+构建 Java 项目+]。
+

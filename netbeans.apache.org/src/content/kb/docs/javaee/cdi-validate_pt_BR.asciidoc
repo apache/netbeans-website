@@ -1,0 +1,405 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= Aplicando Anotações de Ciclo de Vida e de Beans @Alternative
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: Aplicando Anotações de Ciclo de Vida e de Beans @Alternative - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, Aplicando Anotações de Ciclo de Vida e de Beans @Alternative
+
+_Contribuição de Andy Gibson_
+
+
+=== Injeção de Dependência e Contextos
+
+1. link:cdi-intro.html[+Introdução ao CDI e ao JSF 2.0+]
+2. link:cdi-inject.html[+Trabalhando com Injeção e Qualificadores no CDI+]
+3. *Aplicando Anotações @Alternative Beans e de Ciclo de Vida*
+* <<alternative,Tratando Várias Implantações>>
+* <<lifecycle,Aplicando Anotações de Ciclo de Vida em Beans gerenciado>>
+* <<seealso,Consulte Também>>
+4. link:cdi-events.html[+Trabalhando com Eventos no CDI+]
+
+image::images/netbeans-stamp-80-74-73.png[title="O conteúdo desta página se aplica ao NetBeans IDE 7.2, 7.3, 7.4 e 8.0"]
+
+A Injeção de Dependência e Contextos (CDI), especificada por link:http://jcp.org/en/jsr/detail?id=299[+JSR-299+], é parte integrante do Java EE 6 e fornece uma arquitetura que permite aos componentes do Java EE, como os servlets, enterprise beans e JavaBeans, existirem dentro do ciclo de vida de uma aplicação com escopos bem definidos. Além disso, os serviços CDI permitem que os componentes do Java EE, como beans de sessão EJB e beans gerenciados do JavaServer Faces (JSF), sejam injetados e interajam de maneira acoplada flexível, disparando e observando eventos.
+
+Este tutorial tem base no post do blog de Andy Gibson, intitulado link:http://www.andygibson.net/blog/index.php/2009/12/22/getting-started-with-cdi-part-2-injection/[+Introdução ao CDI parte 2: Injeção+]. Ele demonstra como é possível usufruir da anotação `@Alternative` para configurar sua aplicação para diferentes implantações e também como utilizar as anotações do ciclo de vida do bean gerenciado, como a `@PostConstruct`e a `@PostDestroy`, para combinar a injeção CDI com a funcionalidade fornecida pela link:http://jcp.org/en/jsr/detail?id=316[+Especificação do Bean Gerenciado do Java EE 6+].
+
+O NetBeans IDE fornece um suporte incorporado para a Injeção de Dependência e Contextos, incluindo a opção de geração do arquivo de configuração de CDI `beans.xml` durante a criação do projeto, do editor e do suporte de navegação para anotações, assim como vários assistentes para a criação de artefatos CDI comumente utilizados.
+
+
+Para concluir este tutorial, você precisa dos seguintes recursos e softwares.
+
+|===
+|Software ou Recurso |Versão Necessária 
+
+|link:https://netbeans.org/downloads/index.html[+NetBeans IDE+] |Versão Java EE 7.2, 7.3, 7.4, 8.0 
+
+|link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+JDK (Java Development Kit)+] |versão 7 ou 8 
+
+|link:http://glassfish.dev.java.net/[+GlassFish Server+] |Open Source Edition 3.x ou 4.x 
+
+|link:https://netbeans.org/projects/samples/downloads/download/Samples%252FJavaEE%252FcdiDemo2.zip[+cdiDemo2.zip+] |n/d 
+|===
+
+*Observações:*
+
+* O pacote Java EE do NetBeans inclui também o GlassFish Server Open Source Edition, que é um contêiner compatível com Java EE.
+* É possível fazer download do projeto modelo de solução deste tutorial: link:https://netbeans.org/projects/samples/downloads/download/Samples%252FJavaEE%252FcdiDemo3.zip[+cdiDemo3.zip+]
+
+
+
+[[alternative]]
+== Tratando Várias Implantações
+
+O CDI oferece o uso da anotação `@Aternative` que lhe permite encapsular vários beans que coincidem com um ponto de injeção sem erros de ambiguidade. Em outras palavras, é possível aplicar a anotação `@Alternative` a dois ou mais beans e, em seguida, com base na implantação, especificar o bean que deseja utilizar no arquivo de configuração do CDI `beans.xml`.
+
+Considere o seguinte cenário como demonstração disso. Nós injetamos um `ItemValidator` na nossa classe `ItemProcessor` principal. O `ItemValidator` é implementado pelo `DefaultItemValidator` e pelo `RelaxedItemValidator`. Com base nos requisitos de implantação, gostaríamos de utilizar o `DefaultItemValidator` para a maior parte dos casos, mas também é exigido o `RelaxedItemValidator` para uma implantação específica. Para resolver isso, anotamos os dois beans e, em seguida, especificamos qual bean utilizar para uma determinada implantação, adicionando uma entrada ao arquivo `beans.xml` da aplicação.
+
+image::images/cdi-diagram-alternative.png[title="Use a injeção de CDI para acoplar, livremente, as classes na sua aplicação"]
+
+1. Começando pela extração do projeto inicial modelo a partir do arquivo `cdiDemo2.zip` (Consulte a <<requiredSoftware,tabela acima, que lista os recursos necessários>>.) Abra o projeto no IDE escolhendo Arquivo > Abrir Projeto (Ctrl-Shift-O; ⌘-Shift-O no Mac) e, em seguida, selecionando o projeto no seu local no computador.
+2. Clique com o botão direito do mouse no nó do projeto na janela Projetos e escolha Propriedades.
+3. Selecione a categoria Executar e confirme se a instância do GlassFish está selecionada na lista drop-down Servidor.
+4. Crie uma interface `ItemValidator`. 
+
+Clique no botão Novo Arquivo (image::images/new-file-btn.png[]) ou pressione CTRL-N (⌘-N no Mac) para abrir o assistente de Arquivo.
+5. Selecione a categoria Java e, em seguida, selecione Interface Java. Clique em Próximo.
+6. Digite *ItemValidator* como o nome da classe e, em seguida, *exercício3* como o pacote.
+7. Clique em Finalizar. A nova interface será gerada e aberta no editor.
+8. Adicione um método chamado `isValid()` que utiliza um objeto `Item` e retorna um valor `boolean`.
+
+[source,java]
+----
+
+public interface ItemValidator {
+    *boolean isValid(Item item);*
+}
+----
+(Utilize a dica do editor para adicionar a instrução de importação para o `exercise2.Item`.)
+9. Expanda a classe `ItemProcessor` para incorporar a nova funcionalidade. Abra o `ItemProcessor` no editor e faça as seguintes alterações.
+
+[source,java]
+----
+
+@Named
+@RequestScoped
+public class ItemProcessor {
+
+    @Inject @Demo
+    private ItemDao itemDao;
+
+    *@Inject
+    private ItemValidator itemValidator;*
+
+    public void execute() {
+      List<Item>  items = itemDao.fetchItems();
+      for (Item item : items) {
+          System.out.println(*"Item = " + item + " valid = " + itemValidator.isValid(item)*);
+      }
+    }
+}
+----
+
+(Utilize a dica do editor para adicionar a instrução de importação para `exercise3.ItemValidator`.)
+
+10. Crie uma implementação do `ItemValidator` chamado `DefaultItemValidator` que simplesmente testa o limite com relação ao valor.
+
+Na janela Projetos, clique com o botão direito do mouse no pacote `exercise3` e selecione Nova > Classe Java. Nomeie a classe como *DefaultItemValidator* e clique em Finalizar.
+
+11. Faça com que o `DefaultItemValidator` implemente o `ItemValidator` e substitua o método `isValid()` como se segue.
+
+[source,java]
+----
+
+public class DefaultItemValidator *implements ItemValidator* {
+
+    *@Override
+    public boolean isValid(Item item) {
+        return item.getValue() < item.getLimit();
+    }*
+}
+----
+
+(Utilize a dica do editor para adicionar a instrução de importação para o `exercise2.Item`.)
+
+12. Clique no botão Executar Projeto (image::images/run-project-btn.png[]) na barra de ferramentas principal do IDE. O projeto é compilado e implantado no GlassFish e a página de boas-vindas da aplicação (`process.xhtml`) será aberta no browser.
+13. Clique no botão "`Execute`" que é exibido na página. Volte ao IDE e examine o log do GlassFish Server. O log do servidor é exibido na janela Saída (Ctrl-4; ⌘-4 no Mac) na guia GlassFish. É possível notar que os itens estão sendo validados e que o único item válido listado é o caso em que o valoe é menor que o limite.
+
+[source,java]
+----
+
+INFO: Item = exercise2.Item@e857ac [Value=34, Limit=7] valid = false
+INFO: Item = exercise2.Item@63124f52 [Value=4, Limit=37] valid = true
+INFO: Item = exercise2.Item@4715c34e [Value=24, Limit=19] valid = false
+INFO: Item = exercise2.Item@65c95a57 [Value=89, Limit=32] valid = false
+----
+image::images/output-window.png[title="Exiba o log do servidor na janela Saída"]
+14. Agora, considere o cenário onde temos que implantar em um site diferente, mais flexível, e considere um item como inválido somente se o valor for mais de duas vezes maior que o limite. Pode ser necessário ter um outro bean que implemente a interface `ItemValidator` para essa lógica.
+
+Crie uma nova implementação do `ItemValidator` chamada `RelaxedItemValidator`. Na janela Projetos, clique com o botão direito do mouse no pacote `exercise3` e selecione Nova > Classe Java. Nomeie a classe *RelaxedItemValidator* e clique em Finalizar.
+
+15. Faça com que o `RelaxedItemValidator` implemente o `ItemValidator` e substitua o método `isValid()` como se segue.
+
+[source,java]
+----
+
+public class RelaxedItemValidator *implements ItemValidator* {
+
+    *@Override
+    public boolean isValid(Item item) {
+        return item.getValue() < (item.getLimit() * 2);
+    }*
+}
+----
+
+(Utilize a dica do editor para adicionar a instrução de importação para o `exercise2.Item`.)
+
+16. Clique no botão Executar Projeto (image::images/run-project-btn.png[]) para executar o projeto. Observe que o projeto agora falha na implantação.
+17. Examine o log do servidor na janela Saída (Ctrl-4; ⌘-4 no Mac). Você nota uma mensagem de erro relatando um problema de "dependência ambígua". Isso ocorre porque agora temos duas classes implementando a mesma interface.
+
+[source,java]
+----
+
+org.glassfish.deployment.common.DeploymentException: Injection point has ambiguous dependencies.
+Injection point: field exercise2.ItemProcessor.itemValidator;
+Qualifiers: [@javax.enterprise.inject.Default()];
+Possible dependencies: [exercise3.RelaxedItemValidator, exercise3.DefaultItemValidator]
+----
+
+Weld, a implementação para CDI, não pode determinar se deve utilizar o `RelaxedItemValidator` ou o `DefaultItemValidator` para o ponto de injeção fornecido.
+
+Como mencionado anteriormente, a única diferença é baseada na implantação. Para a maioria das implantações, preferimos utilizar o validador default, mas para uma implantação, preferimos utilizar a implantação "flexível". O CDI oferece o uso da anotação `@Alternative` que lhe permite encapsular vários beans que coincidam com um ponto de injeção sem erros de ambiguidade e o bean a ser utilizado, que é definido no arquivo `beans.xml`. Isso lhe permite implantar as duas implementações no mesmo módulo com a definição `beans.xml` sendo a única diferença, que pode ser alterada ao longo de implantações diferentes.
+
+18. Adicione a anotação `@Alternative` e as instruções de importação correspondentes a `RelaxedItemValidator` e `DefaultItemValidator`. 
+
+Abra o `RelaxedItemValidator` no editor e faça as seguintes alterações.
+
+[source,java]
+----
+
+*import javax.enterprise.inject.Alternative;*
+...
+
+*@Alternative*
+public class RelaxedItemValidator implements ItemValidator {
+
+    public boolean isValid(Item item) {
+        return item.getValue() < (item.getLimit() * 2);
+    }
+}
+----
+
+Digite "`@Al`" e, em seguida, pressione Ctrl-Espaço para chamar a funcionalidade autocompletar código. Como somente uma opção é filtrada, a anotação `@Alternative` é autocompletada e a instrução de importação correspondente para o `javax.enterprise.inject.Alternative` é adicionada automaticamente à parte superior do arquivo. Normalmente, ao pressionar Ctrl-Espaço nas anotações também é fornecido uma documentação pop-up Javadoc.
+
+image::images/code-completion-alternative.png[title="Pressione Ctrl-Espaço em anotações para chamar a documentação Javadoc"]
+
+Alterne para `DefaultItemValidator` (pressione Ctrl-Tab) e faça as alterações a seguir.
+
+
+[source,java]
+----
+
+*import javax.enterprise.inject.Alternative;*
+...
+
+*@Alternative*
+public class DefaultItemValidator implements ItemValidator {
+
+    public boolean isValid(Item item) {
+        return item.getValue() < item.getLimit();
+    }
+}
+----
+
+Se tivéssemos implantado a aplicação, agora obteríamos uma mensagem de erro "dependência não-satisfeita", já que definimos os dois beans coincidentes como alternativos, mas não ativamos nenhum deles no arquivo `beans.xml`.
+
+19. Utilize a caixa de diálogo Ir para Arquivo do IDE para abrir rapidamente o arquivo `beans.xml`. Selecione Navegar > Ir para Arquivo no menu principal do IDE (Alt-Shift-O; Ctrl-Shift-O no Mac) e, em seguida, digite "`beans`". Clique em OK. image::images/go-to-file.png[title="Use a caixa de diálogo Ir para Arquivo para localizar rapidamente um arquivo de projeto"]
+20. Faça as seguintes alterações no arquivo `bean.xml`.
+
+[source,xml]
+----
+
+<beans xmlns="http://java.sun.com/xml/ns/javaee"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/beans_1_0.xsd">
+
+    *<alternatives>
+        <class>exercise3.RelaxedItemValidator</class>
+    </alternatives>*
+
+</beans>
+----
+
+Isso informa ao CDI que o `RelaxedItemValidator` deve ser usado para esta implantação. É possível achar que a anotação `@Alternative` desativa efetivamente o bean, tornando-o indisponível para injeção, mas permitindo que a implementação seja encapsulada com os outros beans. Adicioná-la como uma alternativa no arquivo `beans.xml` reabilita efetivamente o bean, tornando-o disponível para injeção. Ao movermos esse tipo de metadados para o arquivo `beans.xml`, podemos colocar no pacote versões diferentes do arquivo à várias implantações.
+
+21. Clique no botão Executar Projeto (image::images/run-project-btn.png[]) para executar o projeto (como alternativa, Pressione F6; fn-F6 no Mac). No browser, clique no botão "`Execute`" exibido na página. Volte ao IDE e examine o log do GlassFish Server exibido na janela Saída (Ctrl-4; ⌘-4 no Mac).
+
+[source,java]
+----
+
+INFO: Item = exercise2.Item@672f0924 [Value=34, Limit=7] valid = false
+INFO: Item = exercise2.Item@41014f68 [Value=4, Limit=37] valid = true
+INFO: Item = exercise2.Item@3d04562f [Value=24, Limit=19] valid = true
+INFO: Item = exercise2.Item@67b646f4 [Value=89, Limit=32] valid = false
+----
+
+Você pode notar que a implementação `RelaxedItemValidator` está sendo utilizada como o terceiro item exibido como válido, ao mesmo tempo em que o valor fornecido (`24`) é maior que o limite informado (`19`).
+
+
+
+[[lifecycle]]
+== Aplicando Anotações de Ciclo de Vida aos Beans Gerenciados
+
+Neste exercício, será injetado um `ItemErrorHandler` na `ItemProcessor` principal. Como o `FileErrorReporter` é a única implementação da interface `ItemErrorHandler`, ela será selecionada como a injeção. Para configurar as ações específicas de ciclo de vida para a classe, é necessário utilizar as anotações `@PostConstruct` e `@PreDestroy` a partir da especificação do Bean gerenciado (incluídas no link:http://jcp.org/en/jsr/detail?id=316[+JSR 316: Plataforma Java, Especificação do Enterprise Edition 6+]).
+
+image::images/cdi-diagram-lifecycle.png[title="Use a injeção de CDI para acoplar, livremente, as classes na sua aplicação"]
+
+Prosseguindo com o exemplo, crie uma interface `ItemErrorHandler` para tratar itens inválidos ao serem descobertos.
+
+1. Na janela Projetos, clique com o botão direito do mouse no pacote `exercise3` e selecione Nova > Interface Java.
+2. No assistente de Interface Java, digite *ItemErrorHandler* como o nome da classe e, em seguida *exercício3* como o pacote. Clique em Finalizar.
+
+A nova interface será gerada e aberta no editor.
+
+3. Adicione o método chamado `handleItem()` que utiliza um objeto `Item` como um argumento.
+
+[source,java]
+----
+
+public interface ItemErrorHandler {
+    *void handleItem(Item item);*
+}
+----
+
+(Utilize a dica do editor para adicionar a instrução de importação para o `exercise2.Item`.)
+
+4. Comece com a implementação do `ItemErrorHandler` com um handler falso chamado `FileErrorReporter` que salva os detalhes do item em um arquivo.
+
+Na janela Projetos, clique com o botão direito do mouse no pacote `exercise3` e selecione Nova > Classe Java. Nomeie a classe *FileErrorReporter* e clique em Finalizar.
+
+5. Faça com que o `FileErrorReporter` implemente o `ItemErrorHandler` e substitua o método `handlerItem()` como se segue.
+
+[source,java]
+----
+
+public class FileErrorReporter *implements ItemErrorHandler* {
+
+    *@Override
+    public void handleItem(Item item) {
+        System.out.println("Saving " + item + " to file");
+    }*
+}
+----
+
+(Utilize a dica do editor para adicionar a instrução de importação para o `exercise2.Item`.)
+
+Você deseja abrir o arquivo antes de começar a tratar itens, portanto, deixe-o aberto durante o processo em que o conteúdo é adicionado ao arquivo e, em seguida, feche o arquivo quando processamento tiver sido concluído. Você poderia adicionar manualmente os métodos `initProcess()` e `finishProcess()` ao bean de informe de erro, mas então não poderia codificar a interface, já que o chamador precisaria conhecer esses métodos específicos da classe. Você poderia adicionar esses mesmos métodos à interface `ItemErrorReporter`, mas então seria necessário implementar desnecessariamente tais métodos em cada classe que implemente aquela interface. Em vez disso, é possível utilizar algumas das anotações de ciclo de vida da especificação do Bean Gerenciado (incluídas na link:http://jcp.org/en/jsr/detail?id=316[+JSR 316: plataforma Java, Especificação do Enterprise Edition 6+]) para chamar os métodos no bean em alguns pontos no ciclo de vida do bean. Um método anotado `@PostConstruct` é chamado quando o bean tiver sido construído e qualquer dependência do bean tiver sido injetada. Da mesma forma, um método anotado `@PreDestroy` é chamado um pouco antes do bean ser descartado pelo contêiner.
+
+6. Adicione os seguintes métodos `init()` e `release()` com as anotações `@PostConstruct` e `@PreDestroy` correspondentes.
+
+[source,java]
+----
+
+public class FileErrorReporter implements ItemErrorHandler {
+
+    *@PostConstruct
+    public void init() {
+        System.out.println("Creating file error reporter");
+    }
+
+    @PreDestroy
+    public void release() {
+        System.out.println("Closing file error reporter");
+    }*
+
+    @Override
+    public void handleItem(Item item) {
+        System.out.println("Saving " + item + " to file");
+    }
+}
+----
+7. Corrigir importações. Clique com o botão direito do mouse no editor e selecione Corrigir importações ou pressione Ctrl-Shift-I (⌘-Shift-I no Mac). Instruções de importação para `javax.annotation.PostConstruct` e `javax.annotation.PreDestroy` serão adicionadas à parte superior do arquivo.
+8. Finalmente, adicione o novo bean `ItemErrorHandler` ao `ItemProcessor`.
+
+[source,java]
+----
+
+@Named
+@RequestScoped
+public class ItemProcessor {
+
+    @Inject @Demo
+    private ItemDao itemDao;
+
+    @Inject
+    private ItemValidator itemValidator;
+
+    *@Inject
+    private ItemErrorHandler itemErrorHandler;*
+
+    public void execute() {
+        List<Item>  items = itemDao.fetchItems();
+        for (Item item : items) {
+            *if (!itemValidator.isValid(item)) {
+                itemErrorHandler.handleItem(item);
+            }*
+        }
+    }
+}
+----
+
+(Utilize a dica do editor para adicionar a instrução de importação para o `exercise3.ItemErrorHandler`.)
+
+9. Clique no botão Executar Projeto (image::images/run-project-btn.png[]) para executar o projeto (como alternativa, Pressione F6; fn-F6 no Mac). No browser, clique no botão "`Execute`" exibido na página. Volte ao IDE e examine o log do GlassFish Server exibido na janela Saída (Ctrl-4; ⌘-4 no Mac).
+
+[source,java]
+----
+
+INFO: Creating file error reporter
+INFO: Saving exercise2.Item@6257d812 [Value=34, Limit=7] to file
+INFO: Saving exercise2.Item@752ab82e [Value=89, Limit=32] to file
+INFO: Closing file error reporter
+----
+link:/about/contact_form.html?to=3&subject=Feedback:%20Using%20CDI%20Injection%20to%20Perform%20Custom%20Validation[+Enviar Feedback neste Tutorial+]
+
+
+
+[[seealso]]
+== Consulte Também
+
+Diferentes implantações de aplicações podem utilizar regras diversas para tratar itens inválidos, tal como a rejeição de um item, o envio de notificações aos indivíduos, a sinalização desses itens, ou simplesmente a listagem deles em um arquivo de saída. Além disso, é possível fazer uma combinação dessas regras (ex., rejeitar um pedido, enviar um e-mail a um representante de vendas e listar o pedido em um arquivo). Uma maneira excelente de tratar esse tipo de problema multifacetado é utilizando _eventos_. Os eventos CDI são o assunto do artigo final desta série:
+
+* link:cdi-events.html[+Trabalhando com Eventos no CDI+]
+
+Para obter mais informações sobre o CDI e o Java EE, consulte os recursos a seguir.
+
+* link:cdi-intro.html[+Introdução à Injeção de Dependência e Contextos e JSF 2.0+]
+* link:cdi-inject.html[+Trabalhando com Injeção e Qualificadores no CDI+]
+* link:javaee-gettingstarted.html[+Conceitos Básicos sobre Aplicações do Java EE+]
+* link:http://blogs.oracle.com/enterprisetechtips/entry/using_cdi_and_dependency_injection[+Dica Técnica do Enterprise: Utilizando Injeção de Dependência e de CDI para Java em uma Aplicação JSF 2.0+]
+* link:http://download.oracle.com/javaee/6/tutorial/doc/gjbnr.html[+O Tutorial do Java EE 6, Parte V: Injeção de Dependência e Contextos para a Plataforma Java EE+]
+* link:http://jcp.org/en/jsr/detail?id=299[+JSR 299: Especificação para Injeção de Dependência e Contextos+]
+* link:http://jcp.org/en/jsr/detail?id=316[+JSR 316: Plataforma Java, Especificação do Enterprise Edition 6+]

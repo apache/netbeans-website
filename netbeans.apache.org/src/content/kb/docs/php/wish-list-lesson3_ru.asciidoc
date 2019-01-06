@@ -1,0 +1,529 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= Создание приложения на основе базы данных на языке PHP
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: Создание приложения на основе базы данных на языке PHP - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, Создание приложения на основе базы данных на языке PHP
+
+= Урок 3: Создание нового пользователя приложения
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: Урок 3: Создание нового пользователя приложения - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, Урок 3: Создание нового пользователя приложения
+
+
+
+1. link:wish-list-tutorial-main-page.html[+Создание приложения на основе базы данных с помощью языка PHP – главная страница+]
+2. 
+Создание базы данных
+
+1. link:wish-list-lesson1.html[+Создание базы данных MySQL+]
+2. link:wish-list-oracle-lesson1.html[+Создание таблиц базы данных Oracle+]
+3. 
+link:wish-list-lesson2.html[+Проектирование приложения. Чтение из базы данных+]
+
+4. *=> Создание нового пользователя приложения*
+
+5. link:wish-list-lesson4.html[+Усовершенствование кода+]
+6. link:wish-list-lesson5.html[+Добавление функций безопасности. Реализация входа пользователя в приложение+]
+7. link:wish-list-lesson6.html[+Добавление к базе данных новых желаний+]
+8. link:wish-list-lesson7.html[+Обновление и удаление записей в базе данных+]
+9. link:wish-list-lesson8.html[+Усовершенствование внешнего вида приложения с использованием технологии CSS+]
+10. link:wish-list-lesson9.html[+Развертывание приложения на удаленном веб-сервере+]
+
+image::images/netbeans-stamp-80-74-73.png[title="Содержимое этой страницы применимо к IDE NetBeans 7.2, 7.3, 7.4 и 8.0"]
+
+В этом уроке рассматривается расширение приложения добавлением функции "Create a New Wisher".
+
+Реализация затрагивает файл index.php, и при этом будут созданы два новых файла с именами  ``createNewWisher.php``  и  ``editWishList.php`` .
+
+Данный пример использования Create a New Wisher ("Создание нового пользователя") состоит из трех действий:
+
+1. <<addLinkNewWisher,Пользователь открывает файл index.php титульной страницы и щелкает ссылку для регистрации>>.
+
+2. <<implementCreateNewWisher,Пользователь переходит на страницу createNewWisher.php для создания нового автора пожелания>>.
+
+3. После создания нового автора пожелания пользователь переключается на editWishList.php, где для него можно создать список желаний.
+
+image::images/page-flow-diagram-l3.png[]
+
+Текущий документ является частью краткого учебного курса "Создание приложения базы данных в IDE NetBeans для PHP".
+
+
+
+== Исходный код приложения из предыдущего урока
+
+Для пользователей MySQL: перейдите по link:https://netbeans.org/files/documents/4/1928/lesson2.zip[+этой ссылке+] для загрузки исходного кода, описывающего состояние проекта на момент завершения предыдущего урока.
+
+Для пользователей Oracle Database: щелкните link:https://netbeans.org/projects/www/downloads/download/php%252Foracle-lesson2.zip[+здесь+] для загрузки исходного кода, отражающего состояние проекта по завершении предыдущего урока.
+
+
+== Добавление ссылки для начала создания нового автора пожелания
+
+Откройте  ``index.php`` . Добавьте пустую строку под закрывающим тегом </form>. Введите в эту пустую строку следующий блок кода:
+
+
+[source,xml]
+----
+
+ <br>Still don't have a wish list?! <a href="createNewWisher.php">Create now</a>
+----
+
+Где
+
+*  ``Still don't have a wish list?! ``  – это текст, который отобразится на странице рядом со ссылкой.
+*  ``<a href="createNewWisher.php"></a>``  – это код ссылки, открывающей страницу createNewWisher.php.
+*  ``Create now``  – это текст, который отобразится в качестве ссылки.
+
+
+== Создание новых веб-страниц PHP
+
+Создайте две новые веб-страницы PHP в исходных файлах проекта, как link:wish-list-lesson2.html#createNewFile[+описано+] в уроке 2.
+
+*  ``createNewWisher.php`` 
+*  ``editWishList.php`` 
+
+В  ``editWishList.php``  добавьте текст "Hello!" к тексту в формате HTML, а в остальном оставьте всё как было. Этот файл будете изменен в последующих уроках, однако на данный момент он необходим в качестве объекта ссылки для  ``createNewWisher.php`` . В оставшейся части этого урока рассматривается изменение файла  ``createNewWisher.php`` .
+
+
+== Добавление формы HTML для ввода данных нового автора пожелания
+
+Введите или вставьте следующий блок HTML в строку  ``createNewWisher.php``  под блоком PHP:
+
+
+[source,xml]
+----
+
+<html>
+    <head>
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+        <title></title>
+    </head>
+    <body>Welcome!<br><form action="createNewWisher.php" method="POST">Your name: <input type="text" name="user"/><br/>Password: <input type="password" name="password"/><br/>Please confirm your password: <input type="password" name="password2"/><br/><input type="submit" value="Register"/></form></body>
+</html>
+----
+
+*Примечание.* Тип  ``password``  это специальный тип текстового поля, в котором символы заменяются звездочками. Код представляет собой link:wish-list-lesson3.html#htmlForm[+форму HTML+], позволяющую ввести имя и пароль нового автора пожелания в текстовые поля. При нажатии кнопки "Register" введенные данные передаются для проверки допустимости на ту же страницу –  ``createNewWisher.php`` .
+
+*Примечание. *Предупреждения от средства проверки HTML можно проигнорировать.
+
+
+=== Проверка допустимости данных и добавление их в базу данных
+
+В этом разделе мы добавим код PHP к  ``createNewWisher.php`` . Добавьте этот код к блоку PHP на верху файла. Блок PHP должен находиться над кодом HTML *all*, пустыми строками или пробелами. Расположение блока кода PHP является важным для правильного функционирования оператора переадресации. Внутри блока PHP введите или вставьте в указанном порядке блоки кода, описанные ниже в данном разделе.
+
+*Добавьте следующий код для проверки допустимости данных:*
+
+1. Необходимо инициализировать переменные. Первая группа переменных осуществляет передачу параметров доступа к базе данных, а другая группа переменных используется в работе кода PHP.
+
+[source,java]
+----
+
+/** database connection credentials */$dbHost="localhost"; //on MySql
+$dbXeHost="localhost/XE"; $dbUsername="phpuser";$dbPassword="phpuserpw";
+
+/** other variables */
+$userNameIsUnique = true;
+$passwordIsValid = true;				
+$userIsEmpty = false;					
+$passwordIsEmpty = false;				
+$password2IsEmpty = false;	
+
+			
+----
+2. Под переменными следует добавить блок  ``if `` . Параметр блока  ``if``  выполняет проверку того, что страница была запрошена из нее самой посредством метода POST. Если это не так, дальнейшие проверки допустимости не выполняются, и на экран выводится страница с пустыми полями, как описано выше.
+
+[source,java]
+----
+
+/** Check that the page was requested from itself via the POST method. */
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+
+}
+----
+3. Внутри фигурных скобок блока  ``if ``  добавьте другой блок  ``if `` , позволяющий проверить, ввел ли пользователь имя автора пожелания в поле. Если текстовое поле "user" является пустым, значение  ``$userIsEmpty``  меняется на "true".
+
+[source,java]
+----
+
+/** Check that the page was requested from itself via the POST method. */
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+
+/** Check whether the user has filled in the wisher's name in the text field "user" */    *
+    if ($_POST["user"]=="") {
+    $userIsEmpty = true;
+    }*
+}
+----
+4. 
+Добавьте код, устанавливающий подключение к базе данных. Если установить подключение невозможно, то выводится ошибка MySQL или Oracle OCI8.
+
+*Для базы данных MySQL*
+
+
+[source,java]
+----
+
+/** Check that the page was requested from itself via the POST method. */
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+
+/** Check whether the user has filled in the wisher's name in the text field "user" */    
+    if ($_POST["user"]=="") {
+        $userIsEmpty = true;
+    }
+
+    /** Create database connection */*$con = mysqli_connect($dbHost, $dbUsername, $dbPassword);
+if (!$con) {
+exit('Connect Error (' . mysqli_connect_errno() . ') '
+. mysqli_connect_error());
+}
+//set the default client character set 
+mysqli_set_charset($con, 'utf-8');*
+} 
+----
+
+*Для базы данных Oracle*
+
+
+[source,java]
+----
+
+/** Check that the page was requested from itself via the POST method. */
+if ($_SERVER['REQUEST_METHOD'] == "POST") {
+
+/** Check whether the user has filled in the wisher's name in the text field "user" */
+    if ($_POST['user'] == "") {
+        $userIsEmpty = true;
+    }
+
+    /** Create database connection */*$con = oci_connect($dbUsername, $dbPassword, $dbXeHost, "AL32UTF8");
+    if (!$con) {
+        $m = oci_error();
+        exit('Connect Error' . $m['message']);
+
+    }*
+}
+----
+5. Добавьте код, позволяющий проверить, существует ли пользователь, имя которого соответствует указанному в поле "user". Эта задача выполняется путем поиска идентификационного номера автора пожелания в соответствии с именем, указанным в поле "user". Если такой номер существует, значение  ``$userNameIsUnique``  меняется на "false".
+
+*Для базы данных MySQL*
+
+
+[source,java]
+----
+
+/** Check that the page was requested from itself via the POST method. */
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+
+/** Check whether the user has filled in the wisher's name in the text field "user" */
+
+    if ($_POST["user"]=="") {
+        $userIsEmpty = true;
+    }/** Create database connection */$con = mysqli_connect($dbHost, $dbUsername, $dbPassword);if (!$con) {exit('Connect Error (' . mysqli_connect_errno() . ') '. mysqli_connect_error());}*/**set the default client character set */ 
+mysqli_set_charset($con, 'utf-8');*
+   */** Check whether a user whose name matches the "user" field already exists */**mysqli_select_db($con, "wishlist");
+    $user = mysqli_real_escape_string($con, $_POST["user"]);
+$wisher = mysqli_query($con, "SELECT id FROM wishers WHERE name='".$user."'");
+$wisherIDnum=mysqli_num_rows($wisher);
+if ($wisherIDnum) {
+$userNameIsUnique = false;
+}*
+} 
+----
+
+*Для базы данных Oracle*
+
+
+[source,java]
+----
+
+/** Check that the page was requested from itself via the POST method. */
+if ($_SERVER['REQUEST_METHOD'] == "POST") {
+/** Check whether the user has filled in the wisher's name in the text field "user" */
+    if ($_POST['user'] == "") {
+        $userIsEmpty = true;
+    }
+    /** Create database connection */$con = oci_connect($dbUsername, $dbPassword, $dbXeHost, "AL32UTF8");
+    if (!$con) {
+        $m = oci_error();
+        exit('Connection Error ' . $m['message']);
+
+    }
+
+   */** Check whether a user whose name matches the "user" field already exists */*
+    *$query = "SELECT id FROM wishers WHERE name = :user_bv";
+    $stid = oci_parse($con, $query);
+    $user = $_POST['user'];
+    $wisherID = null;
+    oci_bind_by_name($stid, ':user_bv', $user);
+    oci_execute($stid);
+
+// Each user name should be unique. Check if the submitted user already exists.
+    $row = oci_fetch_array($stid, OCI_ASSOC);
+    if ($row){
+        $userNameIsUnique = false;
+    }*
+}
+----
+6. После кода, проверяющего уникальность пользователя, добавьте серию блоков  ``if `` , проверяющих, правильно ли пользователь ввел и подтвердил пароль. Код выполняет проверку того, что поля "Password" ("password") и "Confirm Password" ("password2") заполнены и идентичны друг другу. В противном случае значения соответствующих логических переменных также изменяются.
+
+[source,java]
+----
+
+if ($_POST["password"]=="") {$passwordIsEmpty = true;
+}if ($_POST["password2"]=="") {$password2IsEmpty = true;
+}if ($_POST["password"]!=$_POST["password2"]) {$passwordIsValid = false;
+} 
+----
+7. 
+Завершите блок  ``if ($_SERVER['REQUEST_METHOD'] == "POST")`` , добавив код, вставляющий новую запись в базу данных "Wishers". В соответствии с кодом выполняется проверка того, что имя пользователя указано однозначно и что пароль введен и подтвержден правильно. Если эти условия выполнены, код извлекает значения "user" и "password" из формы HTML и вставляет их соответственно в столбцы "Name" и "Password", относящиеся к новой строке в базе данных "Wishers". После создания строки код закрывает подключение к базе данных и переадресует приложение на страницу  ``editWishList.php`` .
+
+*Для базы данных MySQL*
+
+
+[source,java]
+----
+
+/** Check that the page was requested from itself via the POST method. */
+if ($_SERVER['REQUEST_METHOD'] == "POST") {
+    /** Check whether the user has filled in the wisher's name in the text field "user" */
+    if ($_POST['user'] == "") {
+        $userIsEmpty = true;
+    }
+
+    /** Create database connection */
+    $con = mysqli_connect($dbHost, $dbUsername, $dbPassword);
+    if (!$con) {
+        exit('Connect Error (' . mysqli_connect_errno() . ') '
+                . mysqli_connect_error());
+    }
+    //set the default client character set 
+    mysqli_set_charset($con, 'utf-8');
+
+    /** Check whether a user whose name matches the "user" field already exists */
+    mysqli_select_db($con, "wishlist");
+    $user = mysqli_real_escape_string($con, $_POST['user']);
+    $wisher = mysqli_query($con, "SELECT id FROM wishers WHERE name='".$user."'");
+    $wisherIDnum=mysqli_num_rows($wisher);
+    if ($wisherIDnum) {
+        $userNameIsUnique = false;
+    }
+
+    /** Check whether a password was entered and confirmed correctly */
+    if ($_POST['password'] == "") {
+        $passwordIsEmpty = true;
+    }
+    if ($_POST['password2'] == "") {
+        $password2IsEmpty = true;
+    }
+    if ($_POST['password'] != $_POST['password2']) {
+        $passwordIsValid = false;
+    }
+
+    /** Check whether the boolean values show that the input data was validated successfully.
+     * If the data was validated successfully, add it as a new entry in the "wishers" database.
+     * After adding the new entry, close the connection and redirect the application to editWishList.php.
+     */
+    *if (!$userIsEmpty &amp;&amp; $userNameIsUnique &amp;&amp; !$passwordIsEmpty &amp;&amp; !$password2IsEmpty &amp;&amp; $passwordIsValid) {
+        $password = mysqli_real_escape_string($con, $_POST['password']);
+        mysqli_select_db($con, "wishlist");
+        mysqli_query($con, "INSERT wishers (name, password) VALUES ('" . $user . "', '" . $password . "')");
+        mysqli_free_result($wisher);
+        mysqli_close($con);
+        header('Location: editWishList.php');
+        exit;
+    }*
+}
+----
+
+*Для базы данных Oracle*
+
+
+[source,java]
+----
+
+/** Check that the page was requested from itself via the POST method. */
+if ($_SERVER['REQUEST_METHOD'] == "POST") {
+
+/** Check whether the user has filled in the wisher's name in the text field "user" */
+    if ($_POST['user'] == "")
+        $userIsEmpty = true;
+
+    /** Create database connection */
+    $con = oci_connect($dbUsername, $dbPassword, $dbXeHost, "AL32UTF8");
+    if (!$con) {
+        $m = oci_error();
+        echo $m['message'], "\n";
+        exit;
+    }
+    
+    /** Check whether a user whose name matches the "user" field already exists */
+    $query = "select ID from wishers where name = :user_bv";
+    $stid = oci_parse($con, $query);
+    $user = $_POST['user'];
+    $wisherID = null;
+    oci_bind_by_name($stid, ':user_bv', $user);
+    oci_execute($stid);
+
+/**Each user name should be unique. Check if the submitted user already exists. */
+    $row = oci_fetch_array($stid, OCI_ASSOC);
+    if ($row) {
+    $wisherID = $row['ID']; 
+    }
+    if ($wisherID != null) {
+        $userNameIsUnique = false;
+    }
+    //Check for the existence and validity of the password
+    if ($_POST['password'] == "") {
+        $passwordIsEmpty = true;
+    }
+    if ($_POST['password2'] == "") {
+        $password2IsEmpty = true;
+    }
+    if ($_POST['password'] != $_POST['password2']) {
+        $passwordIsValid = false;
+    }
+    /** Check whether the boolean values show that the input data was validated successfully.
+     * If the data was validated successfully, add it as a new entry in the "wishers" database.
+     * After adding the new entry, close the connection and redirect the application to editWishList.php.
+     */
+    *if (!$userIsEmpty &amp;&amp; $userNameIsUnique &amp;&amp; !$passwordIsEmpty &amp;&amp; !$password2IsEmpty &amp;&amp; $passwordIsValid) {
+
+        $query = "INSERT INTO wishers (name, password) VALUES (:user_bv, :pwd_bv)";
+        $stid = oci_parse($con, $query);
+        $pwd = $_POST['password'];
+        oci_bind_by_name($stid, ':user_bv', $user);
+        oci_bind_by_name($stid, ':pwd_bv', $pwd);
+        oci_execute($stid);
+        oci_free_statement($stid);
+        oci_close($con);
+        header('Location: editWishList.php');
+        exit;
+    }*
+}
+----
+
+
+== Отображение сообщений об ошибках в форме ввода
+
+Перейдем к реализации вывода сообщений об ошибках при неверно введенных данных. Реализация основывается на проверках допустимости и изменении значений логических переменных, описанных в разделе <<validatinDataBeforeAddingToDatabase,Проверка допустимости данных и добавление их в базу данных>>.
+
+1. Введите следующий блок кода PHP в форме ввода HTML непосредственно под именем пользователя:
+
+[source,php]
+----
+
+Welcome!<br><form action="createNewWisher.php" method="POST">Your name: <input type="text" name="user"/><br/>
+
+*<?php
+    if ($userIsEmpty) {
+        echo ("Enter your name, please!");
+        echo ("<br/>");
+    }                
+    if (!$userNameIsUnique) {
+        echo ("The person already exists. Please check the spelling and try again");
+        echo ("<br/>");
+    }
+    ?> *
+----
+2. Введите следующий блок кода PHP в форме ввода HTML под кодом для ввода пароля:
+
+[source,php]
+----
+
+Password: <input type="password" name="password"/><br/>
+*<?php
+ if ($passwordIsEmpty) {
+     echo ("Enter the password, please!");
+     echo ("<br/>");
+ }                
+ ?>*
+----
+3. Введите следующий блок кода PHP в форме ввода HTML под кодом для подтверждения пароля:
+
+[source,php]
+----
+
+Please confirm your password: <input type="password" name="password2"/><br/>
+
+
+*<?php
+ if ($password2IsEmpty) {
+     echo ("Confirm your password, please");
+     echo ("<br/>");    
+ }                
+ if (!$password2IsEmpty &amp;&amp; !$passwordIsValid) {
+     echo  ("The passwords do not match!");
+     echo ("<br/>");  
+ }                 
+?>*
+----
+
+
+=== Тестирование функциональных возможностей по созданию нового пользователя "Create New Wisher"
+
+1. Запустите приложение. Откроется страница-указатель.
+image::images/index-php-3.png[]
+2. На странице-указателе щелкните ссылку рядом с текстом "Still don't have a wish list?" Откроется следующая форма:
+image::images/create-new-wisher-empty-form.png[]
+3. Оставьте поля пустыми и нажмите кнопку Register ("Зарегистрировать"). На экране появится сообщение об ошибке.
+image::images/create-new-wisher-name-empty.png[]
+4. Введите имя зарегистрированного пользователя, например, "Tom" в поле "Your name", внимательно заполните другие поля и нажмите кнопку "Register". На экране появится сообщение об ошибке.
+5. Заполните поля "Password" и "Please confirm your password" различными значениями и нажмите кнопку "Register". На экране появится сообщение об ошибке.
+6. Введите "Bob" в поле "Your name", укажите в полях пароля один и тот же пароль и нажмите кнопку "Register". Откроется пустая страница, однако переадресация осуществляется правильно, поскольку URL-адрес заканчивается текстом "editWishList.php":
+image::images/edit-wish-list-empty.png[]
+7. Проверьте, что данные сохранены в базе данных, путем перехода к разделу "Wishers" в окне "Services", расположенном под узлом "wislist1", и выбора "View Data" в контекстном меню 
+image::images/wishers.png[]
+
+
+== Исходный код приложения на момент завершения текущего урока
+
+Для пользователей MySQL: щелкните link:https://netbeans.org/files/documents/4/1929/lesson3.zip[+сюда+] для загрузки исходного кода, отражающего состояние проекта по завершении данного урока.
+
+Для пользователей Oracle Database: щелкните link:https://netbeans.org/projects/www/downloads/download/php%252Foracle-lesson3.zip[+сюда+] для загрузки исходного кода, отражающего состояние проекта по завершении данного урока.
+
+
+== Что дальше?
+
+link:wish-list-lesson2.html[+<<Предыдущий урок+]
+
+link:wish-list-lesson4.html[+Следующий урок >>+]
+
+link:wish-list-tutorial-main-page.html[+Назад на главную страницу руководства+]
+
+
+link:/about/contact_form.html?to=3&subject=Feedback:%20PHP%20Wish%20List%20CRUD%203:%20Creating%20New%20User[+Отправить отзыв по этому учебному курсу+]
+
+
+Для отправки комментариев и предложений, получения поддержки и новостей о последних разработках, связанных с PHP IDE NetBeans link:../../../community/lists/top.html[+присоединяйтесь к списку рассылки users@php.netbeans.org+].
+
+link:../../trails/php.html[+Возврат к учебной карте PHP+]
+

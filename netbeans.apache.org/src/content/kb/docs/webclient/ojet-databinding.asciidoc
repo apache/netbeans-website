@@ -1,0 +1,202 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= Using Data Bindings to Connect Components
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: Using Data Bindings to Connect Components - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, Using Data Bindings to Connect Components
+
+This document provides a step-by-step set of instructions guiding you through the process of connecting components to each other via data bindings, as provided by link:http://knockoutjs.com/[+Knockout.js+], which is the data binding library included in the link:http://oraclejet.org[+Oracle JavaScript Extension Toolkit (JET)+]. JET empowers developers by providing a modular toolkit based on modern JavaScript, CSS3, and HTML5 design and development principles.
+
+
+== Using the Oracle JET Cookbook
+
+In this section, you copy/paste Oracle JET components into your JET applications.
+
+1. As described in link:https://netbeans.org/kb/docs/webclient/ojet-cookbook.html[+Using the Oracle JET Cookbook+], you can copy/paste Oracle JET components from the Oracle JET Cookbook into your Oracle JET application. At this stage, you should have the link:http://www.oracle.com/webfolder/technetwork/jet/jetCookbook.html?component=barChart&demo=default[+Bar Chart+] component in your application, as shown below:
+
+image::images/cookbook-3.png[]
+
+2. Also add a link:http://www.oracle.com/webfolder/technetwork/jet/jetCookbook.html?component=select&demo=single[+Select+] component to your application, in the same Oracle JET module where the Bar Chart is found:
+
+
+* Read the link:http://www.oracle.com/webfolder/technetwork/jet/jetCookbook.html?component=select&demo=single[+Select+] component recipe in the Oracle JET Cookbook and copy the recipe into your application, then take the steps below to tweak the code.
+
+* Tweak the HTML so that the user will be able to select different types of charts. Notice that not all the HTML from the recipe is needed. Nothing more than the below should be added to the JavaScript file for usage with the Select component defined above.
+
+
+[source,xml]
+----
+
+<form id="form1">
+    <select id="basicSelect" 
+            data-bind="ojComponent: {
+                component: 'ojSelect',
+                value: val}">
+        <option value="bar">Bar</option>
+        <option value="line">Line</option>
+        <option value="area">Area</option>
+    </select>
+</form>
+
+----
+* 
+Notice that the HTML makes use of a  ``value``  named  ``val`` . That gives you the information needed to determine which part of the JS tab of the recipe you need to tweak and copy to your JavaScript file:
+
+
+[source,java]
+----
+
+self.val = ko.observableArray(["bar"]);
+----
+* 
+Make sure to include the reference to the Select component at the end of the  ``define``  block, copied from the JS tab in the recipe:
+
+
+[source,java]
+----
+
+'ojs/ojselectcombobox'
+----
+3. 
+In the browser, check that the application looks something like the below, that is, you should see a Bar Chart component and a Select component:
+
+image::images/databinding-001.png[]
+
+In the next section, you're going to bind the two components together.
+
+
+== Connecting the Select Component to the Bar Chart Component
+
+In this section, you connect the components together enabling the user to select the chart type.
+
+1. Notice in your HTML file that the Bar Chart component has its  ``type``  property hardcoded to  ``'bar'`` .
+
+2. Notice in your HTML file that the Select component has its  ``value``  property set to the two-way binding array  ``val`` , defined in your JavaScript file.
+
+3. Change the value of the Bar Chart component's  ``type``  property to  ``val()[0]`` . That means that when the  ``val``  array changes, the first value defines the type of the Bar Chart, which will immediately update itself to the new value.
+
+4. In the browser, switch to a different chart type in the Select component and notice that the Bart Chart component automatically updates itself:
+
+image::images/databinding-002.png[]
+
+You have now connected two Oracle JET components together. When the user makes a choice in the Select component, the Bar Chart automatically reflects the current choice.
+
+
+== Displaying a Current Value
+
+In Oracle JET applications, a common construction is to display the current state of a value as follows, using a  ``span``  tag to do so:
+
+
+[source,xml]
+----
+
+Selected: <b><span *data-bind="text: val"*></span> chart</b>
+----
+
+In the above, the  ``text``  attribute of the  ``span``  element is bound to the  ``val``  property.
+
+Add the above anywhere in your HTML file and notice that the browser now displays an updated text whenever  ``val``  changes.
+
+
+== Connecting a Gauge to an Input Field
+
+In this section, you're on your own! As an exercise, instead of step-by-step instructions, you'll be told to connect two Oracle JET components together.
+
+1. From the link:http://www.oracle.com/webfolder/technetwork/jet/jetCookbook.html?component=statusMeterGauge&demo=statusMeterGaugeCircular[+Circular Status Meter Gauge recipe+], copy a gauge into your Oracle JET application.
+
+2. From the link:http://www.oracle.com/webfolder/technetwork/jet/jetCookbook.html?component=textInput&demo=text[+Input Text recipe+], copy an input text into your Oracle JET application.
+
+3. Connect the two components together so that the current value of the gauge is shown in the input field and so that the gauge reflects the current value in the input field. Experiment with the link:http://knockoutjs.com/documentation/textinput-binding.html[+ ``textInput``  binding+], as follows:
+
+
+[source,java]
+----
+
+<input type="text" data-bind="textInput: value, ojComponent: {component: 'ojInputText'}" />
+----
+
+Let's extend the scenario above and include  ``ojButtons``  for increasing and decreasing the value:
+
+image::images/ojgauge.png[]
+
+The HTML for the above is as follows, take note of the  ``click``  binding:
+
+
+[source,xml]
+----
+
+<button class="oj-button-primary"
+        data-bind="*click: up*,
+                   ojComponent: {
+                       component: 'ojButton',
+                       label: 'Up'
+                   }">
+</button>
+<button class="oj-button-primary"
+        data-bind="*click: down*,
+                   ojComponent: {
+                       component: 'ojButton',
+                       label: 'Down'
+                   }">
+</button>
+----
+
+Here is the business logic, to be put in the JavaScript file:
+
+
+[source,java]
+----
+
+self.up = function() {
+   self.value(self.value()+1);
+};
+self.down = function() {
+   self.value(self.value()-1); 
+};
+----
+
+Incorporate other Oracle JET components into your application and find ways of binding them together.
+
+
+== Next Steps
+
+Work through the link:http://knockoutjs.com/examples/[+Live Examples+] and link:http://learn.knockoutjs.com/[+Tutorials+] on the Knockout.js site to familiarize yourself with the basic constructs and strategies provided by Knockout.js.
+
+Congratulations! You have now learned the basics of using Knockout data bindings to connect components together.
+
+link:/about/contact_form.html?to=3&subject=Feedback:%20Using%20Data%20Bindings%20to%20Connect%20Components[+Send Feedback on This Tutorial+]
+
+
+
+
+[[seealso]]
+== See Also
+
+For more information about support for Oracle JET and a variety of HTML5 applications in the IDE on link:https://netbeans.org/[+netbeans.org+], see the following resources:
+
+* link:http://www.oracle.com/webfolder/technetwork/jet/globalExamples.html[+"Learn" section on the Oracle JET site+]. A set of official Oracle JET learning resources.
+* link:html5-editing-css.html[+Working with CSS Style Sheets in HTML5 Applications+]. A document that continues with the application that you created in this tutorial that demonstrates how to use some of the CSS wizards and windows in the IDE and how to use the Inspect mode in the Chrome browser to visually locate elements in your project sources.
+* link:html5-js-support.html[+Debugging and Testing JavaScript in HTML5 Applications+]. A document that demonstrates how the IDE provides tools that can help you debug and test JavaScript files in the IDE.

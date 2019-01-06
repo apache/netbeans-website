@@ -1,0 +1,366 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= Vinculando Beans e Dados em uma Aplicação Java
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: Vinculando Beans e Dados em uma Aplicação Java - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, Vinculando Beans e Dados em uma Aplicação Java
+
+Esse guia é uma introdução ao suporte no NetBeans IDE para vinculação de beans e de dados em aplicações Java.
+
+
+image::images/netbeans-stamp-80-74-73.png[title="O conteúdo desta página se aplica ao NetBeans IDE 7.1, 7.2, 7.3, 7.4 e 8.0"]
+
+
+*Para concluir este tutorial, você precisa dos seguintes recursos e softwares.*
+
+|===
+|Software ou Recurso |Versão Necessária 
+
+|link:https://netbeans.org/downloads/index.html[+NetBeans IDE+] |versão 7.1, 7.2, 7.3, 7.4 ou 8.0 
+
+|link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+JDK (Java Development Kit)+] |versão 6 ou posterior 
+|===
+
+
+== Introdução: Vinculação de Beans no NetBeans IDE
+
+Até o lançamento da biblioteca de vinculações de beans, era incômodo conectar componentes de IU a banco de dados ou manter os valores das propriedades do componente em sincronia. Por exemplo, a exibição de dados em um banco de dados padrão em uma JTable exigia a criação manual de classes do utilitário para manipular a conexão entre o banco de dados e a JTable. E manter valores de propriedades de bean diferentes em sincronia (tal como o valor de um JTextField com a renderização de um bean visual) exigia codificar manualmente os listeners e os handlers de eventos.
+
+A biblioteca de vinculação de beans simplifica e padroniza tudo isso. Você pode simplesmente escrever algumas linhas de código para estabelecer quais propriedades de quais componentes precisam ser mantidas em sincronia, e a biblioteca de vinculação de beans manipula o resto. No NetBeans IDE, as funcionalidades de vinculação de beans são integradas no GUI Builder, para que você possa ter rapidamente o comportamento da sua aplicação codificado, depois que tiver estabelecido o design visual.
+
+Este guia é uma visão geral dos aspectos principais da vinculação de beans no IDE.
+
+
+== Vinculando Propriedades a Outras Propriedades
+
+Fundamentalmente, a vinculação de beans é uma forma de conectar as propriedades do bean sem usar listening de eventos e código de tratamento.
+
+Para ilustrar o conceito de vinculação de beans e como o IDE a suporta, usaremos um exemplo simples onde um usuário pode ajustar um controle deslizante para alterar um valor numérico em um campo de texto.
+
+*Para configurar o exemplo:*
+
+1. No IDE, escolha Arquivo > Novo Projeto.
+2. Selecione a categoria Java e selecione o modelo da Aplicação Java. Clique em Próximo.
+3. Na página Nome e Localização do assistente, realize as seguintes operações:
+* Digite  ``NumberSlider``  como o nome do projeto.
+* Deixe desmarcada a caixa de seleção Utilizar Pasta Dedicada para Armazenar Bibliotecas.
+
+image::images/numberslider-small.png[role="left", link="images/numberslider.png"]
+
+* Desmarque a caixa de seleção Criar Classe Principal.
+4. Clique em Finalizar para sair do assistente e configurar o projeto.
+5. Na janela Projetos, clique com o botão direito do mouse no nó do projeto NumberSlider e selecione Novo > Form JFrame.
+
+(Se o form JFrame não estiver disponível no menu Novo, escolha Outro. Em seguida, no assistente para Novo Arquivo, selecione a categoria Forms de GUI Swing e selecione o modelo Form JFrame.)
+
+6. Na página Nome e Localização do assistente, realize as seguintes operações:
+* Digite  ``NumberSliderFrame``  para o nome da classe.
+* Digite  ``numberslider``  como o nome do pacote.
+
+image:::images/numberslider2-small.png[role="left", link="images/numberslider2.png"]
+
+7. Clique em Finalizar para sair do assistente e criar o form.
+
+ ``NumberSliderFrame.java``  deve ser aberto no modo de design na área de edição.
+
+8. Na seção Controles Swing da Paleta, arraste um componente de controle deslizante para a área de design. (Se a janela Paleta não estiver aberta, escolha Janela > Paleta).
+9. Da Paleta, arraste um componente de campo de texto para a área de design.
+
+O form resultante é parecido com a tela abaixo. Entretanto, o posicionamento não é importante para fins deste exemplo.
+
+image:::images/slider-textfield-small.png[role="left", link="images/slider-textfield.png"]
+
+
+=== Origem e Destino
+
+Agora que precisamos configurar o exemplo, estamos prontos para criar a vinculação. Entretanto, primeiro precisamos determinar qual componente será a _origem_ da vinculação e qual será o _destino_. O componente da origem da vinculação é de onde um valor da propriedade primeiro se origina.
+
+Ao vincular no Editor de GUI, você inicia uma vinculação no destino e, em seguida, declara a origem na caixa de diálogo Vincular.
+
+Nesse caso, já que o JSlider vem com uma faixa default de valores, vamos usá-lo como origem.
+
+*Observação:* As vinculações podem ser bidirecionais (leitura/gravação), para que as alterações no destino sejam automaticamente refletidas na origem. Entretanto, a direção da vinculação inicial é sempre da origem para o destino. Consulte as informações no Modo de Atualização na seção <<prop-advanced,Configuração de Vinculação Avançada>>.
+
+*Para vincular o controle deslizante ao campo de texto:*
+
+1. Clique com o botão direito do mouse no componente de campo de texto e escolha Vincular > texto para abrir a caixa de diálogo Vincular.
+2. Na caixa de combinação Origem da Vinculação, selecione  ``jSlider1`` .
+3. Na caixa de combinação Expressão de Vinculação, selecione  ``value int``  como mostrado na imagem abaixo.
+
+image:::images/bind-dialog-small.png[role="left", link="images/bind-dialog.png"]
+
+4. Clique em OK.
+
+Você acabou de vincular a propriedade de bean  ``value``  do controle deslizante ao valor  ``text``  do campo de texto.
+
+Na área de design, o campo de texto deve mostrar o valor  ``50`` . Esse valor reflete o fato de que o controle deslizante está na posição intermediária e a faixa default de valores do controle deslizante é de 0 a 100.
+
+Agora você pode executar a aplicação e ver a vinculação em ação.
+
+Escolha Executar > Executar Arquivo para executar o arquivo.
+
+A aplicação deve começar em uma janela separada. Ajuste o controle deslizante na aplicação em execução e observe a alteração do valor no campo de texto.
+
+image::images/run-numberslider.png[]
+
+
+== Vinculando Beans Personalizados
+
+Na seção anterior, você vinculou propriedades de dois componentes Swing padrão adicionados ao form da Paleta. Você também pode vincular as propriedades de outros beans. Entretanto, para fazer isso, você precisa realizar algumas etapas para disponibilizar as funcionalidades do IDE para gerar o código de vinculação desse bean disponível. Você pode realizar uma das abordagens a seguir para tornar as funcionalidades de vinculação do IDE disponíveis para um bean:
+
+* Adicione o bean à Paleta de forma que possa adicioná-lo a um form como adicionaria um componente Swing padrão.
+* Adicione a classe de bean ao projeto e compile o bean.
+
+Para adicionar um bean à janela da Paleta:
+
+1. Verifique se o bean foi compilado.
+2. Escolha Ferramentas > Paleta > Componentes Swing/AWT.
+3. Se desejar criar uma nova categoria de paleta para o bean, clique em Nova Categoria e insira o nome desejado antes de adicionar o bean.
+4. Clique em Adicionar do JAR, Adicionar da Biblioteca ou Adicionar do Projeto e conclua o assistente para adicionar o bean.
+
+Para adicionar um bean a partir do seu projeto:
+
+1. Na janela Projeto, clique com o botão direito do mouse no nó do bean e escolha Compilar Arquivo.
+2. Arraste o bean para o form.
+
+Você deve ver o bean na janela Inspetor. Você pode chamar a caixa de diálogo Vincular de qualquer uma das propriedades do bean.
+
+
+== Configuração de Vinculação Avançada
+
+O exemplo na primeira seção deste tutorial mostra uma vinculação direta com alguns comportamentos default. Mas às vezes você pode querer ou precisar configurar sua vinculação de forma diferente. Se for esse o caso, você pode usar a guia Avançado da caixa de diálogo Vinculação.
+
+A guia Avançado da caixa de diálogo contém os seguintes campos:
+
+* *Nome. *Permite que você crie um nome para a vinculação, que fornece a você mais flexibilidade para gerenciar suas vinculações. O nome é adicionado ao construtor da vinculação e pode ser referenciado com o método  ``getName()``  da vinculação.
+* *Modo de Atualização. * Especifica a maneira que as propriedades são mantidas sincronizadas. Os valores possíveis são:
+* *Sempre SYNC (ler/gravar).* Sempre que uma alteração for feita para a origem ou o destino, a outra será atualizada.
+* *Apenas ler da origem (somente para leitura).* O alvo é atualizado somente na primeira vez que o valor de origem é definido. As alterações feitas na origem são atualizadas no destino. As alterações feitas no destino são atualizadas na origem.
+* *Ler da origem uma vez (ler uma vez).* O destino só é atualizado quando o destino e origem são inicialmente associados.
+* *Atualizar Origem Quando *(disponível somente para a propriedade  ``text``  dos componentes JTextField e JTextArea). Permite que você selecione a frequência com que as propriedades são sincronizadas.
+* *Ignorar Ajuste* (disponível para a propriedade  ``value``  de JSlider; para a propriedade  ``selectedElement``  de JTable e JList; e para a propriedade  ``selectedElements``  de JTable e JList). Se esta caixa de seleção estiver marcada, quaisquer alterações feitas na propriedade são propagadas para outra propriedade até que o usuário finalize a alteração. Por exemplo, quando o usuário da aplicação arrasta um controle deslizante, o valor da propriedade ao qual a propriedade  ``value``  do controle deslizante está vinculada só é atualizado quando o usuário liberar o botão do mouse.
+* *Conversor.* Envolve propriedades se sua vinculação com tipos de dados diferentes, você pode especificar Código que converte valores entre os tipos. A biblioteca de vinculação de beans manipula muitas conversões usadas comumente, mas talvez você precise fornecer seus próprios conversores para outras combinações de tipos de propriedade. Tais conversores precisam estender a classe  ``org.jdesktop.beansbinding.Converter`` .
+
+A lista drop-down Conversor é preenchida com quaisquer conversores que foram adicionados como beans ao seu form. Você também pode adicionar o código de conversão diretamente, clicando no botão de reticências (...), e selecionando Personalizar Código na lista drop-down Selecionar Propriedade do Conversor usando.
+
+Abaixo há uma lista de conversões para as quais você não precisa fornecer um conversor:
+
+* BigDecimal para String, String para BigDecimal
+* BigInteger para String, String para BigInteger
+* Booliano para String, String para Booliano
+* Byte para String, String para Byte
+* Caractere para String, String para Caractere
+* Duplo para String, String para Duplo
+* Flutuante para String, String para Flutuante
+* Int para String, String para Int
+* Longo para String, String para BigDecimal
+* Curto para String, String para Curto
+* Int para Booliano, Booliano para Int
+* *Validador. * Permite que você especifique um código para validar uma alteração no valor de propriedade de alvo antes de propagar que alterar de volta para a propriedade de origem. Por exemplo, você pode usar um validador para garantir que um valor de propriedade inteiro esteja em uma faixa específica.
+
+Os validadores precisam estender a classe  ``org.jdesktop.beansbinding.Validator`` . 
+A lista drop-down Validador é preenchida com quaisquer validadores que foram adicionados como beans ao seu form. Você também pode adicionar o código de validação diretamente, clicando no botão de reticências (...), e selecionando Personalizar código na lista drop-down Selecionar Propriedade do Validador Usando.
+
+* *Valor de Origem Nulo. * Permite que você especifique um valor diferente para usar se a propriedade de origem tem um valor  ``null``  quando a vinculação é tentada. Este campo corresponde ao método  ``setSourceNullValue()``  da classe  ``org.jdesktop.beansbinding.Binding`` .
+* *Valor de Origem Ilegível. * Permite que você especifique um valor diferente para usar se a expressão de vinculação não puder ser resolvida quando a vinculação for tentada. Este campo corresponde ao método  ``setSourceUnreadableValue()``  da classe  ``org.jdesktop.beansbinding.Binding`` .
+
+*Observação:* Para entender melhor as classes e os métodos mencionados acima, você pode acessar a documentação de Javadoc da vinculação de beans diretamente no IDE. Escolha Ajuda > Referências de Javadoc > Vinculação de Beans. Na janela do browser que se abre, clique no link  ``org.jdesktop.beansbinding``  para acessar a documentação dessas classes.
+
+
+== Vinculando Dados aos Componentes
+
+Além de sincronizar propriedades de componentes Swing visuais e outros beans personalizados, você pode usar a vinculação de beans para ajudar no uso de componentes visuais para interagir com um banco de dados. Quando tiver criado um novo form Java e adicionado componentes ao form, você pode gerar código para vincular esses componentes aos dados. Esta seção mostra como vincular dados a componentes JTable, JList e JComboBox Swing.
+
+Antes de vincular um componente a dados de um banco de dados, você precisa ter concluído as seguintes etapas:
+
+* Conectado a um banco de dados no IDE.
+* Criado classes que representam as tabelas de banco de dados às quais você deseja se vincular. Os passos para criar as classes de entidade para vincular dados a um componente são fornecidos a seguir.
+
+
+=== Criando Classes de Entidade
+
+*Para criar classes de entidade para representar o banco de dados que é vinculado a JTable:*
+
+1. Na janela Projetos, clique com o botão direito do mouse em seu projeto e escolha Novo > Outro, selecione a categoria Persistência, e selecione as Classes de entidade no modelo de banco de dados.
+2. Na página Tabelas de Banco de Dados do assistente, selecione a conexão de banco de dados.
+3. Quando a coluna Tabelas Disponíveis for preenchida, selecione as tabelas que você deseja usar em sua aplicação e clique em Adicionar para movê-las para a coluna Tabelas Selecionadas. Clique em Próximo.
+
+image:::images/entity-wizard1-small.png[role="left", link="images/entity-wizard1.png"]
+
+4. Na página Classes de Entidade do assistente, verifique se as caixas de seleção Gerar Anotações de Consulta Nomeada e Criar Unidades Persistentes estão selecionadas.
+
+image:::images/entity-wizard2-small.png[role="left", link="images/entity-wizard2.png"]
+
+5. Faça quaisquer personalizações que desejar nos nomes das classes geradas e em sua localização.
+6. Clique em Finalizar.
+
+Você deve ver nós das classes de entidade na janela Projetos.
+
+
+=== Vinculando Componentes aos Beans que Representam os Dados
+
+Esta seção mostra como você pode vincular dados a componentes JTable, JList e JComboBox.
+
+*Para adicionar uma tabela de banco de dados a um form e gerar automaticamente um JTable para exibir o conteúdo da tabela do banco de dados:*
+
+1. Abra a janela Serviços.
+2. Conecte-se ao banco de dados que contém a tabela que você deseja adicionar ao form. (Você pode se conectar ao banco de dados clicando com o botão direito do mouse no nó da conexão do banco de dados e escolhendo Conectar.)
+
+*Observação:* o tutorial usa o banco de dados  ``sample [app on App]``  que pode ser conectado, selecionando a janela Serviços, expandindo o nó dos Bancos de dados, clicando com o botão direito do mouse no nó de conexão do banco de dados ( ``jdbc:derby://localhost:1527/sample[app on APP]`` ) e selecionando Conectar do menu de contexto.
+Especifique  ``app``  como id do usuário e  ``app``  como senha, se for solicitado um id do usuário e uma senha.
+
+3. Expanda o nó da conexão e expanda seu nó Tabelas.
+4. Arraste o nó para a tabela no form e pressione Ctrl enquanto arrasta a tabela.
+
+Um JTable é criado e suas colunas são vinculadas às colunas na tabela do banco de dados.
+
+*Para vincular uma tabela de banco de dados a um componente JTable existente:*
+
+1. Clique com o botão direito do mouse no GUI Builder e escolha Vincular > elementos.
+
+image:::images/bind-dialog-table-small.png[role="left", link="images/bind-dialog-table.png"]
+
+2. Clique em Importar Dados para Form. Na caixa de diálogo Importar Dados para Form, selecione a tabela de banco de dados a qual você deseja vincular seus componentes. Clique em OK.
+3. Na caixa de combinação Vincular Origem, selecione o item que representa a lista de resultados da classe da entidade. Por exemplo, se a classe da entidade for chamada,  ``Customer.java`` , o objeto da lista seria gerado como  ``customerList`` .
+
+image:::images/source-selected-small.png[role="left", link="images/source-selected.png"]
+
+4. Deixe o valor Expressão de Vinculação como  ``nulo`` .
+5. Se houver quaisquer colunas de banco de dados que você deseja que apareça na JTable, selecione essas colunas na lista Selecionado e mova-as para a lista Disponível.
+6. Selecione a guia Avançado para configurar a vinculação. Por exemplo, você pode especificar um validador ou conversor, ou pode especificar o comportamento se a origem da vinculação for nula ou ilegível.
+7. Clique em OK.
+
+*Para vincular os dados a um componente JList:*
+
+1. Clique com o botão direito do mouse no GUI Builder e escolha Vincular > elementos.
+2. Clique em Importar Dados para Form. Na caixa de diálogo Importar Dados para Form, selecione a tabela de banco de dados a qual você deseja vincular seus componentes. Clique em OK.
+3. Na caixa de combinação Vincular Origem, selecione o item que representa a lista de resultados da classe da entidade. Por exemplo, se a classe da entidade for chamada,  ``Customer.java`` , o objeto da lista seria gerado como  ``customerList`` .
+
+image:::images/jlist-binding-small.png[role="left", link="images/jlist-binding.png"]
+
+4. Deixe o valor Expressão de Vinculação como  ``nulo`` .
+5. Na lista drop-down Exibir expressão, selecione a propriedade que representa a coluna do banco de dados que contém os valores que você deseja exibir na lista.
+6. Selecione a guia Avançado para configurar a vinculação.
+7. Clique em OK.
+
+*Para vincular os dados a um componente JComboBox:*
+
+1. Clique com o botão direito do mouse na caixa de combinação e escolha Vincular > Elementos.
+2. Clique em Importar Dados para Form. Na caixa de diálogo Importar Dados para Form, selecione a tabela de banco de dados a qual você deseja vincular seus componentes. Clique em OK.
+3. Na caixa de combinação Vincular Origem, selecione o item que representa a lista de resultados da classe da entidade. Por exemplo, se a classe da entidade for chamada,  ``Customer.java`` , o objeto da lista seria gerado como  ``customerList`` .
+
+image:::images/combo-binding-small.png[role="left", link="images/combo-binding.png"]
+
+4. Deixe o valor da Expressão de Vinculação como  ``nulo``  e clique em OK.
+5. Clique com o botão direito do mouse na caixa de combinação novamente e escolha Vincular > Item selecionado.
+6. Vincule à propriedade que você deseja que seja afetada pela seleção do usuário.
+
+image::images/combo-item.png[]
+
+7. Clique em OK para salvar suas edições.
+
+A biblioteca Vinculação de Beans (a partir da versão 1.2.1) não possui uma classe DetailBinding que permite que você especifique como derivar os valores de _exibição_ de JComboBox. Portanto, você precisará escrever algum código personalizado. Uma abordagem é escrever um renderizador de célula personalizado, como mostrado abaixo.
+
+*Para renderizar a caixa de combinação adequadamente:*
+
+1. Selecione a caixa de combinação.
+2. Na guia Propriedades da janela Propriedades, selecione a propriedade do renderizador.
+3. Clique no botão de reticências (...).
+4. Na caixa de combinação na parte superior do editor de propriedades, selecione Personalizar Código.
+5. Na área de texto, insira um código semelhante ao seguinte (onde `jComboBox1` é o nome da instância JComboBox, `MyEntityClass` é a classe da entidade e `getPropertyFromMyEntityClass()` é o getter da propriedade na classe da entidade que você está vinculando.
+
+[source,java]
+----
+
+jComboBox1.setRenderer(new DefaultListCellRenderer() {
+           @Override
+           public Component getListCellRendererComponent(
+                   JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+               super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+               if (value instanceof MyEntityClass) {
+                   MyEntityClass mec = (MyEntityClass)value;
+                   setText(mec.getPropertyFromMyEntityClass());
+               }
+               return this;
+           }
+            })
+----
+
+image:::images/custom-small.png[role="left", link="images/custom.png"]
+
+*Observação:* você também pode criar um renderizador personalizado em seu próprio arquivo de código-fonte, compilar o arquivo, arrastar o renderizador para o form e definir a propriedade do renderizador da caixa de combinação para usar este bean.
+
+
+== Propriedades de Vinculação Especiais
+
+Onde necessário, a biblioteca de vinculação de beans fornece propriedades sintéticas especiais para alguns componentes Swing que estão faltando nos próprios componentes. Essas propriedades representam coisas, tais como uma linha selecionada da tabela, que são úteis para vincular a outras propriedades.
+
+Abaixo há uma lista de propriedades sintéticas adicionadas pelas bibliotecas de vinculação de beans:
+
+|===
+|Componente |Propriedade |Descrição 
+
+|AbstractButton |selecionado |O estado selecionado de um botão. 
+
+|JComboBox |selectedItem |O item selecionado de uma JComboBox. 
+
+|JSlider |valor |O valor de um JSlider; notifica todas as alterações. 
+
+|value_IGNORE_ADJUSTING |O mesmo que "valor" mas não notifica de alteração enquanto o controle deslizante está ajustando seu valor. 
+
+|JList |selectedElement |O elemento selecionado de uma JList; notifica todas as alterações. Se houver uma JListBinding com a JList como destino, o elemento selecionado é indicado como um elemento da lista de origem da vinculação. Caso contrário, o elemento selecionado é indicado como um objeto do modelo da lista. Caso nada esteja selecionado, a propriedade é avaliada como  ``null`` . 
+
+|selectedElements |Uma lista que contém os elementos selecionados de uma JList; notifica todas as alterações. Se houver uma JListBinding com a JList como destino, os elementos selecionados são indicados como elementos da lista de origem da vinculação. Caso contrário, os elementos selecionados são indicados como objetos do modelo da lista. Caso nada esteja selecionado, a propriedade é avaliada como uma lista vazia. 
+
+|selectedElement_IGNORE_ADJUSTING |O mesmo que "selectedElement" mas não notifica alteração enquanto a seleção da lista está sendo atualizada. 
+
+|selectedElements_IGNORE_ADJUSTING |O mesmo que "selectedElements" mas não notifica alteração enquanto a seleção da lista está sendo atualizada. 
+
+|JTable |selectedElement |O elemento selecionado de uma JTable; notifica todas as alterações. Se houver uma JTableBinding com a JTable como destino, o elemento selecionado é indicado como um elemento da lista de origem da vinculação. Caso contrário, o elemento selecionado é indicado como um mapa onde as chaves são compostas da "coluna" da string mais o índice da coluna e os valores são valores de modelo dessa coluna. Exemplo: {column0=column0value, column1=column1value, ...} Caso nada esteja selecionado, a propriedade é avaliada como  ``null`` . 
+
+|selectedElements |Uma lista que contém os elementos selecionados de uma JTable; notifica todas as alterações. Se houver uma JTableBinding com a JTable como destino, os elementos selecionados são indicados como elementos da lista de origem da vinculação. Caso contrário, cada elemento selecionado é indicado como um mapa onde as chaves são compostas da "coluna" da string mais o índice da coluna e os valores são valores de modelo dessa coluna. Exemplo: {column0=column0value, column1=column1value, ...} Caso nada esteja selecionado, a propriedade é avaliada como uma lista vazia. 
+
+|selectedElement_IGNORE_ADJUSTING |O mesmo que "selectedElement" mas não notifica de alteração enquanto a seleção da tabela está sendo atualizada. 
+
+|selectedElements_IGNORE_ADJUSTING |O mesmo que "selectedElements" mas não notifica de alteração enquanto a seleção da tabela está sendo atualizada. 
+
+|JTextComponent (incluindo suas subclasses JTextField, JTextArea e JEditorPane) |texto |A propriedade texto de um JTextComponent; notifica todas as alterações (incluindo digitação). 
+
+|text_ON_FOCUS_LOST |A propriedade de texto de um JTextComponent; notifica de alteração somente quando o foco é perdido no componente. 
+
+|text_ON_ACTION_OR_FOCUS_LOST |A propriedade de texto de um JTextComponent; notifica alteração somente quando o componente notifica de actionPerformed ou quando o foco é perdido no componente. 
+|===
+link:/about/contact_form.html?to=3&subject=Feedback:%20Binding%20Beans%20and%20Data%20in%20Java%20Applications[+Enviar Feedback neste Tutorial+]
+
+
+
+== Consulte Também
+
+* link:http://www.oracle.com/pls/topic/lookup?ctx=nb8000&id=NBDAG2649[+Trabalhando com Aplicações do Banco de Dados e Vinculação de Beans+] em _Desenvolvendo Aplicações com o NetBeans IDE_
+* link:gui-functionality.html[+Introdução à Construção de GUIs+]
+* link:http://java.net/projects/beansbinding/[+Vinculação de Beans - Java.net+]
+* link:http://docs.oracle.com/javase/tutorial/javabeans/index.html[+Trilha de JavaBeans(tm) do Tutorial Java+]
+* link:http://wiki.netbeans.org/NetBeansUserFAQ#GUI_Editor_.28Matisse.29[+FAQ do Editor de GUI+]

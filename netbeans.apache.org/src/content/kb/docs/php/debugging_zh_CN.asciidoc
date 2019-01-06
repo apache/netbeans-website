@@ -1,0 +1,414 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= 在 NetBeans IDE 中调试 PHP 源代码
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: 在 NetBeans IDE 中调试 PHP 源代码 - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, 在 NetBeans IDE 中调试 PHP 源代码
+
+
+image::images/netbeans-stamp-80-74-73.png[title="此页上的内容适用于 NetBeans IDE 7.2、7.3、7.4 和 8.0"]
+
+
+*要学习本教程，您需要具备以下软件和资源。*
+
+|===
+|软件或资源 |要求的版本 
+
+|link:https://netbeans.org/downloads/index.html[+NetBeans IDE+] |PHP 下载包 
+
+|PHP 引擎 |版本 5 
+
+|Web 服务器 |推荐使用 link:http://httpd.apache.org/download.cgi[+Apache HTTP Server 2.2+]。
+ 
+
+|PHP 调试器 |link:http://www.xdebug.org/[+XDebug 2.0 或更高版本+] 
+|===
+
+
+== 准备工作
+
+要在适用于 PHP 的 NetBeans IDE 中成功调试 PHP 应用程序，您需要link:../../trails/php.html#configuration[+为进行 PHP 开发安装并配置+] PHP 引擎、Apache 本地 Web 服务器和 XDebug 调试器。如果您难以使 XDebug 正常工作，请参见 link:http://wiki.netbeans.org/HowToConfigureXDebug[+NetBeans XDebug Wiki+]，并/或通过 users@php.netbeans.org 咨询社区。
+
+
+== 如何在 NetBeans IDE 中使用 XDebug 进行 PHP 调试
+
+从 NetBeans IDE 中运行 XDebug 时，将在设置断点的每行暂停执行 PHP 程序。当程序暂停执行时，XDebug 可以检索有关当前程序状态的信息，如程序变量的值。实际上，此过程可以用下列工作流来表示：
+
+1. 在应暂停执行 PHP 源代码的每行设置断点。
+2. 启动调试会话。
+3. 当到达包含断点的行时，可以按 F7 和 F8 键，以逐行执行脚本。在<<editorLayout,调试器窗口>>中监视应用程序的状态。
+4. 关闭调试会话。
+
+有关在 NetBeans IDE 中使用 XDebug 的工作流详细信息，请参见<<debuggingSession,调试会话>>。
+
+NetBeans IDE 提供了一个调试工具栏，可帮助您逐步执行文件。请参见<<work,使用工具栏和编辑器>>。
+
+
+== 调试选项
+
+NetBeans IDE 的 "Options"（选项）中包含一个标签，用于更改 PHP 调试的某些默认设置。要打开这些选项，请转至 "Tools"（工具）> "Options"（选项）（在 Mac 上则转至 "NetBeans" > "Preferences"（首选项）），然后依次选择 "PHP" 选项和 "Debugging"（调试）标签。
+
+*注：*在 NetBeans IDE 版本 7.1 中引入了 "Debugging"（调试）标签。早期版本的 NetBeans 在 "General PHP"（常规 PHP）标签中具有调试选项。版本 7.1 中的部分选项在早期版本中不可用。
+
+image::images/php-debugging-options.png[]
+
+您可以在此面板中更改以下选项：
+
+* *Debugger port（调试器端口）。*这是 XDebug 使用的端口，如 php.ini 中所设置。默认情况下为端口 9000。_此对话框中的端口号必须与您在 php.ini 中设置的调试器端口相同。在此对话框中，不能改动 XDebug 使用的端口。只能将 XDebug 使用的端口通知 NetBeans IDE。_
+* *Session ID（会话 ID）。*调试会话的任意名称。默认情况下为 netbeans-xdebug。如果需要设置 php.ini 中的  ``xdebug.idekey``  属性（如在某些远程调试情况下），则必须注意该值。
+* *Stop at First Line（在第一行停止）。*勾选此选项时，调试器会话在代码的第一行停止，而不在第一个断点处停止。在启动调试会话时，该选项可使您的屏幕一直居于 IDE 中，而不切换至浏览器窗口。
+* *Watches and Balloon Evaluation（监视和气球式求值）。*默认情况下，将禁用监视和气球式求值。监视和气球式求值会导致 XDebug 不稳定。
+* *Maximum Depth of Structures（最大结构深度）。*设置嵌套结构（如嵌套数组、对象中的对象等）的可视性
+* *Maximum Number of Children（最大子项数）。*设置监视求值期间数组项的可视性。（如果将 "Maximum Number of Children"（最大子项数）设置为 1，则只会看到数组中的第一项，即使该数组有多个项也是如此。）
+* *Show Requested URLs（显示请求的 URL）。*调试期间打开新的 "Output"（输出）窗口。此 "Output"（输出）窗口名为 "PHP Requested Urls"（PHP 请求的 URL），它会显示当前处理的 URL。这些 URL 是可单击的。在 "Output"（输出）窗口中单击 URL，以便在浏览器窗口中打开该 URL。
+* *PHP Debugger Console（PHP 调试器控制台）。*打开显示已调试脚本输出的新 "Output"（输出）窗口。
+
+*注：*请设置  ``php.ini``  文件中的  ``output_buffering = Off`` 。否则，在 "Output"（输出）窗口中，将会延迟显示脚本输出。
+
+就本教程而言，您不需要更改任何这些设置，除非选择性地启用监视。
+
+
+[[work]]
+== 使用工具栏和编辑器
+
+可以使用编辑器来查看文件内容。因此，在进行调试时，编辑器以及调试器工具栏可为您提供在执行期间逐步执行代码的功能，以便查看文件内容如何影响在浏览器中执行的操作。
+
+* <<toolbar,使用调试器工具栏>>
+* <<editorBreakpoints,设置断点>>
+* <<editorTooltips,检查工具提示>>
+
+
+=== 使用调试器工具栏
+
+在运行调试会话时，将在编辑器上方显示调试器工具栏。
+
+image::images/debugger-toolbar2.png[title="处于挂起状态的调试器工具栏"]
+
+工具栏提供了以下操作：
+
+|===
+|*完成会话* (image::images/finish-session-button.png[]) |完成调试会话 
+
+|*暂停* (image::images/pause-button.png[]) |挂起调试会话 
+
+|*恢复* (image::images/resume-button.png[]) |继续调试会话 
+
+|*步过* (image::images/step-over-button.png[]) |越过执行语句 
+
+|*步入* (image::images/step-into-button.png[]) |步入函数调用 
+
+|*步出* (image::images/step-out-button.png[]) |步出当前函数调用 
+
+|*运行至光标位置* (image::images/run-to-cursor-button.png[]) |运行至光标位置 
+|===
+
+ 
+
+
+=== 设置断点
+
+在文件中设置断点，以便在执行期间通知调试器停止的位置。
+
+*重要提示：*您_必须_在 PHP 代码中设置断点才能使用 XDebug。
+
+要设置断点，请在编辑器中单击要设置断点的行的左旁注处。
+
+image::images/set-breakpoint.png[title="可在编辑器中设置断点"]
+
+可以通过单击断点标记 (image::images/breakpoint-badge.png[]) 删除断点。
+
+此外，还可以暂时禁用断点。要执行此操作，请右键单击断点标记，然后取消选中 "Breakpoint"（断点）> "✔Enabled"（✔启用）。这会将断点切换为禁用状态，从而导致一个灰色标记 (image::images/disabled-breakpoint-badge.png[]) 显示在左旁注中。
+
+如果调试器在执行时遇到断点，它将在断点处停止，以便您在调试窗口中检查变量，然后逐步执行断点后面的任何代码。
+
+image::images/stop-on-breakpoint.png[title="调试器在断点处挂起"] 
+
+
+=== 检查工具提示
+
+在调试会话期间挂起调试器时，可以在编辑器中将鼠标悬停在 PHP 标识符上以显示工具提示。如果该标识符在选定调用堆栈框架中有效，则会显示其值。此外，还可以选择 PHP 表达式。该表达式的值将显示在工具提示中。
+
+image::images/tool-tip.png[title="工具提示显示在编辑器中"]
+
+
+== 调试器窗口
+
+启动调试会话时，将在主编辑器窗口下打开一组调试器窗口。在调试器窗口中，可以在逐步执行代码时跟踪变量和表达式值，检查执行线程的调用堆栈，验证源 URL 以及在会话之间切换（如果正在运行并发调试会话）。
+
+* <<sessions,"Sessions"（会话）窗口>>
+* <<localVar,"Variables"（变量）窗口>>
+* <<watches,"Watches"（监视）窗口>>
+* <<callStack,"Call Stack"（调用堆栈）窗口>>
+* <<threads,"Threads"（线程）窗口>>
+* <<sources,"Sources"（源）窗口>>
+* <<breakpoints,"Breakpoints"（断点）窗口>>
+
+可以从 IDE 的 "Window"（窗口）> "Debugging"（调试）菜单中访问所有调试器窗口。在调试会话处于活动状态后，便可以开始使用调试器窗口。
+
+image::images/debugger-menu.png[title="从 IDE 主菜单访问的调试器菜单"]
+
+
+=== "Sessions"（会话）窗口
+
+"Sessions"（会话）窗口显示当前处于活动状态的所有调试会话。在启动 PHP 调试会话时，可以在 "Sessions"（会话）窗口中看到 PHP 调试器条目。
+
+image::images/sessions-win.png[]
+
+NetBeans IDE 还允许同时运行多个调试器会话。例如，可以同时调试 Java 和 PHP 项目。在这种情况下，可以标识在 "Sessions"（会话）窗口中列出的两个会话。
+
+image::images/sessions-win2.png[]
+
+当前会话（即您可使用调试器工具栏控制的会话）由更为醒目的图标 (image::images/current-session-icon.png[]) 指示。要切换会话，您可以双击要激活的会话，或者右键单击非当前会话，然后选择“激活”。
+
+*注：*如果挂起了当前所在的会话，建议您不要切换会话。
+
+您还可以使用右键单击弹出式窗口终止会话（单击鼠标右键，然后选择 "Finish"（完成）），或者在调试会话中的当前线程或调试所有线程之间切换（单击鼠标右键，然后选择 "Scope"（范围）> "Debug All Threads"（调试所有线程）或 "Debug Current Thread"（调试当前线程））。
+
+
+=== "Variables"（变量）窗口
+
+在挂起调试器后，"Variables"（变量）窗口将显示选定调用堆栈框架的当前 `window` 对象的变量。在当前窗口中，将显示每个变量的节点。超全局变量按单独的节点进行分组。
+
+image::images/vars-win.png[]
+
+ 
+
+在逐步执行代码时，某些局部变量的值可能会发生变化。此类局部变量以粗体显示在 "Local Variables"（局部变量）窗口中。您也可以直接单击 "Values"（值）列并手动更改变量值。
+
+
+=== "Watches"（监视）窗口
+
+设置监视会导致 XDebug 不稳定，因此不建议这样做。默认情况下，将禁用监视。不过，如果要设置监视，请参见<<usingAdditionalWatches,使用其他监视>>。
+
+
+=== "Call Stack"（调用堆栈）窗口
+
+"Call Stack"（调用堆栈）窗口列出了在执行期间进行的调用序列。在挂起调试器时，"Call Stack"（调用堆栈）窗口将显示函数调用序列（即_调用堆栈_）。在初次暂停时，将会自动选择最顶部的堆栈框架。在该窗口中双击函数调用，即可在编辑器中转至该行。如果对 PHP 类进行调用，则在双击该调用时，"Navigator"（导航器）窗口也将转至该行。
+
+image::images/call-stack-win.png[]
+
+可以双击某个调用堆栈框架将其选中，然后在 <<localVar,"Variables"（变量）>>和 <<watches,"Watches"（监视）>>窗口中查看该框架的任何变量或表达式值。
+
+
+=== "Threads"（线程）窗口
+
+"Threads"（线程）窗口中会指出哪个 PHP 脚本当前处于活动状态，以及是在断点处挂起还是处于运行状态。如果该脚本处于运行状态，则需要转至浏览器窗口，并与该脚本进行交互。
+
+image::images/threads-win.png[] 
+
+
+=== "Sources"（源）窗口
+
+"Sources"（源）窗口显示为调试会话加载的所有文件和脚本。对于 PHP 项目，"Sources"（源）窗口当前不起作用。
+
+
+=== "Breakpoints"（断点）窗口
+
+可以使用 "Breakpoints"（断点）窗口来查看在 IDE 中设置的所有断点。
+
+image::images/breakpoints-win.png[]
+
+通过 "Breakpoints"（断点）窗口，可以在 "Context"（上下文）窗口中启用或禁用断点。此外，还可以创建断点组。
+
+
+== 调试会话
+
+以下过程是典型调试会话的工作流。
+
+*运行调试会话：*
+
+1. 启动 IDE，然后打开包含要调试的源代码的文件。
+2. 在要暂停调试器的每行设置断点。要设置断点，请将光标放在行首，然后按 Ctrl-F8/⌘-F8 组合键，或者选择 "Debug"（调试）> "Toggle Line Breakpoint"（开启/关闭行断点）。
+3. 在 "Projects"（项目）窗口中，导航至当前项目节点，单击鼠标右键，然后从弹出式菜单中选择 "Debug"（调试）。IDE 将打开调试器窗口并在调试器中运行该项目，直至到达断点为止。
+*注：*如果当前项目设置为“主项目”，您可以选择“调试”>“调试主项目”，按 Ctrl-F5，或单击 image::images/debug-main-project-button.png[]。
+4. 切换至 "Local Variables"（局部变量）窗口。该窗口显示当前函数中已初始化的所有变量及其类型和值。
+5. 要查看该函数外部的变量值，请将光标置于此变量出现的某个位置上。工具提示会显示变量值。
+6. 要逐行（包括所有被调用函数中的行）执行程序，请按 F7 键或选择 "Debug"（调试）> "Step Into"（步入），然后在 "Local Variables"（局部变量）窗口中监视这些变量值的更改。
+7. 要通过监视表达式的更改来检查程序逻辑，请定义一个新监视：
+1. 要打开 "Watches"（监视）窗口，请选择 "Window"（窗口）> "Debugging"（调试）> "Watches"（监视），或者按 Ctrl-Shift-2 组合键。"Watches"（监视）窗口打开。
+2. 在 "Watches"（监视）窗口中的任意位置单击鼠标右键，然后从弹出式菜单中选择 "New Watch"（新建监视）。"New Watch"（新建监视）窗口打开。
+3. 输入监视表达式，然后单击 "OK"（确定）。
+
+现在，您便可以在调试过程中进行其他检查。
+
+*重要提示：*您必须在 <<options,PHP "Options"（选项）的 "Debugging"（调试）标签>>中启用监视才能设置监视。
+
+8. 要取消对某个函数中代码的逐行执行操作并跳至该函数调用后的下一行，请按 Ctrl-F7/⌘-F7 组合键或选择 "Debug"（调试）> "Step Out"（步出）。
+9. 要跳过对某个函数中代码的逐行执行操作，获取该函数返回的值，并跳至该函数调用后的下一行，请按 F8 键或选择 "Debug"（调试）> "Step Over"（步过）。
+10. 要暂停调试会话，请选择 "Debug"（调试）> "Pause"（暂停）。
+11. 要继续调试会话，请选择 "Debug"（调试）> "Continue"（继续）或按 image::images/continue-debugging-session.png[]。
+12. 要取消调试会话，请按 image::images/stop-debugging-session.png[]。
+13. 
+在程序结束时，调试器窗口会关闭。
+
+
+== 样例调试会话
+
+本部分中的样例说明了基本的调试器函数，包括步入和步过函数。此外，还显示了典型的调试器窗口输出。
+
+1. 使用以下参数创建新的 PHP 项目：
+* 项目类型 - PHP 应用程序
+* 源位置 -  ``htdocs``  文件夹的默认位置
+* 运行配置 - "Local Web Site"（本地 Web 站点）
+有关设置 PHP 项目的更多详细信息，请参见link:project-setup.html[+设置 PHP 项目+]文档。
+2. 要在会话过程中使用热键，请将光标置于项目节点上，然后从弹出式菜单中选择 "Set as Main Project"（设置为主项目）。
+3. 在  ``index.php``  文件中，输入以下代码：
+
+[source,php]
+----
+
+  <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>NetBeans PHP debugging sample</title></head><body><?php$m=5;$n=10;$sum_of_factorials = calculate_sum_of_factorials ($m, $n);echo "The sum of factorials of the entered integers is " . $sum_of_factorials;function calculate_sum_of_factorials ($argument1, $argument2) {$factorial1 = calculate_factorial ($argument1);$factorial2 = calculate_factorial ($argument2);$result = calculate_sum ($factorial1, $factorial2);return $result;}function calculate_factorial ($argument) {$factorial_result = 1;for ($i=1; $i<=$argument; $i++) {$factorial_result = $factorial_result*$i;}return $factorial_result;}function calculate_sum ($argument1, $argument2) {return $argument1 + $argument2;}	?></body></html>
+----
+该代码包含三个函数：
+*  ``calculate_factorial ()``  函数
+*  ``calcualte_sum ()``  函数
+*  ``calculate_sum_of_factorials ()``  函数，该函数调用  ``calculate_factorial ()``  函数两次，再调用  ``calcualte_sum ()``  函数一次，然后返回计算的阶乘和。
+4. 在 PHP 块的开头设置一个断点（Ctrl-F8/⌘-F8 组合键）：
+
+[source,php]
+----
+
+<?php
+----
+5. 要开始调试，请单击 image::images/debug-main-project-button.png[]。调试器将在断点处停止。
+6. 按 F7 键三次。调试器将在调用函数  ``calculate_sum_of_factorials ()``  的行上停止。"Local Variables"（局部变量）窗口会显示变量  ``$m``  和  ``$n``  以及它们的值：
+image::images/degugger-stopped-at-function-call.png[]
+7. 要步入函数  ``calculate_sum_of_factorials ()`` ，请按 F7 键。调试器开始执行函数  ``calculate_sum_of_factorials ()``  中的代码，然后在函数  ``calculate_factorial ()``  的调用处停止。
+image::images/call-of-embedded-function.png[] 
+现在，"Local Variables"（局部变量）窗口将显示函数  ``calculate_sum_of_factorials ()``  中声明的局部变量  ``$argument1``  和  ``$argument2`` 。 
+image::images/variables-inside-function-call-another-function.png[]
+8. 按 F7 键。调试器开始执行函数  ``calculate_factorial ()``  中的代码。"Call Stack"（调用堆栈）窗口将按倒序显示函数的调用堆栈，最后调用的函数位于列表顶部： 
+image::images/call-stack.png[]
+9. 按 F7 键步入循环。在 "Variables"（变量）窗口中查看变量值。 
+image::images/local-variables-inside-loop.png[]
+10. 如果您确定代码运行正常，请按 Ctrl-F7/⌘-F7 组合键，以取消函数执行。程序将在调用函数  ``calculate_factorial ()``  后返回至下一行。
+*注：*您也可以按 F7 键，直到程序执行完函数  ``calculate_factorial ()``  为止。您也会在调用该函数后返回至下一行。 
+image::images/call-of-embedded-function-second-time.png[]
+11. 由于您刚检查了函数  ``calculate_factorial ()`` ，并且确定其运行正常，因此可以跳过对该函数的再次执行操作（“步过”）。要越过该函数，请按 F8 键。程序将在函数  ``calculate_sum ()``  的调用处停止。 
+image::images/cal-of-embedded-function-calculate-sum.png[]
+12. 要步入函数  ``calculate_sum ()`` ，请按 F7 键。
+13. 要越过该函数，请按 F8 键。对于任何一种情况，调试器都会在函数  ``calculate_sum_of_factorials ()``  的最后一行停止。
+image::images/return-result.png[]
+14. 按 F7 键。调试器将移到  ``echo``  语句所在的行上。
+15. 按 F7 键，直到调试器退出程序为止。将打开浏览器窗口并显示程序执行的结果：
+image::images/program-output.png[]
+
+
+== 使用其他监视
+
+可以定义其他监视表达式来跟踪程序的执行。这有助于捕获错误。
+
+*警告：*设置其他监视会导致 XDebug 不稳定。默认情况下，将禁用监视，请参见<<options,调试选项>>。
+
+1. 按如下所示更新代码（将加号替换为减号）：
+
+[source,java]
+----
+
+function calculate_sum ($argument1, $argument2) {return $argument1 - argument2;}
+----
+假定运算符的改变是由于拼写错误造成的，而实际上您需要计算和。
+2. 选择 "Debug"（调试）> "New Watch"（新建监视），或者按 Ctrl/⌘-shift-F7 组合键。"New Watch"（新建监视）窗口打开。
+3. 输入以下表达式，然后单击 "OK"（确定）。
+
+[source,java]
+----
+
+$factorial1+$factorial2
+----
+"Watches"（监视）窗口中将显示新表达式。
+4. 运行调试会话。当调试器在以下行停止时
+
+[source,java]
+----
+
+return $result;
+----
+将 "Watches"（监视）窗口中表达式的值与 "Local Variables"（局部变量）窗口中 $result 的值进行比较。它们应该相同，但在此示例中不同。 
+image::images/watches.png[]
+此示例非常简单，它为您提供了使用监视的一些基本概念。
+
+
+== PHP 和 HTML 混合用例
+
+您可以调试同时包含 PHP 块和 HTML 块的代码。在<<sampleDebuggingSession,样例调试会话>>部分的示例中，对值进行了固定编码。现在，将通过用于输入值的 HTML 输入窗体来扩展该代码。
+
+1. 将以下 HTML 代码添加到 <?php ?> 块下键入或粘贴以下代码：
+
+[source,xml]
+----
+
+ <form action="index.php" method="POST">Enter the first integer, please:<input type="text" name="first_integer"/><br/>Enter the second integer, please:<input type="text" name="second_integer"/><br/><input type="submit" name="enter" value="Enter"/></form>
+----
+
+有关详细信息，请参见 link:wish-list-lesson2.html#htmlForm[+HTML 输入窗体+]。
+
+2. 替换 <?php ?> 块下键入或粘贴以下代码：
+
+[source,java]
+----
+
+$m=5;$n=10;$sum_of_factorials = calculate_sum_of_factorials ($m, $n);echo "The sum of factorials of the entered integers is " . $sum_of_factorials;
+----
+替换为以下代码：
+
+[source,java]
+----
+
+if (array_key_exists ("first_integer", $_POST) &amp;&amp; array_key_exists ("second_integer", $_POST)) {$result = calculate_sum_of_factorials ($_POST["first_integer"], $_POST["second_integer"]);echo "Sum of factorials is " . $result;}
+----
+3. 在 <?php ?> 块的开头设置断点，然后启动<<debuggingSession,调试会话>>。
+4. 按 F7 键。调试器将步入程序。同时，会打开浏览器窗口，但不显示输入窗体。这是调试器的正确行为，因为它必须首先通过 Web 页的整个源代码，然后才能显示该页面。实际上，这意味着调试器通过了两次代码。第一次是调试器处理代码以显示 HTML 输入窗体。第二次是调试器逐步执行 PHP 代码。
+5. 按 F7 键，直到调试器到达程序末尾并且打开输入窗体为止。
+6. 填写该窗体，然后单击 Enter 键。将继续调试会话（如<<sampleDebuggingSession,样例调试会话>>部分中所述）。
+
+
+== [[路径映射、调试器代理以及在定制 URL 上启动调试会话]] 
+
+可以调试脚本和 Web 页，还可以在本地或远程调试 Web 页。遗憾的是，对于远程调试，在远程服务器上调试的 PHP 文件与在本地计算机上运行的 NetBeans IDE 中打开的文件并不相同。因此，NetBeans 中的调试器支持必须能够将服务器路径映射到本地路径。然而，由于存在诸多复杂因素，无法针对各种情况自动解决路径映射问题。因此，从 NetBeans 6.7 开始，您可以通过link:https://netbeans.org/kb/docs/php/project-setup.html[+项目设置+]针对各个运行配置手动定义路径映射。此外，还可以指定代理服务器（如果有），以及在其上启动调试会话的 URL。如果未指定此 URL，则将从索引文件开始执行调试。
+
+*设置路径映射并启用定制调试 URL：*
+
+1. 在 "Projects"（项目）窗口中右键单击项目节点，然后从上下文菜单中打开项目的 "Properties"（属性）。
+2. 在 "Project Properties"（项目属性）对话框中，转至 "Run Configuration"（运行配置）类别。
+3. 单击 "Advanced"（高级）按钮。"Advanced Web Configuration"（高级 Web 配置）对话框打开。
+4. 添加要进行路径映射的服务器路径和项目路径。
+5. 在 "Debug URL"（调试 URL）下，选中以下一个选项（不要将默认值保留为选中状态）： 
+
+* "Ask Every Time"（每次都询问）：让 IDE 提示您在启动调试会话时输入 URL。
+* "Do Not Open Web Browser"（不打开 Web 浏览器）：需要您手动打开浏览器并输入 URL（您需要 GET/POST XDEBUG_SESSION_START 变量）。
+6. 使用代理服务器进行调试时，请在 "Debugger Proxy"（调试器代理）类别中输入该服务器的主机名和端口。
+
+有关详细信息，请参见 "NetBeans for PHP"(NetBeans PHP) 博客中的 link:http://blogs.oracle.com/netbeansphp/entry/path_mapping_in_php_debugger[+Path Mapping in PHP Debugger+]（使用 PHP 调试器进行路径映射）的帖子。
+
+
+link:/about/contact_form.html?to=3&subject=Feedback:%20Debugging%20PHP[+发送有关此教程的反馈意见+]
+
+
+要发送意见和建议、获得支持以及随时了解 NetBeans IDE PHP 开发功能的最新开发情况，请link:../../../community/lists/top.html[+加入 users@php.netbeans.org 邮件列表+]。
+
+link:../../trails/php.html[+返回至 PHP 学习资源+]
+

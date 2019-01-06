@@ -1,0 +1,405 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= 应用 @Alternative Bean 和生命周期标注
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: 应用 @Alternative Bean 和生命周期标注 - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, 应用 @Alternative Bean 和生命周期标注
+
+_撰稿人：Andy Gibson_
+
+
+=== 上下文和依赖关系注入
+
+1. link:cdi-intro.html[+CDI 和 JSF 2.0 入门指南+]
+2. link:cdi-inject.html[+使用 CDI 中的注入和限定符+]
+3. *应用 @Alternative Bean 和生命周期标注*
+* <<alternative,处理多个部署>>
+* <<lifecycle,将生命周期标注应用于受管 Bean>>
+* <<seealso,另请参见>>
+4. link:cdi-events.html[+使用 CDI 中的事件+]
+
+image::images/netbeans-stamp-80-74-73.png[title="此页上的内容适用于 NetBeans IDE 7.2、7.3、7.4 和 8.0"]
+
+link:http://jcp.org/en/jsr/detail?id=299[+JSR-299+] 指定的上下文和依赖关系注入 (CDI) 是 Java EE 6 的一个组成部分，提供了一个体系结构，以允许 Java EE 组件（例如 Servlet、企业 Bean 和 JavaBeans）在具有明确定义范围的应用程序生命周期内存在。此外，CDI 服务允许 Java EE 组件（例如 EJB 会话 Bean 和 JavaServer Faces (JSF) 受管 Bean）注入并通过触发和观察事件以松散耦合的方式进行交互。
+
+本教程基于 Andy Gibson 发布的博客，标题为：link:http://www.andygibson.net/blog/index.php/2009/12/22/getting-started-with-cdi-part-2-injection/[+CDI 入门指南，第 2 部分 - 注入+]。本教程演示如何使用 `@Alternative` 标注配置应用程序用于不同的部署，还将演示如何使用受管 Bean 生命周期标注（例如，`@PostConstruct` 和 `@PreDestroy`）将 CDI 注入和 link:http://jcp.org/en/jsr/detail?id=316[+Java EE 6 受管 Bean 规范+]提供的功能结合起来。
+
+NetBeans IDE 为上下文和依赖关系注入提供了内置支持，包括在项目创建时构建 `beans.xml` CDI 配置文件的选项，为标注提供的编辑器和导航支持，以及用于创建常用 CDI 工件的各种向导。
+
+
+要学完本教程，您需要具备以下软件和资源。
+
+|===
+|软件或资源 |要求的版本 
+
+|link:https://netbeans.org/downloads/index.html[+NetBeans IDE+] |7.2、7.3、7.4、8.0、Java EE 版本 
+
+|link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+Java 开发工具包 (JDK)+] |版本 7 或 8 
+
+|link:http://glassfish.dev.java.net/[+GlassFish Server+] |Open Source Edition 3.x 或 4.x 
+
+|link:https://netbeans.org/projects/samples/downloads/download/Samples%252FJavaEE%252FcdiDemo2.zip[+cdiDemo2.zip+] |N/A 
+|===
+
+*注：*
+
+* NetBeans IDE Java 包中还含 GlassFish Server Open Source Edition，后者是与 Java EE 兼容的容器。
+* 可以下载本教程的解决方案样例项目：link:https://netbeans.org/projects/samples/downloads/download/Samples%252FJavaEE%252FcdiDemo3.zip[+cdiDemo3.zip+]
+
+
+
+[[alternative]]
+== 处理多个部署
+
+CDI 提供 `@Alternative` 标注，通过该标注可以包含与注入点匹配的多个 Bean 而不会出现多义性错误。换句话说，可以将 `@Alternative` 标注应用至两个或多个 Bean，然后，根据部署指定要在 CDI 的 `beans.xml` 配置文件中使用的 Bean。
+
+为演示此情况，请参见下面的方案。我们将 `ItemValidator` 注入 `ItemProcessor` 主类。`ItemValidator` 由 `DefaultItemValidator` 和 `RelaxedItemValidator` 实现。根据部署要求，在大多数情况下我们会使用 `DefaultItemValidator`，但在特定部署中，还需要 `RelaxedItemValidator`。为解决此问题，我们对两个 Bean 添加标注，然后通过向应用程序的 `beans.xml` 文件添加条目，指定给定部署要使用的 Bean。
+
+image::images/cdi-diagram-alternative.png[title="在应用程序中使用 CDI 注入对类进行松散耦合"]
+
+1. 首先，从 `cdiDemo2.zip` 文件提取样例启动项目（请参见上面的<<requiredSoftware,所需资源列表>>）。在 IDE 中打开项目，方法是选择 "File"（文件）> "Open Project"（打开项目）（Ctrl-Shift-O 组合键；在 Mac 上为 ⌘-Shift-O 组合键），然后从计算机上的相应位置选择该项目。
+2. 右键单击“项目”窗口中的项目节点，然后选择“属性”。
+3. 选择 "Run"（运行）类别，并确认在 "Server"（服务器）下拉列表中选定 GlassFish 实例。
+4. 创建 `ItemValidator` 接口。
+
+单击 "New File"（新建文件）(image::images/new-file-btn.png[]) 按钮，或者按 Ctrl-N 组合键（在 Mac 上为 ⌘-N 组合键）以打开文件向导。
+5. 选择 "Java" 类别，然后选择 "Java Interface"（Java 接口）。单击 "Next"（下一步）。
+6. 键入 *ItemValidator* 作为类名，然后输入 *exercise3* 作为包。
+7. 单击 "Finish"（完成）。将会生成新接口并在编辑器中将其打开。
+8. 添加名为 `isValid()` 的方法，以提取 `Item` 对象并返回 `boolean` 值。
+
+[source,java]
+----
+
+public interface ItemValidator {
+    *boolean isValid(Item item);*
+}
+----
+（使用编辑器的提示为 `exercise2.Item` 添加 import 语句。）
+9. 扩展 `ItemProcessor` 类以包含新功能。在编辑器中打开 `ItemProcessor`，并进行以下更改。
+
+[source,java]
+----
+
+@Named
+@RequestScoped
+public class ItemProcessor {
+
+    @Inject @Demo
+    private ItemDao itemDao;
+
+    *@Inject
+    private ItemValidator itemValidator;*
+
+    public void execute() {
+      List<Item>  items = itemDao.fetchItems();
+      for (Item item : items) {
+          System.out.println(*"Item = " + item + " valid = " + itemValidator.isValid(item)*);
+      }
+    }
+}
+----
+
+使用编辑器的提示为 `exercise3.ItemValidator` 添加 import 语句。
+
+10. 创建一个 `ItemValidator` 实现，名为 `DefaultItemValidator`，该实现根据值简单地对 limit 进行测试。
+
+在 "Projects"（项目）窗口中，右键单击 `exercise3` 包，并选择 "New"（新建）> "Java Class"（Java 类）。将该类命名为 *DefaultItemValidator*，然后单击 "Finish"（完成）。
+
+11. 让 `DefaultItemValidator` 实现 `ItemValidator` 并覆盖 `isValid()` 方法，如下所示。
+
+[source,java]
+----
+
+public class DefaultItemValidator *implements ItemValidator* {
+
+    *@Override
+    public boolean isValid(Item item) {
+        return item.getValue() < item.getLimit();
+    }*
+}
+----
+
+（使用编辑器的提示为 `exercise2.Item` 添加 import 语句。）
+
+12. 在 IDE 的主工具栏中单击 "Run Project"（运行项目）(image::images/run-project-btn.png[]) 按钮。编译该项目并将其部署到 GlassFish，然后在浏览器中打开应用程序的欢迎页 (`process.xhtml`)。
+13. 单击页面上显示的 `Execute` 按钮。切换回 IDE 并检查 GlassFish Server 日志。服务器日志会显示在 "Output"（输出）窗口（Ctrl-4 组合键；在 Mac 上为 ⌘-4 组合键）中 "GlassFish" 标签的下方。然后会看到验证项，并列出唯一一个值小于 limit 的有效项。
+
+[source,java]
+----
+
+INFO: Item = exercise2.Item@e857ac [Value=34, Limit=7] valid = false
+INFO: Item = exercise2.Item@63124f52 [Value=4, Limit=37] valid = true
+INFO: Item = exercise2.Item@4715c34e [Value=24, Limit=19] valid = false
+INFO: Item = exercise2.Item@65c95a57 [Value=89, Limit=32] valid = false
+----
+image::images/output-window.png[title="在 "Output"（输出）窗口中查看服务器日志"]
+14. 现在，请考虑以下情况，假定您必须部署到另一个更松散的站点，且仅当项值大于 limit 的两倍时，才将该项视为无效。您可能需要使用另一个 Bean 为该逻辑实现 `ItemValidator` 接口。
+
+创建一个新的 `ItemValidator` 实现，名为 `RelaxedItemValidator`。在 "Projects"（项目）窗口中，右键单击 `exercise3` 包，并选择 "New"（新建）> "Java Class"（Java 类）。将该类命名为 *RelaxedItemValidator*，然后单击 "Finish"（完成）。
+
+15. 让 `RelaxedItemValidator` 实现 `ItemValidator` 并覆盖 `isValid()` 方法，如下所示。
+
+[source,java]
+----
+
+public class RelaxedItemValidator *implements ItemValidator* {
+
+    *@Override
+    public boolean isValid(Item item) {
+        return item.getValue() < (item.getLimit() * 2);
+    }*
+}
+----
+
+（使用编辑器的提示为 `exercise2.Item` 添加 import 语句。）
+
+16. 单击 "Run Project"（运行项目）(image::images/run-project-btn.png[]) 按钮以运行项目。请注意，项目现在无法部署。
+17. 在 "Output"（输出）窗口（Ctrl-4 组合键；在 Mac 上为 ⌘-4 组合键）中查看服务器日志。您会看到一则错误消息，报告 "ambiguous dependency"（依赖关系不明确）问题。出现此错误的原因是，您现在有两个实现同一接口的类。
+
+[source,java]
+----
+
+org.glassfish.deployment.common.DeploymentException: Injection point has ambiguous dependencies.
+Injection point: field exercise2.ItemProcessor.itemValidator;
+Qualifiers: [@javax.enterprise.inject.Default()];
+Possible dependencies: [exercise3.RelaxedItemValidator, exercise3.DefaultItemValidator]
+----
+
+Weld（CDI 实现）无法确定对给定注入点使用 `RelaxedItemValidator` 还是使用 `DefaultItemValidator`。
+
+如前面所述，唯一的区别在于部署。对于大多数部署，需要使用默认验证器，但对于一个部署，需要使用 "relaxed" 实现。CDI 提供 `@Alternative` 标注，通过该标注可以包含与一个注入点匹配的多个 Bean 而不会出现多义性错误，且要使用的 Bean 在 `beans.xml` 中定义。这允许您在同一模块中部署这两个实现，唯一的差别在于 `beans.xml` 的定义，该定义可以根据不同的部署进行更改。
+
+18. 将 `@Alternative` 标注和相应的 import 语句添加至 `RelaxedItemValidator` 和 `DefaultItemValidator`。
+
+在编辑器中打开 `RelaxedItemValidator` 并进行以下更改。
+
+[source,java]
+----
+
+*import javax.enterprise.inject.Alternative;*
+...
+
+*@Alternative*
+public class RelaxedItemValidator implements ItemValidator {
+
+    public boolean isValid(Item item) {
+        return item.getValue() < (item.getLimit() * 2);
+    }
+}
+----
+
+键入 `Al`，然后按 Ctrl-空格组合键以调用代码完成。因为仅过滤了一个选项，将完成 `@Alternative` 标注，`javax.enterprise.inject.Alternative` 相应的 import 语句会自动添加到文件顶部。通常情况下，在标注上按 Ctrl-空格组合键还会提供 Javadoc 文档弹出窗口。
+
+image::images/code-completion-alternative.png[title="在标注时按 Ctrl-空格组合键可调用 Javadoc 文档"]
+
+切换至 `DefaultItemValidator`（按 Ctrl-Tab 组合键）并进行以下更改。
+
+
+[source,java]
+----
+
+*import javax.enterprise.inject.Alternative;*
+...
+
+*@Alternative*
+public class DefaultItemValidator implements ItemValidator {
+
+    public boolean isValid(Item item) {
+        return item.getValue() < item.getLimit();
+    }
+}
+----
+
+如果现在部署了应用程序，则会收到 "unsatisfied dependency"（不符合要求的依赖关系）错误，因为您定义了两个匹配的 Bean 作为替代项，但是没有在 `beans.xml` 文件中启用这两个文件中的任何一个。
+
+19. 使用 IDE 的 "Go to File"（转至文件）对话框快速打开 `beans.xml` 文件。从 IDE 的主菜单（Alt-Shift-O；在 Mac 上为 Ctrl-Shift-O）选择 "Navigate"（导航）> "Go to File"（转至文件），然后键入 "`beans`"。单击 "OK"（确定）。image::images/go-to-file.png[title="使用 "Go to File"（转至文件）对话框可快速找到项目文件"]
+20. 对 `beans.xml` 文件进行如下更改。
+
+[source,xml]
+----
+
+<beans xmlns="http://java.sun.com/xml/ns/javaee"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/beans_1_0.xsd">
+
+    *<alternatives>
+        <class>exercise3.RelaxedItemValidator</class>
+    </alternatives>*
+
+</beans>
+----
+
+这会通知 CDI 使用 `RelaxedItemValidator` 进行此部署。可以认为 `@Alternative` 标注有效禁用了 Bean，使其不能用于注入，但是允许该实现与其他 Bean 一起打包。在 `beans.xml` 文件中将其添加为替代项可有效地重新启用该 Bean，使其可用于注入。通过将此类型的元数据移动至 `beans.xml` 文件，可以将不同版本的文件与不同部署一起打包。
+
+21. 单击 "Run Project"（运行项目）(image::images/run-project-btn.png[]) 按钮以运行项目（或者，按 F6 键；在 Mac 上按 fn-F6 组合键）。在浏览器中，单击页面上显示的 "`Execute`" 按钮。切换回 IDE 并查看 "Output"（输出）窗口（Ctrl-4 组合键，在 Mac 上为 ⌘-4 组合键）中显示的 GlassFish Server 日志。
+
+[source,java]
+----
+
+INFO: Item = exercise2.Item@672f0924 [Value=34, Limit=7] valid = false
+INFO: Item = exercise2.Item@41014f68 [Value=4, Limit=37] valid = true
+INFO: Item = exercise2.Item@3d04562f [Value=24, Limit=19] valid = true
+INFO: Item = exercise2.Item@67b646f4 [Value=89, Limit=32] valid = false
+----
+
+您会看到，当第三项显示为有效而提供的值 (`24`) 大于给定 limit (`19`) 时，会使用 `RelaxedItemValidator` 实现。
+
+
+
+[[lifecycle]]
+== 将生命周期标注应用于受管 Bean
+
+在此示例中，将 `ItemErrorHandler` 注入到主 `ItemProcessor` 类。因为 `FileErrorReporter` 是 `ItemErrorHandler` 接口的唯一实现，所以会选中它作为接口。要为此类设置生命周期特定的操作，请从受管 Bean 规范（包含在 link:http://jcp.org/en/jsr/detail?id=316[+JSR 316：Java Platform, Enterprise Edition 6 规范+]）使用 `@PostConstruct` 和 `@PreDestroy` 标注。
+
+image::images/cdi-diagram-lifecycle.png[title="在应用程序中使用 CDI 注入对类进行松散耦合"]
+
+继续执行本示例，创建 `ItemErrorHandler` 接口以在发现无效的项时对其进行处理。
+
+1. 在 "Projects"（项目）窗口中，右键单击 `exercise3` 包，然后选择 "New"（新建）> "Java Interface"（Java 接口）。
+2. 在 Java 接口向导中，键入 *ItemErrorHandler* 作为类名，然后输入 *exercise3* 作为包。单击 "Finish"（完成）。
+
+将会生成新接口并在编辑器中将其打开。
+
+3. 添加名为 `handleItem()` 的方法，该方法将 `Item` 对象作为参数。
+
+[source,java]
+----
+
+public interface ItemErrorHandler {
+    *void handleItem(Item item);*
+}
+----
+
+（使用编辑器的提示为 `exercise2.Item` 添加 import 语句。）
+
+4. 首先，使用名为 `FileErrorReporter` 的伪处理程序（该程序将项详细信息保存至文件）实现 `ItemErrorHandler`。
+
+在 "Projects"（项目）窗口中，右键单击 `exercise3` 包，并选择 "New"（新建）> "Java Class"（Java 类）。将该类命名为 *FileErrorReporter*，然后单击 "Finish"（完成）。
+
+5. 让 `FileErrorReporter` 实现 `ItemErrorHandler` 并覆盖 `handleItem()` 方法，如下所示。
+
+[source,java]
+----
+
+public class FileErrorReporter *implements ItemErrorHandler* {
+
+    *@Override
+    public void handleItem(Item item) {
+        System.out.println("Saving " + item + " to file");
+    }*
+}
+----
+
+（使用编辑器的提示为 `exercise2.Item` 添加 import 语句。）
+
+您需要在开始处理项之前打开文件，并在向文件添加内容的过程中使其保持打开状态，然后在完成处理时关闭文件。您可以手动将 `initProcess()` 和 `finishProcess()` 方法添加到错误报告程序 Bean，但之后无法向接口添加代码，因为调用程序需要知道这些类特定的方法。您可以将以上这些方法添加到 `ItemErrorReporter` 接口，但之后必须在实现该接口的每个类中实现这些方法，这就产生了不必要的操作。不过，您可以使用受管 Bean 规范（link:http://jcp.org/en/jsr/detail?id=316[+JSR 316：Java 平台 Enterprise Edition 6 规范+]中包含）中的一些生命周期标注，在 Bean 生命周期中的某些时点对 Bean 调用方法。当已经构造了 Bean 且 Bean 的任何依赖关系都已注入时，则调用 `@PostConstruct` 标注的方法。同样，容器会在处理 Bean 之前调用 `@PreDestroy` 标注的方法。
+
+6. 添加以下带有相应 `@PostConstruct` 和 `@PreDestroy` 标注的 `init()` 和 `release()` 方法。
+
+[source,java]
+----
+
+public class FileErrorReporter implements ItemErrorHandler {
+
+    *@PostConstruct
+    public void init() {
+        System.out.println("Creating file error reporter");
+    }
+
+    @PreDestroy
+    public void release() {
+        System.out.println("Closing file error reporter");
+    }*
+
+    @Override
+    public void handleItem(Item item) {
+        System.out.println("Saving " + item + " to file");
+    }
+}
+----
+7. 修复导入。在编辑器中右键单击并选择 "Fix Imports"（修复导入），或者按 Ctrl-Shift-I 组合键（在 Mac 上按 ⌘-Shift-I 组合键）。`javax.annotation.PostConstruct` 和 `javax.annotation.PreDestroy` 的 Import 语句将添加到文件顶部。
+8. 最后，向 `ItemProcessor` 添加 `ItemErrorHandler` Bean。
+
+[source,java]
+----
+
+@Named
+@RequestScoped
+public class ItemProcessor {
+
+    @Inject @Demo
+    private ItemDao itemDao;
+
+    @Inject
+    private ItemValidator itemValidator;
+
+    *@Inject
+    private ItemErrorHandler itemErrorHandler;*
+
+    public void execute() {
+        List<Item>  items = itemDao.fetchItems();
+        for (Item item : items) {
+            *if (!itemValidator.isValid(item)) {
+                itemErrorHandler.handleItem(item);
+            }*
+        }
+    }
+}
+----
+
+（使用编辑器的提示为 `exercise3.ItemErrorHandler` 添加 import 语句。）
+
+9. 单击 "Run Project"（运行项目）(image::images/run-project-btn.png[]) 按钮以运行项目（或者，按 F6 键；在 Mac 上按 fn-F6 组合键）。在浏览器中，单击页面上显示的 "`Execute`" 按钮。切换回 IDE 并查看 "Output"（输出）窗口（Ctrl-4 组合键，在 Mac 上为 ⌘-4 组合键）中显示的 GlassFish Server 日志。
+
+[source,java]
+----
+
+INFO: Creating file error reporter
+INFO: Saving exercise2.Item@6257d812 [Value=34, Limit=7] to file
+INFO: Saving exercise2.Item@752ab82e [Value=89, Limit=32] to file
+INFO: Closing file error reporter
+----
+link:/about/contact_form.html?to=3&subject=Feedback:%20Using%20CDI%20Injection%20to%20Perform%20Custom%20Validation[+发送有关此教程的反馈意见+]
+
+
+
+[[seealso]]
+== 另请参见
+
+不同的应用程序部署会使用不同的规则来处理无效项，例如拒绝项、向个人发送通知、为其添加标记、或者仅在输出文件中列出它们。此外，我们可能需要结合使用这些项（例如，拒绝订单、向销售代表发送电子邮件以及在文件中列出订单）。处理此类多方面问题的一个最佳方式是使用_事件_。本系列最后一部分的主题是 CDI 事件：
+
+* link:cdi-events.html[+使用 CDI 中的事件+]
+
+有关 CDI 和 Java EE 的详细信息，请参见以下资源。
+
+* link:cdi-intro.html[+上下文和依赖关系注入以及 JSF 2.0 入门指南+]
+* link:cdi-inject.html[+使用 CDI 中的注入和限定符+]
+* link:javaee-gettingstarted.html[+Java EE 应用程序入门指南+]
+* link:http://blogs.oracle.com/enterprisetechtips/entry/using_cdi_and_dependency_injection[+企业技术提示：在 JSF 2.0 应用程序中使用面向 Java 的 CDI 和依赖关系注入+]
+* link:http://download.oracle.com/javaee/6/tutorial/doc/gjbnr.html[+Java EE 6 教程第五部分：面向 Java EE 平台的上下文和依赖关系注入+]
+* link:http://jcp.org/en/jsr/detail?id=299[+JSR 299：上下文和依赖关系注入规范+]
+* link:http://jcp.org/en/jsr/detail?id=316[+JSR 316：Java Platform、Enterprise Edition 6 规范+]

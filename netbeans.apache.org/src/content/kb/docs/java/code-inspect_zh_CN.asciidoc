@@ -1,0 +1,327 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= NetBeans IDE Java 编辑器中的静态代码分析
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: NetBeans IDE Java 编辑器中的静态代码分析 - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, NetBeans IDE Java 编辑器中的静态代码分析
+
+Jan Lahoda，Alyona Stashkova
+
+NetBeans IDE Java 编辑器具有静态代码分析功能，这是一种用于在源代码中查找潜在问题和检测不一致性的工具。
+
+在本教程中，您将学习如何使用 FindBugs 和 NetBeans Java 提示，无需实际运行应用程序即可执行 Java 代码静态分析。
+
+
+
+image::images/netbeans-stamp.png[title="此页上的内容适用于 NetBeans IDE 8.0"]
+
+
+
+== 要求
+
+*要学完本教程，您需要具备以下软件和资源。*
+
+|===
+|软件或资源 |要求的版本 
+
+|link:http://netbeans.org/downloads/index.html[+NetBeans IDE+] |版本 8.0 
+
+|link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+Java 开发工具包+] (JDK) |版本 7 及更高版本 
+
+|link:https://netbeans.org/projects/samples/downloads/download/Samples/Java/library.zip[+library.zip+] |NetBeans 项目 
+
+|link:http://repo1.maven.org/maven2/com/google/code/findbugs/jsr305/2.0.0/jsr305-2.0.0.jar[+jsr305-2.0.0.jar+] |旨在提高静态分析工具效率的 Java 规范请求 
+|===
+
+*注：*出于本教程的目的，将  ``jsr305-2.0.0.jar``  包括到  ``library.zip``  中。
+
+如果使用其他 NetBeans 项目，则 link:http://repo1.maven.org/maven2/com/google/code/findbugs/jsr305/2.0.0/jsr305-2.0.0.jar[+jsr305-2.0.0.jar+] 应下载并添加到 IDE 中项目的 "Libraries"（库）文件夹中，如下所示：
+
+1. 右键单击 "Libraries"（库）文件夹并从弹出菜单中选择 "Add JAR/Folder"（添加 JAR/文件夹）。
+2. 在 "Add JAR/Folder"（添加 JAR/文件夹）对话框中，指定下载的  ``jsr305-2.0.0.jar``  文件的路径，然后单击 "Open"（打开）。
+
+image::images/jar.png[]
+
+
+== 设置教程环境
+
+除了上面列出的必需软件以外，您还应在计算机上执行以下安装：
+
+* 应将 link:https://netbeans.org/projects/samples/downloads/download/Samples/Java/library.zip[+library.zip+] 文件解压缩到 NetBeans 项目文件夹中，然后在 NetBeans IDE 中打开。
+* FindBugs 插件应下载并安装到 NetBeans IDE 中，如下所示：
+1. 从 IDE 主菜单中选择 "Source"（源）> "Inspect"（检查）。
+2. 在 "Inspect"（检查）对话框中，单击 "Install"（安装）。
+
+image:::images/inspect-small.png[role="left", link="images/inspect.png"]
+
+3. 在 "Installer"（安装程序）对话框中，单击 "Next"（下一步）以继续安装。
+
+image:::images/plugin-small.png[role="left", link="images/plugin.png"]
+
+4. 查看许可证协议，选择许可证协议选项，然后单击 "Install"（安装）。
+5. 安装完成后，单击 "Finish"（完成）。
+
+
+== 使用预定义配置
+
+在 NetBeans IDE 中检查代码时，可以使用以下预定义配置：
+
+* <<all,所有分析器>>
+* <<hints,NetBeans Java 提示>>
+* <<fb,FindBugs>>
+* <<default,默认值>>
+
+
+=== 运行所有分析器
+
+ ``All Analyzers`` （所有分析器）配置将会部署 IDE 中所有可用的静态代码分析工具。
+
+*要运行  ``All Analyzers`` （所有分析器）配置，请完成以下步骤：*
+
+1. 从 IDE 工具栏中选择 "Source"（源）> "Inspect"（检查）。
+2. 在 "Inspect"（检查）对话框的 "Scope"（范围）下拉列表中，选择  ``Current Project (library)`` （当前项目 (库)）。
+3. 在 "Configuration"（配置）下拉列表中，选择  ``All Analyzers`` （所有分析器）配置。
+
+image:::images/allconfig-small.png[role="left", link="images/allconfig.png"]
+
+*注：*首次运行此配置时，需要安装 <<plugin,FindBugs>> 插件。
+
+4. 单击 "Inspect"（检查）。
+分析的结果以树视图显示在 "Inspector"（检查器）窗口的左侧。
+
+image:::images/all-small.png[role="left", link="images/all.png"]
+
+当前在树视图查找结果中选定的项的说明显示在右侧。
+
+image:::images/alldescription-small.png[role="left", link="images/alldescription.png"]
+
+*注：*如果希望将报告为有问题的部分代码保留原样，IDE 允许隐藏对此代码的警告，将代码保留原样而不做任何更改。在 "Inspector"（检查器）窗口的树视图中双击某个警告可转到源代码编辑器。按 Alt-Enter，单击所显示提示结尾指向右侧的黑色箭头，然后选择  ``SuppressWarning - _（警告名称）_`` 。
+
+image:::images/suppress-small.png[role="left", link="images/suppress.png"]
+
+
+=== 根据 NetBeans Java 提示验证 Java 代码
+
+使用 IDE 中提供的  ``NetBeans Java Hints`` （NetBeans Java 提示）配置可以验证所考虑的源代码是否满足预定义的编码标准规则。换而言之，它会将一组 NetBeans Java 提示（也称为代码检查）应用到 Java 源文件。
+
+*要运行  ``NetBeans Java Hints`` （NetBeans Java 提示）配置，请完成以下步骤：*
+
+1. 从 IDE 工具栏中选择 "Source"（源）> "Inspect"（检查）。
+2. 在 "Inspect"（检查）对话框的 "Scope"（范围）下拉列表中，选择  ``Open Projects`` （打开项目）（如果 IDE 中只打开了一个  ``library`` （库）项目）或者  ``Current Project (library)`` （当前项目 (库)）。
+
+*注：*可以为  ``NetBeans Java Hints`` （NetBeans Java 提示）配置定义范围（文件、包或项目）。
+
+3. 选择 "Configuration"（配置）单选按钮并在下拉列表中选择  ``NetBeans Java Hints`` （NetBeans Java 提示）。
+
+image:::images/hints-small.png[role="left", link="images/hints.png"]
+
+4. 单击 "Inspect"（检查）。
+IDE 显示树视图，使用  ``NetBeans Java Hints`` （NetBeans Java 提示）配置进行分析的结果显示在 "Inspector"（检查器）窗口中。
+
+image::images/hintsconfig.png[]
+
+5. 在 "Inspector"（检查器）窗口，在左侧的工具栏中单击 <<categorize,Categorize（分类）>>按钮可以按照类别分组查看问题。
+
+image::images/catview.png[]
+
+下表显示了可在 "Inspector"（检查器）窗口中使用的命令。
+|===
+
+|图标 |名称 |功能 
+
+|image::images/refreshbutton.png[] |*Refresh*（刷新） |显示静态分析结果的最新列表。 
+
+|image::images/upbutton.png[] |*Previous Problem*（上一个问题） |显示静态分析结果列表中的上一个问题。 
+
+|image::images/downbutton.png[] |*Next Problem*（下一个问题） |显示静态分析结果列表中的下一个问题。 
+
+|image::images/categorizebutton.png[] |
+*Categorize*（分类） |在文件、项目或包中检测到的问题的折叠视图与检测到的所有问题的分类视图之间切换。 
+|===
+
+
+=== 使用 Findbugs 在 Java 代码中查找潜在问题
+
+使用 IDE 中提供的  ``FindBugs``  配置可以查找代码中的各种潜在问题。它调用常见的开源 FindBugs 工具以执行 Java 中的代码分析。此时将生成错误报告，并显示在 NetBeans IDE 的 "Inspector"（检查器）窗口中，在其中可以对所有发现的问题分类，并允许直接从报告中的错误导航到可疑的代码。您还可以在旁边的窗口中查看错误说明，或者在 link:http://findbugs.sourceforge.net/bugDescriptions.html[+FindBugs Bug Descriptions+]（FindBugs 错误说明）页中使用在左侧框架顶部提供的指针来查看。
+
+*注：*首次运行此配置时，需要安装 <<plugin,FindBugs>> 插件。
+
+*要使用  ``FindBugs``  配置确定 Java 代码中的潜在错误，请完成以下步骤：*
+
+1. 在 NetBeans IDE 中打开  ``library`` （库）项目，然后从主工具栏中选择 "Source"（源）> "Inspect"（检查）。
+2. 在 "Inspect"（检查）对话框的 "Scope"（范围）下拉列表中，选择  ``Current Project (library)`` （当前项目 (库)）。
+
+*注：*可以使用  ``FindBugs``  配置检查文件、包或项目。
+
+3. 在 "Inspect"（检查）对话框中，选择  ``FindBugs``  配置。
+
+image:::images/fb-small.png[role="left", link="images/fb.png"]
+
+4. 单击 "Inspect"（检查）按钮可启动静态代码分析。
+静态代码分析的结果显示在源代码编辑器下的 "Inspector"（检查器）窗口中。
+所选错误的说明将显示在右侧框架中。
+
+image:::images/inspector-small.png[role="left", link="images/inspector.png"]
+
+5. 此外，在左侧的工具栏中单击 <<categorize,Categorize>>（分类）按钮可以按照类别分组查看错误。
+
+image::images/fbcat.png[]
+
+*注：*
+
+* 如果在展开的列表中双击某个问题，则 IDE 将在源代码编辑器中显示报告的问题。
+按 Alt-Enter 可查看源代码中的错误说明。
+
+image:::images/source-editor-small.png[role="left", link="images/source-editor.png"]
+
+* 在源代码编辑器的左侧旁注使用感叹号图标 (image::images/exclamation.png[]) 突出显示代码中的潜在问题。
+
+*要在 Java 编辑器中启用 FindBugs，请完成以下步骤：*
+
+1. 在 IDE 主工具栏中选择 "Tools"（工具）> "Options"（选项）。
+2. 依次选择 "Editor"（编辑器）标签和 "Hints"（提示）。
+3. 在 "Language"（语言）下拉列表中选择  ``FindBugs`` 。
+
+image:::images/fb-editor-small.png[role="left", link="images/fb-editor.png"]
+
+4. 在 "Editor"（编辑器）选项中选择 "Run FindBugs"（运行 FindBugs）。
+5. 单击 "OK"（确定）。
+现在，如果在源代码中报告了错误的位置按 Alt-Enter，并单击所显示提示结尾的指向右侧的黑色箭头，则 IDE 将针对潜在错误显示一些修复选项。
+
+image:::images/fbenabled-small.png[role="left", link="images/fbenabled.png"]
+
+
+=== 定制默认配置
+
+在处理代码时，可能需要定制包含自己的 NetBeans Java 提示或 FindBugs 错误的预定义配置。
+
+*要根据自身需求定制预定义的  ``Default`` （默认）配置，请完成以下步骤：*
+
+1. 从 IDE 工具栏中选择 "Source"（源）> "Inspect"（检查）。
+2. 在 "Inspect"（检查）对话框中，选择 "Configuration"（配置）单选按钮，然后选择  ``Default`` （默认）配置。
+3. 单击 "Manage"（管理）。
+IDE 将显示 "Configurations"（配置）对话框。
+
+image::images/configurations-db.png[]
+
+4. 确保在 "Configurations"（配置）下拉列表中选择了  ``Default`` （默认）。
+5. 在 "Analyzer"（分析器）下拉列表中，选择  ``JRE 8 Profiles Conformance`` （JRE 8 配置文件一致性）、 ``Netbeans Java Hints`` （NetBeans Java 提示）或  ``FindBugs``  分析器。
+6. 根据在上一步选择的分析器，选择要验证的配置文件、需要在  ``Default`` （默认）配置中包含的检查或错误。
+
+image:::images/select-inspections-small.png[role="left", link="images/select-inspections.png"]
+
+7. 单击 "OK"（确定）可保存  ``Default`` （默认）配置。
+
+
+== 创建和删除配置
+
+可以创建和删除在 Java 代码静态分析中使用的自己的配置。
+
+*要创建配置，请完成以下步骤：*
+
+1. 从 IDE 工具栏中选择 "Source"（源）> "Inspect"（检查）。
+2. 在 "Inspect"（检查）对话框中，选择 "Configuration"（配置）单选按钮，然后选择  ``Default`` （默认）配置。
+3. 单击 "Manage"（管理）。
+4. 在 "Configurations"（配置）对话框中，单击 "Configurations"（配置）下拉列表结尾的黑色箭头，然后选择 "New"（新建）。
+
+image::images/newconfig.png[]
+
+此时将创建  ``newConfig``  配置并将其添加到 "Configurations"（配置）下拉列表中。
+
+image::images/newconfig-created.png[]
+
+5. 在 "Analyzer"（分析器）下拉列表中，选择  ``JRE 8 Profiles Conformance`` （JRE 8 配置文件一致性）、 ``Netbeans Java Hints`` （NetBeans Java 提示）或  ``FindBugs`` 。
+6. 指定要包括到您自己的配置中的配置文件、检查或错误。
+7. 单击 "OK"（确定）保存所做编辑并关闭 "Configurations"（配置）对话框。
+此时所创建的  ``newConfig``  配置在 "Inspect"（检查）对话框的 "Configuration"（配置）下拉列表中可用。
+
+image:::images/newconfig-inspect-small.png[role="left", link="images/newconfig-inspect.png"]
+
+*注：*要重命名配置，请在 "Configurations"（配置）下拉列表中选择  ``newConfig``  配置，单击 "Configurations"（配置）下拉列表结尾的黑色箭头，然后选择 "Rename"（重命名）。键入新名称（例如， ``renamedConfig`` ）并按 Enter 以保存所做的编辑。
+
+image::images/renamedconfig.png[]
+
+*要删除配置，请完成以下步骤：*
+
+1. 从 IDE 工具栏中选择 "Source"（源）> "Inspect"（检查）。
+2. 在 "Inspect"（检查）对话框中，选择 "Configuration"（配置）单选按钮，然后选择要删除的配置（在本例中为  ``renamedConfig`` ）。
+3. 单击 "Manage"（管理）。
+4. 在 "Configurations"（配置）对话框中，单击 "Configurations"（配置）下拉列表结尾的黑色箭头，然后选择 "Delete"（删除）。
+
+image::images/delete.png[]
+
+5. 在 "Delete Configuration"（删除配置）对话框中，单击 "Yes"（是）以确认删除配置。
+
+image::images/delete-confirm.png[]
+
+ ``renamedConfig``  配置将从 "Configurations"（配置）列表中删除。
+
+*注：*有关如何创建提供一个或多个 NetBeans Java 提示的 NetBeans 模块的信息，请参见 link:http://platform.netbeans.org/tutorials/nbm-java-hint.html[+NetBeans Java 提示模块教程+]。
+
+
+== 运行单个检查
+
+使用 NetBeans IDE 中的静态代码分析功能可以检查源代码中的特定缺陷。
+
+*要通过单个检查来检测 Java 源代码中的特定不一致性或问题，请完成以下步骤：*
+
+1. 从 IDE 主菜单中选择 "Source"（源）> "Inspect"（检查）。
+2. 在 "Inspect"（检查）对话框的 "Scope"（范围）下拉列表中，选择要检查的文件、包或项目。
+3. 选择 "Single Inspection"（单个检查）并执行以下操作之一：
+* 在 "Single Inspection"（单个检查）下拉列表中，滚动并选择在源代码分析中使用的_单个_ NetBeans Java 提示或 FindBugs 错误。
+
+image:::images/single-inspection-small.png[role="left", link="images/single-inspection.png"]
+
+* 单击 "Browse"（浏览）以打开 "Configurations"（配置）对话框，在 "Analyzer"（分析器）下拉列表中指定分析器，然后选择要在源代码分析中使用的配置文件（对于 JRE 8 配置文件相容性分析器）、_单个_检查（对于 NetBeans Java 提示分析器）或_单个_错误（对于 FindBugs 分析器）。单击 "OK"（确定）以关闭 "Configurations"（配置）对话框。
+
+image:::images/hint-inspection-small.png[role="left", link="images/hint-inspection.png"]
+
+4. 在 "Inspect"（检查）对话框中，单击 "Inspect"（检查）以执行源代码分析。
+检查操作完成后，将在源代码编辑器下的 "Inspector"（检查器）窗口中显示可应用于找到的代码或错误的提示。
+
+
+== 小结
+
+本教程介绍了 NetBeans IDE 中静态代码分析功能最常见的用法。请注意，通过静态代码分析功能，您还可以对项目作用域执行定制重构，或者对 IDE 中打开的多个项目应用特定的重构配置等。
+
+<<top,返回页首>>
+
+link:/about/contact_form.html?to=3&subject=Feedback:%20Static%20Code%20Analysis%20in%20NetBeans%20IDE[+发送有关此教程的反馈意见+]
+
+
+
+== 另请参见
+
+相关资料请参见以下文档：
+
+* link:code-inspect-screencast.html[+NetBeans IDE 中静态代码分析功能的视频+]
+* link:http://wiki.netbeans.org/Java_Hints[+NetBeans Java 提示的完整列表+]
+* link:http://wiki.netbeans.org/JavaDeclarativeHintsDescriptionSketch[+NetBeans Java 声明提示的说明+]
+* link:http://platform.netbeans.org/tutorials/nbm-java-hint.html[+NetBeans Java 提示模块教程+]
+* _使用 NetBeans IDE 开发应用程序_中的link:http://www.oracle.com/pls/topic/lookup?ctx=nb8000&id=NBDAG613[+在源代码分析和重构中使用提示+]
+
+<<top,返回页首>>
+

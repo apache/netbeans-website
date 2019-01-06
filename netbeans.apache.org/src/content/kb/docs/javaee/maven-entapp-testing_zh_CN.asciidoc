@@ -1,0 +1,423 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= 测试 Maven 企业应用程序
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: 测试 Maven 企业应用程序 - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, 测试 Maven 企业应用程序
+
+本教程说明了如何使用 NetBeans IDE 和 Maven 原型测试简单的企业应用程序。在本教程中，将创建包含实体类和会话 Bean 的企业应用程序。您将使用向导为 Bean 类创建一个简单的测试类，然后在 IDE 中运行测试。测试类将用于创建 GlassFish 嵌入式 EJB 容器的实例，以测试与数据库的连接。
+
+*注：*如果您使用的是 GlassFish 3.1.x，请参见link:../../73/javaee/maven-entapp-testing.html[+使用嵌入式 GlassFish Server 3.1 测试 Maven 企业应用程序+]
+
+*教程练习*
+
+image::images/netbeans-stamp-80-74.png[title="此页上的内容适用于 NetBeans IDE 7.4 和 8.0"]
+
+* <<intro,在 IDE 中使用 Maven>>
+* <<Exercise_1,创建企业应用程序>>
+* <<Exercise_1a,创建 Web 项目>>
+* <<Exercise_1b,创建实体类>>
+* <<Exercise_1c,创建会话 Bean>>
+* <<Exercise_2,创建会话 Bean 测试>>
+
+*要学习本教程，您需要具备以下软件和资源。*
+
+|===
+|软件或资源 |要求的版本 
+
+|link:https://netbeans.org/downloads/index.html[+NetBeans IDE+] |7.4、8.0、Java EE 包 
+
+|link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+Java 开发工具包 (JDK)+] |版本 7 或 8 
+
+|GlassFish Server Open Source Edition |4.0 
+|===
+
+*注：*下载的 Java EE 包中附带了 GlassFish Server 的安装程序。在 NetBeans IDE 的安装过程中，您可以安装和注册 GlassFish。
+
+*先决条件*
+
+本文档假定您具备以下技术的一些基本知识或编程经验：
+
+* Java 编程
+* NetBeans IDE
+
+在开始本教程之前，您可以先阅读下面这些文档。
+
+* link:http://wiki.netbeans.org/MavenBestPractices[+NetBeans IDE 中的 Apache Maven 最佳做法+]
+* link:http://books.sonatype.com/mvnref-book/reference/introduction.html[+Chapter 1. Introducing Apache Maven+]（第 1 章. Apache Maven 简介，来自 link:http://books.sonatype.com/mvnref-book/reference/index.html[+Maven: The Complete Reference+]（Maven：完整参考））
+
+
+== 在 IDE 中使用 Maven
+
+NetBeans IDE 中完全集成了 Maven 支持。开发使用 Maven 框架的项目几乎与在 Ant 中开发项目完全相同。不过，Maven 构建项目和使用依赖关系的方式有一些区别。如果是第一次创建 Maven 应用程序，以下提示可帮助您避免某些问题。
+
+*检查 Maven 设置*
+
+如果这是您首次创建 Maven 项目，则需要在“选项”窗口中检查 Maven 配置设置。要学完本教程，您的本地系统中必须安装有 Maven。Maven 与 IDE 捆绑在一起，并随同 IDE 一起安装。
+
+1. 在 IDE 中打开“选项”窗口（“工具”>“选项”；在 Mac 上为 "NetBeans" >“首选项”）。
+2. 在“选项”窗口中选择 "Java" 类别，然后单击 "Maven" 标签。
+
+您可以使用与 IDE 捆绑在一起的 Maven 版本，也可以指定 Maven 在本地的安装位置（要求为 2.0.9 或更高版本）。
+
+4. 选择“确定”以关闭“选项”窗口。
+
+*注：*在 IDE 中启用 Java 后，会自动启用 Maven 支持。您将需要启用 Java EE 插件（如果尚未启用）。
+
+*更新 Maven 资源库*
+
+本地和远程 Maven 资源库可用于代码完成以及构建项目。应更新 Maven 远程资源库索引，以确保在开发项目时可方便地使用所需的任何工件。可以在“选项”窗口的 "Maven" 标签中配置 IDE 检查更新的频率。您可以执行即时更新检查，并在“服务”窗口中浏览本地和远程 Maven 资源库。
+
+1. 选择“窗口”>“服务”以打开“服务”窗口。
+2. 在“服务”窗口中展开“Maven 资源库”节点。
+3. 右键单击资源库节点并在弹出式菜单中选择“更新索引”。
+
+在单击“更新索引”时，IDE 将检查并下载每个 Maven 远程资源库的最新索引。索引表示位于资源库中的工件的当前状态，并用于提供对可用于应用程序的工件的引用。默认情况下，在明确需要工件之前，IDE 不会从资源库中下载该工件。
+
+*注：*
+
+* 索引非常大，因此可能需要一些时间才能全部更新。
+
+有关在 NetBeans IDE 中使用 Maven 的更多详细信息，请参见link:https://netbeans.org/kb/docs/java/maven-hib-java-se.html[+使用 Hibernate 创建 Maven Swing 应用程序+]教程中的link:https://netbeans.org/kb/docs/java/maven-hib-java-se.html#02[+配置 Maven+] 部分以及 link:http://wiki.netbeans.org/MavenBestPractices[+NetBeans IDE 中的 Apache Maven 最佳做法+]。
+
+
+== 创建企业应用程序
+
+在本部分中，将创建一个简单的 Web 应用程序，其中包含实体类以及用于访问该实体类的会话 Bean。
+
+
+=== 创建 Web 项目
+
+在本练习中，将使用 "New Project"（新建项目）向导，通过 Maven 原型创建 Java EE Web 应用程序。使用该向导创建项目时，可将 GlassFish Server 指定为目标服务器。
+
+1. 从主菜单中选择 "File"（文件）> "New Project"（新建项目）（Ctrl-Shift-N 组合键；在 Mac 上为 ⌘-Shift-N 组合键），以打开新建项目向导。
+2. 在 "Maven" 类别中选择 "Web Application"（Web 应用程序）。单击 "Next"（下一步）。
+3. 将项目命名为 *mavenwebtestapp* 并设置项目位置。单击 "Next"（下一步）。
+4. 在 "Server"（服务器）下拉列表中选择 "GlassFish Server"。
+5. 在 "Java EE Version"（Java EE 版本）下拉列表中选择 "Java EE 6 Web" 或 "Java EE 7 Web"。单击 "Finish"（完成）。
+
+在单击 "Finish"（完成）后，IDE 将创建 Web 应用程序，并在 "Projects"（项目）窗口中打开该项目。
+
+image::images/maven-testing-projects.png[title="显示已生成项目的 &quot;Projects&quot;（项目）窗口"]
+
+如果在 "Projects"（项目）窗口中展开项目节点，则可以看到  ``javaee-web-api``  JAR 作为项目依赖关系列出，而 JDK 作为 Java 依赖关系列出。IDE 生成了项目 POM ( ``pom.xml`` )，并将该文件列在 "Project Files"（项目文件）节点的下方。
+
+
+=== 创建实体类
+
+在本练习中，将使用新建文件向导创建实体类。创建实体类时，将在该向导中选择  ``jdbc/sample``  数据源。您不需要创建或注册新的数据源，因为  ``jdbc/sample``  数据源已在安装服务器时进行了注册。
+
+*注：*如果要创建新数据源或使用其他数据源，则必须先在服务器上注册该数据源，然后再使用嵌入的容器测试应用程序。使用嵌入的容器测试应用程序时，IDE 将不会为您注册数据源，因为在部署到 GlassFish Server 实例时，它已对该数据源进行了注册。
+
+1. 右键单击项目节点，然后选择 "New"（新建）> "Entity Class"（实体类）。
+
+此外，也可以从主菜单中选择 "File"（文件）> "New File"（新建文件）（Ctrl-N 组合键；在 Mac 上为 ⌘-N 组合键），然后在 "Persistence"（持久性）类别中选择 "Entity Class"（实体类）。
+
+2. 键入 *MyEntity* 作为类名。
+3. 选择  ``com.mycompany.mavenwebtestapp``  作为包，并将 "Primary Key Type"（主键类型）设置为 * ``int`` *。
+4. 确认选中了 "Create Persistence Unit"（创建持久性单元）。单击 "Next"（下一步）。
+5. 在 "Data Source"（数据源）下拉列表中选择 *jdbc/sample*。
+6. 确认选中了 "Use Java Transaction APIs"（使用 Java 事务 API），然后选择 "Drop and Create"（删除并创建）作为 "Table Generation Strategy"（表生成策略）。单击 "Finish"（完成）。
+image::images/maven-testing-pu.png[title="显示已生成项目的 &quot;Projects&quot;（项目）窗口"]
+
+在单击 "Finish"（完成）后，IDE 将生成 MyEntity 类，并在源代码编辑器中打开该类。IDE 将添加  ``eclipselink`` 、 ``javax.persistence``  和  ``org.eclipse.persistence.jpa.modelgen.processor``  工件作为项目依赖关系。
+
+7. 在源代码编辑器中，将私有字段  ``name``  添加到类中。
+
+[source,java]
+----
+
+private String name;
+----
+8. 在编辑器中右键单击，然后从 "Insert Code"（插入代码）弹出式菜单（Alt-Insert 组合键；在 Mac 上为 Ctrl-I 组合键）中选择 "Getter and Setter"（Getter 和 Setter），以便为  ``name``  字段生成 getter 和 setter。
+9. 添加以下构造函数。
+
+[source,java]
+----
+
+public MyEntity(int id) {
+    this.id = id;
+    name = "Entity number " + id + " created at " + new Date();
+}
+----
+10. 添加以下  ``@NamedQueries``  和  ``@NamedQuery``  标注（以粗体显示），以创建命名 SQL 查询，用于在 MyEntity 表中查找所有记录。
+
+[source,java]
+----
+
+@Entity
+*@NamedQueries({
+    @NamedQuery(name = "MyEntity.findAll", query = "select e from MyEntity e")})*
+public class MyEntity implements Serializable {
+----
+
+11. 单击类声明旁边左旁注中的提示，然后选择 *Create default constructor*（创建默认的构造函数）提示。
+image::images/maven-testing-createconstructor.png[title="显示已生成项目的 &quot;Projects&quot;（项目）窗口"]
+12. 修复 import 语句（Ctrl-Shift-I 组合键；在 Mac 上为 ⌘-Shift-I 组合键），以便为  ``javax.persistence.NamedQuery`` 、 ``javax.persistence.NamedQueries``  和  ``java.util.Date``  添加 import 语句。保存所做的更改。 
+
+
+=== 创建会话 Bean
+
+在本练习中，将使用向导为  ``MyEntity``  实体类创建会话 Facade。在使用向导生成 Facade 时，IDE 还将生成抽象 Facade，其中包含一些访问实体类时常用的方法，如  ``create``  和  ``find`` 。然后，将两个方法添加到 Facade 中。
+
+1. 右键单击项目节点，然后选择 "New"（新建）> "Other"（其他）。
+
+此外，也可以从主菜单中选择 "File"（文件）> "New File"（新建文件）（Ctrl-N 组合键；在 Mac 上为 ⌘-N 组合键），以打开新建文件向导。
+
+2. 在 "Enterprise JavaBeans" 类别中，选择 "Session Beans For Entity Classes"（实体类的会话 Bean）。单击 "Next"（下一步）。
+3. 从 "Available Entity Classes"（可用的实体类）列表中选择  ``MyEntity``  类，然后单击 "Add"（添加）。单击 "Next"（下一步）。
+4. 使用该向导的 "Generated Session Beans"（生成的会话 Bean）面板中的默认属性。单击 "Finish"（完成）。
+
+在单击 "Finish"（完成）后，IDE 将在  ``com.mycompany.mavenwebtestapp``  包中生成  ``AbstractFacade.java``  和  ``MyEntityFacade.java`` ，并在源编辑器中打开这些类。
+
+在源代码编辑器中，可以看到 IDE 为  ``EntityManager``  生成了代码，并添加了  ``@PersistenceContext``  标注，以指定持久性单元。
+
+
+[source,java]
+----
+
+@Stateless
+public class MyEntityFacade extends AbstractFacade<MyEntity> {
+    @PersistenceContext(unitName = "com.mycompany_mavenwebtestapp_war_1.0-SNAPSHOTPU")
+    private EntityManager em;
+
+    @Override
+    protected EntityManager getEntityManager() {
+        return em;
+    }
+
+    public MyEntityFacade() {
+        super(MyEntity.class);
+    }
+    
+}
+----
+5. 将以下方法添加到  ``MyEntityFacade.java``  中。
+
+[source,java]
+----
+
+    @PermitAll
+    public int verify() {
+        String result = null;
+        Query q = em.createNamedQuery("MyEntity.findAll");
+        Collection entities = q.getResultList();
+        int s = entities.size();
+        for (Object o : entities) {
+            MyEntity se = (MyEntity) o;
+            System.out.println("Found: " + se.getName());
+        }
+
+        return s;
+    }
+
+    @PermitAll
+    public void insert(int num) {
+        for (int i = 1; i <= num; i++) {
+            System.out.println("Inserting # " + i);
+            MyEntity e = new MyEntity(i);
+            em.persist(e);
+        }
+    }
+----
+6. 修复导入以添加所需的 import 语句。保存所做的更改。 
+image::images/maven-testing-fiximports.png[title="显示已生成项目的 &quot;Projects&quot;（项目）窗口"]
+
+*注：*请确认 "Fix All Imports"（修复所有导入）对话框中的 * ``javax.persistence.Query`` * 处于选中状态。
+
+
+== 创建会话 Bean 测试
+
+在本部分中，将为  ``MyEntityFacade``  会话 Facade 创建 JUnit 测试类。IDE 将为 Facade 类中的每个方法以及抽象 Facade 中的每个方法生成框架测试方法。您需要标注为抽象 Facade 中的方法生成的测试方法，以指示 IDE 和 JUnit 测试运行器将其忽略。然后，您需要修改已添加到  ``MyEntityFacade``  中的  ``verify``  方法的测试方法。
+
+在生成的测试中，将会看到 IDE 自动添加用于调用  ``EJBContainer``  以创建 EJB 容器实例的代码。
+
+1. 在 "Projects"（项目）窗口中右键单击  ``MyEntityFacade.java`` ，然后选择 "Tools"（工具）> "Create Tests"（创建测试）。
+2. 从 "Framework"（框架）下拉列表中选择测试框架
+3. 使用 "Create Tests"（创建测试）对话框中的默认选项。单击 "OK"（确定）。
+
+*注：*首次创建 JUnit 测试时，您需要指定 JUnit 框架的版本。选择 JUnit 4.x 作为 JUnit 版本并单击 "Select"（选择）。
+
+默认情况下，IDE 将生成框架测试类，其中包含  ``MyEntityFacade``  和  ``AbstractFacade``  中每个方法的测试。IDE 自动将 JUnit 4.10 的依赖关系添加到 POM 中。
+
+4. 使用  ``@Ignore``  标注对每个测试方法（ ``testVerify``  除外）进行标注。运行测试时，IDE 将跳过使用  ``@Ignore``  标注的每个测试。
+
+此外，也可以删除所有测试方法，但  ``testVerify``  除外。
+
+5. 找到测试类中的  ``testVerify``  测试方法。
+
+您可以看到该测试包含调用  ``EJBContainer``  的一行。
+
+
+[source,java]
+----
+
+    @Test
+    public void testVerify() throws Exception {
+        System.out.println("verify");
+        EJBContainer container = javax.ejb.embeddable.EJBContainer.createEJBContainer();
+        MyEntityFacade instance = (MyEntityFacade)container.getContext().lookup("java:global/classes/MyEntityFacade");
+        int expResult = 0;
+        int result = instance.verify();
+        assertEquals(expResult, result);
+        container.close();
+        // TODO review the generated test code and remove the default call to fail.
+        fail("The test case is a prototype.");
+    }
+----
+6. 对  ``testVerify``  测试方法的框架进行以下更改（以粗体显示）。
+
+[source,java]
+----
+
+@Test
+public void testVerify() throws Exception {
+    System.out.println("verify");
+    EJBContainer container = javax.ejb.embeddable.EJBContainer.createEJBContainer();
+    MyEntityFacade instance = (MyEntityFacade)container.getContext().lookup("java:global/classes/MyEntityFacade");
+    *System.out.println("Inserting entities...");
+    instance.insert(5);*
+    int result = instance.verify();
+    *System.out.println("JPA call returned: " + result);
+    System.out.println("Done calling EJB");
+    Assert.assertTrue("Unexpected number of entities", (result == 5));*
+    container.close();
+}
+----
+7. 修复 import 语句以添加  ``junit.framework.Assert`` 。保存所做的更改。
+
+现在，您需要修改 POM 以添加位于 GlassFish Server 本地安装中的  ``<glassfish.embedded-static-shell.jar>``  的依赖关系。
+
+8. 在编辑器中打开  ``pom.xml``  并找到  ``<properties>``  元素。
+
+[source,xml]
+----
+
+    <properties>
+        <endorsed.dir>${project.build.directory}/endorsed</endorsed.dir>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+                
+----
+9. 编辑  ``<properties>``  元素以添加  ``<glassfish.embedded-static-shell.jar>``  元素（*粗体*），后者指定本地 GlassFish 安装中的 JAR 位置。然后，将在工件的依赖关系中引用此属性。
+
+[source,xml]
+----
+
+    <properties>
+        <endorsed.dir>${project.build.directory}/endorsed</endorsed.dir>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        *<glassfish.embedded-static-shell.jar>_<INSTALLATION_PATH>_/glassfish-4.0/glassfish/lib/embedded/glassfish-embedded-static-shell.jar</glassfish.embedded-static-shell.jar>*
+
+    </properties>
+                
+----
+
+*注：*  ``_<INSTALLATION_PATH>_``  是本地 GlassFish 安装的绝对路径。如果该本地安装路径发生变化，则需要修改 POM 中的此元素。
+
+10. 在 "Projects"（项目）窗口中右键单击 "Dependencies"（依赖关系）节点，然后选择 "Add Dependency"（添加依赖关系）。
+11. 在 "Add Dependency"（添加依赖关系）对话框的 "Query"（查询）文本字段中，键入 *embedded-static-shell*。
+12. 在搜索结果中找到 4.0 JAR，然后单击 "Add"（添加）。
+image::images/add-shell-dependency.png[title="&quot;Test Results&quot;（测试结果）窗口"]
+
+单击 "Add"（添加）时，IDE 会将依赖关系添加到 POM 中。
+
+您现在需要修改 POM 以将 GlassFish 的本地安装指定为 JAR 的源。
+
+13. 找到 POM 中的依赖关系并进行以下更改（*粗体*），以将元素修改为引用您添加的  ``<glassfish.embedded-static-shell.jar>``  属性并指定  ``<scope>`` 。保存所做的更改。
+
+[source,xml]
+----
+
+        <dependency>
+            <groupId>org.glassfish.main.extras</groupId>
+            <artifactId>glassfish-embedded-static-shell</artifactId>
+            <version>4.0</version>
+            *<scope>system</scope>
+            <systemPath>${glassfish.embedded-static-shell.jar}</systemPath>*
+        </dependency>
+                
+----
+14. 在 "Services"（服务）窗口中，右键单击 "GlassFish Server" 节点并选择 "Start"（启动）。
+
+当启动 GlassFish Server 时，还会启动 JavaDB 数据库服务器。
+
+15. 在 "Projects"（项目）窗口中，右键单击项目节点，然后选择 "Test"（测试）。
+
+在选择 "Test"（测试）时，IDE 将构建应用程序，并运行构建生命周期的测试阶段。单元测试将使用 Surefire 插件执行，该插件支持运行 JUnit 4.x 测试。有关 Surefire 插件的更多信息，请参见 link:http://maven.apache.org/plugins/maven-surefire-plugin/[+http://maven.apache.org/plugins/maven-surefire-plugin/+]。
+
+您可以在 "Test Results"（测试结果）窗口中查看测试结果。通过从主菜单中选择 "Window"（窗口）> "Output"（输出）> "Test Results"（测试结果），可以打开 "Test Results"（测试结果）窗口。
+
+image::images/maven-test-results.png[title="&quot;Test Results&quot;（测试结果）窗口"]
+
+在 "Test Results"（测试结果）窗口中，可以单击 "Show Passed"（显示通过的测试）图标 (image::images/test-ok_16.png[title="&quot;Show Passed&quot;（显示通过的测试）图标"]) 显示通过的所有测试的列表。在本示例中，可以看到通过了九项测试。如果在 "Output"（输出）窗口中查看，则可以看到只运行了一项测试，而其他八项测试都被跳过。跳过的测试包含在 "Test Results"（测试结果）窗口中的通过的测试列表中。
+
+
+[source,java]
+----
+
+Running com.mycompany.mavenwebtestapp.MyEntityFacadeTest
+verify
+...
+Inserting entities...
+Inserting # 1
+Inserting # 2
+Inserting # 3
+Inserting # 4
+Inserting # 5
+Found: Entity number 2 created at Wed Oct 09 19:06:59 CEST 2013
+Found: Entity number 4 created at Wed Oct 09 19:06:59 CEST 2013
+Found: Entity number 3 created at Wed Oct 09 19:06:59 CEST 2013
+Found: Entity number 1 created at Wed Oct 09 19:06:59 CEST 2013
+Found: Entity number 5 created at Wed Oct 09 19:06:59 CEST 2013
+JPA call returned: 5
+Done calling EJB
+...
+
+Results :
+
+Tests run: 9, Failures: 0, Errors: 0, Skipped: 8
+
+----
+
+
+link:/about/contact_form.html?to=3&subject=Feedback:%20Creating%20an%20Enterprise%20Application%20Using%20Maven[+发送有关此教程的反馈意见+]
+
+
+
+== 另请参见
+
+有关使用 NetBeans IDE 开发 Java EE 应用程序的更多信息，请参见以下资源：
+
+* link:javaee-intro.html[+Java EE 技术简介+]
+* link:javaee-gettingstarted.html[+Java EE 应用程序入门指南+]
+* link:maven-entapp.html[+使用 Maven 创建企业应用程序+]
+* link:../../trails/java-ee.html[+Java EE 和 Java Web 学习资源+]
+
+您可以在 link:http://download.oracle.com/javaee/6/tutorial/doc/[+Java EE 6 教程+]中找到有关使用 企业 Bean 的详细信息。
+
+要发送意见和建议、获得支持以及随时了解 NetBeans IDE Java EE 开发功能的最新开发情况，请link:../../../community/lists/top.html[+加入 nbj2ee 邮件列表+]。
+

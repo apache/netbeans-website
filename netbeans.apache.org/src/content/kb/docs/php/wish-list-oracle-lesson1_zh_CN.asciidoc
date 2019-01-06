@@ -1,0 +1,241 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= 使用 PHP 创建数据库驱动的应用程序
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: 使用 PHP 创建数据库驱动的应用程序 - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, 使用 PHP 创建数据库驱动的应用程序
+
+= 第 1b 课：创建 Oracle 数据库表
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: 第 1b 课：创建 Oracle 数据库表 - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, 第 1b 课：创建 Oracle 数据库表
+
+
+
+1. link:wish-list-tutorial-main-page.html[+使用 PHP 创建 CRUD 应用程序 - 主页+]
+2. 
+创建数据库
+
+1. link:wish-list-lesson1.html[+创建 MySQL 数据库+]
+2. 
+*=> 创建 Oracle 数据库表*
+
+3. link:wish-list-lesson2.html[+设计应用程序。从数据库读取数据+]
+4. link:wish-list-lesson3.html[+创建新的应用程序用户+]
+5. link:wish-list-lesson4.html[+优化代码+]
+6. link:wish-list-lesson5.html[+添加安全功能。实现应用程序用户登录+]
+7. link:wish-list-lesson6.html[+在数据库中添加新的愿望+]
+8. link:wish-list-lesson7.html[+更新和删除数据库中的条目+]
+9. link:wish-list-lesson8.html[+使用 CSS 技术改进应用程序的外观+]
+10. link:wish-list-lesson9.html[+将应用程序部署到远程 Web 服务器+]
+
+image::images/netbeans-stamp-80-74-73.png[title="此页上的内容适用于 NetBeans IDE 7.2、7.3、7.4 和 8.0"]
+
+本课程介绍在开发愿望列表应用程序时的最后一个预备步骤，即，使用测试数据创建样例数据库。要完成本教程中的步骤，您需要创建一个数据库以存储许愿者的数据。使用 NetBeans IDE，您可以通过 IDE 界面执行所有这些活动。
+开始之前，请参见link:wish-list-tutorial-main-page.html[+使用 PHP 创建 CRUD 应用程序 - 主页+]中介绍的教程要求。
+
+当前文档是“在适用于 PHP 的 NetBeans IDE 中创建 CRUD 应用程序”教程的一部分。
+
+
+
+== 创建数据库用户
+
+在此过程中，先创建一个用户，然后以该用户身份创建表。
+
+可以通过以下方法创建一个用户：使用 Oracle 的工具，或者将 NetBeans IDE 连接到数据库并使用 IDE 的 SQL 编辑器。NetBeans 7.0 目前仅提供 Beta 或开发版本，可以改进到 Oracle 数据库的连接。要了解如何将 NetBeans IDE 连接到 Oracle 数据库以及如何在数据库中创建用户，请参见link:../ide/oracle-db.html[+连接到 Oracle 数据库+]教程。
+
+通过使用所选的工具，创建以下用户：
+
+|===
+|用户名 |phpuser 
+
+|Password |phpuserpw 
+
+|系统权限 |CREATE TABLE 
+
+|CREATE VIEW 
+
+|CREATE SEQUENCE 
+
+|CREATE TRIGGER 
+
+|角色 (Oracle Database 10.x) |CONNECT 
+
+|RESOURCE 
+|===
+
+下面是一组用于创建该用户的示例 SQL 命令。这些命令假定数据库具有 USERS 和 TEMP 表空间。
+
+
+[source,java]
+----
+
+drop user phpuser cascade;create user phpuser identified by phpuserpw;grant connect, resource to phpuser;alter user phpuser default tablespace users temporary tablespace temp account unlock; 
+----
+
+
+== 设计样例数据库的结构
+
+要排列和存储所有必需数据，您需要使用两个表：
+
+* 一个是 wishers 表，用于存储注册用户的名称和口令
+* 一个是 wishes 表，用于存储愿望说明
+
+image::images/wishlist-db.png[]
+
+wishers 表包含三个字段：
+
+1. id - 许愿者的唯一 ID。该字段用作主键
+2. name
+3. password
+
+wishes 表包含四个字段：
+
+1. id - 愿望的唯一 ID。该字段用作主键
+2. wisher_id - 愿望所属的许愿者的 ID。该字段用作外键。
+3. description
+4. due_date - 请求愿望时的日期
+
+这些表通过许愿者的 ID 相关联。除了 wishes 表中的 due_date 以外，所有字段都是必填的。
+
+
+== 创建 Oracle 数据库方案
+
+1. 以创建的用户身份登录到数据库。
+
+如果通过 NetBeans IDE 进行连接，请使用新用户的名字和口令创建一个连接。确保选择的方案具有与用户相同的名称。（请参见“连接到 Oracle 数据库”教程的link:../ide/oracle-db.html#connect[+建立到 Oracle DB 的连接+]部分。）
+
+2. 要创建 wishers 表，请运行以下 SQL 查询：
+
+[source,java]
+----
+
+create table wishers (id number not null,name varchar2(50) unique not null,password varchar2(50) not null,constraint wishers_pk primary key(id));
+----
+3. 要创建 wishes 表，请运行以下 SQL 查询。请注意，将创建一个外键，使愿望与许愿者相关联。
+
+[source,java]
+----
+
+create table wishes (id number not null,wisher_id number not null,description varchar2(255) not null,due_date date,constraint wishes_pk primary key(id),constraint wishes_fk1 foreign key(wisher_id) references wishers(id));
+----
+4. 验证是否将新表添加到数据库中。如果使用 NetBeans IDE 连接到数据库，请转至 "Services"（服务）窗口中的 jdbc:oracle:thin:@localhost:1521:XE [PHPUSER 上的 phpuser] 连接节点。将在 "Tables"（表）节点中列出新表。（如果未显示这些表，请右键单击连接，然后选择 "Refresh"（刷新）。） 
+image::images/tables-in-services-window.png[]
+
+注：您可以在link:https://netbeans.org/projects/www/downloads/download/php%252FSQL-files-for-Oracle.zip[+此处+]下载一组 SQL 命令以创建 Oracle 数据库表。
+
+
+== 添加序列和触发器以增加 ID 值
+
+在使用 Oracle 数据库时，您必须指定一个序列以增加值。要在表中添加新成员时增加值，请添加一个触发器。
+
+1. 要为 wishers 表添加序列，请运行以下 SQL 命令：
+
+[source,java]
+----
+
+create sequence wishers_id_seq start with 1 increment by 1;
+----
+2. 要在添加新的许愿者时在 wishers 表的 ID 列上触发序列，请运行以下 SQL 命令：
+
+[source,java]
+----
+
+create or replace trigger wishers_insertbefore insert on wishersfor each rowbeginselect wishers_id_seq.nextval into :new.id from dual;end;/
+----
+3. 为 wishes 表添加一个序列。
+
+[source,java]
+----
+
+create sequence wishes_id_seq start with 1 increment by 1;
+----
+4. 添加一个触发器，以便在添加新的愿望时在 wishes 表的 ID 列上运行序列。
+
+[source,java]
+----
+
+create or replace trigger wishes_insertbefore insert on wishesfor each rowbeginselect wishes_id_seq.nextval into :new.id from dual;end;/
+----
+
+注：您可以在link:https://netbeans.org/projects/www/downloads/download/php%252FSQL-files-for-Oracle.zip[+此处+]下载一组 SQL 命令以创建 Oracle 数据库表。
+
+
+== 输入测试数据
+
+要测试应用程序，您需要使用数据库中的某些数据。下面的示例说明了如何添加两个许愿者和四个愿望。
+
+1. 添加一个名为 Tom 且口令为 tomcat 的许愿者。
+
+[source,java]
+----
+
+insert into wishers (name, password) values ('Tom','tomcat');
+----
+2. 添加一个名为 Jerry 且口令为 jerrymouse 的许愿者。
+
+[source,java]
+----
+
+insert into wishers (name, password) values ('Jerry', 'jerrymouse');commit;
+----
+3. 添加愿望。
+
+[source,java]
+----
+
+insert into wishes (wisher_id, description, due_date) values (1, 'Sausage', to_date('2008-04-01', 'YYYY-MM-DD'));insert into wishes (wisher_id, description) values (1, 'Icecream');insert into wishes (wisher_id, description, due_date) values (2, 'Cheese', to_date('2008-05-01', 'YYYY-MM-DD'));insert into wishes (wisher_id, description)values (2, 'Candle');commit;
+----
+4. 验证是否添加了测试数据。如果使用 NetBeans IDE 查看测试数据，请在相关表上单击鼠标右键，然后从上下文菜单中选择 "View Data"（查看数据）。 
+image::images/view-test-data.png[]
+
+要大致了解数据库原理和设计模式，请查阅以下教程：link:http://www.tekstenuitleg.net/en/articles/database_design_tutorial/1[+http://www.tekstenuitleg.net/en/articles/database_design_tutorial/1+]。
+
+有关 Oracle  ``CREATE TABLE``  语句语法的详细信息，请参见 link:http://download.oracle.com/docs/cd/B19306_01/server.102/b14200/statements_7002.htm[+http://download.oracle.com/docs/cd/B19306_01/server.102/b14200/statements_7002.htm+]。
+
+注：您可以在link:https://netbeans.org/projects/www/downloads/download/php%252FSQL-files-for-Oracle.zip[+此处+]下载一组 SQL 命令以创建 Oracle 数据库表。
+
+
+== 后续步骤
+
+link:wish-list-lesson2.html[+下一课 >>+]
+
+link:wish-list-tutorial-main-page.html[+返回到教程主页+]
+
+
+link:/about/contact_form.html?to=3&subject=Feedback:%20PHP%20Wish%20List%20CRUD%201:%20Create%20Oracle%20Database%20Tables[+请将您的反馈意见发送给我们+]
+
+
+要发送意见和建议、获得支持以及随时了解 NetBeans IDE PHP 开发功能的最新开发情况，请link:../../../community/lists/top.html[+加入 users@php.netbeans.org 邮件列表+]。
+
+link:../../trails/php.html[+返回至 PHP 学习资源+]
+

@@ -1,0 +1,888 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= Usando a API do WebSocket em uma Aplicação Web
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: Usando a API do WebSocket em uma Aplicação Web - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, Usando a API do WebSocket em uma Aplicação Web
+
+Este tutorial demonstra como criar uma aplicação Web simples que permite colaboração entre browsers do cliente que estão conectados a uma aplicação do servidor único. Quando um usuário desenha um elemento gráfico em uma tela no browser do cliente, o elemento aparece na tela de todos os clientes conectados. Como isso funciona? Quando o browser carrega a página Web um script do cliente envia uma solicitação de handshake de WebSocket para o servidor de aplicações. A aplicação pode aceitar mensagens binárias e de JSON dos clientes conectados na sessão e transmitir as mensagens para todos os clientes conectados.
+
+Neste tutorial você criará uma aplicação web que usa Java API para WebSocket (link:http://www.jcp.org/en/jsr/detail?id=356[+JSR 356+]) para ativar a comunicação bidirecional entre clientes do browser e o servidor de aplicações. Java API para WebSocket fornece suporte para criar componentes de WebSocket Java e interceptar eventos de WebSocket e criar e consumir texto e mensagens binárias de WebSocket. O tutorial também demonstra como você usa a API de Java para Processamento de JSON (link:http://jcp.org/en/jsr/detail?id=353[+JSR 353+]) para produzir e consumir JSON. Java API para WebSocket e a API Java para Processamento de JSON fazem parte da plataforma Java EE 7 (link:http://jcp.org/en/jsr/detail?id=342[+JSR 342+]).
+
+A aplicação contém um ponto final de WebSocket e interfaces do decodificador e do codificador, uma página Web e alguns arquivos de JavaScript que são executados no browser do cliente quando a página for carregada ou quando chamada de um form na página Web. Você implantará a aplicação para GlassFish Server Open Source Edition 4, a implementação de referência da tecnologia Java EE 7.
+
+*Observação.* Este tutorial é baseado no blog link:https://blogs.oracle.com/arungupta/entry/collaborative_whiteboard_using_websocket_in[+ Collaborative Whiteboard using WebSocket in GlassFish 4 - Text/JSON and Binary/ArrayBuffer Data Transfer (TOTD #189) (Quadro de Comunicação sobre como usar WebSocket no GlassFish 4 - Texto/JSON e Transferência de Dados/Binário/ArrayBuffer (TOTD #189)) +] e em outros blogs que podem ser encontrados no link:http://blog.arungupta.me/[+blog de Arun Gupta+]. Certifique-se de visitar o blog e ver muitas outras entradas excelentes sobre como trabalhar com a API de WebSocket e com o GlassFish 4.
+
+Você também pode assistir ao link:maven-websocketapi-screencast.html[+Vídeo Usando a API do WebSocket em uma Aplicação Web+].
+
+*Exercícios do Tutorial*
+
+image::images/netbeans-stamp-80-74-73.png[title="O conteúdo desta página se aplica ao NetBeans IDE 7.3, 7.4 e 8.0"]
+
+* <<Exercise_1,Criando o Projeto de Aplicação Web>>
+* <<createendpoint,Criando o Ponto Final do WebSocket>>
+* <<createendpoint1,Criar o Ponto Final>>
+* <<createendpoint2,Iniciar a Sessão de WebSocket>>
+* <<createendpoint3,Testar o Ponto Final>>
+* <<createwhiteboard,Criando o Quadro de Comunicação>>
+* <<createwhiteboard1,Adicionar a Tela>>
+* <<createwhiteboard2,Criar o POJO>>
+* <<createwhiteboard3,Criar uma Classe de Coordenadas>>
+* <<createwhiteboard6,Gerar a String JSON>>
+* <<createwhiteboard4,Implementar as Interfaces do Codificador e do Decodificador>>
+* <<createwhiteboard5,Executar a Aplicação>>
+* <<sendbinary,Enviando Dados Binários para o Ponto Final>>
+
+*Para seguir este tutorial, são necessários os recursos e o software a seguir.*
+
+|===
+|Software ou Recurso |Versão Necessária 
+
+|link:https://netbeans.org/downloads/index.html[+NetBeans IDE+] |Versão Java EE 7.3.1, 7.4, 8.0 
+
+|link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+JDK (Java Development Kit)+] |versão 7 ou 8 
+
+|link:https://glassfish.java.net/[+GlassFish Server Open Source Edition+] |4 
+|===
+
+*Observação.* O GlassFish 4 está incluído no pacote de downloads do Java EE do NetBeans IDE.
+
+*Pré-requisitos*
+
+Este tutorial pressupõe que você tenha algum conhecimento básico das tecnologias a seguir, ou alguma experiência de programação com elas:
+
+* Programação em Java
+* Programação de JavaScript/HTML
+* NetBeans IDE
+
+Antes de começar este tutorial, talvez você queira se familiarizar com a documentação a seguir.
+
+* link:http://wiki.netbeans.org/MavenBestPractices[+Melhores Práticas para o Apache Maven no NetBeans IDE+]
+* link:http://books.sonatype.com/mvnref-book/reference/introduction.html[+Capítulo 1. Introdução ao Apache Maven+] (do link:http://books.sonatype.com/mvnref-book/reference/index.html[+Maven: A Referência Completa +])
+
+Você pode fazer download link:https://netbeans.org/projects/samples/downloads/download/Samples/JavaEE/WhiteboardApp.zip[+de um arquivo compactado zip do projeto finalizado+].
+
+
+== Criando o Projeto de Aplicação Web
+
+O objetivo deste exercício é criar um projeto de aplicação Web usando o assistente Novo Projeto noIDE. Quando você criar o projeto irá selecionar Java EE 7 como a versão do Java EE e GlassFish 4 como o servidor de aplicações. O GlassFish 4 é a implementação de referência da plataforma Java EE 7. Você deve ter um servidor de aplicações que suporta Java EE 7 registrado com o IDE para criar a aplicação neste tutorial.
+
+1. Selecione Arquivo > Novo Projeto (Ctrl-Shift-N no Windows, ⌘-Shift-N no Mac) no menu principal.
+2. Selecione Aplicação Web na categoria Maven. Clique em Próximo.
+3. Digite *WhiteboardApp* como nome do projeto e defina a Localização do Projeto.
+4. Digite *org.sample* para o Id do Grupo. Clique em Próximo.
+5. Selecione *GlassFish Server 4.0* para o Servidor.
+6. Defina a Versão do Java EE como *Java EE 7 Web*. Clique em Finalizar.
+image::images/websocket-newproject.png[title="Versões de servidor e Java EE no assistente de Novo Projeto"]
+
+Quando você clica em Finalizar, o IDE cria o projeto e o abre na janela Projetos.
+
+
+== Criando o Ponto Final do WebSocket
+
+Nesta seção você criará uma classe e um ponto final de WebSocket e um arquivo JavaScript. A classe do ponto final de WebSocket contém alguns métodos básicos que são executados quando a sessão for aberta. Em seguida, você irá criar um arquivo JavaScript que iniciará o handshake com o servidor quando a página for carregada. Você irá então executar a aplicação para testar se a conexão foi bem-sucedida.
+
+Para obter mais informações sobre como usar APIs e anotações de WebSocket, consulte o resumo do pacote link:https://javaee-spec.java.net/nonav/javadocs/javax/websocket/package-summary.html[+ javax.websocket +].
+
+
+=== Criando o Ponto Final
+
+Neste exercício você usará usar um assistente no IDE para ajudá-lo a criar a classe do ponto final de WebSocket.
+
+1. Clique com o botão direito do mouse no nó Pacotes do Código-fonte na janela Projetos e selecione Novo > Outro.
+2. Selecione Ponto Final de WebSocket na categoria Web. Clique em Próximo.
+3. Digite *MyWhiteboard* como o Nome da Classe.
+4. Selecione  ``org.sample.whiteboardapp``  na lista drop-down Pacote.
+5. Digite */whiteboardendpoint* como o URI de WebSocket. Clique em Finalizar.
+image::images/websocket-newendpoint.png[title="Ponto Final de WebSocket no assistente Novo Arquivo"]
+
+Quando você clica em Finalizar, o IDE gera a classe Ponto Final do WebSocket e abre a classe no editor de código-fonte. No editor, você pode ver que o IDE gerou algumas anotações que são parte da API do WebSocket. A classe é anotada com  ``link:https://javaee-spec.java.net/nonav/javadocs/javax/websocket/server/ServerEndpoint.html[+@ServerEndpoint+]``  para identificar a classe como um ponto final e o URI do WebSocket é especificado como um parâmetro da anotação. O IDE também gerou um método  ``onMessage``  default que é anotado com  ``link:https://javaee-spec.java.net/nonav/javadocs/javax/websocket/OnMessage.html[+@onmessage+]`` . Um método anotado com  ``@onmessage``  é chamado cada vez que o cliente recebe uma mensagem de WebSocket.
+
+
+[source,java]
+----
+
+@ServerEndpoint("/whiteboardendpoint")
+public class MyWhiteboard {
+
+    @OnMessage
+    public String onMessage(String message) {
+        return null;
+    }
+    
+}
+----
+6. Adicione os campos a seguir (em *negrito*) à classe.
+
+[source,java]
+----
+
+@ServerEndpoint("/whiteboardendpoint")
+public class MyWhiteboard {
+    *private static Set<Session> peers = Collections.synchronizedSet(new HashSet<Session>());*
+
+    @OnMessage
+    public String onMessage(String message) {
+        return null;
+    }
+}
+----
+7. Adicione os seguintes métodos  ``onOpen``  e  ``onClose`` .
+
+[source,java]
+----
+
+    @OnOpen
+    public void onOpen (Session peer) {
+        peers.add(peer);
+    }
+
+    @OnClose
+    public void onClose (Session peer) {
+        peers.remove(peer);
+    }
+----
+
+Você pode ver que os métodos  ``onOpen``  e  ``onClose``  são anotados com as anotações da API de WebSocket  ``link:https://javaee-spec.java.net/nonav/javadocs/javax/websocket/OnOpen.html[+@OnOpen+]``  e  ``link:https://javaee-spec.java.net/nonav/javadocs/javax/websocket/OnClose.html[+@OnClose+]`` . Um método anotado com  ``@OnOpen``  é chamado quando a sessão de web socket é aberta. Neste exemplo, o método  ``onOpen``  anotado adiciona o cliente do browser ao grupo de colegas da sessão atual e o método  ``onClose``  remove o browser do grupo.
+
+Use as dicas e a funcionalidade autocompletar código no editor de código-fonte para ajudá-lo a gerar os métodos. Clique no glifo de dicas na margem esquerda próxima à declaração de classe (ou coloque o cursor na declaração de classe e clique em Alt-Enter) e selecione o método no menu pop-up. A funcionalidade autocompletar código pode ajudá-lo a codificar o método.
+
+image::images/websocket-endpoint-hint.png[title="Dica do Código no Editor de Código-fonte"]
+8. Clique com o botão direito do mouse no editor e selecione Corrigir Importações (Alt-Shift-I; ⌘-Shift-I no Mac). Salve as alterações.
+
+Você verá que as instruções de importação das classes no  ``javax.websocket``  foram adicionadas ao arquivo.
+
+O ponto final agora foi criado. Agora você precisará criar um arquivo JavaScript para iniciar a sessão WebSocket.
+
+ 
+
+
+=== Iniciar a Sessão de WebSocket
+
+Neste exercício você criará um arquivo JavaScript que iniciará uma sessão de WebSocket. O cliente do browser junta-se a uma sessão por meio de um 'handshake' HTTP com o servidor em TCP. No arquivo JavaScript você especificará o nome do  ``wsURI``  do ponto final e declarará o WebSocket. O esquema do URI  ``wsURI``  faz parte do protocolo de WebSocket e especifica o caminho para o ponto final da aplicação.
+
+1. Clique com o botão direito do mouse no nó do projeto na janela Projetos e escolha Novo > Outro.
+2. Selecione o Arquivo JavaScript na categoria Web do assistente Novo Arquivo. Clique em Próximo.
+3. Digite *websocket* para o Nome do Arquivo JavaScript. Clique em Finalizar.
+4. Adicione o seguinte ao arquivo JavaScript.
+
+[source,xml]
+----
+
+var wsUri = "ws://" + document.location.host + document.location.pathname + "whiteboardendpoint";
+var websocket = new WebSocket(wsUri);
+
+websocket.onerror = function(evt) { onError(evt) };
+
+function onError(evt) {
+    writeToScreen('<span style="color: red;">ERROR:</span> ' + evt.data);
+}
+----
+
+Este script iniciará o handshake da sessão com o servidor quando  ``websocket.js``  for carregado pelo browser.
+
+5. Abra  ``index.html``  e adicione o seguinte código (em *negrito*) na parte inferior do arquivo para carregar  ``websocket.js``  quando a página terminar de carregar.
+
+[source,xml]
+----
+
+<body>
+    *<h1>Collaborative Whiteboard App</h1>
+        
+    <script type="text/javascript" src="websocket.js"></script>*
+</body>
+----
+
+Agora você pode testar se o ponto final do WebSocket está trabalhando e se a sessão foi iniciada e o cliente adicionado à sessão.
+
+ 
+
+
+=== Testando o Ponto Final
+
+Neste exercício você adicionará alguns métodos simples ao arquivo JavaScript para imprimir o  ``wsURI``  na janela do browser quando o browser for conectado ao ponto final.
+
+1. Adicione a seguinte tag  ``<div>``  (em *negrito*) para  ``index.html`` 
+
+[source,html]
+----
+
+<h1>Collaborative Whiteboard App</h1>
+        
+*<div id="output"></div>*
+<script type="text/javascript" src="websocket.js"></script>
+----
+2. Adicione a seguinte declaração e métodos ao  ``websocket.js`` . Salve as alterações.
+
+[source,java]
+----
+
+// For testing purposes
+var output = document.getElementById("output");
+websocket.onopen = function(evt) { onOpen(evt) };
+
+function writeToScreen(message) {
+    output.innerHTML += message + "<br>";
+}
+
+function onOpen() {
+    writeToScreen("Connected to " + wsUri);
+}
+// End test functions
+----
+
+Quando a página carregar as funções de JavaScript imprimirá a mensagem que o browser está conectado ao ponto final. Você pode deletar as funções depois que confirmar se o ponto final está executando corretamente.
+
+3. Clique com o botão direito do mouse na janela Projetos e selecione Executar.
+
+Quando você executar a aplicação, o IDE iniciará o GlassFish server e construirá e implantará a aplicação. A página de índice será aberta no seu browser e você verá a seguinte mensagem na janela do browser.
+
+image::images/websocket-browser1.png[title="Conectado à mensagem do ponto final na janela do browser"]
+
+Na janela do browser você pode ver o seguinte ponto final no qual as mensagens serão aceitas:  ``http://localhost:8080/WhiteboardApp/whiteboardendpoint`` 
+
+
+== Criando o Quadro de Comunicação
+
+Nesta seção você criará as classes e os arquivos JavaScript para enviar e receber mensagens de texto de JSON. Você também adicionará um elemento link:http://www.whatwg.org/specs/web-apps/current-work/multipage/the-canvas-element.html[+Tela HTML5+] para exibição de conteúdo e  ``<form>``  HTML com botões de rádio que permitem que você especifique o formato e cor do pincel.
+
+
+=== Adicionar a Tela à Página Web
+
+Neste exercício você adicionar um elemento  ``canvas``  e um elemento  ``form``  à página do índice default. As caixas de seleção no form determinam as propriedades do pincel da tela.
+
+1. Abra  ``index.html``  no editor de código-fonte.
+2. Delete a tag  ``<div>``  que você adicionou para testar o ponto final e adicione os seguintes elementos  ``<table>``  e  ``<form>``  (em *bold*) após abrir a tag do corpo.
+
+[source,xml]
+----
+
+<h1>Collaborative Whiteboard App</h1>
+        
+    *<table>
+        <tr>
+            <td>
+            </td>
+            <td>
+                <form name="inputForm">
+                    
+
+                </form>
+            </td>
+        </tr>
+    </table>*
+    <script type="text/javascript" src="websocket.js"></script>
+    </body>
+----
+3. Adicione o seguinte código (em *negrito*) ao elemento canvas.
+
+[source,xml]
+----
+
+        <table>
+            <tr>
+                <td>
+                    *<canvas id="myCanvas" width="150" height="150" style="border:1px solid #000000;"></canvas>*
+                </td>
+----
+4. Adicione a seguinte  ``<table>``  para adicionar os botões de rádio para selecionar a cor e o formato. Salve as alterações.
+
+[source,xml]
+----
+
+        <table>
+            <tr>
+                <td>
+                    <canvas id="myCanvas" width="150" height="150" style="border:1px solid #000000;"></canvas>
+                </td>
+                <td>
+                    <form name="inputForm">
+                        *<table>
+
+                            <tr>
+                                <th>Color</th>
+                                <td><input type="radio" name="color" value="#FF0000" checked="true">Red</td>
+                                <td><input type="radio" name="color" value="#0000FF">Blue</td>
+                                <td><input type="radio" name="color" value="#FF9900">Orange</td>
+                                <td><input type="radio" name="color" value="#33CC33">Green</td>
+                            </tr>
+
+                            <tr>
+                                <th>Shape</th>
+                                <td><input type="radio" name="shape" value="square" checked="true">Square</td>
+                                <td><input type="radio" name="shape" value="circle">Circle</td>
+                                <td> </td>
+                                <td> </td>
+                            </tr>
+
+                        </table>*
+                    </form>
+----
+
+O formato, cor e coordenadas de qualquer figura desenhada na tela serão convertidos em uma string em uma estrutura JSON e enviadas como uma mensagem ao ponto final de WebSocket.
+
+ 
+
+
+=== Criando o POJO
+
+Neste exercício você criará um POJO simples.
+
+1. Clique com o botão direito do mouse no nó do projeto e selecione Novo > Classe Java.
+2. Digite *Figura* como o Nome da Classe e escolha  ``org.sample.whiteboardapp``  na lista drop-down Pacote. Clique em Finalizar.
+3. No editor de origem, adicione o seguinte (em *negrito*):
+
+[source,java]
+----
+
+public class Figure {
+    *private JsonObject json;*
+}
+----
+
+Quando você adicionar o código será solicitado que adicione uma instrução de importação para  ``javax.json.jsonobject`` . Se não for solicitado, digite Alt-Enter.
+
+Para obter mais informações sobre  ``javax.json.JsonObject`` , consulte Java API para Processamento de JSON (link:http://jcp.org/en/jsr/detail?id=353[+JSR 353+]), que faz parte da Especificação Java EE 7.
+
+4. Criar um getter e setter para  ``json`` .
+
+Você pode selecionar getter e setter no menu pop-up Inserir Código (Alt-Ins no Windows; Ctrl-I no Mac) para abrir a caixa de diálogo Gerar Getters e Setter. Se preferir, você pode escolher Origem > Inserir Código no menu principal.
+
+image::images/websocket-generategetter.png[title="Caixa de diálogo Gerar Getter e Setter"]
+5. Adicione um construtor para  ``json`` .
+
+[source,java]
+----
+
+    public Figure(JsonObject json) {
+        this.json = json;
+    }
+----
+
+Você pode escolher Construtor no menu pop-up Inserir Código (Ctrl-I).
+
+image::images/websocket-generateconstructor.png[title="Menu pop-up Gerar Construtor"]
+6. Adicione o método  ``toString``  a seguir:
+
+[source,java]
+----
+
+    @Override
+    public String toString() {
+        StringWriter writer = new StringWriter();
+        Json.createWriter(writer).write(json);
+        return writer.toString();
+    }
+----
+7. Clique com o botão direito do mouse no editor e selecione Corrigir Importações (Alt-Shift-I; ⌘-Shift-I no Mac). Salve as alterações.
+ 
+
+
+=== Criar uma Classe de Coordenadas
+
+Agora você cria uma classe para as coordenadas das figuras que são pintadas na tela.
+
+1. Clique com o botão direito do mouse no nó do projeto e selecione Novo > Classe Java.
+2. No assistente Nova Classe Java, digite *Coordinadas* como o Nome da Classe e selecione  ``org.sample.whiteboardapp``  na lista drop-down Pacote. Clique em Finalizar.
+3. No editor de Código-fonte, adicione o seguinte código. Salve as alterações.
+
+[source,java]
+----
+
+    private float x;
+    private float y;
+
+    public Coordinates() {
+    }
+
+    public Coordinates(float x, float y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    public float getX() {
+        return x;
+    }
+
+    public void setX(float x) {
+        this.x = x;
+    }
+
+    public float getY() {
+        return y;
+    }
+
+    public void setY(float y) {
+        this.y = y;
+    }
+                
+----
+
+A classe só contém campos para as coordenadas  ``x``  e  ``y``  e alguns getters e setters.
+
+ 
+
+
+=== Gerar a String JSON
+
+Neste exercício você criará um arquivo JavaScript que coloca os detalhes da figura que é desenhada no elemento  ``canvas``  para uma estrutura JSON que é enviada para o ponto final do websocket.
+
+1. Clique com o botão direito no nó e escolha Novo > Arquivo JavaScript para abrir o assistente Novo Arquivo JavaScript.
+2. Digite *quadro de comunicações* para Nome do Arquivo. Clique em Finalizar.
+
+Quando você clica em Finalizar, o IDE cria o arquivo JavaScript vazio e o abre no editor. Você pode ver o novo arquivo no nó Páginas Web, na janela Projetos.
+
+3. Adicione o seguinte código para iniciar a tela e adicionar um listener de evento.
+
+[source,java]
+----
+
+var canvas = document.getElementById("myCanvas");
+var context = canvas.getContext("2d");
+canvas.addEventListener("click", defineImage, false);
+----
+
+Você pode ver que o método  ``defineImage``  é chamado quando o usuário clica no elemento  ``canvas`` .
+
+4. Adicione os seguintes métodos  ``getCurrentPos`` ,  ``defineImage``  e  ``drawImageText``  para construir a estrutura JSON e enviá-la ao ponto final ( ``sendText(json)`` ).
+
+[source,java]
+----
+
+function getCurrentPos(evt) {
+    var rect = canvas.getBoundingClientRect();
+    return {
+        x: evt.clientX - rect.left,
+        y: evt.clientY - rect.top
+    };
+}
+            
+function defineImage(evt) {
+    var currentPos = getCurrentPos(evt);
+    
+    for (i = 0; i < document.inputForm.color.length; i++) {
+        if (document.inputForm.color[i].checked) {
+            var color = document.inputForm.color[i];
+            break;
+        }
+    }
+            
+    for (i = 0; i < document.inputForm.shape.length; i++) {
+        if (document.inputForm.shape[i].checked) {
+            var shape = document.inputForm.shape[i];
+            break;
+        }
+    }
+    
+    var json = JSON.stringify({
+        "shape": shape.value,
+        "color": color.value,
+        "coords": {
+            "x": currentPos.x,
+            "y": currentPos.y
+        }
+    });
+    drawImageText(json);
+        sendText(json);
+}
+
+function drawImageText(image) {
+    console.log("drawImageText");
+    var json = JSON.parse(image);
+    context.fillStyle = json.color;
+    switch (json.shape) {
+    case "circle":
+        context.beginPath();
+        context.arc(json.coords.x, json.coords.y, 5, 0, 2 * Math.PI, false);
+        context.fill();
+        break;
+    case "square":
+    default:
+        context.fillRect(json.coords.x, json.coords.y, 10, 10);
+        break;
+    }
+}
+----
+
+A estrutura JSON que é enviada será semelhante à seguinte:
+
+
+[source,java]
+----
+
+{
+ "shape": "square",
+ "color": "#FF0000",
+ "coords": {
+ "x": 31.59999942779541,
+ "y": 49.91999053955078
+ }
+} 
+----
+
+Agora você precisa adicionar um método  ``sendText(json)``  para enviar uma string JSON usando  ``websocket.send()`` .
+
+5. Abra  ``websocket.js``  no editor e adicione os seguintes métodos para enviar JSON ao ponto final e para desenhar a imagem quando uma mensagem for recebida do ponto final.
+
+[source,java]
+----
+
+websocket.onmessage = function(evt) { onMessage(evt) };
+
+function sendText(json) {
+    console.log("sending text: " + json);
+    websocket.send(json);
+}
+                
+function onMessage(evt) {
+    console.log("received: " + evt.data);
+    drawImageText(evt.data);
+}
+----
+
+*Observação.* Você pode deletar o código adicionado ao  ``websocket.js``  para testar o ponto final.
+
+6. Adicione a seguinte linha (em *negrito*) na parte inferior de  ``index.html``  para carregar o  ``whiteboard.js`` .
+
+[source,xml]
+----
+
+        </table>
+    <script type="text/javascript" src="websocket.js"></script>
+    *<script type="text/javascript" src="whiteboard.js"></script>*
+<body>
+                
+----
+ 
+
+
+=== Implementar as Interfaces do Codificador e do Decodificador
+
+Neste exercício você cria classes para implementar interfaces do decodificador e do codificador para decodificar mensagens do web socket (JSON) para a classe POJO  ``Figura``  e para codificar a ``Figura``  como uma string JSON para enviar ao ponto final.
+
+Para obter mais detalhes, consulte a seção sobre tipos de mensagem e codificadores e decodificadores no artito técnico link:http://www.oracle.com/technetwork/articles/java/jsr356-1937161.html[+JSR 356, Java API para WebSocket+].
+
+1. Clique com o botão direito do mouse no nó do projeto e selecione Novo > Classe Java.
+2. Digite *FigureEncoder* como o Nome da Classe e escolha  ``org.sample.whiteboardapp``  na lista drop-down Pacote. Clique em Finalizar.
+3. No editor de código-fonte, implemente a interface Codificador do WebSocket adicionando o seguinte código (em *negrito*):
+
+[source,java]
+----
+
+            
+public class FigureEncoder *implements Encoder.Text<Figure>* {
+    
+}
+----
+4. Adicione uma instrução de importação para  ``javax.websocket.Encoder``  e implemente os métodos abstratos.
+
+Coloque o cursor na declaração de classe e digite Alt-Enter e selecione *Implementar todos os métodos abstratos* no menu pop-up.
+
+5. Modifique os métodos abstratos gerados fazendo as seguintes alterações (em *negrito*). Salve as alterações.
+
+[source,java]
+----
+
+    @Override
+    public String encode(Figure *figure*) throws EncodeException {
+        *return figure.getJson().toString();*
+    }
+
+    @Override
+    public void init(EndpointConfig ec) {
+        *System.out.println("init");*
+    }
+
+    @Override
+    public void destroy() {
+        *System.out.println("destroy");*
+    }
+----
+6. Clique com o botão direito do mouse no nó do projeto e selecione Novo > Classe Java.
+7. Digite *FigureEncoder* como o Nome da Classe e escolha  ``org.sample.whiteboardapp``  na lista drop-down Pacote. Clique em Finalizar.
+8. No editor de código-fonte, implemente a interface Decodificador do WebSocket adicionando o seguinte código (em *negrito*):
+
+[source,java]
+----
+
+            
+public class FigureDecoder *implements Decoder.Text<Figure>* {
+    
+}
+----
+9. Adicione uma instrução de importação para  ``javax.websocket.Decoder``  e implemente os métodos abstratos.
+10. Faça as seguintes alterações (em *negrito*) para os métodos abstratos gerados.
+
+[source,java]
+----
+
+    @Override
+    public Figure decode(String *string*) throws DecodeException {
+        *JsonObject jsonObject = Json.createReader(new StringReader(string)).readObject();
+        return  new Figure(jsonObject);*
+    }
+
+    @Override
+    public boolean willDecode(String *string*) {
+        *try {
+            Json.createReader(new StringReader(string)).readObject();
+            return true;
+        } catch (JsonException ex) {
+            ex.printStackTrace();
+            return false;
+        }*
+    
+    }
+
+    @Override
+    public void init(EndpointConfig ec) {
+        *System.out.println("init");*
+    }
+
+    @Override
+    public void destroy() {
+        *System.out.println("destroy");*
+    }
+----
+11. Corrija as importações e salve as alterações.
+
+Agora você precisa modificar  ``MyWhiteboard.java``  para especificar o codificador e o decodificador.
+
+ 
+
+
+=== Executando a Aplicação
+
+Agora você está quase pronto para executar a aplicação. Neste exercício você modifica a classe do ponto final do WebSocket para especificar o codificador e o decodificador para a string JSON e adicionar um método para enviar a string JSON aos clientes conectados quando uma mensagem for recebida.
+
+1. Abra  ``MyWhiteboard.java``  no editor.
+2. Modifique a anotação  ``@ServerEndpoint``  para especificar o codificador e o decodificador do ponto final. Observe que você precisa especificar explicitamente o parâmetro  ``valor``  para o nome do ponto final.
+
+[source,java]
+----
+
+@ServerEndpoint(*value=*"/whiteboardendpoint"*, encoders = {FigureEncoder.class}, decoders = {FigureDecoder.class}*)
+        
+----
+3. Delete o método  ``onMessage``  que foi gerado por default.
+4. Adicione o seguinte método  ``broadcastFigure``  e anote o método com  ``@OnMessage`` .
+
+[source,java]
+----
+
+    @OnMessage
+    public void broadcastFigure(Figure figure, Session session) throws IOException, EncodeException {
+        System.out.println("broadcastFigure: " + figure);
+        for (Session peer : peers) {
+            if (!peer.equals(session)) {
+                peer.getBasicRemote().sendObject(figure);
+            }
+        }
+    }
+----
+5. Clique com o botão direito do mouse no editor e selecione Corrigir Importações (Alt-Shift-I; ⌘-Shift-I no Mac). Salve as alterações.
+6. Clique com o botão direito do mouse na janela Projetos e selecione Executar.
+
+Quando você clicar em Executar, o IDE abre uma janela do browser para link:http://localhost:8080/WhiteboardApp/[+http://localhost:8080/WhiteboardApp/+].
+
+*Observação.* Talvez você precise cancelar a implantação da aplicação anterior do servidor de aplicações ou forçar a recarga da página no browser.
+
+Se você exibir as mensagens do browser poderá ver que uma string é enviada por meio de JSON para o ponto final, cada vez que você clicar na tela.
+
+image::images/websocket-onebrowser.png[title="Canvas com figuras no browser e JSON exibido na console web"]
+
+Se você abrir outro browser para  ``http://localhost:8080/WhiteboardApp/``  você verá que cada vez que você clicar na tela em um browser, o novo círculo ou quadrado é reproduzido na tela de outro browser.
+
+image::images/websocket-twobrowsers.png[title="Dois browsers enviando JSON por meio do ponto final"]
+
+
+== Enviando Dados Binários para o Ponto Final
+
+A aplicação agora pode processar e enviar uma string por meio de JSON para o ponto final e a string é, em seguida, enviada para os clientes conectados. Nesta seção você modificará os arquivos JavaScript para enviar e receber dados binários.
+
+Para enviar os dados binários para o ponto final, é necessário definir a propriedade  ``binaryType``  do WebSocket para  ``arraybuffer`` . Isso garante que quaisquer transferências binárias que usam o WebSocket são feitas usando  ``ArrayBuffer`` . A conversão de dados binários é executada pelo método  ``defineImageBinary``  em  ``whiteboard.js`` .
+
+1. Abra  ``websocket.js``  e adicione o seguinte código para definir a propriedade  ``binaryType``  de WebSocket para  ``arraybuffer`` .
+
+[source,java]
+----
+
+websocket.binaryType = "arraybuffer";
+----
+2. Adicione o seguinte método para enviar dados binários para o ponto final.
+
+[source,java]
+----
+
+function sendBinary(bytes) {
+    console.log("sending binary: " + Object.prototype.toString.call(bytes));
+    websocket.send(bytes);
+}
+----
+3. Modifique o método  ``onMessage``  para adicionar o seguinte código (em *negrito*) para selecionar o método para atualizar a tela, de acordo com o tipo de dados na mensagem de entrada.
+
+[source,java]
+----
+
+function onMessage(evt) {
+    console.log("received: " + evt.data);
+    *if (typeof evt.data == "string") {*
+        drawImageText(evt.data);
+    *} else {
+        drawImageBinary(evt.data);
+    }*
+}
+----
+
+O método  ``drawImageBinary``  é chamado se uma mensagem com dados binários for recebida.
+
+4. Abra  ``whiteboard.js``  e adicione os seguintes métodos. O método  ``drawImageBinary``  é chamado para atualizar a tela após fazer parse dos dados binários de entrada. O método  ``defineImageBinary``  é usado para preparar um snapshot da tela como dados binários.
+
+[source,java]
+----
+
+function drawImageBinary(blob) {
+    var bytes = new Uint8Array(blob);
+//    console.log('drawImageBinary (bytes.length): ' + bytes.length);
+    
+    var imageData = context.createImageData(canvas.width, canvas.height);
+    
+    for (var i=8; i<imageData.data.length; i++) {
+        imageData.data[i] = bytes[i];
+    }
+    context.putImageData(imageData, 0, 0);
+    
+    var img = document.createElement('img');
+    img.height = canvas.height;
+    img.width = canvas.width;
+    img.src = canvas.toDataURL();
+}
+                    
+function defineImageBinary() {
+    var image = context.getImageData(0, 0, canvas.width, canvas.height);
+    var buffer = new ArrayBuffer(image.data.length);
+    var bytes = new Uint8Array(buffer);
+    for (var i=0; i<bytes.length; i++) {
+        bytes[i] = image.data[i];
+    }
+    sendBinary(buffer);
+}
+----
+
+Agora você precisa adicionar uma forma de chamar  ``defineImageBinary``  quando quiser gerar dados como o tipo  ``ArrayBuffer``  e enviá-los ao ponto final.
+
+5. Abra  ``index.html``  e modifique o elemento  ``<table>``  para adicionar a seguinte linha à tabela do form.
+
+[source,xml]
+----
+
+<tr>
+    <th> </th>
+    <td><input type="submit" value="Send Snapshot" onclick="defineImageBinary(); return false;"></td>
+    <td> </td>
+    <td> </td>
+    <td> </td>
+</tr>
+                
+----
+
+A nova linha contém um botão Enviar Snapshot para enviar um snapshot binário da tela para os colegas conectados. O método  ``defineImageBinary``  em  ``whiteboard.js``  será chamado quando o botão for clicado.
+
+6. Abra  ``MyWhiteboard.java``  e adicione o seguinte método que enviará os dados binários aos colegas quando o ponto final receber uma mensagem com dados binários.
+
+[source,java]
+----
+
+@OnMessage
+public void broadcastSnapshot(ByteBuffer data, Session session) throws IOException {
+    System.out.println("broadcastBinary: " + data);
+    for (Session peer : peers) {
+        if (!peer.equals(session)) {
+            peer.getBasicRemote().sendBinary(data);
+        }
+    }
+}
+----
+
+*Observação.* Será necessário adicionar uma instrução de importação em  ``java.nio.ByteBuffer`` .
+
+Você pode modificar a aplicação para permitir que o usuário interrompa o envio de dados ao ponto final. Por default, todos os colegas são conectados assim que abrem a página e os dados são enviados do browser para todos os colegas conectados. Você pode adicionar uma condicional simples, de forma que os dados não sejam enviados ao ponto final, a menos que a opção seja selecionada. Isso não afeta o recebimento de dados. Os dados ainda são recebidos do ponto final.
+
+1. Modifique o método  ``defineImage``  em  ``whiteboard.js``  para adicionar o seguinte código (em *negrito*).
+
+[source,java]
+----
+
+        drawImageText(json);
+*    if (document.getElementById("instant").checked) {*
+        sendText(json);
+*    }*
+}
+----
+
+O código condicional que você verifica se o elemento com o id for  ``verificado`` 
+
+2. Abra  ``index.html``  e modifique o elemento  ``<table>``  para adicionar uma caixa de seleção ao form.
+
+[source,xml]
+----
+
+<tr>
+    <th> </th>
+    <td><input type="submit" value="Send Snapshot" onclick="defineImageBinary(); return false;"></td>
+    <td>*<input type="checkbox" id="instant" value="Online" checked="true">Online*</td>
+    <td> </td>
+    <td> </td>
+</tr>
+                
+----
+
+Os dados não são enviados quando a caixa de seleção On-line estiver desmarcada, mas o cliente ainda receberá dados do ponto final.
+
+Se você adicionar o botão Enviar Snapshot e a caixa de seleção On-line e executar a aplicação novamente, você verá os novos elementos na página do índice. Se você abrir outro browser e desmarcar o botão On-line você poderá ver que a mensagem JSON não é enviada ao ponto final quando você clicar na tela.
+
+image::images/websocket-onebrowser-binary.png[title="Console da web no browser exibindo a mensagem que os dados binários foram enviados"]
+
+Se você clicar em Enviar Snapshot, os dados binários serão enviados para o ponto final e transmitidos para os clientes conectados.
+
+
+link:/about/contact_form.html?to=3&subject=Feedback:%20Using%20the%20WebSocket%20API%20in%20a%20Web%20Application[+Enviar Feedback neste Tutorial+]
+
+
+
+== Consulte Também
+
+Para obter mais informações sobre o uso do NetBeans IDE para desenvolver aplicações Java EE, consulte os seguintes recursos:
+
+* Demonstração: link:maven-websocketapi-screencast.html[+ Usando a API do WebSocket em uma Aplicação Web+]
+* link:javaee-intro.html[+Introdução à Tecnologia Java EE+]
+* link:javaee-gettingstarted.html[+Conceitos Básicos sobre Aplicações do Java EE+]
+* link:../../trails/java-ee.html[+Trilha de Aprendizado do Java EE e Java Web+]
+
+Para obter mais informações sobre o uso de Java EE, consulte o link:http://download.oracle.com/javaee/6/tutorial/doc/[+Tutorial do Java EE+].
+
+Para enviar comentários e sugestões, obter suporte e se manter informado sobre os mais recentes desenvolvimentos das funcionalidades de desenvolvimento do Java EE do NetBeans IDE, link:../../../community/lists/top.html[+inscreva-se na lista de correspondência de nbj2ee+].
+

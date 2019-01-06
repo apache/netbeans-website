@@ -1,0 +1,305 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= NetBeans IDEでのネイティブ・パッケージング
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: NetBeans IDEでのネイティブ・パッケージング - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, NetBeans IDEでのネイティブ・パッケージング
+
+執筆: Petr SomolおよびAlyona Stashkova
+
+ネイティブ・パッケージングは、アプリケーションを_ネイティブ・バンドル_としてパッケージ化し、システムJREやJavaFX SDKの外部依存に関係なくアプリケーションをインストールして実行できるようにする機能で、JavaFX 2.2 SDKで初めて導入されました。次に、Java SEプロジェクトでも使用できるようになりました。
+
+ネイティブ・パッケージングではアプリケーションのデプロイメント・モデルは変更しません。アプリケーションをそのまま取り込んでJavaランタイムとともにパッケージ化し、使用しているオペレーティング・システムで通常使用されるインストーラを生成します。肝心な点は、ターゲット・マシンでのJavaランタイム・ユーザーのソフトウェアにまったく依存しないということです。そのようなインストーラはJavaがインストールされていないマシンに配布して実行できます。すると、アプリケーションと必要なJavaランタイムがインストールされます。"Hello world"アプリケーションの場合でさえ、アプリケーション自体と大容量のJavaランタイム・アーティファクトが含まれるため、インストーラのサイズは非常に大きくなります。
+
+このチュートリアルでは、IDEにバンドルされているサンプル・アプリケーションに基づいて、Windowsオペレーティング・システム向けに、Java SEアプリケーション用の ``EXE`` インストーラおよびJavaFXアプリケーション用の ``MSI`` インストーラを作成します。
+
+*注意:*
+
+* 生成される ``EXE`` および ``MSI`` インストーラはプラットフォーム固有で、 ``EXE`` / ``MSI`` インストール可能パッケージが作成されたターゲットJavaプラットフォームと互換性のあるシステムでのみ実行されます。(たとえば、 ``EXE`` または ``MSI`` インストーラが64ビットJDKがインストールされているマシンで作成された場合、64ビットWindowsがインストールされたマシンで実行する必要があります。)
+* Windowsでは、両方のアプリケーションとも ``C:\Users\<username>\AppData\Local\`` ディレクトリにインストールされ、「スタート」メニューから利用できます。
+
+
+image::images/netbeans-stamp-80-74.png[title="このページの内容は、NetBeans IDE 7.4または8.0に適用されます"]
+
+
+*このチュートリアルに従うには、次のソフトウェアとリソースが必要です。*
+
+|===
+|ソフトウェアまたはリソース |必須バージョン 
+
+|link:http://netbeans.org/downloads/index.html[+NetBeans IDE+] |7.4または8.0 
+
+|link:http://www.oracle.com/technetwork/java/javafx/downloads/index.html[+Java Development Kit (JDK)+] |7 update 25以降または8 
+
+|link:http://www.jrsoftware.org/[+Inno Setup+] |5.5またはそれ以降 
+
+|link:http://wixtoolset.org/[+WiX+] |3.7またはそれ以降 
+|===
+
+
+== 必要なツールのインストールおよびパスへの追加
+
+ネイティブ・パッケージングに対するIDEサポートを使用するには、さらに次のツールをインストールする必要があります。
+
+* WindowsでEXEインストーラを生成するためにlink:http://www.jrsoftware.org/[+Inno Setup 5.5+](またはそれ以降)が必要です。
+* WindowsでMSIインストーラを生成するためにlink:http://wixtoolset.org/[+WiX 3.7+](またはそれ以降)が必要です。
+
+*注意: *各プラットフォーム向けにインストーラを作成するために必要なツールのリストは、_NetBeans IDEによるアプリケーションの開発_のlink:http://www.oracle.com/pls/topic/lookup?ctx=nb7400&id=NBDAG2508[+ネイティブ・インストーラとしてのアプリケーションのパッケージング+]を参照してください。
+
+*Inno Setupをインストールするには:*
+
+1. link:http://www.jrsoftware.org/isdl.php[+「Inno Setup Downloads」+]ページから ``ispack-5.5.3.exe`` をダウンロードします。
+2. ファイルをダブルクリックして、インストーラを起動します。
+3. Inno Setupライセンス契約に同意し、「Next」をクリックします。
+4. Inno Setupをインストールするためのインストール・ウィザードの指示に従います。
+
+*WiXをインストールするには:*
+
+1. link:http://wix.codeplex.com/releases/view/99514[+「WiX Toolset - Download」+]ページから ``wix37.exe`` をダウンロードします。
+2. ファイルをダブルクリックして、インストーラを起動します。
+3. WiXをインストールするためのインストール・ウィザードの指示に従います。
+
+*Inno Setup/WiXをシステム・パス変数に追加するには:*
+
+1. Windows 7で、「スタート」>「コンピュータ」>「システムのプロパティ」>「システムの詳細設定」を選択します。
+2. 「詳細設定」タブを選択し、「環境変数」ボタンをクリックします。
+3. 「システム環境変数」ペインでPath変数をダブルクリックします。
+4. 「システム変数の編集」ダイアログ・ボックスで、「変数値」フィールドにセミコロンと新しいパス(たとえば、 ``C:\Program Files (x86)\Inno Setup 5`` 、 ``C:\Program Files (x86)\WiX Toolset v3.6\bin`` など)を追加します。
+5. 「OK」をクリックして、開いているダイアログ・ボックスをすべて閉じます。
+
+*注意: *
+
+* インストールされたツールのパスが通っていることを確認するには、「コマンド プロンプト」ウィンドウを開き、 ``iscc.exe``  (Inno Setupの場合)または ``candle.exe``  (WiXの場合)と入力します。(コマンド プロンプトがすぐに閉じる場合、それぞれ ``cmd.exe /c cmd.exe /k iscc.exe`` または ``cmd.exe /c cmd.exe /k candle.exe`` と指定してみてください。)
+次の図に、Inno Setupがシステム・パス変数に追加されている場合のコマンド プロンプトでの表示を示します。
+
+image:::images/cmd_small.png[role="left", link="images/cmd.png"]
+
+* ツールをシステム・パス変数に追加した後、必ずIDEを再起動してください。
+
+
+== Java SEプロジェクトでのネイティブ・パッケージング
+
+IDEでネイティブ・パッケージング・サポートを利用するには、次の手順を実行する必要があります。
+
+* <<createse,IDEのプロジェクトの作成>>
+* <<enable,プロジェクトでのネイティブ・パッケージング・アクションの有効化>>
+* <<buildse,プロジェクトの消去およびビルド>>
+* <<instse,インストーラへのアプリケーションのパッケージ化>>
+
+
+=== Java SEプロジェクトの設定
+
+アプリケーションをインストーラにパッケージングする前に、アプリケーション自体を作成する必要があります。
+
+NetBeans IDEに含まれているAnagramゲーム・サンプルを使用して新しいJava SEプロジェクトを作成します。
+
+*IDEプロジェクトを作成するには:*
+
+1. IDEで、「ファイル」>「新規プロジェクト」を選択します。
+2. 新規プロジェクト・ウィザードで、「サンプル」カテゴリを展開して「Java」を選択します。
+3. 「プロジェクト」リストで「アナグラム・ゲーム」を選択します。「次」をクリックします。
+
+image:::images/new_javase_prj_small.png[role="left", link="images/new_javase_prj.png"]
+
+4. 「名前と場所」パネルで、「プロジェクト名」および「プロジェクトの場所」フィールドのデフォルト値をそのままにします。
+5. 「終了」をクリックします。
+IDEによってJava SEプロジェクトが作成され、開かれます。
+
+作成されたプロジェクトが正常に動作することをテストするには、メイン・メニューから「実行」>「プロジェクトの実行」を選択して実行します。
+Anagramsアプリケーションが起動し、マシンに表示されます。
+
+image::images/anagrams.png[]
+
+
+=== IDEでのネイティブ・パッケージングの有効化
+
+ネイティブ・パッケージングのアクションは、デフォルトでは、IDEで無効になっています。
+
+「プロジェクト」ウィンドウでAnagramGameプロジェクトを右クリックして、作成されたJava SEプロジェクトに対してIDEで使用可能なアクションを確認します。プロジェクトのコンテキスト・メニューにはパッケージングに関連するアクションはありません。
+
+image::images/context_wo_pkg.png[]
+
+*プロジェクに対してネイティブ・パッケージングのアクションを有効にするには:*
+
+1. 「プロジェクト」ウィンドウでプロジェクトのノードを右クリックし、コンテキスト・メニューから「プロパティ」を選択します。
+2. 「プロジェクト・プロパティ」ダイアログ・ボックスで、「デプロイメント」カテゴリを選択し、「プロジェクト・メニューでネイティブ・パッケージング・アクションを有効化」オプションを選択します。
+
+image:::images/enable_native_pkg_small.png[role="left", link="images/enable_native_pkg.png"]
+
+3. 「OK」をクリックします。
+「パッケージとして」コマンドがプロジェクトのコンテキスト・メニューに追加されます。
+
+image::images/pkg_enabled.png[]
+
+
+=== アプリケーションのビルド
+
+デプロイメント用にアプリケーションを消去してビルドします。
+
+*プロジェクトを消去してビルドするには:*
+
+* メイン・メニューから「実行」>「プロジェクトを消去してビルド」を選択します。
+「出力」ウィンドウに結果が表示されます。
+
+image:::images/output_small.png[role="left", link="images/output.png"]
+
+ ``jar`` ファイルを含む ``dist`` フォルダがプロジェクト・フォルダに作成されます。
+
+
+===  ``EXE`` インストーラの作成
+
+これで、Windows用インストーラにアプリケーションをパッケージ化できます。
+
+* ``EXE`` インストーラをビルドするには:*
+
+* AnagramGameプロジェクトを右クリックし、コンテキスト・メニューから「パッケージとして」>「EXEインストーラ」を選択します。
+
+*注意: *Inno Setupが<<tool,インストールされ、システム・パス変数に追加>>されている場合にのみ ``EXE`` インストーラが作成されます。
+
+「出力」ウィンドウに、進捗とパッケージング処理の結果が表示されます。
+
+image:::images/output_se_exe_small.png[role="left", link="images/output_se_exe.png"]
+
+*注意: *IDEが進捗の一部を出力した後、しばらく何も行われていないように見えます。この間、Inno Setupがバックグラウンドで動作しています。パッケージングが完了するまで少し時間がかかります。
+
+ ``EXE`` インストーラが完成すると、 ``AnagramGame/dist/bundles/`` ディレクトリに置かれます。
+
+image::images/anagram_exe.png[]
+
+
+== JavaFXプロジェクトでの自己完結型アプリケーション・パッケージング
+
+IDEでネイティブ・パッケージング・サポートを使用して、インストール可能なJavaFXアプリケーションをビルドするには、次の手順を実行する必要があります。
+
+* <<createfx,IDEでのJavaFXプロジェクトの作成>>
+* <<enablefx,プロジェクトに対するネイティブ・パッケージング・サポートの有効化>>
+* <<buildfx,JavaFXアプリケーションの消去およびビルド>>
+* <<instfx,インストール可能なJavaFXアプリケーションのビルド>>
+
+
+=== JavaFXプロジェクトの作成
+
+IDEにバンドルされたBrickBreakeサンプル・プロジェクトを使用してJavaFXプロジェクトを作成することから始めます。
+
+*IDEでJavaFXプロジェクトを作成するには:*
+
+1. IDEで、「ファイル」>「新規プロジェクト」を選択します。
+2. 新規プロジェクト・ウィザードで「サンプル」カテゴリを展開し、「JavaFX」を選択します。
+3. 「プロジェクト」リストでBrickBreakerを選択します。「次」をクリックします。
+4. 「名前と場所」パネルで、「プロジェクト名」、「プロジェクトの場所」および「JavaFXプラットフォーム」の各フィールドをデフォルト値のままにします。
+
+image:::images/new_javafx_prj_small.png[role="left", link="images/new_javafx_prj.png"]
+
+5. 「終了」をクリックします。
+IDEの「プロジェクト」ウィンドウにBrickBreaker JavaFXが表示されます。
+
+作成されたプロジェクトが正常に動作することをテストするには、メイン・メニューから「実行」>「プロジェクトの実行(BrickBreaker)」を選択して実行します。
+Brick Breakerアプリケーションが起動し、マシンに表示されます。
+
+image:::images/brickbreaker_small.png[role="left", link="images/brickbreaker.png"]
+
+
+=== プロジェクトでのネイティブ・パッケージングの有効化
+
+IDEでプロジェクトに対してネイティブ・パッケージング・サポートを使用するには、まず有効化する必要があります。
+
+Brick Breakerプロジェクトを右クリックしても、ネイティブ・パッケージングに関連するアクションは表示されません。
+
+image::images/javafx_wo_pkg.png[]
+
+*プロジェクトのコンテキスト・メニューでネイティブ・パッケージングのアクションを有効にするには:*
+
+1. 「プロジェクト」ウィンドウでプロジェクトのノードを右クリックし、コンテキスト・メニューから「プロパティ」を選択します。
+2. 「プロジェクト・プロパティ」ダイアログ・ボックスで、「ビルド」カテゴリの「デプロイメント」を選択し、「ネイティブ・パッケージングの有効化」オプションを選択します。
+
+image:::images/enable_native_pkg_fx_small.png[role="left", link="images/enable_native_pkg_fx.png"]
+
+3. 「OK」をクリックします。
+「パッケージとして」項目がプロジェクトのコンテキスト・メニューに追加されます。
+
+image::images/pkg_fx_enabled.png[]
+
+
+=== アプリケーションのビルド
+
+JavaFXアプリケーションの消去およびビルドの準備ができました。
+
+*プロジェクトを消去してビルドするには:*
+
+* メイン・メニューから「実行」>「プロジェクトを消去してビルド」を選択します。
+「出力」ウィンドウに結果が表示されます。
+
+*注意: *ビルドが成功したけれども、IDEから「出力」ウィンドウに「 ``warning: [options] bootstrap class path not set in conjunction with -source 1.6`` 」が表示される場合、次のようにプロジェクトのプロパティで「ソース/バイナリ形式」をJDK 8に設定し、プロジェクトを再度消去およびビルドする必要があります。
+
+1. 「プロジェクト」ウィンドウでBrickBreakerプロジェクトを右クリックし、「プロパティ」を選択します。
+2. 「プロジェクト・プロパティ」ダイアログ・ボックスで、「ソース」カテゴリを選択します。
+3. 「ソース/バイナリ形式」をJDK 8に設定し、「OK」をクリックします。
+4. 「プロジェクト」ウィンドウでBrickBreakerを右クリックし、コンテキスト・メニューから「消去してビルド」を選択します。
+
+
+===  ``MSI`` インストーラの作成
+
+これで、アプリケーションをWindows固有のインストール可能なパッケージにラップできます。
+
+* ``MSI`` インストーラをビルドするには:*
+
+* BrickBreakerプロジェクトを右クリックし、コンテキスト・メニューから「パッケージとして」>「MSIインストーラ」を選択します。
+
+*注意: *WiXが<<tool,インストールされ、システム・パス変数に追加>>されている場合にのみ ``MSI`` インストーラが作成されます。
+
+「出力」ウィンドウに、進捗とパッケージング処理の結果が表示されます。
+
+image:::images/output_fx_msi_small.png[role="left", link="images/output_fx_msi.png"]
+
+*注意: *IDEが進捗の一部を出力した後、しばらく何も行われていないように見えます。この間、WiXがバックグラウンドで動作しています。パッケージングが完了するまで少し時間がかかります。
+
+インストール可能なJavaFXアプリケーションは、 ``BrickBreaker/dist/bundles/`` ディレクトリに置かれます。
+
+image::images/brickbreaker_msi.png[]
+
+
+== [[インストール可能なアプリケーションの検証]] 
+
+ ``AnagramGame-1.0.exe`` および ``BrickBreaker-1.0.msi`` インストーラが完成したら、AnagramおよびBrickBreakerアプリケーションがネイティブでインストールされるディレクトリを確認する必要があります。
+
+*インストーラを確認するには:*
+
+1. ハード・ドライブでインストーラ・ファイル( ``AnagramGame-1.0.exe`` または ``BrickBreaker-1.0.msi`` )に移動します。
+2. ダブルクリックして、インストーラを実行します。
+
+両方のアプリケーションとも ``C:\Users\<username>\AppData\Local\`` ディレクトリにインストールされ、「スタート」メニューから利用できる必要があります。
+
+
+== 関連項目
+
+* _NetBeans IDEによるアプリケーションの開発_のlink:http://www.oracle.com/pls/topic/lookup?ctx=nb8000&id=NBDAG2508[+ネイティブ・インストーラとしてのアプリケーションのパッケージング+]
+* link:http://docs.oracle.com/javafx/2/deployment/self-contained-packaging.htm[+JavaFXアプリケーションのデプロイ: 自己完結型アプリケーション・パッケージング+]
+* link:http://docs.oracle.com/javase/7/docs/technotes/guides/jweb/packagingAppsForMac.html[+MacでのJavaアプリケーションの配布用のパッケージング+]
+link:/about/contact_form.html?to=3&subject=Feedback:%20Native%20Packaging%20In%20NetBeans%20IDE[+このチュートリアルに関するご意見をお寄せください+]
+
+
+link:../../trails/matisse.html[+学習に戻る+]
+

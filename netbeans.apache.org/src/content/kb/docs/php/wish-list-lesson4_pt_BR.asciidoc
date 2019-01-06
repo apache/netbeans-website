@@ -1,0 +1,591 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= Criando uma Aplicação Orientada pelo Banco de Dados com o PHP
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: Criando uma Aplicação Orientada pelo Banco de Dados com o PHP - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, Criando uma Aplicação Orientada pelo Banco de Dados com o PHP
+
+= Lição 4: Otimizando o Código com Classes e Objetos
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: Lição 4: Otimizando o Código com Classes e Objetos - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, Lição 4: Otimizando o Código com Classes e Objetos
+
+
+
+1. link:wish-list-tutorial-main-page.html[+Criando uma Aplicação Orientada pelo Banco de Dados com o PHP - Página Principal+]
+2. 
+Criando o Banco de Dados
+
+1. link:wish-list-lesson1.html[+Criando um Banco de Dados MySQL+]
+2. link:wish-list-oracle-lesson1.html[+Criando Tabelas do Banco de Dados Oracle+]
+3. link:wish-list-lesson2.html[+Projetando a Aplicação. Lendo o Banco de Dados+]
+4. link:wish-list-lesson3.html[+Criando um Novo Usuário da Aplicação+]
+5. 
+*=> Otimizando o Código*
+
+6. link:wish-list-lesson5.html[+Adicionando Segurança. Implementando o Log-in de Usuário da Aplicação+]
+7. link:wish-list-lesson6.html[+Adicionando um Novo Desejo ao Banco de Dados+]
+8. link:wish-list-lesson7.html[+Atualizando e Deletando Entradas no Banco de Dados+]
+9. link:wish-list-lesson8.html[+Melhorando a Aparência da Aplicação Usando a Tecnologia CSS+]
+10. link:wish-list-lesson9.html[+Implantando a Aplicação em um Servidor Web Remoto+]
+
+image::images/netbeans-stamp-80-74-73.png[title="O conteúdo desta página se aplica ao NetBeans IDE 7.2, 7.3, 7.4 e 8.0"]
+
+Nesta lição, você otimizará o código para facilitar sua manutenção no futuro. Isso afeta os arquivos  ``createNewWisher.php``  e  ``wishlist.php`` . Além disso, um novo arquivo chamado  ``db.php``  é criado.
+
+O código do sua aplicação contém vários blocos de código semelhantes com consultas ao banco de dados. Para facilitar a leitura e a manutenção do código no futuro, você pode extrair esses blocos, implementá-los como funções de uma classe separada chamada  ``WishDB``  e colocar  ``WishDB``  em  ``db.php`` . Depois disso, você pode incluir o arquivo  ``db.php``  em qualquer arquivo PHP e usar qualquer <<includedFunctions,função de WishDB>> sem duplicação de código. Essa abordagem garante que quaisquer alterações em consultas ou funções serão feitas em um único local e você não terá de fazer parsing do código inteiro da aplicação.
+
+Ao usar uma função de WishDB, você não altera o valor de quaisquer variáveis de WishDB. Em vez disso, use a classe WishDB como um plano gráfico para criar um objeto de WishDB, e altere os valores das variáveis nesse objeto. Quando você finaliza o trabalho com esse objeto, ele é destruído. Como os valores da classe WishDB nunca são alterados, você pode reutilizar a classe por um número ilimitado de vezes. Em alguns casos, talvez você queira ter várias instâncias de uma classe ao mesmo tempo, e em outros casos, talvez você prefira uma classe "única", onde você possui apenas uma instância de cada vez. O WishDB neste tutorial é uma classe única.
+
+Observe que o termo para criar um objeto de uma classe é "instanciar" essa classe, e que outra palavra para um objeto é uma "instância" de uma classe. O termo geral para programar com classes e objetos é "programação orientada por objeto" ou OOP. O PHP 5 usa um modelo OOP sofisticado. Consulte link:http://us3.php.net/zend-engine-2.php[+php.net+] para obter mais informações.
+
+Neste tutorial, a funcionalidade de chamada do banco de dados é movida de arquivos PHP individuais para classes WishDB. Usuários do MySQL também podem substituir a chamada  ``mysqli``  de estilo de procedimento por chamadas orientadas por objetos. Isso é para manter com o novo projeto orientado por objetos da aplicação
+
+O documento atual é uma parte do tutorial Criando uma Aplicação CRUD no NetBeans IDE para PHP.
+
+
+
+== Código-fonte da Aplicação da Lição Anterior
+
+Usuários MySQL: clique link:https://netbeans.org/files/documents/4/1929/lesson3.zip[+aqui+] para fazer o download do código-fonte que reflete o estado do projeto depois que a lição anterior estiver concluída.
+
+Usuários do Banco de Dados Oracle: clique link:https://netbeans.org/projects/www/downloads/download/php%252Foracle-lesson3.zip[+aqui+] para fazer o download do código-fonte que reflete o estado do projeto depois que a lição anterior estiver concluída.
+
+
+== Criando o Arquivo db.php
+
+Crie uma nova subpasta na pasta Códigos-fonte. Nomeie a pasta Inclusão. Crie uma nova pasta nomeada db.php e coloque em Inclusão. Depois disso, é possível adicionar mais arquivos para essa pasta que será incluída em outros arquivos PHP.
+
+*Para criar o db.php em uma nova pasta:*
+
+1. Clique com o botão direito do mouse no nó Código-fonte e selecione Novo > Pasta no menu de contexto. A caixa de diálogo Nova Pasta é aberta.
+2. No campo Nome da Pasta, digite Inclusão. Em seguida, clique em Finalizar.
+3. Clique com o botão direito do mouse no nó Inclusão e selecione Novo > Arquivo PHP no menu de contexto. A caixa de diálogo Novo Arquivo PHP é aberta.
+4. No campo Nome do Arquivo, digite db. Em seguida, clique em Finalizar.
+
+
+== Criando a Classe WishDB
+
+Para criar a classe WishDB, você precisa inicializar as variáveis da classe e implementar um construtor da classe. Usuários MySQL, observem a classe WishDB _extends_  ``mysqli`` . Isso significa que o WishDB _herda_ a função e outras características da classe mysqli PHP. A importância disso é mostrada ao adicionar as funções  ``mysqli``  à classe.
+
+Abra o arquivo db.php e crie a classe WishDB. Na classe, declare variáveis de configuração de banco de dados para armazenar o nome e a senha do proprietário do banco de dados (usuário), o nome e o host do banco de dados. Todas essas declarações de variável são "privadas", o que significa que os valores iniciais nas declarações não podem ser acessados de fora da classe WishDB (Consulte link:http://us3.php.net/manual/en/language.oop5.visibility.php[+php.net+]). Declare também a variável _ static_  ``$instance``  privada, que armazena a instância do WishDB. A palavra-chave “estática” significa que a função na classe pode acessar a variável mesmo quando não há instância da classe.
+
+*Para o Banco de Dados MySQL:*
+
+
+[source,java]
+----
+
+class WishDB extends mysqli {
+
+
+    // single instance of self shared among all instances
+    private static $instance = null;
+
+
+    // db connection config vars
+    private $user = "phpuser";
+    private $pass = "phpuserpw";
+    private $dbName = "wishlist";
+    private $dbHost = "localhost";
+}
+----
+
+*Para o Banco de Dados Oracle: *
+
+
+[source,java]
+----
+
+class WishDB {// single instance of self shared among all instances
+private static $instance = null;// db connection config vars
+private $user = "phpuser";
+private $pass = "phpuserpw";
+private $dbName = "wishlist";
+private $dbHost = "localhost/XE";
+private $con = null;}        
+----
+
+
+[[instantiate-wishdb]]
+== Instanciando a classe WishDB
+
+Para outros arquivos PHP usarem funções na classe WishDB, esses arquivos PHP precisam chamar uma função que crie um objeto ("instantiates") da classe WishDB. WishDB é designado como uma link:http://www.phpclasses.org/browse/package/1151.html[+classe única+], o que significa que somente uma instância da classe existe de cada vez. Portanto, é útil evitar qualquer instanciação externa de WishDB, o que poderia criar instâncias duplas.
+
+Dentro da classe WishDB, digite ou cole o seguinte código:
+
+
+[source,java]
+----
+
+ //This method must be static, and must return an instance of the object if the object
+ //does not already exist.
+ public static function getInstance() {
+   if (!self::$instance instanceof self) {
+     self::$instance = new self;
+   }
+   return self::$instance;
+ }
+
+ // The clone and wakeup methods prevents external instantiation of copies of the Singleton class,
+ // thus eliminating the possibility of duplicate objects.
+ public function __clone() {
+   trigger_error('Clone is not allowed.', E_USER_ERROR);
+ }
+ public function __wakeup() {
+   trigger_error('Deserializing is not allowed.', E_USER_ERROR);
+ }
+----
+
+A função  ``getInstance``  é "pública" e "estática." "Pública" significa que ela pode ser acessada publicamente de fora da classe. "Estática" significa que a função está disponível mesmo quando a classe não tiver sido instanciada. Como a função  ``getInstance``  é chamada para instanciar a classe, ela deve ser estática. Observe que essa função acessa a variável ``$instance``  estática e ajusta os valores como a instância da classe.
+
+Os dois-pontos duplos (::), chamados de Operador de Resolução de Escopo, e a palavra-chave  ``self``  são usados para acessar funções estáticas.  ``Self``  é usado na definição da classe para se referir à classe em si. Quando os dois-pontos duplos forem usados fora da definição da classe, o nome da classe será usado em vez de  ``self`` . Consulte link:http://us3.php.net/manual/en/language.oop5.paamayim-nekudotayim.php[+php.net no Operador de Resolução de Escopo+].
+
+
+[[wishdb-constructor]]
+== Adicionando um Construtor à Classe WishDB
+
+Uma classe pode conter um método especial conhecido como 'construtor', que é processado automaticamente sempre que uma instância dessa classe é criada. Neste tutorial, você adiciona um construtor ao WishDB que se conecta ao banco de dados sempre que WishDB é instanciado.
+
+Adicione o código seguinte ao WishDB:
+
+*Para o banco de dados MySQL:*
+
+
+[source,java]
+----
+
+// private constructorprivate function __construct() {parent::__construct($this->dbHost, $this->user, $this->pass, $this->dbName);if (mysqli_connect_error()) {exit('Connect Error (' . mysqli_connect_errno() . ') '. mysqli_connect_error());}parent::set_charset('utf-8');}
+----
+
+*Para o banco de dados Oracle:*
+
+
+[source,java]
+----
+
+// private constructor
+private function __construct() {
+    $this->con = oci_connect($this->user, $this->pass, $this->dbHost);
+    if (!$this->con) {
+        $m = oci_error();
+        echo $m['message'], "\n";
+        exit;
+    }
+}
+----
+
+Observe o uso da pseudovariável  ``$this``  em vez das variáveis  ``$con`` ,  ``$dbHost`` ,  ``$user``  ou  ``$pass`` . A pseudovariável  ``$this``  é usada quando um método é chamado de dentro do contexto de um objeto. Ela se refere ao valor de uma variável nesse objeto.
+
+
+== Funções da Classe WishDB
+
+Nesta lição, você implementará as seguintes funções da classe WishDB:
+
+* <<getIDByName,get_wisher_id_by_name>> para recuperar o id de um wisher com base em seu nome
+* <<getWishesByID,get_wishes_by_wisher_id>> para recuperar uma lista de desejos do wisher com um id específico
+* <<createWisher,create_wisher>> para adicionar um novo registro de wisher aos wishers da tabela
+
+
+=== Função get_wisher_id_by_name
+
+A função requer o nome de um wisher como parâmetro de entrada e retorna o wisher id. 
+
+Digite ou cole a seguinte função na classe WishDB, depois da função WishDB:
+
+*Para o banco de dados MySQL:*
+
+
+[source,java]
+----
+
+public function get_wisher_id_by_name($name) {$name = $this->real_escape_string($name);$wisher = $this->query("SELECT id FROM wishers WHERE name = '". $name . "'");
+    if ($wisher->num_rows > 0){$row = $wisher->fetch_row();return $row[0];} elsereturn null;
+}
+----
+
+*Para o banco de dados Oracle:*
+
+
+[source,java]
+----
+
+public function get_wisher_id_by_name($name) {
+    $query = "SELECT id FROM wishers WHERE name = :user_bv";
+    $stid = oci_parse($this->con, $query);
+    oci_bind_by_name($stid, ':user_bv', $name);
+    oci_execute($stid);
+//Because user is a unique value I only expect one row
+    $row = oci_fetch_array($stid, OCI_ASSOC);if ($row) return $row["ID"];elsereturn null;
+}
+----
+O bloco de código executa a consulta  ``SELECT ID FROM wishers WHERE name = [variável para o nome do wisher]`` . O resultado da consulta é um array de IDs dos registros que satisfazem a consulta. Se o array não estiver vazio, isso significa automaticamente que ele contém um elemento, porque o nome do campo é especificado como UNIQUE durante a criação da tabela. Nesse caso, a função retorna o primeiro elemento do array  ``$result``  (o elemento com zero). Se o array estiver vazio, a função retornará nula.
+
+*Observação sobre Segurança:* Para o banco de dados MySQL, a string  ``$name``  tem escape para evitar os ataques de injeção SQL. Consulte link:http://en.wikipedia.org/wiki/SQL_injection[+Wikipedia sobre injeções SQL+] e a documentação mysql_real_escape_string. Embora no contexto deste tutorial você não esteja correndo o risco de injeções SQL prejudiciais, recomendamos escapar as strings nas consultas MySQL que estariam correndo risco de tal ataque. O banco de dados Oracle evita esse problema usando variáveis de ligação.
+
+
+=== Função get_wishes_by_wisher_id
+
+A função exige o id de um wisher como o parâmetro de entrada e retorna os desejos registrados para o wisher.
+
+Indique o seguinte bloco de código:
+
+*Para o banco de dados MySQL:*
+
+
+[source,java]
+----
+
+public function get_wishes_by_wisher_id($wisherID) {return $this->query("SELECT id, description, due_date FROM wishes WHERE wisher_id=" . $wisherID);}
+----
+
+*Para o banco de dados Oracle:*
+
+
+[source,java]
+----
+
+public function get_wishes_by_wisher_id($wisherID) {
+    $query = "SELECT id, description, due_date FROM wishes WHERE wisher_id = :id_bv";
+    $stid = oci_parse($this->con, $query);
+    oci_bind_by_name($stid, ":id_bv", $wisherID);
+    oci_execute($stid);
+    return $stid;
+}
+----
+
+O bloco de código executa a consulta  ``"SELECT id, description, due_date FROM wishes WHERE wisherID=" . $wisherID``  e retorna um conjunto de resultados que é um array de registros que atende à consulta. (O banco de dados Oracle usa variáveis de ligação para o desempenho do banco de dados e motivos de segurança). A seleção é realizada pelo wisherID, que é a chave estrangeira dos  ``desejos``  da tabela.
+
+*Observação:* o valor ``id``  não é necessário até a Lição 7.
+
+
+=== Função create_wisher
+
+A função cria um novo registro na tabela de wishers. A função requer o nome e a senha de um novo wisher como os parâmetros de entrada e não retorna dados.
+
+Indique o seguinte bloco de código:
+
+*Para o banco de dados MySQL:*
+
+
+[source,java]
+----
+
+public function create_wisher ($name, $password){
+    $name = $this->real_escape_string($name);$password = $this->real_escape_string($password);$this->query("INSERT INTO wishers (name, password) VALUES ('" . $name . "', '" . $password . "')");
+}
+----
+
+*Para o banco de dados Oracle:*
+
+
+[source,java]
+----
+
+public function create_wisher($name, $password) {
+    $query = "INSERT INTO wishers (name, password) VALUES (:user_bv, :pwd_bv)";
+    $stid = oci_parse($this->con, $query);
+    oci_bind_by_name($stid, ':user_bv', $name);
+    oci_bind_by_name($stid, ':pwd_bv', $password);
+    oci_execute($stid);
+}
+----
+O bloco de código executa a consulta  ``"INSERT wishers (Name, Password) VALUES ([variáveis representando o nome e a senha do novo wisher]).``  A consulta adiciona um novo registro à tabela "wishers" com os campos "nome" e "senha" preenchidos com os valores de  ``$name``  e  ``$password``  respectivamente.
+
+
+== Refatorando o Código da Sua Aplicação
+
+Agora que tem uma classe separada para trabalhar com o banco de dados, você pode substituir blocos duplicados por chamadas para as funções relevantes desta classe. Isso ajudará a evitar erros ortográficos e inconsistência no futuro. A otimização de código que não afeta a funcionalidade é chamada de refatoração.
+
+
+=== Refatorando o Arquivo wishlist.php
+
+Comece com o arquivo wishlist.php porque ele é pequeno e as melhorias serão mais ilustrativas.
+
+1. Na parte superior do bloco <?php ?> , insira a linha seguinte para permitir o uso do arquivo  ``db.php`` :
+
+[source,java]
+----
+
+require_once("Includes/db.php");
+----
+2. Substitua o código que estabelece conexão com o banco de dados e que obtém o wisher ID por uma chamada para a função  ``get_wisher_id_by_name`` .
+
+Para o *banco de dados MySQL*, o código a ser substituído é:
+
+[.line-through]#$con = mysqli_connect("localhost", "phpuser", "phpuserpw");
+if (!$con) {
+    exit('Connect Error (' . mysqli_connect_errno() . ') '
+            . mysqli_connect_error());
+}
+//set the default client character set 
+mysqli_set_charset($con, 'utf-8');
+
+mysqli_select_db($con, "wishlist");
+$user = mysqli_real_escape_string($con, $_GET['user']);
+$wisher = mysqli_query($con, "SELECT id FROM wishers WHERE name='" . $user . "'");
+if (mysqli_num_rows($wisher) < 1) {
+    exit("The person " . $_GET['user'] . " is not found. Please check the spelling and try again");
+}
+$row = mysqli_fetch_row($wisher);$wisherID = $row[0];
+mysqli_free_result($wisher);#
+
+*$wisherID = WishDB::getInstance()->get_wisher_id_by_name($_GET["user"]);
+if (!$wisherID) {
+    exit("The person " .$_GET["user"]. " is not found. Please check the spelling and try again" );
+}*
+
+Para o *banco de dados Oracle*, o código a ser substituído é:
+
+[.line-through]#$con = oci_connect("phpuser", "phpuserpw", "localhost/XE", "AL32UTF8");
+if (!$con) {
+   $m = oci_error();
+   echo $m['message'], "\n";
+   exit;
+}
+$query = "SELECT id FROM wishers WHERE name = :user_bv";
+$stid = oci_parse($con, $query);
+$user = $_GET["user"];
+
+oci_bind_by_name($stid, ':user_bv', $user);
+oci_execute($stid);
+
+//Because user is a unique value I only expect one row$row = oci_fetch_array($stid, OCI_ASSOC);
+if (!$row) {
+    echo("The person " . $user . " is not found. Please check the spelling and try again" );exit;}
+$wisherID = $row["ID"]; #
+
+[source,java]
+----
+
+*$wisherID = WishDB::getInstance()->get_wisher_id_by_name($_GET["user"]);
+if (!$wisherID) {
+    exit("The person " .$_GET["user"]. " is not found. Please check the spelling and try again" );
+}*
+----
+
+O novo código chama primeiro a função  ``getInstance``  no WishDB. O  ``getInstance``  retorna uma instância de WishDB, e o código chama a função  ``get_wisher_id_by_name``  dentro dessa instância. Se a lista de desejos solicitada não for encontrada no banco de dados, o código terminará o processo, e exibirá uma mensagem de erro.
+
+Nenhum código é necessário para abrir uma conexão ao banco de dados. A conexão é aberta pelo construtor da classe WishDB. Se o nome e/ou a senha for alterado, você precisará atualizar somente as variáveis relevantes da classe WishDB.
+
+3. Substitua o código que recebe desejos de um wisher identificado pelo ID com um código que chama a função  ``get_wishes_by_wisher_id`` .
+
+Para o *banco de dados MySQL*, o código a ser substituído é:
+
+[.line-through]#$result = mysqli_query($con, "SELECT description, due_date FROM wishes WHERE wisher_id=". $wisherID);#
+
+[source,java]
+----
+
+                
+*$result = WishDB::getInstance()->get_wishes_by_wisher_id($wisherID);*
+----
+
+Para o *banco de dados Oracle*, o código a ser substituído é:
+
+[.line-through]#$query = "select * from wishes where wisher_id = :id_bv";$stid = oci_parse($con, $query);oci_bind_by_name($stid, ":id_bv", $wisherID);oci_execute($stid);#
+
+[source,java]
+----
+
+                
+*$stid = WishDB::getInstance()->get_wishes_by_wisher_id($wisherID);*
+----
+4. Remova a linha que fecha a conexão do banco de dados.
+
+[source,java]
+----
+
+ [.line-through]#mysqli_close($con);#
+                    or
+ [.line-through]#oci_close($con);#                
+----
+O código não é necessário porque a conexão ao banco de dados é automaticamente fechada quando o objeto WishDB é destruído. No entanto, mantenha o código que libera o recurso. É necessário liberar todos os recursos que usam uma conexão para garantir que a conexão seja fechada corretamente, mesmo quando a função  ``close``  é chamada ou se a instância for destruída com a conexão do banco de dados.
+
+
+===  
+
+
+=== Refatorando o Arquivo createNewWisher.php
+
+A refatoração não afetará o form de entrada HTML ou o código para exibir as mensagens de erro relacionadas.
+
+1. Na parte superior do bloco <?php ?>, insira o código seguinte para permitir o uso do arquivo  ``db.php`` :
+
+[source,java]
+----
+
+require_once("Includes/db.php");
+----
+2. Delete a credencial da conexão do banco de dados ( ``$dbHost,``  etc). Esses estão agora em  ``db.php.`` .
+3. Substitua o código que estabelece conexão com o banco de dados e que obtém o wisher ID por uma chamada para a função  ``get_wisher_id_by_name`` .
+
+Para o *banco de dados MySQL*, o código a ser substituído é:
+
+[.line-through]#
+$con = mysqli_connect("localhost", "phpuser", "phpuserpw");
+if (!$con) {
+    exit('Connect Error (' . mysqli_connect_errno() . ') '
+            . mysqli_connect_error());
+}
+//set the default client character set 
+mysqli_set_charset($con, 'utf-8');
+
+
+/** Check whether a user whose name matches the "user" field already exists */
+mysqli_select_db($con, "wishlist");
+$user = mysqli_real_escape_string($con, $_POST['user']);
+$wisher = mysqli_query($con, "SELECT id FROM wishers WHERE name='".$user."'");
+$wisherIDnum=mysqli_num_rows($wisher);
+if ($wisherIDnum) {
+   $userNameIsUnique = false;
+}#
+
+[source,java]
+----
+
+*$wisherID = WishDB::getInstance()->get_wisher_id_by_name($_POST["user"]);
+if ($wisherID) {
+$userNameIsUnique = false;
+}*
+----
+
+Para o *banco de dados Oracle*, o código a ser substituído é:
+
+[.line-through]#
+$con = oci_connect("phpuser", "phpuserpw", "localhost");
+if (!$con) {
+    $m = oci_error();
+    echo $m['message'], "\n";
+    exit;
+}
+$query = "select ID from wishers where name = :user_bv";
+$stid = oci_parse($con, $query);
+$user = $_POST['user'];
+$wisherID = null;
+oci_bind_by_name($stid, ':user_bv', $user);
+oci_execute($stid);
+
+//Each user name should be unique. Check if the submitted user already exists.
+$row = oci_fetch_array($stid, OCI_ASSOC);if ($row) {$wisherID = $row["ID"]; }if ($wisherID != null) {$userNameIsUnique = false;}#
+
+[source,java]
+----
+
+
+*$wisherID = WishDB::getInstance()->get_wisher_id_by_name($_POST["user"]);
+if ($wisherID) {
+$userNameIsUnique = false;
+}*
+----
+O objeto  ``WishDB``  existe enquanto a página atual estiver sendo processada. Ele é destruído depois que o processamento é concluído ou interrompido. O código para abrir uma conexão ao banco de dados não é necessário porque isso é feito pela função WishDB. O código para fechar a conexão não é necessário porque a conexão é fechada assim que o objeto  ``WishDB``  é destruído.
+4. Substitua o código que insere novos desejos no banco de dados pelo código que chama a função  ``create_wisher`` .
+
+Para o *banco de dados MySQL*, o código a ser substituído é:
+
+[.line-through]#if (!$userIsEmpty &amp;&amp; $userNameIsUnique &amp;&amp; !$passwordIsEmpty &amp;&amp; !$password2IsEmpty &amp;&amp; $passwordIsValid) {
+    $password = mysqli_real_escape_string($con, $_POST["password"]);mysqli_select_db($con, "wishlist");mysqli_query($con, "INSERT wishers (name, password) VALUES ('" . $user . "', '" . $password . "')");mysqli_free_result($wisher);mysqli_close($con);header('Location: editWishList.php');exit;}
+                    #
+
+[source,java]
+----
+
+                *if (!$userIsEmpty &amp;&amp; $userNameIsUnique &amp;&amp; !$passwordIsEmpty &amp;&amp; !$password2IsEmpty &amp;&amp; $passwordIsValid) {
+WishDB::getInstance()->create_wisher($_POST["user"], $_POST["password"]);
+header('Location: editWishList.php' );
+exit;
+}*
+----
+
+Para o *banco de dados Oracle*, o código a ser substituído é:
+
+[.line-through]#
+if (!$userIsEmpty &amp;&amp; $userNameIsUnique &amp;&amp; !$passwordIsEmpty &amp;&amp; !$password2IsEmpty &amp;&amp; $passwordIsValid) {
+    $query = "INSERT INTO wishers (name, password) VALUES (:user_bv, :pwd_bv)";
+    $stid = oci_parse($con, $query);
+    $pwd = $_POST['password'];
+    oci_bind_by_name($stid, ':user_bv', $user);
+    oci_bind_by_name($stid, ':pwd_bv', $pwd);
+    oci_execute($stid);
+    oci_close($con);
+    header('Location: editWishList.php');
+    exit;
+}#
+
+[source,java]
+----
+
+
+
+*if (!$userIsEmpty &amp;&amp; $userNameIsUnique &amp;&amp; !$passwordIsEmpty &amp;&amp; !$password2IsEmpty &amp;&amp; $passwordIsValid) {
+WishDB::getInstance()->create_wisher($_POST["user"], $_POST["password"]);
+header('Location: editWishList.php' );
+exit;
+}*
+----
+
+
+== O código-fonte da Aplicação após a Lição Atual está Concluído
+
+Usuários do MySQL: clique link:https://netbeans.org/projects/www/downloads/download/php%252Flesson4.zip[+aqui+] para fazer o download do código-fonte que reflete o estado do projeto depois que a lição estiver concluída.
+
+Usuários do banco de dados Oracle: clique link:https://netbeans.org/projects/www/downloads/download/php%252Foracle-lesson4.zip[+aqui+] para fazer o download do código-fonte que reflete o estado do projeto depois que a lição for concluída.
+
+
+== Próximas Etapas
+
+link:wish-list-lesson3.html[+<< Lição anterior+]
+
+link:wish-list-lesson5.html[+Próxima lição >>+]
+
+link:wish-list-tutorial-main-page.html[+Voltar à página principal do Tutorial+]
+
+
+== Links Úteis
+
+Saiba mais sobre o uso de classes em PHP:
+
+* link:http://us3.php.net/manual/en/language.oop5.php[+Classes e Objetos+]
+
+Saiba mais sobre a refatoração de código PHP:
+
+* link:http://www.slideshare.net/spriebsch/seven-steps-to-better-php-code-presentation/[+Sete Etapas Para Melhorar o Código PHP+]
+* link:http://www.dokeos.com/wiki/index.php/Refactoring[+Refatoração do PHP+]
+
+
+link:/about/contact_form.html?to=3&subject=Feedback:%20PHP%20Wish%20List%20CRUD%204:%20Optimizing%20Code[+Enviar Feedback neste Tutorial+]
+
+
+Para enviar comentários e sugestões, obter suporte e manter-se informado sobre os desenvolvimentos mais recentes das funcionalidades de desenvolvimento PHP do NetBeans IDE, link:../../../community/lists/top.html[+junte-se à lista de correspondência users@php.netbeans.org+].
+
+link:../../trails/php.html[+Voltar à Trilha de Aprendizado PHP+]
+

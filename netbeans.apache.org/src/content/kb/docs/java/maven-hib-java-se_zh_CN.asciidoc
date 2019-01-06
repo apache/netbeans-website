@@ -1,0 +1,663 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= 使用 Hibernate 创建 Maven Swing 应用程序 - NetBeans IDE 教程
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: 使用 Hibernate 创建 Maven Swing 应用程序 - NetBeans IDE 教程 - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, 使用 Hibernate 创建 Maven Swing 应用程序 - NetBeans IDE 教程
+
+在本教程中，您将使用 NetBeans IDE 通过 Maven 原型创建 Java Swing 应用程序。该应用程序使用 Hibernate 框架作为持久层来检索关系数据库中的 POJO (plain old Java object) 对象。本教程演示了 IDE 中的向导将如何帮助您创建所需的 Hibernate 文件并将 Hibernate 依赖关系添加到 POM。创建 Java 对象并将应用程序配置为使用 Hibernate 后，您将创建一个 GUI 界面，用于搜索并显示数据。
+
+NetBeans IDE 中完全集成了对 Maven 的支持，并且 Maven 3 已随 IDE 捆绑提供。在新建项目向导中，可以从捆绑的 Maven 原型或者从远程资源库中的原型创建应用程序。使用 Maven 资源库浏览器，可以浏览本地和远程 Maven 资源库，检查工件以及将项目依赖关系添加到项目的 POM 中。
+
+要使用 Ant 构建此应用程序，请参见link:hibernate-java-se.html[+在 Java Swing 应用程序中使用 Hibernate+]。
+
+要构建 Maven Java EE 应用程序，请参见link:../javaee/maven-entapp.html[+使用 Maven 创建企业应用程序+]。
+
+
+image::images/netbeans-stamp-80-74-73.png[title="此页上的内容适用于 NetBeans IDE 7.2、7.3、7.4 和 8.0"]
+
+
+*要学习本教程，您需要具备以下软件和资源。*
+
+|===
+|软件或资源 |要求的版本 
+
+|link:http://download.netbeans.org/[+NetBeans IDE+] |7.2、7.3、7.4、8.0、Java 包 
+
+|link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+Java 开发工具包 (JDK)+] |版本 7 或 8 
+
+|link:http://maven.apache.org/[+Maven+] |版本 2.09 或更高 
+
+|link:http://www.mysql.com/[+MySQL 数据库服务器+] |版本 5.x 
+
+|Sakila 数据库 |更新中心上可用的插件 
+|===
+
+在开始本教程之前，您可以先阅读下面这些文档。
+
+
+您可以下载link:https://netbeans.org/projects/samples/downloads/download/Samples/Java/DVDStoreAdmin-Maven.zip[+已完成项目的 zip 档案文件+]。
+
+
+== 创建数据库
+
+本教程使用名为  ``sakila``  的 MySQL 数据库。当您安装 IDE 时，样例数据库并未包括在内，因此您需要先创建数据库才能完成本教程。
+
+Sakila 数据库是一个免费的样例 MySQL 数据库，可从 MySQL 站点获取。要创建 sakila 数据库，可使用 "Plugins"（插件）管理器下载并安装 "Sakila Sample Database"（Sakila 样例数据库）插件。安装好插件之后，您可以在 "Services"（服务）窗口中创建 sakila 数据库。sakila 数据库已添加到 "Create MySQL Database"（创建 MySQL 数据库）对话框的数据库列表中。
+
+有关配置 IDE 使用 MySQL 的详细信息，请参见link:../ide/mysql.html[+连接 MySQL 数据库+]教程。
+
+1. 打开 "Plugins"（插件）管理器，并安装 "Sakila Sample Database"（Sakila 样例数据库）插件。
+2. 安装插件之后，启动 MySQL 数据库，方法是在 "Services"（服务）窗口中展开 "Databases"（数据库）节点，右键单击 MySQL 服务器节点并选择 "Start"（启动）。
+3. 右键单击 MySQL 服务器节点并选择 "Create Database"（创建数据库）。
+4. 在 "Create MySQL Database"（创建 MySQL 数据库）对话框的 "New Database Name"（新数据库名称）下拉列表中选择 "Sakila" 数据库。单击 "OK"（确定）。
+image::images/create-sakila-mysql.png[title=""Create MySQL Database"（创建 MySQL 数据库）对话框的屏幕快照"]
+
+单击 "OK"（确定）后，IDE 将运行脚本以创建 Sakila 数据库，并填充数据库表。您可以在 "Output"（输出）窗口中查看运行脚本的结果。此时，还会在 MySQL 服务器节点下方添加 Sakila 数据库的节点。
+
+5. 右键单击 "Sakila" 节点，然后选择 "Connect"（连接）。
+
+单击 "Connect"（连接）后，"Databases"（数据库）节点下面将列出 Sakila 数据库连接节点 ( ``jdbc:mysql://localhost:3306/sakila [_username_ on Default]`` )。打开连接时，可通过展开该连接节点查看数据库中数据。
+
+
+== 配置 Maven
+
+Maven 与 IDE 捆绑在一起，并在安装 IDE 时进行安装，但如果这是您首次创建 Maven 项目，则需要在 "Options"（选项）窗口中检查 Maven 配置设置。
+
+1. 在 IDE 中打开“选项”窗口（“工具”>“选项”；在 Mac 上为 "NetBeans" >“首选项”）。
+2. 在 "Options"（选项）窗口中选择 "Java" 类别，然后单击 "Maven" 标签。
+3. 确认指定了 Maven Home 目录。
+
+您可以使用与 IDE 捆绑在一起的 Maven 版本，也可以指定 Maven 在本地的安装位置（要求为 2.0.9 或更高版本）。
+
+4. 选择 "OK"（确定）以关闭 "Options"（选项）窗口。
+
+*注：*
+
+* 在 IDE 中启用 Java 后，会自动启用 Maven 支持。您将需要启用 Java EE 插件（如果尚未启用）。
+* 在 NetBeans IDE 7.1 和 IDE 的早期版本中，"Options"（选项）窗口的 "Maven" 标签位于 "Miscellaneous"（其他）类别下。
+
+
+=== 查看 Maven 资源库
+
+Maven 用于构建所有项目的工件均存储在本地 Maven 资源库中。如果某一工件被声明为项目依赖关系，则会将其从已注册的某个远程资源库下载到您的本地资源库中。
+
+默认情况下，已注册一些常见的索引 Maven 资源库，并将其列在资源库浏览器中。已注册的资源库包含构建项目所需的大多数公共工件。大多数情况下，无需注册任何其他资源库，除非项目需要使用只包含在专用资源库中的工件。
+
+在 "Services"（服务）窗口中，可以浏览本地和远程 Maven 资源库和执行即时更新检查。本地或远程资源库中的所有工件都可以作为项目依赖关系进行添加。在 "Service"（服务）窗口中，可以展开 "Local repository"（本地资源库）节点以查看本地存在的工件。远程资源库节点下列出的工件可以作为项目依赖关系进行添加，但并非所有这些工件都在本地存在。仅当这些工件声明为项目依赖关系时，才会将其添加到本地资源库。
+
+要浏览和更新 Maven 资源库，请执行以下步骤。
+
+1. 选择 "Window"（窗口）> "Services"（服务）以打开 "Services"（服务）窗口。
+2. 在 "Services"（服务）窗口中展开 "Maven Repositories"（Maven 资源库）节点以查看资源库。
+3. 展开资源库节点以查看工件。
+4. 右键单击资源库节点并在弹出菜单中选择 "Update Index"（更新索引）以更新资源库。
+image::images/maven-repositories.png[title=""Services"（服务）窗口中的 "Maven Repositories"（Maven 资源库）"]
+
+当将光标置于某个工件上时，IDE 将显示包含其坐标的工具提示。可以双击工件的 JAR 文件以查看有关该工件的其他详细信息。
+
+在 "Services"（服务）窗口中右键单击 "Maven Repositories"（Maven 资源库）并选择 "Find"（查找）可搜索工件。
+
+有关管理 Maven 类路径依赖关系和在 IDE 中使用 Maven 资源库的详细信息，请参见 link:http://wiki.netbeans.org/MavenBestPractices#section-MavenBestPractices-DependencyManagement[+NetBeans IDE 中的 Apache Maven 最佳做法+]的link:http://wiki.netbeans.org/MavenBestPractices[+依赖关系管理+]部分。
+
+*NetBeans IDE 7.1 和 IDE 较早版本的注释。*
+
+* 选择 "Window"（窗口）> "Other"（其他）> "Maven Repositories Browser"（Maven 资源库浏览器）以查看 Maven 资源库。
+* 可以使用 Maven 资源库浏览器的工具栏中的按钮来更新索引和搜索工件。
+
+
+== 创建 Maven 应用程序
+
+在本教程中，您将创建一个简单的 Java Swing 应用程序项目 DVDStoreAdmin。您将通过某个捆绑的 Maven 原型创建项目，然后修改默认项目设置。
+
+
+=== 选择原型
+
+使用新建项目向导可以通过 Maven 原型创建 Maven 项目。IDE 包含一些常用 NetBeans 项目类型的原型，但是您也可以在该向导中找到并选择远程资源库中的原型。
+
+1. 从主菜单中选择 "File"（文件）> "New Project"（新建项目）（Ctrl-Shift-N 组合键；在 Mac 上为 ⌘-Shift-N 组合键），以打开新建项目向导。
+2. 从 "Maven" 类别中选择 "Java Application"（Java 应用程序）。单击 "Next"（下一步）。
+image::images/maven-project-wizard.png[title="新建项目向导中的 "Maven Archetypes"（Maven 原型）"]
+3. 键入 *DVDStoreAdmin* 作为项目名称并设置项目位置。
+4. 修改默认的组 ID 和版本（可选）。
+
+构建项目时，组 ID 和版本将作为工件在本地资源库中的坐标使用。
+
+5. 单击 "Finish"（完成）。
+
+单击 "Finish"（完成）后，IDE 将创建 Maven 项目并在 "Projects"（项目）窗口中打开该项目。IDE 将自动在  ``com.mycompany.dvdstoreadmin``  包中创建类  ``App.java`` 。您可以删除  ``App.java`` ，因为应用程序不需要使用该类。
+
+*注：*如果这是首次创建 Maven 项目，则 Maven 需要将一些必需的插件和工件下载到本地资源库中。这可能会花费一些时间。
+
+
+=== 修改项目属性
+
+使用向导创建 Maven 项目时，默认项目属性是基于原型的。在某些情况下，您可能需要根据自己所用的系统及项目的要求对默认属性进行修改。例如，对于本项目，由于项目使用标注，因此您需要确认将源代码级别设置为 1.5 或更高版本。
+
+1. 右键单击项目节点，然后选择 "Properties"（属性）。
+2. 在 "Properties"（属性）窗口中选择 "Sources"（源）类别。
+3. 确认在下拉列表中选择的 "Source/Binary Format"（源代码/二进制格式）为 1.5 或更高版本。
+4. 从 "Encoding"（编码）属性的下拉列表中选择 "UTF-8"。单击 "OK"（确定）。
+
+
+== 添加 Hibernate 文件和依赖关系
+
+要添加对 Hibernate 的支持，您需要使 Hibernate 库可用，方法是在 POM 中将所需工件声明为依赖关系。IDE 提供的向导可以帮助您创建在项目中需要的 Hibernate 文件。您可以使用 IDE 中的向导来创建 Hibernate 配置文件和实用程序帮助类。如果您使用向导创建 Hibernate 配置文件，IDE 将自动更新 POM，以将 Hibernate 依赖关系添加到项目中。
+
+您可以在 "Projects"（项目）窗口中将依赖关系添加到项目，也可以直接编辑  ``pom.xml`` 。要在 "Projects"（项目）窗口中添加依赖关系，请右键单击 "Projects"（项目）窗口中的 "Dependencies"（依赖关系）节点，然后从弹出菜单中选择 "Add Dependency"（添加依赖关系）以打开 "Add Dependency"（添加依赖关系）对话框。添加依赖关系时，IDE 将更新 POM 并将本地尚不存在的任何所需工件下载到本地资源库。
+
+要直接编辑  ``pom.xml`` ，请在 "Projects"（项目）窗口中展开 "Project Files"（项目文件）节点，然后双击  ``pom.xml``  以打开该文件。
+
+
+=== 创建 Hibernate 配置文件
+
+Hibernate 配置文件 ( ``hibernate.cfg.xml`` ) 包含关数据库连接、资源映射和其他连接属性的信息。在使用向导创建 Hibernate 配置文件时，您可以从 IDE 的注册数据库连接列表中选择数据库连接。生成配置文件时，IDE 会根据所选的数据库连接自动添加连接详细信息和方言信息。IDE 还会自动修改 POM 以添加所需的 Hibernate 依赖关系。创建配置文件之后，您可以使用多视图编辑器来编辑文件，也可以直接在 XML 编辑器中编辑 XML 文件。
+
+1. 右键单击 "Services"（服务）窗口中的 Sakila 数据库连接，然后选择 "Connect"（连接）。
+2. 在 "Projects"（项目）窗口中右键单击 "Source Packages"（源包）节点，并选择 "New"（新建）> "Other"（其他）以打开新建文件向导。
+3. 从 "Hibernate" 类别中选择 Hibernate 配置向导。单击 "Next"（下一步）。
+4. 保留默认文件名 ( ``hibernate.cfg`` )。
+5. 单击 "Browse"（浏览）并指定  ``src/main/resources``  目录作为位置（如果尚未指定）。单击 "Next"（下一步）。
+6. 在 "Database Connection"（数据库连接）下拉列表中，选择 sakila 连接。单击 "Finish"（完成）。
+image::images/hib-config.png[title="用于选择数据库连接的对话框"]
+
+单击 "Finish"（完成）后，IDE 在编辑器中打开  ``hibernate.cfg.xml`` 。配置文件包含关于单一数据库的信息。
+
+如果在 "Projects"（项目）窗口中展开 "Dependencies"（依赖关系）节点，则可以看到 IDE 已添加了所需的 Hibernate 工件。IDE 会在 "Dependencies"（依赖关系）节点下列出编译项目所需的所有直接依赖关系和传递依赖关系。作为直接依赖关系（项目的 POM 中指定的依赖关系）的工件以彩色 JAR 图标表示。作为传递依赖关系的工件（该工件是一个或多个直接依赖关系的依赖关系）以灰色显示。
+
+image::images/maven-project-libs.png[title=""Projects"（项目）窗口中的 "Libraries"（库）节点下的依赖关系"]
+
+通过右键单击某个 JAR 并选择 "View Artifact Details"（查看工件详细信息），可以查看工件的详细信息。工件查看器包含一些标签，其中提供了有关选定工件的详细信息。例如，"Basic"（基本）标签提供了有关工件坐标和可用版本的详细信息。"Graph"（图形）标签提供了选定工件的依赖关系的可视表示。
+
+image::images/maven-artifacts-viewer.png[title="显示依赖关系的 "Graphs"（图形）标签或工件查看器"]
+
+您也可以使用 "Graph"（图形）标签发现并解决依赖关系间的版本冲突问题。
+
+
+=== 修改 Hibernate 配置文件
+
+在本练习中，您将编辑  ``hibernate.cfg.xml``  中指定的默认属性来启用 SQL 语句的调试日志记录。本练习为可选。
+
+1. 在 "Design"（设计）标签中打开  ``hibernate.cfg.xml`` 。可以通过展开 "Projects"（项目）窗口的 "Configuration Files"（配置文件）节点并双击  ``hibernate.cfg.xml``  来打开该文件。
+2. 在 "Optional Properties"（可选属性）下，展开 "Configuration Properties"（配置属性）节点。
+3. 单击 "Add"（添加）以打开 "Add Hibernate Property"（添加 Hibernate 属性）对话框。
+4. 在此对话框中，选择  ``hibernate.show_sql``  属性并将值设置为  ``true`` 。单击 "OK"（确定）。这将启用 SQL 语句的调试日志记录。
+image::images/add-property-showsql.png[title="显示 hibernate.show_sql 属性的设置值的 "Add Hibernate Property"（添加 Hibernate 属性）对话框"]
+5. 单击 "Miscellaneous Properties"（其他属性）节点下的 "Add"（添加），然后选择 "Property Name"（属性名称）下拉列表中的  ``hibernate.query.factory_class`` 。
+6. 在文本字段中键入 *org.hibernate.hql.internal.classic.ClassicQueryTranslatorFactory*。单击 "OK"（确定）。
+
+*注：*不要从下拉列表中选择值。
+
+image::images/add-property-factoryclass-4.png[title="显示 hibernate.query.factory_class 属性的设置值的 "Add Hibernate Property"（添加 Hibernate 属性）对话框"]
+
+如果单击编辑器中的 XML 标签，则可以在 XML 视图中看到此文件。您的文件应看起来类似于以下内容：
+
+
+[source,xml]
+----
+
+<hibernate-configuration>
+    <session-factory name="session1">
+        <property name="hibernate.dialect">org.hibernate.dialect.MySQLDialect</property>
+        <property name="hibernate.connection.driver_class">com.mysql.jdbc.Driver</property>
+        <property name="hibernate.connection.url">jdbc:mysql://localhost:3306/sakila</property>
+        <property name="hibernate.connection.username">root</property>
+        <property name="hibernate.connection.password">######</property>
+        <property name="hibernate.show_sql">true</property>
+        <property name="hibernate.query.factory_class">org.hibernate.hql.internal.classic.ClassicQueryTranslatorFactory</property>
+    </session-factory>
+</hibernate-configuration>
+----
+7. 保存对该文件所做的更改。
+
+运行项目时，您将能够在 IDE 的 "Output"（输出）窗口中看到输出的 SQL 查询。
+
+
+=== 创建  ``HibernateUtil.java``  帮助文件
+
+要使用 Hibernate，您需要创建一个 helper 类，该类处理启动并访问 Hibernate 的  ``SessionFactory``  以获取 "Session"（会话）对象。该类将调用 Hibernate 的  ``configure()``  方法，加载  ``hibernate.cfg.xml``  配置文件，然后构建  ``SessionFactory``  来获取会话对象。
+
+在此部分，使用新建文件向导创建 helper 类  ``HibernateUtil.java`` 。
+
+1. 右键单击 "Source Packages"（源包）节点并选择 "New"（新建）> "Other"（其他），打开新建文件向导。
+2. 从 "Categories"（类别）列表中选择 "Hibernate"，从 "File Types"（文件类型）列表中选择 HibernateUtil.java。单击 "Next"（下一步）。
+3. 键入 *HibernateUtil* 作为类名，并键入 *sakila.util* 作为包名。单击 "Finish"（完成）。
+image::images/maven-hibutil-wizard.png[title="Hibernate 实用程序向导"]
+
+单击 "Finish"（完成），此时  ``HibernateUtil.java``  将在编辑器中打开。由于不需要编辑该文件，因此可以关闭该文件。
+
+
+== 生成 Hibernate 映射文件和 Java 类
+
+在本教程中，您将使用 POJO  ``Actor.java``  表示数据库中的 ACTOR 表的数据。该类为表中的列指定字段并使用简单的 setter 和 getter 检索和编写数据。要将  ``Actor.java``  映射到 ACTOR 表，您可以使用 Hibernate 映射文件或使用类中的注释。
+
+您可以使用逆向工程向导和 "Hibernate Mapping Files and POJOs from a Database"（通过数据库生成 Hibernate 映射文件和 POJO）向导，基于所选的数据库表创建多个 POJO 和映射文件。或者，也可以使用 IDE 中的相应向导帮助您从头创建各个 POJO 和映射文件。
+
+*注：*要为多个表创建文件时，您很可能希望使用这些向导。在本教程中，您只需创建一个 POJO 和一个映射文件，因此单独创建各文件相当简单。本教程的末尾介绍了<<10,单独创建 POJO 和映射文件>>的步骤。
+
+
+=== 创建逆向工程文件
+
+要使用通过数据库生成 POJO 和映射文件向导，您需要首先在  ``src/main/resources``  目录（在其中创建了  ``hibernate.cfg.xml`` ）中创建  ``reveng.xml``  逆向工程文件。
+
+1. 右键单击 "Source Packages"（源包）节点并选择 "New"（新建）> "Other"（其他），打开新建文件向导。
+2. 从 "Categories"（类别）列表中选择 "Hibernate"，然后从 "File Types"（文件类型）列表中选择 Hibernate 逆向工程向导。单击 "Next"（下一步）。
+3. 键入 *hibernate.reveng* 作为文件名。
+4. 指定 * ``src/main/resources`` * 作为位置。单击 "Next"（下一步）。
+5. 在 "Available Tables"（可用表）窗格中选择 *actor*，然后单击 "Add"（添加）。单击 "Finish"（完成）。
+
+该向导将生成  ``hibernate.reveng.xml``  逆向工程文件。可将该逆向工程文件关闭，因为无需对其进行编辑。
+
+*注：*此项目需要 MySQL 连接器 jar 库（例如， ``mysql-connector-jar-5.1.13.jar`` ）。如果在 "Dependencies"（依赖关系）节点下面未将适当的 JAR 作为项目依赖关系列出，则可以右键单击 "Dependencies"（依赖关系）节点并选择 "Add Dependency"（添加依赖关系）以添加依赖关系。
+
+
+=== 通过数据库创建 Hibernate 映射文件和 POJO
+
+"Hibernate Mapping Files and POJOs from a Database"（通过数据库生成 Hibernate 映射文件和 POJO）向导生成基于数据库表的文件。使用该向导时，IDE 将基于  ``hibernate.reveng.xml``  中指定的数据库表生成 POJO 和映射文件，然后将映射条目添加到  ``hibernate.cfg.xml`` 。使用向导时可选择希望 IDE 生成的文件（比如，只生成 POJO）并选择代码生成选项（例如，生成使用 EJB 3 标注的代码）。
+
+1. 在 "Projects"（项目）窗口中右键单击 "Source Packages"（源包）节点，并选择 "New"（新建）> "Other"（其他）以打开新建文件向导。
+2. 在 "Hibernate" 类别中选择 "Hibernate Mapping Files and POJOs from a Database"（通过数据库生成 Hibernate 映射文件和 POJO）。单击 "Next"（下一步）。
+3. 从 "Hibernate Configuration File"（Hibernate 配置文件）下拉列表中选择  ``hibernate.cfg.xml`` （如果未将其选定）。
+4. 从 "Hibernate Reverse Engineering File"（Hibernate 逆向工程文件）下拉列表中选择  ``hibernate.reveng.xml`` （如果未将其选定）。
+5. 确保选中了 *Domain Code*（域代码）和 *Hibernate XML Mappings*（Hibernate XML 映射）选项。
+6. 键入 *sakila.entity* 作为包名。单击 "Finish"（完成）。
+image::images/mapping-pojos-wizard.png[title=""Generate Hibernate Mapping Files and POJOs"（生成 Hibernate 映射文件和 POJO）向导"]
+
+单击 "Finish"（完成），此时 IDE 将在  ``src/main/java/sakila/entity``  目录中生成包含所有必需字段的 POJO  ``Actor.java`` 。IDE 还会在  ``src/main/resources/sakila/entity``  目录中生成 Hibernate 映射文件，并将映射条目添加到  ``hibernate.cfg.xml`` 。
+
+您已经创建了 POJO 和所需的 Hibernate 相关文件，现在，您可以为应用程序创建一个简单的 Java GUI 前端。您还将创建并添加一个 HQL 查询，用于查询数据库以检索数据。在此过程中，我们还将使用 HQL 编辑器来构建和测试查询。
+
+
+== 创建应用程序 GUI
+
+在本练习中，您将创建一个简单的 JFrame 窗体，并添加一些字段用于输入和显示数据。您还将添加一个按钮，用于触发检索数据的数据库查询。
+
+如果您不知道如何使用 GUI 构建器创建窗体，可以阅读link:gui-functionality.html[+构建 GUI 应用程序简介+]教程。
+
+
+=== 创建 JFrame 窗体
+
+1. 在 "Projects"（项目）窗口中右键单击项目节点，然后选择 "New"（新建）> "Other"（其他）以打开新建文件向导。
+2. 从 "Swing GUI Forms"（Swing GUI 窗体）类别中选择 "JFrame Form"（JFrame 窗体）。单击 "Next"（下一步）。
+3. 键入 *DVDStoreAdmin* 作为类名，并键入 *sakila.ui* 作为包名。单击 "Finish"（完成）。
+
+单击 "Finish"（完成），此时 IDE 将创建类并在编辑器的 "Design"（设计）视图中打开 JFrame 窗体。
+
+
+=== 在窗体中添加元素
+
+现在，您需要在窗体中添加 UI 元素。在编辑器中的 "Design"（设计）视图中打开窗体后，"Palette"（组件面板）出现在 IDE 的右侧。在窗体中添加元素的方法是将 "Palette"（组件面板）中的元素拖至窗体区域。将元素添加到窗体之后，您需要修改元素 "Variable Name"（变量名称）属性的默认值。
+
+1. 从 "Palette"（组件面板）中拖出一个 "Label"（标签）元素，并将文本更改为 *Actor Profile*。
+2. 从 "Palette"（组件面板）中拖出一个 "Label"（标签）元素，并将文本更改为 *First Name*。
+3. 拖放一个 "Text Field"（文本字段）元素到 "First Name" 标签旁边，并删除默认文本。
+
+删除默认文本后，文本字段将折叠起来。您可以稍后调整文本字段的大小，以调整窗体元素的对齐方式。
+
+4. 从 "Palette"（组件面板）中拖出一个 "Label"（标签）元素，并将文本更改为 *Last Name*。
+5. 拖放一个 "Text Field"（文本字段）元素到 "Last Name" 标签旁边，并删除默认文本。
+6. 从 "Palette"（组件面板）中拖出一个 "Button"（按钮）元素，并将文本更改为 *Query*。
+7. 从 "Palette"（组件面板）中拖放一个 "Table"（表）元素到窗体中。
+8. 根据下表中的值更改以下 UI 元素的 "Variable Name"（变量名称）值。
+
+您可以更改元素的 "Variable Name"（变量名称）值，方法是右键单击 "Design"（设计）视图中的元素并选择 "Change Variable Name"（更改变量名称）。或者，您可以直接在 "Inspector"（检查器）窗口中更改变量名称。
+
+您不需要为 "Label"（标签）元素指定变量名称。
+
+|===
+|元素 |变量名称 
+
+|"First Name" 文本字段 | ``firstNameTextField``  
+
+|"Last Name" 文本字段 | ``lastNameTextField``  
+
+|"Query" 按钮 | ``queryButton``  
+
+|表 | ``resultTable``  
+|===
+9. 调整文本字段的大小并对齐窗体元素。
+
+您可以对文本字段启用 "Horizontal Resizable"（可水平调整大小）属性，以确保文本字段的大小可随窗口进行调整且元素间距保持不变。
+
+10. 保存所做的更改。
+
+在 "Design"（设计）视图中，您的窗体应与下图类似。
+
+image::images/hib-jframe-form.png[title="编辑器设计视图中的 GUI 窗体"]
+
+现在，您已经创建了窗体。接下来，您需要创建为窗体元素指定活动的代码。在下一练习中，您将根据 Hibernate 查询语言构建查询来检索数据。构建查询之后，您将在窗体中添加一些方法，用于在单击 "Query" 按钮时调用适当的查询。
+
+
+== 在 HQL 查询编辑器中创建查询
+
+在 IDE 中，您可以使用 HQL 查询编辑器根据 Hibernate 查询语言来构建和测试查询。键入查询时，编辑器将显示等价的（经过转换的）SQL 查询。单击工具栏中的 "Run HQL Query"（运行 HQL 查询）按钮后，IDE 将执行查询并在编辑器底部显示结果。
+
+在本练习中，您将使用 HQL 编辑器构建简单的 HQL 查询，用于根据姓氏和名字查询演员的详细信息。将查询添加到类中之前，您需要使用 HQL 查询编辑器测试连接运行正常，且查询生成了预期的结果。在运行该查询之前，您首先需要对应用程序进行编译。
+
+1. 右键单击项目节点，然后选择 "Build"（构建）。
+
+单击 "Build"（构建）后，IDE 会将所需的工件下载到您本地的 Maven 资源库。
+
+2. 在 "Projects"（项目）窗口中的 "Other Sources"（其他源）节点下展开  ``<默认包>``  源包节点。
+3. 右键单击  ``hibernate.cfg.xml``  配置文件，然后选择 "Run HQL Query"（运行 HQL 查询）以打开 HQL 编辑器。
+4. 通过在 HQL 查询编辑器中键入  ``from Actor``  来测试连接。单击工具栏中的 "Run HQL Query"（运行 HQL 查询）按钮 (image::images/run_hql_query_16.png[title=""Run HQL Query"（运行 HQL 查询）按钮"])。
+
+单击 "Run HQL Query"（运行 HQL 查询）按钮之后，您应该能在 HQL 查询编辑器的底部窗格中看到查询结果。
+
+image::images/hib-query-hqlresults.png[title="显示 HQL 查询结果的 HQL 查询编辑器"]
+5. 在 HQL 查询编辑器中键入以下查询，然后单击 "Run HQL Query"（运行 HQL 查询）查询搜索字符串为 "PE" 时的查询结果。
+
+[source,java]
+----
+
+from Actor a where a.firstName like 'PE%'
+----
+
+该查询返回姓氏以 'PE' 开头的演员详细信息列表。
+
+如果您单击结果上方的 SQL 按钮，您应该能看到与以下等价的 SQL 查询。
+
+
+[source,java]
+----
+
+select actor0_.actor_id as col_0_0_ from sakila.actor actor0_ where (actor0_.first_name like 'PE%' )
+----
+6. 打开一个新的 HQL 查询编辑器标签，在编辑器窗格中键入以下查询。单击 "Run HQL Query"（运行 HQL 查询）按钮。
+
+[source,java]
+----
+
+from Actor a where a.lastName like 'MO%'
+----
+
+该查询返回名字以 'MO' 开头的演员详细信息列表。
+
+测试表明，查询返回了预期结果。下一步需要在应用程序中实现查询，以便单击窗体中的 "Query" 按钮能调用正确的查询。
+
+
+== 在窗体中添加查询
+
+现在，您需要修改  ``DVDStoreAdmin.java`` ，添加一些查询字符串并创建一些方法，用于构建和调用合并输入变量的查询。您还需要修改按钮事件处理程序，以调用正确的查询，并添加一个用于在表中显示查询结果的方法。
+
+1. 打开  ``DVDStoreAdmin.java``  并单击 "Source"（源）标签。
+2. 将以下查询字符串（粗体）添加到类中。
+
+[source,java]
+----
+
+public DVDStoreAdmin() {
+    initComponents();
+}
+
+*private static String QUERY_BASED_ON_FIRST_NAME="from Actor a where a.firstName like '";
+private static String QUERY_BASED_ON_LAST_NAME="from Actor a where a.lastName like '";*
+----
+
+可以将 HQL 查询编辑器标签中的查询复制到文件中，然后再修改代码。
+
+3. 添加以下方法，以根据用户输入字符串创建查询。
+
+[source,java]
+----
+
+private void runQueryBasedOnFirstName() {
+    executeHQLQuery(QUERY_BASED_ON_FIRST_NAME + firstNameTextField.getText() + "%'");
+}
+    
+private void runQueryBasedOnLastName() {
+    executeHQLQuery(QUERY_BASED_ON_LAST_NAME + lastNameTextField.getText() + "%'");
+}
+----
+
+这些方法调用一个名称为  ``executeHQLQuery()``  的方法，并通过结合查询字符串与用户输入的搜索字符串来创建查询。
+
+4. 添加  ``executeHQLQuery()``  方法。
+
+[source,java]
+----
+
+private void executeHQLQuery(String hql) {
+    try {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        session.beginTransaction();
+        Query q = session.createQuery(hql);
+        List resultList = q.list();
+        displayResult(resultList);
+        session.getTransaction().commit();
+    } catch (HibernateException he) {
+        he.printStackTrace();
+    }
+}
+----
+
+ ``executeHQLQuery()``  方法调用 Hibernate 来执行选定的查询。该方法利用  ``HibernateUtil.java``  实用程序类来获取 Hibernate 会话。
+
+5. 修复您的导入，为 Hibernate 库（ ``org.hibernate.Query`` ,  ``org.hibernate.Session`` ）和  ``java.util.List``  添加导入语句。
+6. 切换到 "Design"（设计）视图并双击 "Query" 按钮，创建一个 "Query" 按钮事件处理程序。
+
+IDE 将创建  ``queryButtonActionPerformed``  方法并在 "Source"（源）视图中显示该方法。
+
+7. 在 "Source"（源）视图中修改  ``queryButtonActionPerformed``  方法，添加以下代码，以便查询能在用户单击按钮时正确运行。
+
+[source,java]
+----
+
+private void queryButtonActionPerformed(java.awt.event.ActionEvent evt) {
+    *if(!firstNameTextField.getText().trim().equals("")) {
+        runQueryBasedOnFirstName();
+    } else if(!lastNameTextField.getText().trim().equals("")) {
+        runQueryBasedOnLastName();
+    }*
+}
+----
+8. 添加以下方法，在 JTable 中显示结果。
+
+[source,java]
+----
+
+private void displayResult(List resultList) {
+    Vector<String> tableHeaders = new Vector<String>();
+    Vector tableData = new Vector();
+    tableHeaders.add("ActorId"); 
+    tableHeaders.add("FirstName");
+    tableHeaders.add("LastName");
+    tableHeaders.add("LastUpdated");
+
+    for(Object o : resultList) {
+        Actor actor = (Actor)o;
+        Vector<Object> oneRow = new Vector<Object>();
+        oneRow.add(actor.getActorId());
+        oneRow.add(actor.getFirstName());
+        oneRow.add(actor.getLastName());
+        oneRow.add(actor.getLastUpdate());
+        tableData.add(oneRow);
+    }
+    resultTable.setModel(new DefaultTableModel(tableData, tableHeaders));
+}
+----
+9. 修复导入（Ctrl+Shift+I 组合键）以添加  ``java.util.Vector`` ，然后保存所做的更改。
+
+保存窗体之后，您可以运行项目。
+
+
+== 运行 Maven 项目
+
+现在您已完成了编码工作，接下来可以构建项目并启动应用程序了。在 IDE 中构建 Maven 项目时，Maven 将读取项目的 POM 以识别项目依赖关系。要构建项目，指定为依赖关系的所有工件都必须位于本地 Maven 资源库中。如果某个所需的工件不在本地资源库中，Maven 将先从远程资源库中检出该工件，然后再尝试构建并运行项目。构建项目后，Maven 会将构建的二进制文件作为工件安装到本地资源库中。
+
+*注：*
+
+* 如果 IDE 需要检出任何项目依赖关系，则首次构建并运行项目可能要花费一些时间。之后的构建过程将会加快。
+* 要运行此应用程序，首先需要指定“主类”。
+
+要编译并启动此应用程序，请执行以下任务。
+
+1. 右键单击 "Projects"（项目）窗口中的项目节点，然后选择 "Properties"（属性）。
+2. 在 "Project Properties"（项目属性）对话框中选择 "Run"（运行）类别。
+3. 键入 *sakila.ui.DVDStoreAdmin* 作为主类。单击 "OK"（确定）。
+
+或者，您可以单击 "Browse"（浏览）按钮并在对话框中选择主类。
+
+image::images/browse-main-class.png[title="在 "Browse Main Classes"（浏览主类）对话框中设置主类"]
+4. 单击主工具栏中的 "Run Project"（运行项目）以启动应用程序。
+
+在 IDE 中对 Maven 项目调用 "Run"（运行）操作时，IDE 将运行与 "Run"（运行）操作关联的 Maven 目标。IDE 具有绑定到 IDE 操作的默认目标，这些目标依据项目包而定。在项目 "Properties"（属性）窗口的 "Actions"（操作）窗格中，可以查看绑定到 "Run"（运行）操作的目标。
+
+image::images/maven-projectproperties.png[title="DVDStoreAdmin 项目属性窗口的 "Actions"（操作）窗格"]
+
+在项目 "Properties"（属性）窗口的 "Actions"（操作）窗格中，可以定制操作的绑定目标。
+
+启动应用程序时，GUI 窗体打开。在 "First Name" 或 "Last Name" 字段中键入搜索字符串，并单击 "Query" 来搜索演员并查看详细信息。
+
+image::images/application-run.png[title="显示结果的 DVDStoreAdmin 应用程序"]
+
+如果您查看 IDE 的 "Output"（输出）窗口，您可以看到检索显示结果的 SQL 查询。
+
+
+=== 下载解决方案项目
+
+您可以采用下列方法下载本教程的解决方案（作为一个项目）。
+
+* 下载link:https://netbeans.org/projects/samples/downloads/download/Samples/Java/DVDStoreAdmin-Maven.zip[+已完成项目的 zip 档案文件+]。
+* 通过执行以下步骤从 NetBeans 样例检出项目源代码：
+1. 从主菜单中选择 "Team"（团队开发）> "Subversion" > "Checkout"（检出）。
+2. 在 "Checkout"（检出）对话框中，输入以下资源库 URL：
+ ``https://svn.netbeans.org/svn/samples~samples-source-code`` 
+单击 "Next"（下一步）。
+3. 单击 "Browse"（浏览）以打开 "Browse Repostiory Folders"（浏览资源库文件夹）对话框。
+4. 展开根节点，然后选择 *samples/java/DVDStoreAdmin-Maven*。单击 "OK"（确定）。
+5. 指定用于存储源代码的本地文件夹（本地文件夹必须为空）。
+6. 单击 "Finish"（完成）。
+
+单击 "Finish"（完成），此时 IDE 会将本地文件夹初始化为 Subversion 资源库，并检出项目源代码。
+
+7. 在完成检出操作后将会显示一个对话框，在该对话框中单击 "Open Project"（打开项目）。
+
+*注：*
+
+* 从 Kenai 检出源代码的步骤仅适用于 NetBeans IDE 6.7 和 6.8。
+* 需要 Subversion 客户端以从 Kenai 检出源代码。有关安装 Subversion 的更多信息，请参见 link:../ide/subversion.html[+NetBeans IDE 中的 Subversion 指南+]中有关link:../ide/subversion.html#settingUp[+设置 Subversion+] 的部分。
+
+
+== 单独创建 POJO 和映射文件
+
+由于 POJO 是一个简单的 Java 类，因此您可以使用新建 Java 类向导创建类，然后在源代码编辑器中编辑该类，添加必要的字段以及 getter 和 setter 方法。创建 POJO 之后，您可以使用相应的向导创建一个将类映射到表的 Hibernate 映射文件，并将映射信息添加到  ``hibernate.cfg.xml`` 。从头开始创建映射文件时，您需要在 XML 编辑器中将字段映射到列。
+
+*注：*此练习是可选的，说明了如何使用 "Hibernate Mapping Files and POJOs from Database"（通过数据库生成 Hibernate 映射文件和 POJO）向导创建 POJO 和映射文件。
+
+1. 右键单击 "Projects"（项目）窗口中的 "Source Packages"（源包）节点并选择 "New"（新建）> "Java Class"（Java 类）以打开新建 Java 类向导。
+2. 在该向导中，键入*类名*作为类名，键入 *sakila.entity* 作为包名。单击 "Finish"（完成）。
+3. 对类进行以下更改（显示为粗体）以实现“可串行化”接口并为表列添加字段。
+
+[source,java]
+----
+
+public class Actor *implements Serializable* {
+    *private Short actorId;
+    private String firstName;
+    private String lastName;
+    private Date lastUpdate;*
+}
+----
+4. 为字段生成 getter 和 setter 方法，方法是将光标放置在源代码编辑器中，按下 Alt-Insert 并选择 "Getter and Setter"（Getter 和 Setter）。
+5. 在 "Generate Getters and Setters"（生成 Getter 和 Setter）对话框中，选择所有字段并单击 "Generate"（生成）。
+image::images/getters-setters.png[title=""Generate Getters and Setters"（生成 getter 和 setter）对话框"]
+
+在 "Generate Getters and Setters"（生成 Getter 和 Setter）对话框中，您可以使用键盘中的向上箭头将所选项目移动到 Actor 节点中，然后按空格键选择 Actor 中的所有字段。
+
+6. 修复导入并保存更改。
+
+为表创建 POJO 之后，您需要为  ``Actor.java``  创建一个 Hibernate 映射文件。
+
+1. 在 "Projects"（项目）窗口中右键单击  ``sakila.entity``  源包节点，然后选择 "New"（新建）> "Other"（其他）以打开新建文件向导。
+2. 从 "Hibernate" 类别中选择 "Hibernate Mapping Wizard"（Hibernate 映射向导）。单击 "Next"（下一步）。
+3. 键入 *Actor.hbm* 作为文件名，并将 "Folder"（文件夹）设置为 *src/main/resources/sakila/entity*。单击 "Next"（下一步）。
+4. 键入 *sakila.entity.Actor* 作为要映射的类。
+5. 从 "Database Table"（数据库表）下拉列表中选择 *actor*（如果尚未将其选定）。单击 "Finish"（完成）。
+image::images/mapping-wizard.png[title="生成 Hibernate 映射文件向导"]
+
+单击 "Finish"（完成），此时将在源代码编辑器中打开 Hibernate 映射文件  ``Actor.hbm.xml`` 。IDE 还会自动在  ``hibernate.cfg.xml``  中添加一个映射资源条目。您可以通过在  ``hibernate.cfg.xml``  "Design"（设计）视图或在 XML 视图中展开 "Mapping"（映射）节点来查看条目详细信息。XML 视图中的  ``mapping``  条目如下所示：
+
+
+[source,xml]
+----
+
+        <mapping resource="sakila/entity/Actor.hbm.xml"/>
+    </session-factory>
+</hibernate-configuration>
+----
+6. 对  ``Actor.hbm.xml``  执行以下更改（黑体），将  ``Actor.java``  中的字段映射到 ACTOR 表中的列。
+
+[source,xml]
+----
+
+<hibernate-mapping>
+  <class name="sakila.entity.Actor" *table="actor">
+    <id name="actorId" type="java.lang.Short">
+      <column name="actor_id"/>
+      <generator class="identity"/>
+    </id>
+    <property name="firstName" type="string">
+      <column length="45" name="first_name" not-null="true"/>
+    </property>
+    <property name="lastName" type="string">
+      <column length="45" name="last_name" not-null="true"/>
+    </property>
+    <property name="lastUpdate" type="timestamp">
+      <column length="19" name="last_update" not-null="true"/>
+    </property>
+  </class>*
+</hibernate-mapping>
+----
+
+在修改映射文件时，可以使用编辑器中的代码完成功能完成各个值。
+
+*注：*默认情况下，生成的  ``class``  元素具有一个结束标记。因为需要在打开和关闭  ``class``  元素标记之间添加属性元素，所以需要进行以下更改（显示为粗体）。进行更改之后，可以在  ``class``  标记之间使用代码完成。
+
+
+[source,xml]
+----
+
+<hibernate-mapping>
+  <class name="sakila.entity.Actor" *table="actor">
+  </class>*
+</hibernate-mapping>
+----
+7. 单击工具栏中的 "Validate XML"（验证 XML）按钮并保存更改。
+
+如果要进一步定制应用程序，单独创建 POJO 和 Hibernate 映射文件可能是一种非常方便的方法。
+
+link:/about/contact_form.html?to=3&subject=Feedback:%20Creating%20a%20Maven%20Project[+发送有关此教程的反馈意见+]
+
+
+
+== 另请参见
+
+有关创建 Swing GUI 应用程序的附加信息，请参见以下教程。
+
+* link:quickstart-gui.html[+在 NetBeans IDE 中设计 Swing GUI+]
+* link:gui-functionality.html[+构建 GUI 应用程序简介+]
+* link:../../trails/matisse.html[+Java GUI 应用程序学习资源+]

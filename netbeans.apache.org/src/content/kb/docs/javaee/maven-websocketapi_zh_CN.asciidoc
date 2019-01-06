@@ -1,0 +1,888 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= 在 Web 应用程序中使用 WebSocket API
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: 在 Web 应用程序中使用 WebSocket API - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, 在 Web 应用程序中使用 WebSocket API
+
+本教程演示了如何创建简单 Web 应用程序，以在连接到单个服务器应用程序的客户端浏览器之间实现协作。当用户在客户端浏览器中的画布上绘制图形元素时，该元素将显示在所有已连接客户端的画布上。如何工作？当浏览器加载 Web 页时，客户端脚本将向应用程序服务器发送 WebSocket 握手请求。应用程序可以从会话中连接的客户端接受 JSON 和二进制消息，并将消息广播到连接的所有客户端。
+
+在本教程中，您将创建一个 Web 应用程序，该应用程序使用用于 WebSocket 的 Java API (link:http://www.jcp.org/en/jsr/detail?id=356[+JSR 356+])，从而支持浏览器客户端与应用程序服务器之间的双向通信。用于 WebSocket 的 Java API 支持创建 WebSocket Java 组件，启动和拦截 WebSocket 事件，以及创建和使用 WebSocket 文本和二进制消息。本教程还将演示如何使用用于 JSON 处理的 Java API (link:http://jcp.org/en/jsr/detail?id=353[+JSR 353+]) 以生成和使用 JSON。用于 WebSocket 的 Java API 和用于 JSON 处理的 Java API 是 Java EE 7 平台的组成部分 (link:http://jcp.org/en/jsr/detail?id=342[+JSR 342+])。
+
+应用程序中包含一个 WebSocket 端点和一些解码器和编码器接口、一个 Web 页和一些 JavaScript 文件，加载 Web 页时或从 Web 页中的窗体调用时，这些 JavaScript 文件将运行在客户端浏览器中。将应用程序部署到 GlassFish Server Open Source Edition 4（Java EE 7 技术的引用实现）。
+
+*注：*本教程基于 link:https://blogs.oracle.com/arungupta/entry/collaborative_whiteboard_using_websocket_in[+Collaborative Whiteboard using WebSocket in GlassFish 4 - Text/JSON and Binary/ArrayBuffer Data Transfer (TOTD #189)+]（在 GlassFish 4 中使用 WebSocket 的协作白板 - 文本/JSON 和二进制/ArrayBuffer 数据传输 (TOTD #189)）博客帖子和其他可在 link:http://blog.arungupta.me/[+Arun Gupta 的博客+]上找到的博客条目。请确保访问此博客，并查看许多其他有关使用 WebSocket API 和 GlassFish 4 的优秀博客。
+
+您也可以观看link:maven-websocketapi-screencast.html[+在 Web 应用程序中使用 WebSocket API 的视频+]。
+
+*教程练习*
+
+image::images/netbeans-stamp-80-74-73.png[title="此页上的内容适用于 NetBeans IDE 7.3、7.4 和 8.0"]
+
+* <<Exercise_1,创建 Web 应用程序项目>>
+* <<createendpoint,创建 WebSocket 端点>>
+* <<createendpoint1,创建端点>>
+* <<createendpoint2,启动 WebSocket 会话>>
+* <<createendpoint3,测试端点>>
+* <<createwhiteboard,创建白板>>
+* <<createwhiteboard1,添加画布>>
+* <<createwhiteboard2,创建 POJO>>
+* <<createwhiteboard3,创建坐标类>>
+* <<createwhiteboard6,生成 JSON 字符串>>
+* <<createwhiteboard4,实现编码器和解码器接口>>
+* <<createwhiteboard5,运行应用程序>>
+* <<sendbinary,向端点发送二进制数据>>
+
+*要学习本教程，您需要具备以下软件和资源。*
+
+|===
+|软件或资源 |要求的版本 
+
+|link:https://netbeans.org/downloads/index.html[+NetBeans IDE+] |7.3.1、7.4、8.0、Java EE 版本 
+
+|link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+Java 开发工具包 (JDK)+] |版本 7 或 8 
+
+|link:https://glassfish.java.net/[+GlassFish Server 开源版+] |4 
+|===
+
+*注：*GlassFish 4 随 NetBeans IDE 的 Java EE 下载包捆绑提供。
+
+*先决条件*
+
+本文档假定您具备以下技术的一些基本知识或编程经验：
+
+* Java 编程
+* JavaScript/HTML 编程
+* NetBeans IDE
+
+在开始本教程之前，您可以先阅读下面这些文档。
+
+* link:http://wiki.netbeans.org/MavenBestPractices[+NetBeans IDE 中的 Apache Maven 最佳做法+]
+* link:http://books.sonatype.com/mvnref-book/reference/introduction.html[+Chapter 1. Introducing Apache Maven+]（第 1 章. Apache Maven 简介，来自 link:http://books.sonatype.com/mvnref-book/reference/index.html[+Maven: The Complete Reference+]（Maven：完整参考））
+
+您可以下载link:https://netbeans.org/projects/samples/downloads/download/Samples/JavaEE/WhiteboardApp.zip[+已完成项目的 zip 档案文件+]。
+
+
+== 创建 Web 应用程序项目
+
+本练习的目标是使用 IDE 中的 "New Project"（新建项目）向导创建一个 Web 应用程序项目。创建该项目时，将选择 Java EE 7 作为 Java EE 版本，并选择 GlassFish 4 作为应用程序服务器。GlassFish 4 是 Java EE 7 平台的引用实现。您必须具有支持注册到 IDE 的 Java EE 7 的应用程序服务器才能在本教程中创建应用程序。
+
+1. 从主菜单中选择 "File"（文件）> "New Project"（新建项目）（在 Windows 上为 Ctrl-Shift-N 组合键；在 Mac 上为 ⌘-Shift-N 组合键）。
+2. 从 "Maven" 类别中选择 "Web Application"（Web 应用程序）。单击 "Next"（下一步）。
+3. 键入 *WhiteboardApp* 作为项目名称并设置项目位置。
+4. 键入 *org.sample* 作为组 ID。单击 "Next"（下一步）。
+5. 选择 *GlassFish Server 4.0* 作为服务器。
+6. 将 Java EE 版本设置为 *Java EE 7 Web*。单击 "Finish"（完成）。
+image::images/websocket-newproject.png[title="&quot;New Project&quot;（新建项目）向导中的服务器和 Java EE 版本"]
+
+单击 "Finish"（完成），此时 IDE 将创建项目并在 "Projects"（项目）窗口中打开该项目。
+
+
+== 创建 WebSocket 端点
+
+在此部分，您将创建一个 WebSocket 端点类和一个 JavaScript 文件。WebSocket 端点类包含一些在打开会话时运行的基本方法。然后，将创建一个 JavaScript 文件，在加载页面时该文件将启动与服务器的握手操作。随后将运行应用程序以测试连接是否成功。
+
+有关使用 WebSocket API 和标注的更多信息，请参见 link:https://javaee-spec.java.net/nonav/javadocs/javax/websocket/package-summary.html[+javax.websocket+] 包的概要。
+
+
+=== 创建端点
+
+在此练习中，您将使用 IDE 中的向导帮助创建 WebSocket 端点类。
+
+1. 在 "Projects"（项目）窗口中右键单击 "Source Packages"（源包）节点，然后选择 "New"（新建）> "Other"（其他）。
+2. 在 "Web" 类别中选择 "WebSocket Endpoint"（WebSocket 端点）。单击 "Next"（下一步）。
+3. 键入 *MyWhiteboard* 作为类名。
+4. 在 "Package"（包）下拉列表中选择  ``org.sample.whiteboardapp`` 。
+5. 键入 */whiteboardendpoint* 作为 WebSocket URI。单击 "Finish"（完成）。
+image::images/websocket-newendpoint.png[title="&quot;New File&quot;（新建文件）向导中的 WebSocket 端点"]
+
+在单击 "Finish"（完成）后，IDE 将生成 WebSocket 端点类，并在源代码编辑器中打开文件。在编辑器中，您会看到 IDE 生成了一些属于 WebSocket API 一部分的标注。使用  ``link:https://javaee-spec.java.net/nonav/javadocs/javax/websocket/server/ServerEndpoint.html[+@ServerEndpoint+]``  标注类以将类标识为端点，并将 WebSocket URI 指定为该标注的参数。IDE 还生成了一个使用  ``link:https://javaee-spec.java.net/nonav/javadocs/javax/websocket/OnMessage.html[+@OnMessage+]``  标注的默认  ``onMessage``  方法。每次客户端收到 WebSocket 消息时都会调用使用  ``@OnMessage``  标注的方法。
+
+
+[source,java]
+----
+
+@ServerEndpoint("/whiteboardendpoint")
+public class MyWhiteboard {
+
+    @OnMessage
+    public String onMessage(String message) {
+        return null;
+    }
+    
+}
+----
+6. 将以下字段（*粗体*）添加到类中。
+
+[source,java]
+----
+
+@ServerEndpoint("/whiteboardendpoint")
+public class MyWhiteboard {
+    *private static Set<Session> peers = Collections.synchronizedSet(new HashSet<Session>());*
+
+    @OnMessage
+    public String onMessage(String message) {
+        return null;
+    }
+}
+----
+7. 添加以下  ``onOpen``  和  ``onClose``  方法。
+
+[source,java]
+----
+
+    @OnOpen
+    public void onOpen (Session peer) {
+        peers.add(peer);
+    }
+
+    @OnClose
+    public void onClose (Session peer) {
+        peers.remove(peer);
+    }
+----
+
+您会看到  ``onOpen``  和  ``onClose``  方法使用  ``link:https://javaee-spec.java.net/nonav/javadocs/javax/websocket/OnOpen.html[+@OnOpen+]``  和  ``link:https://javaee-spec.java.net/nonav/javadocs/javax/websocket/OnClose.html[+@OnClose+]``  WebSocket API 标注进行了标注。打开 Web 套接字会话时会调用使用  ``@OnOpen``  进行标注的方法。在此示例中，标注的  ``onOpen``  方法将浏览器客户端添加到当前会话中的对等组中，而  ``onClose``  方法则从组中删除浏览器。
+
+使用源代码编辑器中的提示和代码完成可帮助生成这些方法。单击类声明旁边的左旁注中的提示图标（或者将插入光标置于类声明中并按下 Alt-Enter 组合键），然后在弹出菜单中选择相应方法。代码完成功能可帮助您对方法进行编码。
+
+image::images/websocket-endpoint-hint.png[title="源代码编辑器中的代码提示"]
+8. 在编辑器中右键单击，然后选择 "Fix Imports"（修复导入）（Alt-Shift-I 组合键；在 Mac 上为 ⌘-Shift-I 组合键）。保存所做的更改。
+
+您将看到  ``javax.websocket``  中类的 import 语句会添加到文件中。
+
+端点现已创建。现在，您需要创建 JavaScript 文件以启动 WebSocket 会话。
+
+ 
+
+
+=== 启动 WebSocket 会话
+
+在此练习中，您将创建一个 JavaScript 文件以启动 WebSocket 会话。浏览器客户端通过 TCP 与服务器进行 HTTP“握手”，从而加入会话。在 JavaScript 文件中，将指定端点的  ``wsURI``  的名称并声明 WebSocket。 ``wsURI``  URI 方案是 WebSocket 协议的一部分，指定应用程序端点的路径。
+
+1. 在项目窗口中，右键单击项目节点，然后选择 "New"（新建）> "Other"（其他）。
+2. 在 "New File"（新建文件）向导的 "Web" 类别中选择 "JavaScript File"（JavaScript 文件）。单击 "Next"（下一步）。
+3. 键入 *websocket* 作为 JavaScript 文件名。单击 "Finish"（完成）。
+4. 将以下内容添加到 JavaScript 文件中。
+
+[source,xml]
+----
+
+var wsUri = "ws://" + document.location.host + document.location.pathname + "whiteboardendpoint";
+var websocket = new WebSocket(wsUri);
+
+websocket.onerror = function(evt) { onError(evt) };
+
+function onError(evt) {
+    writeToScreen('<span style="color: red;">ERROR:</span> ' + evt.data);
+}
+----
+
+当浏览器加载  ``websocket.js``  时，此脚本将启动与服务器的会话握手。
+
+5. 打开  ``index.html`` ，然后将以下代码（*粗体*）添加到文件底部，以便在页面完成加载时加载  ``websocket.js`` 。
+
+[source,xml]
+----
+
+<body>
+    *<h1>Collaborative Whiteboard App</h1>
+        
+    <script type="text/javascript" src="websocket.js"></script>*
+</body>
+----
+
+现在，您可以测试 WebSocket 端点是否正在工作，会话是否已启动，以及客户端是否已添加到会话中。
+
+ 
+
+
+=== 测试端点
+
+在此练习中，您将向 JavaScript 文件中添加一些简单方法，以便在浏览器连接到端点时将  ``wsURI``  输出到浏览器窗口。
+
+1. 将以下  ``<div>``  标记（*粗体*）添加到  ``index.html`` 
+
+[source,html]
+----
+
+<h1>Collaborative Whiteboard App</h1>
+        
+*<div id="output"></div>*
+<script type="text/javascript" src="websocket.js"></script>
+----
+2. 将以下声明和方法添加到  ``websocket.js`` 。保存所做的更改。
+
+[source,java]
+----
+
+// For testing purposes
+var output = document.getElementById("output");
+websocket.onopen = function(evt) { onOpen(evt) };
+
+function writeToScreen(message) {
+    output.innerHTML += message + "<br>";
+}
+
+function onOpen() {
+    writeToScreen("Connected to " + wsUri);
+}
+// End test functions
+----
+
+当页面加载 JavaScript 时，这些函数将输出浏览器已连接到端点的消息。在确认端点正确执行之后，可以删除这些函数。
+
+3. 在 "Projects"（项目）窗口中右键单击项目，然后选择 "Run"（运行）。
+
+运行应用程序时，IDE 将启动 GlassFish Server，然后构建并部署应用程序。索引页将在浏览器中打开，并且您将会在浏览器窗口中看到以下消息。
+
+image::images/websocket-browser1.png[title="浏览器窗口中的已连接到端点的消息"]
+
+在浏览器窗口中，您会看到以下接受消息的端点： ``http://localhost:8080/WhiteboardApp/whiteboardendpoint`` 
+
+
+== 创建白板
+
+在此部分，您将创建类和 JavaScript 文件以发送和接收 JSON 文本消息。您还将添加一个 link:http://www.whatwg.org/specs/web-apps/current-work/multipage/the-canvas-element.html[+HTML5 Canvas+] 元素（用于绘制和显示一些内容）和一个含有单选按钮的 HTML  ``<form>`` （用于指定画笔的形状和颜色）。
+
+
+=== 将画布添加到 Web 页中
+
+在此练习中，将向默认索引页中添加  ``canvas``  元素和  ``form``  元素。窗体中的复选框确定画布的画笔属性。
+
+1. 在源代码编辑器中打开  ``index.html`` 。
+2. 删除您添加的  ``<div>``  标记以测试端点，并在开始的 body 标记之后添加以下  ``<table>``  和  ``<form>``  元素（*粗体*）。
+
+[source,xml]
+----
+
+<h1>Collaborative Whiteboard App</h1>
+        
+    *<table>
+        <tr>
+            <td>
+            </td>
+            <td>
+                <form name="inputForm">
+                    
+
+                </form>
+            </td>
+        </tr>
+    </table>*
+    <script type="text/javascript" src="websocket.js"></script>
+    </body>
+----
+3. 为 canvas 元素添加以下代码（*粗体*）。
+
+[source,xml]
+----
+
+        <table>
+            <tr>
+                <td>
+                    *<canvas id="myCanvas" width="150" height="150" style="border:1px solid #000000;"></canvas>*
+                </td>
+----
+4. 添加以下  ``<table>``  以添加单选按钮用于选择颜色和形状。保存所做的更改。
+
+[source,xml]
+----
+
+        <table>
+            <tr>
+                <td>
+                    <canvas id="myCanvas" width="150" height="150" style="border:1px solid #000000;"></canvas>
+                </td>
+                <td>
+                    <form name="inputForm">
+                        *<table>
+
+                            <tr>
+                                <th>Color</th>
+                                <td><input type="radio" name="color" value="#FF0000" checked="true">Red</td>
+                                <td><input type="radio" name="color" value="#0000FF">Blue</td>
+                                <td><input type="radio" name="color" value="#FF9900">Orange</td>
+                                <td><input type="radio" name="color" value="#33CC33">Green</td>
+                            </tr>
+
+                            <tr>
+                                <th>Shape</th>
+                                <td><input type="radio" name="shape" value="square" checked="true">Square</td>
+                                <td><input type="radio" name="shape" value="circle">Circle</td>
+                                <td> </td>
+                                <td> </td>
+                            </tr>
+
+                        </table>*
+                    </form>
+----
+
+画布上绘制的任何图形的形状、颜色和坐标都将转换为 JSON 结构中的字符串并作为消息发送至 WebSocket 端点。
+
+ 
+
+
+=== 创建 POJO
+
+在此练习中，您将创建一个简单的 POJO。
+
+1. 右键单击项目节点，然后选择 "New"（新建）> "Java Class"（Java 类）。
+2. 键入 *Figure* 作为类名，并从 "Package"（包）下拉列表中选择  ``org.sample.whiteboardapp`` 。单击 "Finish"（完成）。
+3. 在源代码编辑器中，添加以下内容（*粗体*）：
+
+[source,java]
+----
+
+public class Figure {
+    *private JsonObject json;*
+}
+----
+
+添加代码时，系统将提示您为  ``javax.json.JsonObject``  添加 import 语句。如果未进行提示，请按下 Alt-Enter 组合键。
+
+有关  ``javax.json.JsonObject``  的更多信息，请参见属于 Java EE 7 规范一部分的用于 JSON 处理的 Java API (link:http://jcp.org/en/jsr/detail?id=353[+JSR 353+])。
+
+4. 为  ``json``  创建 getter 和 setter。
+
+可以在 "Insert Code"（插入代码）弹出菜单中选择 getter 和 setter（在 Windows 上为 Alt-Ins；在 Mac 上为 Ctrl-I），以便打开 "Generate Getters and Setter"（生成 getter 和 setter）对话框。或者，也可以从主菜单中选择 "Source"（源）> "Insert Code"（插入代码）。
+
+image::images/websocket-generategetter.png[title="&quot;Generate Getter and Setter&quot;（生成 getter 和 setter）对话框"]
+5. 为  ``json``  添加构造函数。
+
+[source,java]
+----
+
+    public Figure(JsonObject json) {
+        this.json = json;
+    }
+----
+
+可以在 "Insert Code"（插入代码）弹出菜单中选择 "Constructor"（构造函数）（Ctrl-I 组合键）。
+
+image::images/websocket-generateconstructor.png[title="&quot;Generate Constructor&quot;（生成构造函数）弹出菜单"]
+6. 添加以下  ``toString``  方法：
+
+[source,java]
+----
+
+    @Override
+    public String toString() {
+        StringWriter writer = new StringWriter();
+        Json.createWriter(writer).write(json);
+        return writer.toString();
+    }
+----
+7. 在编辑器中右键单击，然后选择 "Fix Imports"（修复导入）（Alt-Shift-I 组合键；在 Mac 上为 ⌘-Shift-I 组合键）。保存所做的更改。
+ 
+
+
+=== 创建坐标类
+
+现在，将为画布上绘制的图形坐标创建一个类。
+
+1. 右键单击项目节点，然后选择 "New"（新建）> "Java Class"（Java 类）。
+2. 在 "New Java Class"（新建 Java 类）向导中，键入 *Coordinates* 作为类名，然后在 "Package"（包）下拉列表中选择  ``org.sample.whiteboardapp`` 。单击 "Finish"（完成）。
+3. 在源代码编辑器中，添加以下代码。保存所做的更改。
+
+[source,java]
+----
+
+    private float x;
+    private float y;
+
+    public Coordinates() {
+    }
+
+    public Coordinates(float x, float y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    public float getX() {
+        return x;
+    }
+
+    public void setX(float x) {
+        this.x = x;
+    }
+
+    public float getY() {
+        return y;
+    }
+
+    public void setY(float y) {
+        this.y = y;
+    }
+                
+----
+
+该类只包含  ``x``  和  ``y``  坐标字段以及某些 getter 和 setter。
+
+ 
+
+
+=== 生成 JSON 字符串
+
+在此练习中，您将创建一个 JavaScript 文件，该文件将  ``canvas``  元素上绘制的图形的详细信息放入发送到 WebSocket 端点的 JSON 结构。
+
+1. 右键单击项目节点，然后选择 "New"（新建）> "JavaScript File"（JavaScript 文件）以打开 "New JavaScript File"（新建 JavaScript 文件）向导。
+2. 键入 *whiteboard* 作为文件名。单击 "Finish"（完成）。
+
+单击 "Finish"（完成）后，IDE 将创建空 JavaScript 文件并在编辑器中打开该文件。您可以在 "Projects"（项目）窗口中的 "Web Pages"（Web 页）节点下看到该新文件。
+
+3. 添加以下代码以初始化画布并添加事件监听程序。
+
+[source,java]
+----
+
+var canvas = document.getElementById("myCanvas");
+var context = canvas.getContext("2d");
+canvas.addEventListener("click", defineImage, false);
+----
+
+您可以看到当用户在  ``canvas``  元素中单击时调用了  ``defineImage``  方法。
+
+4. 添加下面的  ``getCurrentPos`` 、 ``defineImage``  和  ``drawImageText``  方法以构造 JSON 结构并将其发送到端点 ( ``sendText(json)`` )。
+
+[source,java]
+----
+
+function getCurrentPos(evt) {
+    var rect = canvas.getBoundingClientRect();
+    return {
+        x: evt.clientX - rect.left,
+        y: evt.clientY - rect.top
+    };
+}
+            
+function defineImage(evt) {
+    var currentPos = getCurrentPos(evt);
+    
+    for (i = 0; i < document.inputForm.color.length; i++) {
+        if (document.inputForm.color[i].checked) {
+            var color = document.inputForm.color[i];
+            break;
+        }
+    }
+            
+    for (i = 0; i < document.inputForm.shape.length; i++) {
+        if (document.inputForm.shape[i].checked) {
+            var shape = document.inputForm.shape[i];
+            break;
+        }
+    }
+    
+    var json = JSON.stringify({
+        "shape": shape.value,
+        "color": color.value,
+        "coords": {
+            "x": currentPos.x,
+            "y": currentPos.y
+        }
+    });
+    drawImageText(json);
+        sendText(json);
+}
+
+function drawImageText(image) {
+    console.log("drawImageText");
+    var json = JSON.parse(image);
+    context.fillStyle = json.color;
+    switch (json.shape) {
+    case "circle":
+        context.beginPath();
+        context.arc(json.coords.x, json.coords.y, 5, 0, 2 * Math.PI, false);
+        context.fill();
+        break;
+    case "square":
+    default:
+        context.fillRect(json.coords.x, json.coords.y, 10, 10);
+        break;
+    }
+}
+----
+
+发送的 JSON 结构将类似于以下内容：
+
+
+[source,java]
+----
+
+{
+ "shape": "square",
+ "color": "#FF0000",
+ "coords": {
+ "x": 31.59999942779541,
+ "y": 49.91999053955078
+ }
+} 
+----
+
+现在，您需要添加  ``sendText(json)``  方法以使用  ``websocket.send()``  发送 JSON 字符串。
+
+5. 在编辑器中打开  ``websocket.js`` ，然后添加以下方法，用于将 JSON 发送到端点，以及在从端点收到消息时绘制图像。
+
+[source,java]
+----
+
+websocket.onmessage = function(evt) { onMessage(evt) };
+
+function sendText(json) {
+    console.log("sending text: " + json);
+    websocket.send(json);
+}
+                
+function onMessage(evt) {
+    console.log("received: " + evt.data);
+    drawImageText(evt.data);
+}
+----
+
+*注：*可以删除已添加到  ``websocket.js``  中的代码以测试端点。
+
+6. 将以下行（*粗体*）添加到  ``index.html``  的底部以加载  ``whiteboard.js`` 。
+
+[source,xml]
+----
+
+        </table>
+    <script type="text/javascript" src="websocket.js"></script>
+    *<script type="text/javascript" src="whiteboard.js"></script>*
+<body>
+                
+----
+ 
+
+
+=== 实现编码器和解码器接口
+
+在此练习中，将创建用于实现解码器和编码器接口的类，以便将 Web 套接字消息 (JSON) 解码为 POJO 类  ``Figure`` ，并将  ``Figure``  编码为 JSON 字符串以发送到端点。
+
+有关更多详细信息，请参见技术文章link:http://www.oracle.com/technetwork/articles/java/jsr356-1937161.html[+用于 WebSocket 的 Java API (JSR 356)+] 中有关消息类型以及编码器和解码器的部分。
+
+1. 右键单击项目节点，然后选择 "New"（新建）> "Java Class"（Java 类）。
+2. 键入 *FigureEncoder* 作为类名，并在 "Package"（包）下拉列表中选择  ``org.sample.whiteboardapp`` 。单击 "Finish"（完成）。
+3. 在源代码编辑器中，通过添加以下代码（*粗体*）来实现 WebSocket 编码器接口：
+
+[source,java]
+----
+
+            
+public class FigureEncoder *implements Encoder.Text<Figure>* {
+    
+}
+----
+4. 为  ``javax.websocket.Encoder``  添加 import 语句并实现抽象方法。
+
+将光标放在类声明中，按下 Alt-Enter 组合键，然后从弹出菜单中选择 *Implement all abstract methods*（实现所有抽象方法）。
+
+5. 通过进行以下更改（*粗体*）修改生成的抽象方法。保存所做的更改。
+
+[source,java]
+----
+
+    @Override
+    public String encode(Figure *figure*) throws EncodeException {
+        *return figure.getJson().toString();*
+    }
+
+    @Override
+    public void init(EndpointConfig ec) {
+        *System.out.println("init");*
+    }
+
+    @Override
+    public void destroy() {
+        *System.out.println("destroy");*
+    }
+----
+6. 右键单击项目节点，然后选择 "New"（新建）> "Java Class"（Java 类）。
+7. 键入 *FigureDecoder* 作为类名，并在 "Package"（包）下拉列表中选择  ``org.sample.whiteboardapp`` 。单击 "Finish"（完成）。
+8. 在源代码编辑器中，通过添加以下代码（*粗体*）来实现 WebSocket 解码器接口：
+
+[source,java]
+----
+
+            
+public class FigureDecoder *implements Decoder.Text<Figure>* {
+    
+}
+----
+9. 为  ``javax.websocket.Decoder``  添加 import 语句并实现抽象方法。
+10. 对生成的抽象方法进行以下更改（*粗体*）。
+
+[source,java]
+----
+
+    @Override
+    public Figure decode(String *string*) throws DecodeException {
+        *JsonObject jsonObject = Json.createReader(new StringReader(string)).readObject();
+        return  new Figure(jsonObject);*
+    }
+
+    @Override
+    public boolean willDecode(String *string*) {
+        *try {
+            Json.createReader(new StringReader(string)).readObject();
+            return true;
+        } catch (JsonException ex) {
+            ex.printStackTrace();
+            return false;
+        }*
+    
+    }
+
+    @Override
+    public void init(EndpointConfig ec) {
+        *System.out.println("init");*
+    }
+
+    @Override
+    public void destroy() {
+        *System.out.println("destroy");*
+    }
+----
+11. 修复导入并保存更改。
+
+现在，您需要修改  ``MyWhiteboard.java``  以指定编码器和解码器。
+
+ 
+
+
+=== 运行应用程序
+
+您现在几乎准备好运行应用程序了。在此练习中，您将修改 WebSocket 端点类以便为 JSON 字符串指定编码器和解码器，并添加方法以便在收到消息时将 JSON 字符串发送到已连接的客户端。
+
+1. 在编辑器中打开  ``MyWhiteboard.java`` 。
+2. 修改  ``@ServerEndpoint``  标注以便为端点指定编码器和解码器。请注意，您需要显式为端点的名称指定  ``value``  参数。
+
+[source,java]
+----
+
+@ServerEndpoint(*value=*"/whiteboardendpoint"*, encoders = {FigureEncoder.class}, decoders = {FigureDecoder.class}*)
+        
+----
+3. 删除默认情况下生成的  ``onMessage``  方法。
+4. 添加以下  ``broadcastFigure``  方法并使用  ``@OnMessage``  标注该方法。
+
+[source,java]
+----
+
+    @OnMessage
+    public void broadcastFigure(Figure figure, Session session) throws IOException, EncodeException {
+        System.out.println("broadcastFigure: " + figure);
+        for (Session peer : peers) {
+            if (!peer.equals(session)) {
+                peer.getBasicRemote().sendObject(figure);
+            }
+        }
+    }
+----
+5. 在编辑器中右键单击，然后选择 "Fix Imports"（修复导入）（Alt-Shift-I 组合键；在 Mac 上为 ⌘-Shift-I 组合键）。保存所做的更改。
+6. 在 "Projects"（项目）窗口中右键单击项目，然后选择 "Run"（运行）。
+
+当您单击 "Run"（运行）时，IDE 会将浏览器窗口打开到 link:http://localhost:8080/WhiteboardApp/[+http://localhost:8080/WhiteboardApp/+]。
+
+*注：*您可能需要从应用程序服务器取消部署以前的应用程序，或者强制在浏览器中重新加载此页。
+
+如果查看浏览器消息，您会看到每次在画布中单击时，都会通过 JSON 将字符串发送到端点。
+
+image::images/websocket-onebrowser.png[title="包含浏览器中的图形和 Web 控制台中显示的 JSON 的画布"]
+
+如果将另一个浏览器打开到  ``http://localhost:8080/WhiteboardApp/`` ，您会看到每次在一个浏览器的画布中单击时，都会在另一个浏览器的画布中重新生成新的圆形或方形。
+
+image::images/websocket-twobrowsers.png[title="通过端点发送 JSON 的两个浏览器"]
+
+
+== 向端点发送二进制数据
+
+应用程序现在可以处理字符串并通过 JSON 将字符串发送到端点，然后将字符串发送到已连接的客户端。在此部分，您将修改 JavaScript 文件以发送和接收二进制数据。
+
+要将二进制数据发送到端点，您需要将 WebSocket 的  ``binaryType``  属性设置为  ``arraybuffer`` 。这可确保通过  ``ArrayBuffer``  完成使用 WebSocket 的任何二进制数据传输。由  ``whiteboard.js``  中的  ``defineImageBinary``  方法执行二进制数据转换。
+
+1. 打开  ``websocket.js`` ，然后添加以下代码以将 WebSocket 的  ``binaryType``  属性设置为  ``arraybuffer`` 。
+
+[source,java]
+----
+
+websocket.binaryType = "arraybuffer";
+----
+2. 添加以下方法以将二进制数据发送到端点。
+
+[source,java]
+----
+
+function sendBinary(bytes) {
+    console.log("sending binary: " + Object.prototype.toString.call(bytes));
+    websocket.send(bytes);
+}
+----
+3. 修改  ``onMessage``  方法以添加以下代码（*粗体*），从而选择该方法用于根据传入消息中的数据类型更新画布。
+
+[source,java]
+----
+
+function onMessage(evt) {
+    console.log("received: " + evt.data);
+    *if (typeof evt.data == "string") {*
+        drawImageText(evt.data);
+    *} else {
+        drawImageBinary(evt.data);
+    }*
+}
+----
+
+如果收到包含二进制数据的消息，则会调用  ``drawImageBinary``  方法。
+
+4. 打开  ``whiteboard.js``  并添加以下方法。在解析传入的二进制数据之后，会调用  ``drawImageBinary``  方法以更新画布。 ``defineImageBinary``  方法用于将画布快照准备为二进制数据。
+
+[source,java]
+----
+
+function drawImageBinary(blob) {
+    var bytes = new Uint8Array(blob);
+//    console.log('drawImageBinary (bytes.length): ' + bytes.length);
+    
+    var imageData = context.createImageData(canvas.width, canvas.height);
+    
+    for (var i=8; i<imageData.data.length; i++) {
+        imageData.data[i] = bytes[i];
+    }
+    context.putImageData(imageData, 0, 0);
+    
+    var img = document.createElement('img');
+    img.height = canvas.height;
+    img.width = canvas.width;
+    img.src = canvas.toDataURL();
+}
+                    
+function defineImageBinary() {
+    var image = context.getImageData(0, 0, canvas.width, canvas.height);
+    var buffer = new ArrayBuffer(image.data.length);
+    var bytes = new Uint8Array(buffer);
+    for (var i=0; i<bytes.length; i++) {
+        bytes[i] = image.data[i];
+    }
+    sendBinary(buffer);
+}
+----
+
+现在，当您想要以  ``ArrayBuffer``  类型生成二进制数据并将其发送到端点时，需要添加一种方法来调用  ``defineImageBinary`` 。
+
+5. 打开  ``index.html`` ，然后修改  ``<table>``  元素以将以下行添加到窗体中的表中。
+
+[source,xml]
+----
+
+<tr>
+    <th> </th>
+    <td><input type="submit" value="Send Snapshot" onclick="defineImageBinary(); return false;"></td>
+    <td> </td>
+    <td> </td>
+    <td> </td>
+</tr>
+                
+----
+
+新行包含 "Send Snapshot"（发送快照）按钮，用于将画布的二进制快照发送到已连接的对等方。单击此按钮时，将调用  ``whiteboard.js``  中的  ``defineImageBinary``  方法。
+
+6. 打开  ``MyWhiteboard.java`` ，然后添加以下方法，用于在端点收到包含二进制数据的消息时将二进制数据发送到对等方。
+
+[source,java]
+----
+
+@OnMessage
+public void broadcastSnapshot(ByteBuffer data, Session session) throws IOException {
+    System.out.println("broadcastBinary: " + data);
+    for (Session peer : peers) {
+        if (!peer.equals(session)) {
+            peer.getBasicRemote().sendBinary(data);
+        }
+    }
+}
+----
+
+*注：*需要为  ``java.nio.ByteBuffer``  添加 import 语句。
+
+可以修改应用程序以使用户能够停止向端点发送数据。默认情况下，只要对等方打开了页面就会立即连接所有这些对等方，并将数据从浏览器发送到连接的所有对等方。可以添加简单条件，以便只有在选择了此选项时才会将数据发送到端点。这并不影响接收数据。仍会从端点接收数据。
+
+1. 修改  ``whiteboard.js``  中的  ``defineImage``  方法以添加以下代码（*粗体*）。
+
+[source,java]
+----
+
+        drawImageText(json);
+*    if (document.getElementById("instant").checked) {*
+        sendText(json);
+*    }*
+}
+----
+
+检查元素的 ID 是否为  ``checked``  的条件代码
+
+2. 打开  ``index.html`` ，然后修改  ``<table>``  元素以向窗体中添加复选框。
+
+[source,xml]
+----
+
+<tr>
+    <th> </th>
+    <td><input type="submit" value="Send Snapshot" onclick="defineImageBinary(); return false;"></td>
+    <td>*<input type="checkbox" id="instant" value="Online" checked="true">Online*</td>
+    <td> </td>
+    <td> </td>
+</tr>
+                
+----
+
+取消选中 "Online"（联机）复选框时不会发送数据，但客户端仍将从端点接收数据。
+
+如果添加 "Send Snapshot"（发送快照）按钮和 "Online"（联机）复选框并再次运行应用程序，则您将会在索引页中看到新元素。如果打开另一个浏览器并取消选中 "Online"（联机）按钮，您会看到在画布中单击时不会将 JSON 消息发送到端点。
+
+image::images/websocket-onebrowser-binary.png[title="浏览器中显示已发送二进制数据的消息的 Web 控制台"]
+
+如果单击 "Send Snapshot"（发送快照），则二进制数据将发送到端点并广播到已连接的客户端。
+
+
+link:/about/contact_form.html?to=3&subject=Feedback:%20Using%20the%20WebSocket%20API%20in%20a%20Web%20Application[+发送有关此教程的反馈意见+]
+
+
+
+== 另请参见
+
+有关使用 NetBeans IDE 开发 Java EE 应用程序的更多信息，请参见以下资源：
+
+* 演示：link:maven-websocketapi-screencast.html[+在 Web 应用程序中使用 WebSocket API+]
+* link:javaee-intro.html[+Java EE 技术简介+]
+* link:javaee-gettingstarted.html[+Java EE 应用程序入门指南+]
+* link:../../trails/java-ee.html[+Java EE 和 Java Web 学习资源+]
+
+您可以在 link:http://download.oracle.com/javaee/6/tutorial/doc/[+Java EE 教程+]中找到有关使用 Java EE 的详细信息。
+
+要发送意见和建议、获得支持以及随时了解 NetBeans IDE Java EE 开发功能的最新开发情况，请link:../../../community/lists/top.html[+加入 nbj2ee 邮件列表+]。
+

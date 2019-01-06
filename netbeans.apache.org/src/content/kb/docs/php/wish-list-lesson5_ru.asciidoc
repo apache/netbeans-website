@@ -1,0 +1,332 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= Создание приложения на основе базы данных на языке PHP
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: Создание приложения на основе базы данных на языке PHP - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, Создание приложения на основе базы данных на языке PHP
+
+= Урок 5: добавление функций безопасности Реализация входа пользователя в приложения
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: Урок 5: добавление функций безопасности Реализация входа пользователя в приложения - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, Урок 5: добавление функций безопасности Реализация входа пользователя в приложения
+
+
+
+1. link:wish-list-tutorial-main-page.html[+Создание приложения на основе базы данных с помощью языка PHP – главная страница+]
+2. 
+Создание базы данных
+
+1. link:wish-list-lesson1.html[+Создание базы данных MySQL+]
+2. link:wish-list-oracle-lesson1.html[+Создание таблиц базы данных Oracle+]
+3. link:wish-list-lesson2.html[+Проектирование приложения. Чтение из базы данных+]
+4. link:wish-list-lesson3.html[+Создание нового пользователя приложения+]
+5. link:wish-list-lesson4.html[+Усовершенствование кода+]
+6. 
+*=> Добавление функций безопасности. Реализация входа пользователя в приложение*
+
+7. link:wish-list-lesson6.html[+Добавление к базе данных новых желаний+]
+8. link:wish-list-lesson7.html[+Обновление и удаление записей в базе данных+]
+9. link:wish-list-lesson8.html[+Усовершенствование внешнего вида приложения с использованием технологии CSS+]
+10. link:wish-list-lesson9.html[+Развертывание приложения на удаленном веб-сервере+]
+
+image::images/netbeans-stamp-80-74-73.png[title="Содержимое этой страницы применимо к IDE NetBeans 7.2, 7.3, 7.4 и 8.0"]
+
+В этом уроке рассматривается реализация функциональных возможностей входа в приложение для пользователя. Эти функции применимы к следующим файлам:
+
+*  ``index.php`` 
+*  ``createNewWisher.php`` 
+*  ``editWishlist.php`` 
+*  ``db.php`` 
+
+Реализация функции входа в систему состоит из следующих действий:
+
+1. <<savingWisherIDInSessionUponCreation,Сохранение идентификатора пользователя в сеансе после создания пользователя>>
+2. <<validateWisherLogon,Проверка того, что пользователь, предпринимающий попытки редактирования списка "Wish list", зарегистрирован в системе.>>
+3. <<logonFromIndexPage,Регистрация пользователя на странице index.php >>
+
+Текущий документ является частью краткого учебного курса "Создание приложения CRUD в IDE NetBeans для PHP".
+
+
+
+== Исходный код приложения из предыдущего урока
+
+Для пользователей MySQL: перейдите по link:https://netbeans.org/files/documents/4/1930/lesson4.zip[+этой ссылке+] для загрузки исходного кода, описывающего состояние проекта на момент завершения предыдущего урока.
+
+Для пользователей баз данных Oracle: перейдите по link:https://netbeans.org/projects/www/downloads/download/php%252Foracle-lesson4.zip[+этой+] для загрузки исходного кода, описывающего состояние проекта на момент завершения предыдущего урока.
+
+
+== Сохранение идентификатора пользователя в сеансе после создания пользователя
+
+link:http://us2.php.net/manual/en/ref.session.php[+Session+] ("Сеанс") является хранилищем состояния для передачи информации с одной страницы на другую без использования link:wish-list-lesson5.html#htmlForm[+формы ввода HTML+]. Данная функция поддерживается посредством предопределенного массива PHР  ``$_SESSION`` .
+
+В целях безопасности новый пользователь после создания должен быть автоматически зарегистрирован без заполнения формы. Поэтому необходимо изменить файл  ``createNewWisher.php``  для реализации следующих функциональных возможностей:
+
+* Добавление нового пользователя в базу данных.
+* Открытие сеанса.
+* Сохранение имени пользователя в сеансе
+* Передача имени пользователя в сеансе при переадресации пользователя на страницу  ``editWishList.php`` .
+
+В файл  ``createNewWisher.php``  включите следующую строку:
+
+
+[source,java]
+----
+
+WishDB::getInstance()->create_wisher($_POST["user"], $_POST["password"]);
+----
+
+а далее введите следующий блок кода:
+
+
+[source,java]
+----
+
+session_start();
+$_SESSION['user'] = $_POST['user'];
+----
+
+Блок кода начинает сеанс, что означает открытие массива  ``$_SESSION``  для ввода или извлечения данных. Затем код добавляет элемент к массиву  ``$_SESSION`` . Добавляемый элемент содержит значение и идентификатор. Значение – это имя недавно созданных пользователей, а "user" является идентификатором. Затем программа переадресует пользователя на страницу  ``editWishList.php`` .
+
+
+== Проверка допустимости входа для пользователя
+
+При переходе пользователя на страницу  ``editWishList.php``  приложение должно выдавать подтверждение того, что страница используется лицом, только что зарегистрированным на странице  ``createNewWisher.php`` .
+
+Реализация этих функциональных возможностей состоит из двух действий:
+
+* <<retrievingUserNameFromSession,Извлечение имени пользователя из сеанса>>
+* <<redirectingNotLoggedInUserToIndexPage,Переадресация пользователя на страницу index.php, в случае если имя пользователя не было извлечено из сеанса>>
+
+
+=== Извлечение имени пользователя из сеанса
+
+Замените код, содержащийся в блоке PHP по умолчанию,  ``editWishList.php``  следующим кодом:
+
+[source,java]
+----
+
+session_start();
+if (array_key_exists("user", $_SESSION)) {
+    echo "Hello " . $_SESSION['user'];
+}
+----
+
+Блок кода открывает массив  ``$_SESSION``  для извлечения данных и проверки того, что в  ``$_SESSION``  содержится элемент с идентификатором "user". Если проверка выполнена успешно, код выводит на экран приветственное сообщение.
+
+Для проверки правильности реализации сеанса выполните следующие действия:
+
+1. Запустите файл  ``createNewWisher.php``  и создайте нового пользователя, например, с именем "Jack".
+Откроется файл  ``editWishList.php``  с приветственным сообщением "Hello Jack".
+2. Можно либо очистить файл cookie сеанса в используемом браузере, либо завершить сеанс и запустить файл  ``editWishList.php``  в среде IDE.
+Откроется файл  ``editWishList.php`` , содержащий текст "Hello", поскольку в рамках сеанса не были переданы какие-либо данные пользователя. Это нежелательный вариант, так как в данном случае незарегистрированный или не выполнивший вход в систему пользователь может создавать или редактировать список "Wish list". Во избежание этого следует выполнить переадресацию пользователя на страницу  ``index.php`` .
+
+
+=== Переадресация пользователя, не зарегистрированного в системе
+
+Разместите следующий блок кода в файле  ``editWishList.php``  под выражением  ``if`` :
+
+[source,java]
+----
+
+else {
+   header('Location: index.php');
+   exit;
+}
+----
+
+В соответствии с кодом осуществляется переадресация пользователя на страницу index.php и прерывается выполнение кода PHP.
+
+Для проверки того, что функциональные возможности реализованы правильно, запустите файл  ``editWishList.php`` . Ожидаемым результатом является открытие страницы  ``index.php`` .
+
+
+== Регистрация на странице index.php
+
+Вход с использованием страницы index.php состоит из двух действий:
+
+* <<logonForm,Ввод имени пользователя и пароля в форму ввода HTML и передача данных на страницу index.php для проверки достоверности.>>
+* <<logonValidation,Проверка допустимости входа>>
+
+
+=== Форма HTML для входа на странице index.php
+
+В файле  ``index.php``  перед закрытием тега  ``</body>`` введите следующий код:
+
+[source,xml]
+----
+
+<form name="logon" action="index.php" method="POST" >
+    Username: <input type="text" name="user">
+    Password  <input type="password" name="userpassword">
+    <input type="submit" value="Edit My Wish List">
+</form>
+----
+
+*Примечание. *Предупреждения от средства проверки HTML можно проигнорировать.
+
+Код представляет собой link:wish-list-lesson3.html#htmlForm[+форму HTML+] которая позволяет вводить имя и пароль пользователя в текстовые поля. Если пользователь нажимает кнопку "Edit My Wish List", данные передаются на ту же страницу – index.php.
+
+
+=== Проверка допустимости входа
+
+Проверка допустимости входа включает следующие действия:
+
+* <<checkWhereUserCameFrom,Проверка местоположения пользователя до переадресации>>.
+* <<verifyCredentials,Проверка имени пользователя и пароля>>.
+* Сохранение имени пользователя в сеансе и переадресация пользователя на страницу editWishList.php или <<displayErrorMessage,Отображение сообщения об ошибке.>>
+
+Пользователь может выполнить доступ на страницу  ``index.php``  при запуске приложения, с помощью страницы <<validateWisherLogon, editWishList.php>> или при переадресации со страницы  ``index.php``  после ввода имени и пароля.
+
+Поскольку только в последнем случае используется link:http://www.htmlcodetutorial.com/forms/_FORM_METHOD.html[+метод запроса HTML+] POST, существует возможность узнать местонахождение пользователя, если он выполняет доступ к странице  ``index.php`` .
+
+В файле index.php над блоком HTML создайте блок <? php? > со следующим кодом:
+
+[source,php]
+----
+
+<?php
+
+require_once("Includes/db.php");
+$logonSuccess = false;// verify user's credentials
+if ($_SERVER['REQUEST_METHOD'] == "POST") {
+    $logonSuccess = (WishDB::getInstance()->verify_wisher_credentials($_POST['user'], $_POST['userpassword']));
+    if ($logonSuccess == true) {
+        session_start();
+        $_SESSION['user'] = $_POST['user'];
+        header('Location: editWishList.php');
+        exit;
+    }
+}
+?>
+
+----
+
+Верхняя часть этого блока кода разрешает использование файла  ``db.php``  и инициализирует переменную  ``$logonSuccess``  со значением  ``false`` . В случае успешной проверки это значение сменится на  ``true`` .
+
+Код, проверяющий учетные данные пользователя, сперва проверяет, является ли методом запроса POST. Если POST является методом запроса, то пользователь был перенаправлен после подачи <<logonForm,формы входа>>. В таком случае блок кода вызывает функцию  ``verify_wisher_credentials`` , используя имя и пароль, введенные в форме входа.
+
+Функция  ``verify_wisher_credentials`` , которую мы напишем в <<verifyWisherCredentials,следующем разделе>>, проверяет есть ли запись в таблице  ``пользователей`` , где имя пользователя и пароль совпадают со значениями, поданными в <<logonForm,форме входа>>. Если функция  ``verify_wisher_credentials``  возвращает  ``true`` , то в базе данных есть пользователь с указанной комбинацией имени и пароля. Это значит, что проверка успешна и значение  ``$logonSuccess``  меняется на  ``true`` . В таком случае начинается сеанс и открывается массив  ``$_SESSION`` . Код добавляет новый элемент к массиву  ``$_SESSION`` . Этот элемент содержит значение и идентификатор (ключ). Значение является именем пользователя, а идентификатором является "user". Затем код перенаправляет пользователя к странице  ``editWishList.php``  для редактирования списка желаний.
+
+Если функция  ``verify_wisher_credentials``  возвращает  ``false`` , то значением переменной  ``$logonSuccess``  останется false. Значение переменной используется для <<displayErrorMessage,отображения сообщения об ошибке>>.
+
+
+=== Функция verify_wisher_credentials
+
+Для проверки учетных данных пользователя необходимо добавить новую функцию к классу  ``WishDB``  в файле  ``db.php`` . Входными параметрами для этой функции являются имя и пароль; функция возвращает значение 0 или 1.
+
+*Для базы данных MySQL* введите следующий блок кода:
+
+[source,java]
+----
+
+public function verify_wisher_credentials ($name, $password){$name = $this->real_escape_string($name);$password = $this->real_escape_string($password);$result = $this->query("SELECT 1 FROM wishers
+ 	           WHERE name = '" . $name . "' AND password = '" . $password . "'");
+   return $result->data_seek(0);
+}
+----
+
+*Для базы данных Oracle* введите следующий блок кода (поскольку в OCI8 нет эквивалента для  ``mysql_num_rows`` , данный код является модифицированной формой  ``get_wisher_id_by_name`` ):
+
+
+[source,java]
+----
+
+public function verify_wisher_credentials($name, $password) {
+    $query = "SELECT 1 FROM wishers WHERE name = :name_bv AND password = :pwd_bv";
+    $stid = oci_parse($this->con, $query);
+    oci_bind_by_name($stid, ':name_bv', $name);
+    oci_bind_by_name($stid, ':pwd_bv', $password);
+    oci_execute($stid);
+//Because name is a unique value I only expect one row
+    $row = oci_fetch_array($stid, OCI_ASSOC);
+    if ($row) 
+        return true;
+    else
+        return false;
+}
+----
+
+Блок кода выполняет запрос  `` "SELECT 1 FROM wishers WHERE Name = '" . $name . "' AND Password = '" . $password . "'"``  и возвращает число записей, соответствующих указанному запросу. Если такая запись найдена, функция возвратит  ``true`` . Если такой записи в базе данных не найдено, функция возвратит  ``false`` .
+
+
+=== Отображение сообщений об ошибках
+
+Для включения отображения сообщений об ошибках в приложении введите следующий блок кода <? php ? > в форму "logon" на странице  ``index.php``  после полей ввода, но над кнопкой:
+
+[source,php]
+----
+
+<?php
+  if ($_SERVER["REQUEST_METHOD"] == "POST") { 
+      if (!$logonSuccess)
+          echo "Invalid name and/or password";
+  }
+?>
+----
+Блок кода проверяет значение переменной $logonSuccess, и если значение есть "false", на экран выводится сообщение об ошибке.
+
+
+== Тестирование входа с помощью страницы index.php
+
+Для проверки корректности работы функции входа на первой странице  ``index.php``  выполните следующие действия:
+
+1. Запустите приложение.
+2. На странице  ``index.php``  введите "Tom" в поле "Username" и "Tim" в поле "Password".
+3. Нажмите кнопку "Edit My Wish List". Отобразится сообщение об ошибке (обратите внимание, что ширина приведенного ниже окна браузера уменьшена до 600 пикселей, в результате чего добавляется несколько разрывов строк). 
+image::images/incorrectNamePasswordIndex.png[]
+4. Введите "Tom" в поле "Username" и "tomcat" в поле "Password".
+5. Нажмите кнопку Edit My Wish List ("Редактировать мой список желаний"). Отобразится страница editWishList.php: 
+image::images/SuccessfulLogonOnIndexRedirectToEditWishList.png[]
+
+
+== Исходный код приложения на момент завершения текущего урока
+
+Для пользователей MySQL: щелкните link:https://netbeans.org/files/documents/4/1931/lesson5.zip[+здесь+] для загрузки исходного кода, отражающего состояние проекта по завершении данного урока.
+
+Для пользователей Oracle Database: щелкните link:https://netbeans.org/projects/www/downloads/download/php%252Foracle-lesson5.zip[+здесь+] для загрузки исходного кода, отражающего состояние проекта по завершении данного урока.
+
+
+== Что дальше?
+
+link:wish-list-lesson4.html[+<<Предыдущий урок+]
+
+link:wish-list-lesson6.html[+Следующий урок >>+]
+
+link:wish-list-tutorial-main-page.html[+Назад на главную страницу руководства+]
+
+
+link:/about/contact_form.html?to=3&subject=Feedback:%20PHP%20Wish%20List%20CRUD%205:%20Implementing%20Security[+Отправить отзыв по этому учебному курсу+]
+
+
+Для отправки комментариев и предложений, получения поддержки и новостей о последних разработках, связанных с PHP IDE NetBeans link:../../../community/lists/top.html[+присоединяйтесь к списку рассылки users@php.netbeans.org+].
+
+link:../../trails/php.html[+Возврат к учебной карте PHP+]
+

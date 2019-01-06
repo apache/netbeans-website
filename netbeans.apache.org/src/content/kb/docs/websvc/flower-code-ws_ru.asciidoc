@@ -1,0 +1,351 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= Сквозная передача двоичных данных – вложение SOAP, часть 3: создание кода для веб-службы и ее тестирование
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: Сквозная передача двоичных данных – вложение SOAP, часть 3: создание кода для веб-службы и ее тестирование - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, Сквозная передача двоичных данных – вложение SOAP, часть 3: создание кода для веб-службы и ее тестирование
+
+В этом уроке рассматривается добавление кода в веб-службу/класс сеансного компонента для преобразования файлов JPEG в массивы байтов, а массивов байтов – в объекты  ``java.awt.Image`` . Также можно добавить код в операции общедоступных веб-служб для возврата данных объектов  ``Image`` . И, наконец, выполняется тестирование веб-службы в браузере с помощью служебной программы тестирования веб-служб IDE NetBeans.
+
+Готовый образец веб-службы можно загрузить из link:https://netbeans.org/projects/samples/downloads/download/Samples%252FWeb%2520Services%252FWeb%2520Service%2520Passing%2520Binary%2520Data%2520--%2520EE6%252FFlowerAlbumService.zip[+каталога примеров NetBeans+].
+
+*Уроки, представленные в этом учебном курсе*
+
+image::images/netbeans-stamp-80-74-73.png[title="Содержимое этой страницы применимо к IDE NetBeans 7.2, 7.3, 7.4 и 8.0"]
+
+1. link:./flower_overview.html[+Обзор+]
+2. link:flower_ws.html[+ Создание веб-службы+]
+3. => Написание кода веб-службы и ее тестирование
+4. link:./flower_wsdl_schema.html[+ Изменение файлов схемы и WSDL для передачи двоичных данных+]
+5. link:./flower_swing.html[+ Создание клиента Swing+]
+
+
+1. <<coding-ws,Создание кода веб-службы>>
+
+1. <<retrieve-jpeg-as-bytes,Получение файла JPEG в виде массива байтов>>
+2. <<read-bytes-as-image,Чтение массива байтов как изображения>>
+3. <<implement-getflower,Реализация метода getFlower>>
+4. <<create-byte-array-list,Создание списка массивов байтов для всех файлов JPEG>>
+5. <<implement-getthumbnails,Реализация метода getThumbnails>>
+2. <<test-ws,Тестирование веб-службы>>
+
+
+[[coding-ws]]
+== Создание кода веб-службы
+
+Ранее было создано веб-приложение с набором файлов JPEG и веб-службой. Веб-служба реализуется как сеансный компонент без поддержки состояния. Веб-служба содержит две пустые веб-операции. В этом уроке рассматривается добавление кода в веб-службу для преобразования файлов JPEG в массивы байтов, а массивов байтов – в объекты  ``java.awt.Image`` . Также можно добавить код в операции общедоступных веб-служб для возврата данных объектов  ``Image`` .
+
+
+[[retrieve-jpeg-as-bytes]]
+=== Получение файла JPEG в виде массива байтов
+
+В этом разделе рассматривается добавление нескольких закрытых методов в тело класса  ``FlowerService`` . Эти методы принимают имя изображения цветка, создают путь к файлу JPEG цветка и возвращают двоичное представление файла JPEG (массив байтов). В последующих разделах описывается создание кода для общедоступных операций веб-служб, чтобы операции могли вызывать эти закрытые методы.
+
+1. Откройте представление Source ("Исходный код") проекта. Необходимо добавить код, который принимает имя изображения, создает путь к изображению на основе этого имени и представляет изображение в виде массива байтов. Введите или вставьте в тело класса  ``FlowerService``  следующий код:
+
+[source,java]
+----
+
+private byte[] getFlowerBytes(String name) throws IOException {
+    URL resource = this.getClass().getResource("/org/flower/resources/"+name+".jpg");
+    return getBytes(resource);
+}
+----
+2. Появится предупреждение о том, что среде IDE не удается найти  ``URL-адрес`` . Добавьте оператор импорта для  ``link:http://download.oracle.com/javase/6/docs/api/java/net/URL.html[+java.net.URL+]`` , вручную или путем нажатия Ctrl-Shift-I (⌘-Shift-I в Mac).
+3. Появится новое предупреждение. В предупреждении сообщается о том, что среде IDE не удается найти метод  ``getBytes`` . Щелкните значок предупреждения левой кнопкой мыши и щелкните всплывающую подсказку для создания метода  ``getBytes`` .
+image::images/create-method-tip.png[]
+4. В окне редактора будет выполнен переход к только что созданному методу  ``getBytes`` . Добавьте в метод следующий код. Этот код служит для link:http://download.oracle.com/javase/6/docs/api/java/net/URL.html#openStream%28%29[+установки подключения к URL-адресу+], переданному от метода  ``getFlowerBytes`` , и возврата элемента  ``link:http://download.oracle.com/javase/6/docs/api/java/io/InputStream.html[+InputStream+]`` . Затем код считывает входной поток порциями по 1024 байта, сохраняет байты в буфере массива данных и записывает  ``link:http://download.oracle.com/javase/6/docs/api/java/io/ByteArrayOutputStream.html[+ByteArrayOutputStream+]``  на основе содержимого буфера.
+
+[source,java]
+----
+
+private byte[] getBytes(URL resource) throws IOException {
+    InputStream in = resource.openStream();
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    byte[] buf = new byte[1024];
+    for(int read; (read = in.read(buf)) != -1;) {
+        bos.write(buf, 0, read);
+    }
+    return bos.toByteArray();
+}
+----
+5. Добавьте операторы импорта для  ``java.io.InputStream``  и  ``java.io.ByteArrayOutputStream`` .
+
+
+[[read-bytes-as-image]]
+=== Чтение массива байтов как изображения
+
+В этом разделе рассматривается добавление закрытого метода в тело класса  ``FlowerService`` . Этот метод принимает массив байтов, представляющих файл JPEG, и возвращает объект  `` java.awt.Image`` . Обратите внимание, что массив байтов создается посредством метода  ``getBytes(URL)`` , создание которого изучалось в разделе <<retrieve-jpeg-as-bytes,Получение файла JPEG в виде массива байтов>>.
+
+1. Добавьте в тело класса  ``FlowerService``  закрытый метод  ``getImage`` . Возвращаемым типом метода  ``getImage``  является  ``Image`` . Метод принимает два параметра. Первым параметром является массив байтов, созданный посредством метода  ``getBytes`` . Вторым параметром является булево значение, указывающее, является ли изображение эскизом. Метод  ``getImage``  выдает исключение  ``IOException`` .
+
+[source,java]
+----
+
+private Image getImage(byte[] bytes, boolean isThumbnail) throws IOException {
+    }
+----
+2. Добавьте в тело метода  ``getImage``  строку, которая создает объект  ``link:http://download.oracle.com/javase/6/docs/api/java/io/ByteArrayInputStream.html[+ByteArrayInputStream+]``  из массива байтов, принимаемого методом в качестве параметра.
+
+[source,java]
+----
+
+ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+----
+3. Добавьте строку для создания элемента  ``Object``  на основе объекта  ``ByteArrayInputStream`` .
+
+[source,java]
+----
+
+Object source = bis;
+----
+4. Добавьте строку для создания объекта  ``link:http://download.oracle.com/javase/6/docs/api/javax/imageio/stream/ImageInputStream.html[+ImageInputStream+]``  из общего объекта  ``Object`` .
+
+[source,java]
+----
+
+ImageInputStream iis = ImageIO.createImageInputStream(source);
+----
+5. Добавьте строку для создания элемента  ``link:http://download.oracle.com/javase/6/docs/api/java/util/Iterator.html[+Iterator+]``  для всех зарегистрированных в настоящее время объектов  ``link:http://download.oracle.com/javase/6/docs/api/javax/imageio/ImageReader.html[+ImageReader+]``  в целях расшифровки файлов JPEG.
+
+[source,java]
+----
+
+Iterator readers = ImageIO.getImageReadersByFormatName("jpeg");
+----
+6. Добавьте строку для создания объекта  ``ImageReader``  для следующего элемента в  ``Iterator`` .
+
+[source,java]
+----
+
+ImageReader reader = (ImageReader) readers.next();
+----
+7. Добавьте строки для создания link:http://download.oracle.com/javase/6/docs/api/javax/imageio/IIOParam.html[+параметров считывания изображения+] по умолчанию, однако  если объект  ``Image``  представляет эскиз, добавьте код link:http://download.oracle.com/javase/6/docs/api/javax/imageio/IIOParam.html#setSourceSubsampling%28int,%20int,%20int,%20int%29[+субдискретизации+] с шагом 4.
+
+[source,java]
+----
+
+ImageReadParam param = reader.getDefaultReadParam();
+if (isThumbnail) {
+    param.setSourceSubsampling(4, 4, 0, 0);
+}
+----
+8. Добавьте код, использующий объект  ``ImageReader``  для чтения объекта  ``ImageInputStream``  и возврата элемента  ``Image``  на основе этого объекта, а также параметров чтения изображения.
+
+[source,java]
+----
+
+reader.setInput(iis, true);
+return reader.read(0, param);
+----
+9. Нажмите Ctrl-Shift-I (⌘-Shift-I в MacOS). Откроется диалоговое окно Fix All Imports ("Исправление всех операторов импорта"). Примите настройку по умолчанию диалогового окна "Исправление всех операторов импорта" и нажмите кнопку "ОК". 
+image::images/fix-getimage-imports.png[]
+
+Метод  ``getImage``  готов.
+
+
+[source,java]
+----
+
+private Image getImage(byte[] bytes, boolean isThumbnail) throws IOException {
+    ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+    Object source = bis; // File or InputStream
+    ImageInputStream iis = ImageIO.createImageInputStream(source);
+    Iterator readers = ImageIO.getImageReadersByFormatName("jpeg");
+    ImageReader reader = (ImageReader) readers.next();
+    ImageReadParam param = reader.getDefaultReadParam();
+    if (isThumbnail) {
+        param.setSourceSubsampling(4, 4, 0, 0);
+    }
+    reader.setInput(iis, true);
+    return reader.read(0, param);
+}
+----
+
+
+[[implement-getflower]]
+=== Реализация метода getFlower
+
+Добавьте следующий код реализации в метод  ``getFlower()``  для получения цветка по его имени и возврата изображения этого цветка. Обратите внимание, что это код вызывает метод  ``getFlowerBytes(name)``  для получения файла JPEG в виде массива байтов. Затем код вызывает закрытый метод  ``getImage``  для возврата массива байтов в виде объекта  ``Image`` .
+
+
+[source,java]
+----
+
+@WebMethod(operationName = "getFlower")
+public Image getFlower(@WebParam(name = "name") String name) throws IOException {
+    byte[] bytes = getFlowerBytes(name);
+    return getImage(bytes, false);
+}
+----
+
+
+[[create-byte-array-list]]
+=== Создание списка массивов байтов для всех файлов JPEG
+
+1. В верхней части тела класса  ``FlowerService``  создайте массив строк с названиями всех цветов.
+
+[source,java]
+----
+
+private static final String[] FLOWERS = {"aster", "honeysuckle", "rose", "sunflower"};
+----
+2. Добавьте метод для создания объекта  ``link:http://download.oracle.com/javase/6/docs/api/java/util/ArrayList.html[+ArrayList+]``  и добавления массива байтов для каждого цветка в список  ``List`` .
+
+[source,java]
+----
+
+private List allFlowers() throws IOException {
+    List flowers = new ArrayList();
+    for (String flower:FLOWERS) {
+        URL resource = this.getClass().getResource("/org/flower/resources/"+flower+".jpg");
+        flowers.add(getBytes(resource));
+    }
+    return flowers;
+}
+----
+3. Добавьте операторы импорта для  ``java.util.ArrayList``  и  ``java.util.List`` .
+
+
+[[implement-getthumbnails]]
+=== Реализация метода getThumbnails
+
+Измените метод  ``getThumbnails()``  следующим образом. Обратите внимание на добавление кода реализации и изменение типа возврата с  ``List``  на  ``List<Image>`` . Также учтите, что булево значения  ``isThumbnail ``   ``true``  передается в метод  ``getImage`` . Код реализации метода  ``getThumbnails``  вызывает метод  ``allFlowers`` , чтобы <<create-byte-array-list,создать список массивов байтов для всех файлов JPEG>>. Метод  ``getThumbnails``  затем создает список  ``List``  объектов  ``Image``  и вызывает метод  ``getImage``  для каждого цветка с целью возврата массива байтов для этого цветка в качестве объекта  ``Image``  и добавления объекта  ``Image``  в объект  ``List`` .
+
+
+[source,java]
+----
+
+@WebMethod(operationName = "getThumbnails")
+public List<Image> getThumbnails() throws IOException {
+    List<byte[]> flowers = allFlowers();
+    List<Image> flowerList = new ArrayList<Image>(flowers.size());
+    for (byte[] flower : flowers) {
+        flowerList.add(getImage(flower, true));
+    }
+    return flowerList;
+}
+----
+
+Объединенная веб-служба/сеансный компонент готовы. В итоге класс веб-службы должен выглядеть следующим образом:
+
+
+[source,java]
+----
+
+package org.flower.service;import java.awt.Image;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import javax.jws.WebMethod;
+import javax.jws.WebParam;
+import javax.jws.WebService;
+import javax.ejb.Stateless;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReadParam;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;@WebService(serviceName = "FlowerService")
+@Stateless()
+public class FlowerService {private static final String[] FLOWERS = {"aster", "honeysuckle", "rose", "sunflower"};@WebMethod(operationName = "getFlower")
+    public Image getFlower(@WebParam(name = "name") String name) throws IOException {
+        byte[] bytes = getFlowerBytes(name);
+        return getImage(bytes, false);
+    }@WebMethod(operationName = "getThumbnails")
+    public List<Image> getThumbnails() throws IOException {
+        List flowers = allFlowers();
+        List<Image> flowerList = new ArrayList<Image>(flowers.size());
+        for (byte[] flower : flowers) {
+            flowerList.add(getImage(flower, true));
+        }
+        return flowerList;
+    }private byte[] getFlowerBytes(String name) throws IOException {
+        URL resource = this.getClass().getResource("/org/flower/resources/" + name + ".jpg");
+        return getBytes(resource);
+    }private byte[] getBytes(URL resource) throws IOException {
+        InputStream in = resource.openStream();
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        byte[] buf = new byte[1024];
+        for (int read; (read = in.read(buf)) != -1;) {
+            bos.write(buf, 0, read);
+        }
+        return bos.toByteArray();
+    }private Image getImage(byte[] bytes, boolean isThumbnail) throws IOException {
+        ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+        Iterator readers = ImageIO.getImageReadersByFormatName("jpeg");
+        ImageReader reader = (ImageReader) readers.next();
+        Object source = bis; // File or InputStream
+        ImageInputStream iis = ImageIO.createImageInputStream(source);
+        reader.setInput(iis, true);
+        ImageReadParam param = reader.getDefaultReadParam();
+        if (isThumbnail) {
+            param.setSourceSubsampling(4, 4, 0, 0);
+        }
+        return reader.read(0, param);
+    }private List allFlowers() throws IOException {
+        List flowers = new ArrayList();
+        for (String flower : FLOWERS) {
+            URL resource = this.getClass().getResource("/flower/album/resources/" + flower + ".jpg");
+            flowers.add(getBytes(resource));
+        }
+        return flowers;
+    }
+}
+----
+
+
+[[test-ws]]
+== Тестирование веб-службы
+
+После создания веб-службы можно развернуть ее и протестировать.
+
+*Порядок тестирования веб-службы.*
+
+1. Щелкните правой кнопкой мыши узел FlowerAlbumService и выберите пункт "Развертывание". IDE компилирует исходный код, запускает сервер GlassFish и выполняет развертывание файла WAR проекта на сервере. При открытии окна "Службы" можно просмотреть развернутую веб-службу  ``FlowerService``  в узле "Приложения" сервера.
+
+*Важно!* Требуется GlassFish Server Open Source Edition 3.1 или более поздняя версия.
+
+image::images/deployed-service.png[]
+2. Разверните узел Web Services ("Веб-службы") проекта. Щелкните правой кнопкой мыши элемент FlowerService и выберите пункт "Тестировать веб-службу". 
+image::images/test-ws-node.png[]
+3. В браузере откроется средство тестирования веб-службы. Введите текст "rose" в поле параметра  ``getFlower`` .
+image::images/ws-tester.png[]
+4. Нажмите кнопку  ``getFlower`` . Среда IDE выведет в браузере данные о вызове. Обратите внимание на область возврата метода: там расположен шифр. Однако на экране должно быть представлено изображение, а не последовательность символов. Поскольку  ``java.awt.Image``  не является допустимым типом схемы, необходимо вручную настроить файл схемы для возврата двоичных данных изображения/jpeg. Эта процедура рассматривается в следующем учебном курсе. 
+image::images/ws-tester-badschema.png[]
+5. 
+
+== Что дальше?
+
+link:./flower_wsdl_schema.html[+ Изменение файлов схемы и WSDL для передачи двоичных данных+]
+
+link:/about/contact_form.html?to=3&subject=Feedback:%20Flower%20Coding%20WS%20EE6[+Отправить отзыв по этому учебному курсу+]
+
+Для отправки комментариев и предложений, получения поддержки и новостей о последних разработках, связанных с Java EE IDE NetBeans link:../../../community/lists/top.html[+присоединяйтесь к списку рассылки nbj2ee@netbeans.org+].
+

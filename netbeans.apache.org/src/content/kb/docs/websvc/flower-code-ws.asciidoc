@@ -1,0 +1,351 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= End-to-End Binary SOAP Attachment part 3: Coding and Testing the Web Service
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: End-to-End Binary SOAP Attachment part 3: Coding and Testing the Web Service - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, End-to-End Binary SOAP Attachment part 3: Coding and Testing the Web Service
+
+In this lesson you add code to the web service/session bean class to convert JPEG files to byte arrays and byte arrays to  ``java.awt.Image``  objects. You also add code to the public web service operations so they return these  ``Image``  objects. Lastly, you test the web service in a browser, using the NetBeans IDE's Test Web Service utility.
+
+You can download a complete sample of the web service from the link:https://netbeans.org/projects/samples/downloads/download/Samples%252FWeb%2520Services%252FWeb%2520Service%2520Passing%2520Binary%2520Data%2520--%2520EE6%252FFlowerAlbumService.zip[+NetBeans Samples Catalog+].
+
+*Lessons In This Tutorial*
+
+image::images/netbeans-stamp-80-74-73.png[title="Content on this page applies to the NetBeans IDE 7.2, 7.3, 7.4 and 8.0"]
+
+1. link:./flower_overview.html[+Overview+]
+2. link:flower_ws.html[+ Creating the Web Service+]
+3. => Coding and Testing the Web Service
+4. link:./flower_wsdl_schema.html[+ Modifying the Schema and WSDL Files to Pass Binary Data+]
+5. link:./flower_swing.html[+ Creating the Swing Client+]
+
+
+1. <<coding-ws,Coding the Web Service>>
+
+1. <<retrieve-jpeg-as-bytes,Get a JPEG File as an Array of Bytes>>
+2. <<read-bytes-as-image,Read an Array of Bytes as an Image>>
+3. <<implement-getflower,Implement getFlower>>
+4. <<create-byte-array-list,Create a List of Byte Arrays for All JPEG Files>>
+5. <<implement-getthumbnails,Implement getThumbnails>>
+2. <<test-ws,Testing the Web Service>>
+
+
+[[coding-ws]]
+== Coding the Web Service
+
+You now have a web application containing a set of JPEG files and a web service. The web service is implemented as a stateless session bean. The web service contains two empty web operations. In this lesson you add code to the web service to convert JPEG files to byte arrays and byte arrays to  ``java.awt.Image``  objects. You also add code to the public web service operations so they return these  ``Image``  objects.
+
+
+[[retrieve-jpeg-as-bytes]]
+=== Get a JPEG File as an Array of Bytes
+
+In this section, you add a pair of private methods to the  ``FlowerService `` class body. These methods take the name of a flower, create a path to the flower's JPEG file, and return a binary representation of the JPEG file (an array of bytes). In later sections you add code to the public web service operations so the operations call these private methods.
+
+1. Open the Source view of the project. You need to add code that takes the name of an image, creates a path to the image based on that name, and retrieves the image as an array of bytes. Type or paste the following code into the  ``FlowerService``  class body:
+
+[source,java]
+----
+
+private byte[] getFlowerBytes(String name) throws IOException {
+    URL resource = this.getClass().getResource("/org/flower/resources/"+name+".jpg");
+    return getBytes(resource);
+}
+----
+2. A warning appears that the IDE cannot find the class  ``URL`` . Add an import statement for  ``link:http://download.oracle.com/javase/6/docs/api/java/net/URL.html[+java.net.URL+]`` , either manually or by pressing Ctrl-Shift-I (⌘-Shift-I on Mac).
+3. A new warning appears. The warning states that the IDE cannot find the  ``getBytes``  method. Left-click the warning icon and click the tip to create the  ``getBytes``  method.
+image::images/create-method-tip.png[]
+4. The editor focuses on the  ``getBytes``  method you just created. Add the following code to the method. This code link:http://download.oracle.com/javase/6/docs/api/java/net/URL.html#openStream%28%29[+opens a connection to the URL+] you passed from the  ``getFlowerBytes``  method and returns an  ``link:http://download.oracle.com/javase/6/docs/api/java/io/InputStream.html[+InputStream+]`` . The code then reads the input stream 1024 bytes at a time, stores the bytes in a byte array buffer, and writes from the buffer to a  ``link:http://download.oracle.com/javase/6/docs/api/java/io/ByteArrayOutputStream.html[+ByteArrayOutputStream+]`` .
+
+[source,java]
+----
+
+private byte[] getBytes(URL resource) throws IOException {
+    InputStream in = resource.openStream();
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    byte[] buf = new byte[1024];
+    for(int read; (read = in.read(buf)) != -1;) {
+        bos.write(buf, 0, read);
+    }
+    return bos.toByteArray();
+}
+----
+5. Add import statements for  ``java.io.InputStream``  and  ``java.io.ByteArrayOutputStream`` .
+
+
+[[read-bytes-as-image]]
+=== Read an Array of Bytes as an Image
+
+In this section, you add a private method to the  ``FlowerService``  class body. This method takes an array of bytes that represent a JPEG file and returns a `` java.awt.Image``  object. Note that the array of bytes is created by the  ``getBytes(URL)``  method that you created in the section <<retrieve-jpeg-as-bytes,Get a JPEG File as an Array of Bytes>>.
+
+1. In the  ``FlowerService``  class body, add the following private method, called  ``getImage`` . The  ``getImage``  method's return type is  ``Image`` . The method takes two parameters. The first parameter is a byte array that is created by the  ``getBytes``  method. The second parameter is a boolean that indicates whether the image is a thumbnail. The  ``getImage``  method throws an  ``IOException`` .
+
+[source,java]
+----
+
+private Image getImage(byte[] bytes, boolean isThumbnail) throws IOException {
+    }
+----
+2. In the  ``getImage``  method body, add a line that creates a  ``link:http://download.oracle.com/javase/6/docs/api/java/io/ByteArrayInputStream.html[+ByteArrayInputStream+]``  from the byte array that the method takes as a parameter.
+
+[source,java]
+----
+
+ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+----
+3. Add a line that creates an  ``Object``  from the  ``ByteArrayInputStream`` .
+
+[source,java]
+----
+
+Object source = bis;
+----
+4. Add a line that creates an  ``link:http://download.oracle.com/javase/6/docs/api/javax/imageio/stream/ImageInputStream.html[+ImageInputStream+]``  from the generic  ``Object`` .
+
+[source,java]
+----
+
+ImageInputStream iis = ImageIO.createImageInputStream(source);
+----
+5. Add a line that creates an  ``link:http://download.oracle.com/javase/6/docs/api/java/util/Iterator.html[+Iterator+]``  of all currently registered  ``link:http://download.oracle.com/javase/6/docs/api/javax/imageio/ImageReader.html[+ImageReader+]`` s that can decode JPEG files.
+
+[source,java]
+----
+
+Iterator readers = ImageIO.getImageReadersByFormatName("jpeg");
+----
+6. Add a line that creates an  ``ImageReader``  from the next element in the  ``Iterator`` .
+
+[source,java]
+----
+
+ImageReader reader = (ImageReader) readers.next();
+----
+7. Add lines that create default link:http://download.oracle.com/javase/6/docs/api/javax/imageio/IIOParam.html[+image read parameters+] but add 1-in-4 link:http://download.oracle.com/javase/6/docs/api/javax/imageio/IIOParam.html#setSourceSubsampling%28int,%20int,%20int,%20int%29[+subsampling+] to the image read parameters  if the  ``Image``  represents a thumbnail.
+
+[source,java]
+----
+
+ImageReadParam param = reader.getDefaultReadParam();
+if (isThumbnail) {
+    param.setSourceSubsampling(4, 4, 0, 0);
+}
+----
+8. Lastly, add code that uses the  ``ImageReader``  object to read the  ``ImageInputStream``  object and to return an  ``Image``  based on that object and the image read parameters.
+
+[source,java]
+----
+
+reader.setInput(iis, true);
+return reader.read(0, param);
+----
+9. Press Ctrl-Shift-I (⌘-Shift-I on MacOS). The Fix All Imports dialog opens. Accept the default suggestions of the Fix All Imports dialog and click OK. 
+image::images/fix-getimage-imports.png[]
+
+The  ``getImage``  method is now complete.
+
+
+[source,java]
+----
+
+private Image getImage(byte[] bytes, boolean isThumbnail) throws IOException {
+    ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+    Object source = bis; // File or InputStream
+    ImageInputStream iis = ImageIO.createImageInputStream(source);
+    Iterator readers = ImageIO.getImageReadersByFormatName("jpeg");
+    ImageReader reader = (ImageReader) readers.next();
+    ImageReadParam param = reader.getDefaultReadParam();
+    if (isThumbnail) {
+        param.setSourceSubsampling(4, 4, 0, 0);
+    }
+    reader.setInput(iis, true);
+    return reader.read(0, param);
+}
+----
+
+
+[[implement-getflower]]
+=== Implement getFlower
+
+Add the following implementation code to the  ``getFlower()``  method to get a flower by its name and return the image of that flower, as follows. Note that this code calls the private  ``getFlowerBytes(name)``  method to get the JPEG file as an array of bytes. The code then calls the private  ``getImage``  method to return the array of bytes as an  ``Image``  object.
+
+
+[source,java]
+----
+
+@WebMethod(operationName = "getFlower")
+public Image getFlower(@WebParam(name = "name") String name) throws IOException {
+    byte[] bytes = getFlowerBytes(name);
+    return getImage(bytes, false);
+}
+----
+
+
+[[create-byte-array-list]]
+=== Create a List of Byte Arrays for All JPEG Files
+
+1. At the top of the class body of  ``FlowerService`` , create an array of Strings of the names of every flower.
+
+[source,java]
+----
+
+private static final String[] FLOWERS = {"aster", "honeysuckle", "rose", "sunflower"};
+----
+2. Add a method that creates an  ``link:http://download.oracle.com/javase/6/docs/api/java/util/ArrayList.html[+ArrayList+]``  and adds a byte array for every flower to the  ``List`` .
+
+[source,java]
+----
+
+private List allFlowers() throws IOException {
+    List flowers = new ArrayList();
+    for (String flower:FLOWERS) {
+        URL resource = this.getClass().getResource("/org/flower/resources/"+flower+".jpg");
+        flowers.add(getBytes(resource));
+    }
+    return flowers;
+}
+----
+3. Add import statements for  ``java.util.ArrayList``  and  ``java.util.List`` .
+
+
+[[implement-getthumbnails]]
+=== Implement getThumbnails
+
+Change the  ``getThumbnails()``  method as follows. Note that you add the implementation code and change the return type from  ``List``  to  ``List<Image>`` . Also note that you pass the boolean  ``isThumbnail `` value of  ``true``  to the  ``getImage``  method. The  ``getThumbnails``  implementation code calls the  ``allFlowers``  method to <<create-byte-array-list,create a list of byte arrays for all the JPEG files>>. The  ``getThumbnails``  method then creates a  ``List``  of  ``Image`` s and calls the  ``getImage``  method for each flower, to return the array of bytes for that flower as an  ``Image``  object and add that  ``Image``  to the  ``List`` .
+
+
+[source,java]
+----
+
+@WebMethod(operationName = "getThumbnails")
+public List<Image> getThumbnails() throws IOException {
+    List<byte[]> flowers = allFlowers();
+    List<Image> flowerList = new ArrayList<Image>(flowers.size());
+    for (byte[] flower : flowers) {
+        flowerList.add(getImage(flower, true));
+    }
+    return flowerList;
+}
+----
+
+The combined web service/session bean is now complete. The final form of the web service class follows:
+
+
+[source,java]
+----
+
+package org.flower.service;import java.awt.Image;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import javax.jws.WebMethod;
+import javax.jws.WebParam;
+import javax.jws.WebService;
+import javax.ejb.Stateless;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReadParam;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;@WebService(serviceName = "FlowerService")
+@Stateless()
+public class FlowerService {private static final String[] FLOWERS = {"aster", "honeysuckle", "rose", "sunflower"};@WebMethod(operationName = "getFlower")
+    public Image getFlower(@WebParam(name = "name") String name) throws IOException {
+        byte[] bytes = getFlowerBytes(name);
+        return getImage(bytes, false);
+    }@WebMethod(operationName = "getThumbnails")
+    public List<Image> getThumbnails() throws IOException {
+        List flowers = allFlowers();
+        List<Image> flowerList = new ArrayList<Image>(flowers.size());
+        for (byte[] flower : flowers) {
+            flowerList.add(getImage(flower, true));
+        }
+        return flowerList;
+    }private byte[] getFlowerBytes(String name) throws IOException {
+        URL resource = this.getClass().getResource("/org/flower/resources/" + name + ".jpg");
+        return getBytes(resource);
+    }private byte[] getBytes(URL resource) throws IOException {
+        InputStream in = resource.openStream();
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        byte[] buf = new byte[1024];
+        for (int read; (read = in.read(buf)) != -1;) {
+            bos.write(buf, 0, read);
+        }
+        return bos.toByteArray();
+    }private Image getImage(byte[] bytes, boolean isThumbnail) throws IOException {
+        ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+        Iterator readers = ImageIO.getImageReadersByFormatName("jpeg");
+        ImageReader reader = (ImageReader) readers.next();
+        Object source = bis; // File or InputStream
+        ImageInputStream iis = ImageIO.createImageInputStream(source);
+        reader.setInput(iis, true);
+        ImageReadParam param = reader.getDefaultReadParam();
+        if (isThumbnail) {
+            param.setSourceSubsampling(4, 4, 0, 0);
+        }
+        return reader.read(0, param);
+    }private List allFlowers() throws IOException {
+        List flowers = new ArrayList();
+        for (String flower : FLOWERS) {
+            URL resource = this.getClass().getResource("/flower/album/resources/" + flower + ".jpg");
+            flowers.add(getBytes(resource));
+        }
+        return flowers;
+    }
+}
+----
+
+
+[[test-ws]]
+== Testing the Web Service
+
+Now that the web service is complete, you can deploy and test it.
+
+*To test the web service:*
+
+1. Right-click the FlowerAlbumService node and select Deploy. The IDE compiles the source code, launches the GlassFish server, and deploys the project's WAR file to the server. If you open the Services window, you can see the deployed  ``FlowerService``  in the server's Applications node.
+
+*Important:* The GlassFish Server Open Source Edition must be Version 3.1 or later.
+
+image::images/deployed-service.png[]
+2. Expand the project's Web Services node. Right-click the FlowerService and select Test Web Service. 
+image::images/test-ws-node.png[]
+3. The web service tester opens in your browser. Type "rose" in the  ``getFlower``  parameter field.
+image::images/ws-tester.png[]
+4. Press the  ``getFlower``  button. The IDE shows you information about the invocation in the browser. When you look at the "Method Returned", you see that it is garbled. You want to see an image, not a series of symbols. However, since  ``java.awt.Image``  is not a valid schema type, you need to manually configure the schema file to return binary image/jpeg data. You will do this in the next tutorial. 
+image::images/ws-tester-badschema.png[]
+5. 
+
+== Next step:
+
+link:./flower_wsdl_schema.html[+ Modifying the Schema and WSDL Files to Pass Binary Data+]
+
+link:/about/contact_form.html?to=3&subject=Feedback:%20Flower%20Coding%20WS%20EE6[+Send Feedback on This Tutorial+]
+
+To send comments and suggestions, get support, and keep informed about the latest developments on the NetBeans IDE Java EE development features, link:../../../community/lists/top.html[+join the nbj2ee@netbeans.org mailing list+].
+

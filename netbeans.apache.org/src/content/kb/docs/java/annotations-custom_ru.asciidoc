@@ -1,0 +1,412 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= Поддержка обработчиков аннотаций в IDE NetBeans (часть II) Использование пользовательских обработчиков аннотаций в IDE
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: Поддержка обработчиков аннотаций в IDE NetBeans (часть II) Использование пользовательских обработчиков аннотаций в IDE - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, Поддержка обработчиков аннотаций в IDE NetBeans (часть II) Использование пользовательских обработчиков аннотаций в IDE
+
+_Составитель:, автор и редактор: Ирина Филиппова (Irina Filippova) _
+
+
+* *Использование пользовательских обработчиков аннотаций в среде IDE*
+
+image::../../../images_www/articles/71/netbeans-stamp-71-72-73.png[title="Содержимое этой страницы применимо к IDE NetBeans 7.0, 7.1, 7.2 и 7.3"]
+
+В этом разделе учебного курса описываются способы добавления собственного обработчика особых аннотаций в проект в среде IDE. Написание обработчика не входит в круг задач данного учебного курса. Здесь описывается добавление его к проекту IDE NetBeans.
+
+Образец приложения, используемый в этом приложении, был создан Джесси Глик (Jesse Glick) и опубликован как link:http://wiki.netbeans.org/FaqApt[+Часто задаваемые вопросы по вводу+] для предыдущих выпусков IDE.
+
+Обработчик аннотаций, используемый в качестве примера, создает родительский класс для аннотированного класса. Созданный родительский класс также содержит метод, вызываемый из аннотированного класса. Следуйте указаниям по созданию и добавлению обработчика особых аннотаций в проект среды IDE, приведенным ниже.
+
+*Для работы с этим учебным курсом требуются программное обеспечение и ресурсы, перечисленные ниже.*
+
+|===
+|Программное обеспечение или материал |Требуемая версия 
+
+|link:https://netbeans.org/downloads/index.html[+IDE NetBeans+] |7.0, 7.1, 7.2, 7.3 
+
+|link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+Комплект для разработчика на языке Java (JDK)+] |версия 6 или 7 
+
+|link:http://code.google.com/p/projectlombok/downloads/list[+lombok.jar+] |версия 1.12.4 и более поздние 
+|===
+
+
+== Определение аннотации и создание обработчика аннотаций
+
+В этом упражнении мы создадим проект библиотеки классов.
+
+1. Выберите File ("Файл") > New Project ("Создать проект") и выберите тип проекта Java Class Library ("Библиотека классов Java") в категории Java. Нажмите кнопку "Далее".
+2. Введите * ``AnnProcessor`` * в поле "Имя проекта" и укажите местоположение для проекта. Нажмите кнопку "Завершить".
+
+При нажатии кнопки "Готово" среда IDE создаст проект библиотеки классов, который появится в окне Projects ("Проекты").
+
+3. Щелкните правой кнопкой мыши узел проекта AnnProcessor в окне Projects ("Проекты") и выберите Properties ("Свойства").
+4. В категории "Источники" подтвердите, что для JDK 6 или JDK 7 указан формат исходного кода/двоичный формат.
+5. Выберите вкладку "Библиотеки" и подтвердите, что платформой Java является JDK 1.6 или JDK 1.7. Нажмите кнопку "ОК", чтобы закрыть окно Project Properties ("Свойства проекта").
+
+В этом упражнении мы создадим несколько пакетов Java и по одному классу Java в каждом из пакетов.
+
+1. В проекте 'AnnProcessor' щелкните правой кнопкой мыши узел 'Пакеты исходных кодов' и выберите 'Создать > Пакет Java'.
+2. Введите * ``ann`` * в поле "Имя пакета" и нажмите кнопку "Готово" для создания нового пакета Java.
+3. Повторите два предыдущих действия, чтобы создать пакет Java под названием * ``proc`` *.
+
+После создания двух пакетов Java структура проекта должна быть подобной изображенной ниже.
+
+image::images/packages.png[title="Структура проекта для обработчика аннотаций."]
+4. Щелкните правой кнопкой мыши пакет Java  ``ann``  и выберите New ("Создать") > Java class ("Класс Java").
+5. Введите * ``Handleable`` * в поле Class Name ("Имя класса"). Нажмите кнопку "Завершить".
+6. Измените файл  ``Handleable.java`` , добавив приведенный ниже код. Сохраните файл.
+
+[source,java]
+----
+
+package ann;
+
+public *@interface* Handleable {
+
+}
+----
+
+Так объявляются аннотации -- совершенно аналогично объявлению интерфейса. Различием является то, что ключевому слову  ``interface``  должен предшествовать знак  ``@`` . Эта аннотация именуется  ``Handleable``  (обрабатываемой).
+
+*Дополнительные сведения.* В объявлениях аннотаций можно указать дополнительные параметры, например, типы элементов, к которым можно добавить аннотации, например, классы или методы. Для этого добавляется  ``@Target(value = {ElementType.TYPE})``  для классов и  ``@Target(value = {ElementType.METHOD}).``  Таким образом, объявление аннотаций становится автоматическим с помощью _мета-аннотаций_.
+
+Теперь необходимо добавить к обработчику аннотаций код для обработки аннотации  ``Handleable`` .
+
+7. Щелкните правой кнопкой мыши пакет* `` Java `` proc* и выберите New ("Создать") > Java class ("Класс Java").
+8. Введите * ``HandleableProcessor`` * в поле Class Name ("Имя класса"). Нажмите кнопку "Завершить".
+9. Измените класс  ``HandleableProcessor.java`` , добавив нижеприведенный код. Сохраните изменения.
+
+*Примечание.* Значение  ``@SupportedSourceVersion``  (выделено *жирным шрифтом*) зависит от используемой версии JDK и может быть двух вариантов:  ``(SourceVersion.RELEASE_7)``  или  ``(SourceVersion.RELEASE_6)`` .
+
+
+[source,java]
+----
+
+package proc;
+
+import ann.Handleable;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.Writer;
+import java.util.Set;
+import javax.annotation.processing.AbstractProcessor;
+import javax.annotation.processing.RoundEnvironment;
+import javax.annotation.processing.SupportedAnnotationTypes;
+import javax.annotation.processing.SupportedSourceVersion;
+import javax.lang.model.SourceVersion;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeMirror;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
+
+@SupportedAnnotationTypes("ann.Handleable")
+@SupportedSourceVersion(*SourceVersion.RELEASE_7*)
+public class HandleableProcessor extends AbstractProcessor {
+
+    /** public for ServiceLoader */
+    public HandleableProcessor() {
+    }
+
+    public boolean process(Set<? extends TypeElement> annotations,
+            RoundEnvironment roundEnv) {
+        for (Element e : roundEnv.getElementsAnnotatedWith(Handleable.class)) {
+            if (e.getKind() != ElementKind.FIELD) {
+                processingEnv.getMessager().printMessage(
+                        Diagnostic.Kind.WARNING,
+                        "Not a field", e);
+                continue;
+            }
+            String name = capitalize(e.getSimpleName().toString());
+            TypeElement clazz = (TypeElement) e.getEnclosingElement();
+            try {
+                JavaFileObject f = processingEnv.getFiler().
+                        createSourceFile(clazz.getQualifiedName() + "Extras");
+                processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
+                        "Creating " + f.toUri());
+                Writer w = f.openWriter();
+                try {
+                    PrintWriter pw = new PrintWriter(w);
+                    pw.println("package "
+                            + clazz.getEnclosingElement().getSimpleName() + ";");
+                    pw.println("public abstract class "
+                            + clazz.getSimpleName() + "Extras {");
+                    pw.println("    protected " + clazz.getSimpleName()
+                            + "Extras() {}");
+                    TypeMirror type = e.asType();
+                    pw.println("    /** Handle something. */");
+                    pw.println("    protected final void handle" + name
+                            + "(" + type + " value) {");
+                    pw.println("        System.out.println(value);");
+                    pw.println("    }");
+                    pw.println("}");
+                    pw.flush();
+                } finally {
+                    w.close();
+                }
+            } catch (IOException x) {
+                processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR,
+                        x.toString());
+            }
+        }
+        return true;
+    }
+
+    private static String capitalize(String name) {
+        char[] c = name.toCharArray();
+        c[0] = Character.toUpperCase(c[0]);
+        return new String(c);
+    }
+}
+----
+
+Давайте рассмотрим внимательнее основные части кода, образующие обработчик аннотаций (обратите внимание, что для удобства рассмотрения код приведен здесь лишь частично).
+
+Сперва следует указать типы аннотаций, поддерживаемые обработчиком аннотаций (используя  ``@SupportedAnnotationTypes`` ) и поддерживаемую версию исходных файлов (используя  ``@SupportedSourceVersion`` ). В данном случае версией является JDK 6: 
+
+
+[source,java]
+----
+
+@SupportedAnnotationTypes("ann.Handleable")
+@SupportedSourceVersion(SourceVersion.RELEASE_6)
+----
+
+Затем следует объявить общедоступный класс для обработчика, расширяющий класс ``AbstractProcessor``  из пакета  ``javax.annotation.processing`` .  ``AbstractProcessor``  является стандартным надклассом для обработчиков конкретных аннотаций и содержит необходимые методы для обработки аннотаций.
+
+
+[source,java]
+----
+
+public class HandleableProcessor extends AbstractProcessor {
+...
+}
+----
+
+Теперь необходимо предоставить общедоступный конструктор для данного класса.
+
+
+[source,java]
+----
+
+public class HandleableProcessor extends AbstractProcessor {
+*    public HandleableProcessor() {
+    }*
+...
+
+}
+----
+
+Затем следует вызвать метод  ``process`` () родительского класса  ``AbstractProcessor`` . Посредством этого метода предоставляются аннотации, доступные для обработки. Кроме того, этот метод содержит данные о цикле обработки.
+
+
+[source,java]
+----
+
+public class HandleableProcessor extends AbstractProcessor {*
+   *...
+*     public boolean process(Set<? extends TypeElement> annotations,
+            RoundEnvironment roundEnv) {
+     ...
+     }
+*
+}
+----
+
+Логика обработчика аннотаций содержится внутри метода  ``process()``  класса  ``AbstractProcessor`` . Обратите внимание, что при помощи класса  ``AbstractProcessor``  также можно получить доступ к интерфейсу  ``ProcessingEnvironment`` , позволяющему обработчикам аннотаций использовать несколько полезных функций, например средство для работы с файловой системой (обработчик файловой системы, позволяющий обработчикам аннотаций создавать файлы) и средство вывода сообщений (способ предупреждения об ошибках обработчиков аннотаций).
+
+
+[source,java]
+----
+
+public class HandleableProcessor extends AbstractProcessor {*
+   *...
+     public boolean process(Set<? extends TypeElement> annotations,
+            RoundEnvironment roundEnv) {//For each element annotated with the Handleable annotation
+            *for (Element e : roundEnv.getElementsAnnotatedWith(Handleable.class)) {
+
+*//Check if the type of the annotated element is not a field. If yes, return a warning*.
+if (e.getKind() != ElementKind.FIELD) {
+processingEnv.getMessager().printMessage(
+Diagnostic.Kind.WARNING,
+"Not a field", e);
+continue;
+}
+            *//Define the following variables: name and clazz*.**
+String name = capitalize(e.getSimpleName().toString());
+TypeElement clazz = (TypeElement) e.getEnclosingElement();
+*//Generate a source file with a specified class name. *
+            try {
+JavaFileObject f = processingEnv.getFiler().
+createSourceFile(clazz.getQualifiedName() + "Extras");
+processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
+"Creating " + f.toUri());
+Writer w = f.openWriter();
+*//Add the content to the newly generated file*.
+                    try {
+PrintWriter pw = new PrintWriter(w);
+pw.println("package "
++ clazz.getEnclosingElement().getSimpleName() + ";");
+pw.println("public abstract class "
++ clazz.getSimpleName() + "Extras {");
+pw.println("    protected " + clazz.getSimpleName()
++ "Extras() {}");
+TypeMirror type = e.asType();
+pw.println("    /** Handle something. */");
+pw.println("    protected final void handle" + name
++ "(" + type + " value) {");
+pw.println("        System.out.println(value);");
+pw.println("    }");
+pw.println("}");
+pw.flush();
+} finally {
+w.close();
+}
+} catch (IOException x) {
+processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR,
+x.toString());
+}
+}*return true;
+    * }*
+...
+}
+----
+
+В последнем блоке этого кода объявляется метод  ``capitalize`` , используемый для написания имени аннотированного элемента с заглавной буквы.
+
+
+[source,java]
+----
+
+public class HandleableProcessor extends AbstractProcessor {*
+   *...*
+
+  private static String capitalize(String name) {
+char[] c = name.toCharArray();
+c[0] = Character.toUpperCase(c[0]);
+return new String(c);
+}
+*}
+----
+10. Создайте проект, щелкнув правой кнопкой мыши проект  ``AnnProcessor``  и выбрав 'Сборка'.
+
+
+== Работа с обработчиком аннотаций в среде IDE
+
+В этом разделе мы создадим приложение Java, в котором будет использоваться обработчик аннотаций.
+
+1. Выберите File ("Файл") > New Project ("Создать проект") и выберите тип проекта Java Application ("Приложение Java") в категории Java. Нажмите кнопку "Далее".
+2. На странице "Имя и расположение" введите * ``Demo`` * в поле "Имя проекта" и укажите расположение проекта.
+3. Введите * ``demo.Main`` * в поле Create Main Class ("Создать главный класс"). Нажмите кнопку "Завершить".
+image::images/demo-project-wizard.png[title="Создание проекта Demo в мастере создания проектов."]
+4. Откройте окно 'Свойства проекта' и убедитесь, что JDK 6 или JDK 7 выбран как двоичный формат/формат исходного кода на панели "Исходные коды", а также что JDK 1.6 or JDK 1.7 установлен как платформа Java на панели "Библиотеки".
+5. Измените класс  ``Main.java`` , добавив приведенный ниже код. Сохраните изменения.
+
+[source,java]
+----
+
+package demo;
+
+*import ann.Handleable;*
+
+public class Main *extends MainExtras* {
+
+    *@Handleable
+    private String stuff;*
+
+    *public static void main(String[] args) {
+        new Main().handleStuff("hello");
+    }*
+}
+----
+
+Данный код содержит следующие элементы:
+
+* оператор импорта для обработчика особых аннотаций  ``ann.Handleable`` ;
+* общедоступный класс  ``Main`` , расширяющий класс  ``MainExtras``  ( ``MainExtras``  должен быть создан обработчиком аннотаций во время компиляции);
+* закрытое поле под названием  ``stuff`` , с аннотацией  ``@Handleable`` ;
+* метод  ``main`` , вызывающий метод  ``handleStuff`` , который объявляется в автоматически создаваемом классе  ``MainExtras`` .
+
+В этом простом примере метод  ``handleStuff``  только распечатывает текущее значение. Назначение метода можно изменить.
+
+После сохранения кода  ``Main.java``  можно увидеть, что среда IDE сообщает о ряде ошибок компиляции. Это происходит, поскольку обработчик аннотаций еще не добавлен в проект.
+
+6. Щелкните правой кнопкой мыши узел проекта  ``Demo``  в окне "Проекты", выберите "Свойства", затем выберите категорию "Библиотеки" в окне 'Свойства проекта'.
+7. На вкладке Compile ("Компиляция") щелкните Add Project ("Добавить проект") и найдите проект  ``AnnProcessor`` .
+image::images/demo-properties-compile.png[title="Вкладка 'Компилировать' в категории 'Библиотеки' окна свойств проекта"]
+
+Вкладка "Компиляция" соответствует параметру  ``-classpath``  link:http://download.oracle.com/javase/6/docs/technotes/tools/windows/javac.html#options[+компилятора Java+]. Поскольку обработчик аннотаций является единым файлом JAR, который содержит как определение аннотаций, так и обработчик аннотаций, его следует добавить к пути классов для проекта, которым является вкладка Compile ("Компиляция").
+
+8. Выберите категорию "Компиляция" в окне "Свойства проекта" и установите флажки "Разрешить обработку аннотаций" и "Разрешить обработку аннотаций в редакторе".
+9. Укажите, какой обработчик аннотаций должен быть запущен, нажав кнопку Add ("Добавить") рядом с текстовой областью обработчиков аннотаций и введя * ``proc.HandleableProcessor`` * в поле FQN ("Полностью определенное имя") обработчика аннотаций. 
+image::images/demo-processor-fqn.png[title="Диалоговое окно 'FQN обработчика аннотаций'"]
+
+Категория Compiling ("Компиляция") в окне Project Properties ("Свойства проекта") должна выглядеть, как на приведенном ниже изображении.
+
+image::images/demo-properties-compiling.png[title="Категория &quot;Компиляция&quot; в окне &quot;Свойства проекта&quot;."]
+10. Нажмите кнопку OK в окне Properties ("Свойства").
+
+*Примечание.* В файле  ``Main.java``  все еще могут отображаться ошибки компиляции. Это происходит, поскольку в среде IDE еще не определено местоположение файла  ``MainExtras.java`` , в котором объявляется метод  ``handleStuff`` . После первого создания проекта Demo будет создан файл  ``MainExtras.java`` . Если для проекта включено режим Compile On Save ("Компилировать при сохранении"), среда IDE компилирует проект при сохранении  ``Main.java`` .
+
+11. Щелкните правой кнопкой мыши проект Demo и выберите Build ("Сборка").
+
+Если после сборки проекта взглянуть на него в окне Projects ("Проекты"), то можно будет увидеть новый узел  ``Generated Sources``  с файлом  ``demo/MainExtras.java`` .
+
+image::images/demo-generated-sources.png[title="В окне 'Проекты' отображаются созданные источники"]
+
+При просмотре содержимого созданного файла  ``MainExtras.java``  можно увидеть, что обработчик аннотаций создал класс  ``MainExtras``  с методом  ``handleStuff`` . Метод  ``handleStuff``  и является методом, вызываемым из аннотированного файла  ``Main.java`` .
+
+
+[source,java]
+----
+
+package demo;
+public abstract class MainExtras {
+    protected MainExtras() {}
+    /** Handle something. */
+    protected final void handleStuff(java.lang.String value) {
+        System.out.println(value);
+    }
+}
+----
+12. Щелкните правой кнопкой мыши проект Demo и выберите Run ("Запустить").
+
+При щелчке Run ("Запустить") в окне вывода можно будет увидеть следующее. Выполняется компиляция проекта Demo, и на экран выводится сообщение.
+
+image::images/demo-run.png[title="В окне 'Проекты' отображаются созданные источники"]
+link:/about/contact_form.html?to=3&subject=Feedback:%20Using%20the%20Annotation%20Processors%20Support%20in%20NetBeans%20IDE[+Отправить отзыв по этому учебному курсу+]
+
+
+== Дополнительные сведения
+
+Ознакомьтесь со следующими ресурсами для получения дополнительных сведений об аннотациях в приложениях Java:
+
+* Документация Java SE - link:http://download.oracle.com/javase/6/docs/technotes/guides/language/annotations.html[+Аннотации+]
+* Учебный курс Java SE - link:http://download.oracle.com/javase/tutorial/java/javaOO/annotations.html[+Аннотации+]
+* link:http://download.oracle.com/javase/6/docs/technotes/tools/windows/javac.html#processing[+Компилятор Java: параметры обработки аннотаций+]
+* link:http://blogs.oracle.com/darcy/[+Блог Джозефа Д. Дарси (Joseph D. Darcy)+] - полезные рекомендации от ведущего специалиста по спецификации JSR-269

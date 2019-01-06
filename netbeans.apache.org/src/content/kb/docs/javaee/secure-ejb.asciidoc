@@ -1,0 +1,312 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= Building Secure Enterprise Beans in Java EE
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: Building Secure Enterprise Beans in Java EE - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, Building Secure Enterprise Beans in Java EE
+
+Support for the Java EE specification in NetBeans IDE enables you to take full advantage of the many Java EE features simplifying application development. A significant development in the Java EE 5 specification was the incorporation of annotations. Using annotations enables you to eliminate a lot of the boilerplate code used when coding applications and minimizes the amount of configuration needed when deploying your application.
+
+One area that has become greatly simplified through the use of annotations is the development and configuration of enterprise beans. Annotations enable you to specify many configuration properties that were previously specified in deployment descriptor files, making many of the deployment descriptor files unnecessary. Though applications may still require some deployment descriptor files (such as  ``web.xml`` ), the IDE's multi-view deployment descriptor editor makes editing the files much easier.
+
+Using annotations, building secure enterprise beans is now much easier. Instead of configuring enterprise bean security in the  ``ejb-jar.xml``  deployment descriptor you can use security annotations to configure authorization directly in the source code. Java EE 5 enterprise applications do not require  ``ejb-jar.xml``  or  ``application.xml`` .
+
+For an overview of some of the features of the Java EE specification, see link:javaee-intro.html[+Introduction to Java EE Technology+]. For more information about annotation specifications, see link:http://jcp.org/en/jsr/detail?id=250[+ JSR 250: Common Annotations for the Java Platform+].
+
+
+image::images/netbeans-stamp-80-74-73.png[title="Content on this page applies to the NetBeans IDE 7.2, 7.3, 7.4 and 8.0"]
+
+
+*To follow this tutorial, you need the following software and resources.*
+
+|===
+|Software or Resource |Version Required 
+
+|link:https://netbeans.org/downloads/index.html[+NetBeans IDE+] |7.2, 7.3, 7.4, 8.0, Java EE version 
+
+|link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+Java Development Kit (JDK)+] |version 7 or 8 
+
+|GlassFish Server |3.1.x, 4.x 
+|===
+
+For this tutorial you need to register a local instance of GlassFish server with the IDE. If you have installed the "Java EE" version of the IDE, the application server should already be installed and registered. If the application server is not registered in the IDE, choose Tools > Servers to register the server in the Servers manager. You cannot deploy enterprise applications to the Tomcat web server.
+
+*Prerequisites*
+
+This document assumes you have some basic knowledge of, or programming experience with, the following technologies:
+
+* Java Programming
+* NetBeans IDE
+
+
+== Creating a Security Group on the Application Server
+
+In this example, you only want users from the group  ``bank_users``  to access the enterprise bean. You will create the user  ``manager``  in the group  ``bank_users``  in the  ``file``  security realm on the application server.
+
+1. Start the application server by right-clicking its node in the Services window and choosing Start.
+2. Right-click the application server node and choose View Domain Admin Console to open the GlassFish server Admin Console in your browser.
+3. Expand the *server-config* node under the Configurations node in the left navigation bar.
+4. Click *Security > Realms > file* to open the Edit Realm frame.
+image::images/console-file-realm.png[title="Selecting the file realm node in admin console of application server"]
+5. Click the Manage Users button at the top of the Edit Realm panel to open the File Users panel.
+image::images/console-edit-realm.png[title="Edit Realm panel node in admin console of application server"]
+6. Click the New button at the top of the File Users table in the File Users panel.
+7. Enter the following data in the New File Realm User form. Click OK.
+|===
+
+|Name |Value 
+
+|User ID |manager 
+
+|Group List |bank_users 
+
+|Password |password 
+|===
+
+The form should resemble the following image.
+
+image::images/console-new-user.png[title="New File Realm User panel in admin console of application server"]
+
+When you click OK, the server will create the user and open the File Users panel. You will see that there is now a user named  ``manager`` .
+
+image::images/console-file-users.png[title="File Users panel in admin console with list of users"]
+
+Now that the user is created, you will create an enterprise application that will check that the user is able to see the data.
+
+
+== Creating a Java Class Library for the Remote Interface
+
+In this exercise you will create a simple Java class library project that will contain the remote interfaces for the session bean. The compiled class library JAR will be added to the classpath of the EJB module and the application client that will be used to call the session bean.
+
+1. Choose File > New Project and select Java Class Library in the Java category. Click Next.
+2. Type SecureRemoteInterface for the Project Name.
+3. Specify a location for the project. Click Finish.
+
+In the next section you will create a session bean in an enterprise application. The session bean will be accessed via a remote interface. When you create the session bean, the IDE will automatically create the remote interface in the class library and add the class library JAR to the classpath of the enterprise application.
+
+
+== Creating and Securing the Enterprise Application
+
+The enterprise application will consist of a simple session bean that is accessed via a remote interface in the class library project.
+
+
+=== Creating the Enterprise Application Project
+
+In this exercise you will create an enterprise application that contains an EJB module.
+
+1. Choose File > New Project (Ctrl-Shift-N; ⌘-Shift-N on Mac) and select the Enterprise Application template from the Java EE category. Click Next.
+2. Type *Secure* for the Project Name and set the Project Location.
+3. Deselect the Use Dedicated Folder option, if selected.
+
+For this tutorial there is little reason to copy project libraries to a dedicated folder because you will not need to share libraries with other users or projects.
+
+Click Next.
+4. Set the server to GlassFish and set the Java EE Version to Java EE 6.
+5. Select Create EJB Module and deselect Create Web Application Module. Click Finish.
+image::images/new-entapp-wizard.png[title="New File Realm User panel in admin console of application server"] 
+
+
+=== Securing a Method in a Session Bean
+
+In this exercise you will create a session bean in the EJB module project. The session bean does not do anything fancy. It just returns a sample balance amount. You will create a  ``getStatus``  method and secure the method bean by annotating it with the  ``@RolesAllowed``  annotation and specify the security roles allowed to access the method. This security role is used by the application and is not the same as the users and groups on the server. You will map the security role to the users and groups later when you configure the deployment descriptors.
+
+Security annotations can be applied individually to each method in a class, or to an entire class. In this simple exercise you will use the  ``@RolesAllowed``  to annotate a method, but the Java EE specification defines other security annotations that can be used in enterprise beans.
+
+1. In the Projects window, right-click the EJB module's node (Secure-ejb) and choose New > Session Bean.
+2. Type *AccountStatus* for the bean name, *bean* for the package.
+3. Select Remote in project for the interface type.
+4. Select SecureRemoteInterface in the dropdown list. Click Finish.
+image::images/new-sessionbean-wizard.png[title="Remote interface selected in New Session Bean wizard"]
+
+When you click Finish, the IDE creates the  ``AccountStatus``  class and opens the file in the source editor.
+
+The IDE also creates the  ``AccountStatusRemote``  remote interface for the bean in the  ``bean``  package in the SecureRemoteInterface class library project and added the SecureRemoteInterface class library JAR to the classpath of the EJB module project.
+
+image::images/projects-window-bean.png[title="Projects window showing session bean and class library on classpath"]
+
+If you open the Libraries category of the Properties dialog box of the EJB module you will see that the JAR is added to the compile-time libraries.
+
+5. In the source editor, add the following field declaration (in bold) to  ``AccountStatus`` :
+
+[source,java]
+----
+
+public class AccountStatus implements AccountStatusRemote {
+    *private String amount = "250";*
+----
+6. In the source editor, right-click in the class and choose Insert Code (Alt-Insert; Ctrl-I on Mac) and then select Add Business Method to open the Add Business Method dialog box.
+7. Type *getStatus* for the method name and set the return type to  ``String`` .
+
+The IDE automatically exposes the business method in the remote interface.
+
+8. In the source editor, add the following line in bold to the  ``getStatus``  method.
+
+[source,java]
+----
+
+public String getStatus() {
+*    return "The account contains $" + amount;*
+}
+----
+9. Type the following (in bold) to annotate the  ``getStatus``  method.*@RolesAllowed({"USERS"})*
+
+[source,java]
+----
+
+public String getStatus() {
+----
+
+This annotation means that only users in the security role  ``USERS``  can access the  ``getStatus``  method.
+
+10. Right-click in the editor and choose Fix Imports (Alt-Shift-I; ⌘-Shift-I on Mac) and save your changes. Make sure that  ``javax.annotation.security.RolesAllowed``  is added to the file.
+
+
+=== Configuring the Deployment Descriptors
+
+Java EE enterprise applications usually do not require deployment descriptor files such as  ``ejb-jar.xml`` . If you expand the Configuration Files node under Secure-ejb or the Secure enterprise application, you can see that there are no deployment descriptors. You can use annotations to specify many of the properties that were configured in  ``ejb-jar.xml`` . In this example you specified the security roles for the EJB methods by using the  ``@RolesAllowed``  annotation in the session bean.
+
+However, when configuring security for an application you still have to specify some properties in the deployment descriptors. In this example you need to map the security roles used in the enterprise application ( ``USERS`` ) to the users and groups you configured on the application server. You created the group  ``bank_users``  on the application server, and you now need to map this group to the security role  ``USERS``  in the enterprise application. To do this you will edit the  ``glassfish-application.xml``  deployment descriptor for the enterprise application.
+
+Because the enterprise application does not need deployment descriptors to run, the IDE did not create the deployment descriptors by default. So you first need to create the deployment descriptor file and then edit the file in the multi-view editor to configure the security role mappings.
+
+1. Right-click the Secure enterprise application project and choose New > Other to open the New File wizard.
+
+Alternatively, you can open the New File wizard by choosing File > New File from the main menu. In this case, be sure that you select the Secure project in the Project dropdown list.
+
+2. Select the GlassFish Descriptor file type in the GlassFish category. Click Next.
+image::images/new-gf-descriptor.png[title="GlassFish descriptor file type in the New File wizard"]
+3. Accept the default values in the wizard and click Finish.
+
+When you click Finish, the IDE creates  ``glassfish-application.xml``  and opens the file in the multi-view editor.
+
+If you expand the Secure enterprise application project node in the Projects window, you can see that the descriptor file is created under the Configuration Files node.
+
+image::images/glassfish-application-descriptor.png[title="Security tab in the multi-view editor"]
+4. In the Security tab of the multi-view editor, click Add Security Role Mapping and type *USERS* for the Security Role Name.
+5. Click Add Group and type *bank_users* for the Group Name in the dialog box. Click OK.
+
+The editor should now be similar to the following.
+
+image::images/security-tab-descriptor.png[title="Security tab in the multi-view editor"]
+6. Save your changes.
+
+You can click on the XML tab in the multi-view editor to view deployment descriptor file in XML view. You can see that the deployment descriptor file now contains the following:
+
+
+[source,xml]
+----
+
+<glassfish-application>
+  <security-role-mapping>
+    <role-name>USERS</role-name>
+    <group-name>bank_users</group-name>
+  </security-role-mapping>
+</glassfish-application>
+----
+
+The  ``getStatus``  method is now secure and only those users in the group  ``bank_users``  that you specified on the server can access the method.
+
+You now need a way to test the security settings. The simplest way is to create a basic application client that will prompt the user for a username and password.
+
+
+== Creating the Application Client
+
+In this section you will create a simple application client to access the  ``AccountStatus``  session bean. You will use the  ``@EJB``  annotation in the code to call the bean via the remote interface and the IDE will automatically add the class library JAR that contains the interface to the classpath of the application client.
+
+1. Choose File > New Project and select Enterprise Application Client in the Java EE category. Click Next.
+2. Type SecureAppClient for the Project Name. Click Next.
+3. Select *<None>* in the Add to Enterprise Application dropdown list.
+4. Select GlassFish Server in the Server dropdown list and Java EE 6 or Java EE 7 as the Java EE version. Click Finish.
+
+When you click Finish,  ``Main.java``  opens in the source editor.
+
+5. In the source editor, right-click in the  ``Main.java``  file and choose Insert Code (Alt-Insert; Ctrl-I on Mac) and select Call Enterprise Bean.
+6. In the Call Enterprise Bean dialog box, expand the Secure-ejb node and select AccountStatus. Click OK.
+image::images/call-enterprise-bean.png[title="interface selected in the Call Enterprise Bean dialog box"]
+
+The IDE adds the following code to the application client to look up the session bean.
+
+
+[source,java]
+----
+
+@EJB
+private static AccountStatusRemote accountStatus;
+----
+
+If you expand the Libraries node in the Projects window you can see that the IDE added the SecureRemoteInterface JAR to the project classpath.
+
+7. Modify the  ``main``  method to add the following code and save your changes.
+
+[source,java]
+----
+
+public static void main(String[] args) {
+    *System.out.println(accountStatus.getStatus());*
+}
+----
+
+For more on applications clients, see link:entappclient.html[+Creating and Running an Application Client on the GlassFish Server+].
+
+
+== Running the Application
+
+The application is now ready. You will first deploy the enterprise application to the server. After you deploy the enterprise application you can run the application client to test that the method in the enterprise application is secure and that the user roles are mapped correctly. When you run the application client you will be prompted for a username and password for a user in the  ``bank_users``  group.
+
+1. Right-click the Secure enterprise application project node in the Projects window and choose Deploy.
+
+When you click Deploy, the IDE builds the EAR file, starts the application server (if it's not running) and deploys the EAR file to the server.
+
+2. Right-click the SecureAppClient project node in the Projects window and choose Run. A dialog box appears prompting you for a username and password.
+image::images/login-window.png[title="Login window prompting for username and password"]
+3. Enter the user name ( ``manager`` ) and password ( ``password`` ) in the dialog box and click OK. The following will appear in the Output window:
+
+[source,java]
+----
+
+The account contains 250$
+----
+
+This very basic example demonstrates how to use Java annotations to secure a method in an enterprise bean.
+
+link:/about/contact_form.html?to=3&subject=Feedback:%20Building%20Secure%20Enterprise%20Beans[+Send Feedback on This Tutorial+]
+
+
+
+== See Also
+
+For more information about using annotations and deployment descriptors to secure enterprise beans, see the following resources:
+
+* link:http://docs.oracle.com/javaee/7/tutorial/doc/security-intro003.htm[+Securing Containers+] and link:http://docs.oracle.com/javaee/7/tutorial/doc/security-advanced008.htm[+Configuring Security Using Deployment Descriptors+] chapters in the link:http://docs.oracle.com/javaee/7/tutorial/doc/partsecurity.htm[+Security+] section of the Java EE 7 Tutorial
+
+For more information about using NetBeans IDE to develop Java EE applications, see the following resources:
+
+* link:javaee-intro.html[+Introduction to Java EE Technology+]
+* link:javaee-gettingstarted.html[+Getting Started with Java EE Applications+]
+* link:../../trails/java-ee.html[+Java EE &amp; Java Web Learning Trail+]
+
+To send comments and suggestions, get support, and keep informed on the latest developments on the NetBeans IDE Java EE development features, link:../../../community/lists/top.html[+join the nbj2ee mailing list+].
+

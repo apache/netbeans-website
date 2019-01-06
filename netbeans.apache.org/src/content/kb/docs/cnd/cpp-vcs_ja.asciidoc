@@ -1,0 +1,118 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= NetBeans C/C++プロジェクトのバージョン管理システムへの格納
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: NetBeans C/C++プロジェクトのバージョン管理システムへの格納 - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, NetBeans C/C++プロジェクトのバージョン管理システムへの格納
+
+執筆: Vladimir Kvashin、管理: Alyona Stashkova
+2014年3月 [リビジョン番号: V8.0-1]
+
+NetBeans C/C++プロジェクト(主に既存のコードからのプロジェクトとバイナリからのプロジェクト)のバージョン管理システム(VCS)への格納は、NetBeans IDE 7.3から複雑さが緩和されました。この記事では、NetBeans IDEでのNetBeans C/C++プロジェクトのVCSへの格納の詳細を説明します。
+
+
+
+image::images/netbeans-stamp-80-74-73.png[title="このページの内容は、NetBeans IDE 7.3以降に適用されます"]
+
+
+
+== 要件
+
+*このチュートリアルに従うには、次のソフトウェアが必要です。*
+
+|===
+|ソフトウェア |必須バージョン 
+
+|NetBeans IDE (C/C++のサポートを含む) |link:https://netbeans.org/downloads/index.html[+バージョン7.3以降とNetBeans C/C++プラグイン+] 
+
+|Java Development Kit (JDK) |link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+バージョン6、7または8 +] 
+|===
+
+
+必要なソフトウェアのダウンロードとインストールについては、link:../../../community/releases/74/install.html[+NetBeans IDEのインストール手順+]およびlink:../../../community/releases/74/cpp-setup-instructions.html[+C/C++/Fortran向けのNetBeans IDEの構成+]のドキュメントを参照してください。
+
+
+== NetBeans IDEで解決されたVCS管理プロジェクトの問題
+
+次の問題は、NetBeans IDEで解決されました。
+
+* <<unfriendly,VCSの扱いにくいプロジェクト・データ・ストレージ>>
+* <<compiler,コンパイラ・オプション>>
+
+
+=== VCSの扱いにくいプロジェクト・データ・ストレージ
+
+NetBeans IDEはプロジェクト・メタデータ・ファイルを非常に頻繁に変更しました。たとえば、VCS下のプロジェクトを開くだけで何も変更しなくても、一部のプロジェクト・メタデータ・ファイルが変更されたことに気づくため、それらをチェックインまたはロールバックする必要がありました。
+
+この問題は、主に既存のコードからのプロジェクトとバイナリからのプロジェクト、つまりユーザーのmakeファイルに基づくプロジェクトに関連していました。
+
+問題の根本原因は、このようなプロジェクトのどのファイルがビルドに関与し、どのコンパイラ・オプションが各ファイルのビルドに使用されたかに関する情報がIDEにほとんどないことでした。このような知識がないため、コード支援機能が正確になりませんでした。したがって、IDEは正しいオプションで正しいファイルを解析するために、何らかのバックグラウンド・インテリジェンスを使用してプロジェクトの内容とコード支援構成を調べる必要がありました。あいにく、このようなインテリジェンスはVCSで扱いにくい方法でデータを格納しました。
+
+
+=== コンパイラ・オプション
+
+コンパイラの問題は、プロジェクトのビルドに使用されるコンパイラ・オプションがプロジェクトのビルドに使用するマシンに非常に固有な場合があるという事実から生じます。たとえば、OpenJDKビルドでは、自分のJDKへのパスに設定する必要のある`ALT_BOOTDIR`が使用されます。このパスは、同じオペレーティング・システムを使用するマシン間でも異なる場合があります。IDEは、すべてのコンパイラ・オプションをプロジェクト・メタデータに格納します。このようなオプションを認識しないと、次回コードを解析できず、十分に正確にすることができません。
+
+一部のマシンまたはユーザー固有情報がVCSに取り込まれると、プロジェクト・メタデータは、ユーザーがプロジェクトに変更を加えていない場合でも、別のユーザーがそれをチェックアウトし、プロジェクトをビルドした後で変更されます(新規オプションが格納されます)。
+
+
+== 環境変数リスト
+
+既存のコードまたはバイナリからのプロジェクトでは、プロジェクト・メタデータの格納時に使用する環境変数のリストを指定できます。IDEがコンパイラ・オプションを格納し、オプション値が変数値と一致する場合は、かわりにマクロが記述されます。
+
+次の例を想定してください。環境内の前述のフィールドに`ALT_BOOTDIR=/usr/jdk/latest`および`ALT_BOOTDIR`変数がリストされています。IDEは、ファイルのコンパイル時に`-I/usr/jdk/latest/include`オプションが使用されたことを認識すると、`${ALT_BOOTDIR}/include`をプロジェクト・メタデータに格納します。
+
+コード支援を構成ウィザードも構成ごとに機能します。つまり、現在アクティブな構成のみを変更します。したがって、これを各構成について別々に実行し、異なるプラットフォームに対して異なるコード支援設定を得ることができます。
+
+
+== プロジェクトをビルドできない場合のコード支援の構成
+
+コード支援を構成ウィザードは、デバッグ情報でコードをビルドする場合に最も効率的です。最適なオプションは、GNUコンパイラでは`-g3 -gdwarf-2`、Sunコンパイラでは`-g`です。
+
+プロジェクトがビルドされていないか、デバッグ情報が含まれていない場合、コード支援を構成ウィザードには、「ファイル・システムからC/C++ヘッダー・ファイルを検索」という特殊なモードがあります。このモードでは、NetBeans IDEはファイル・システムからヘッダーを検索することによって、失敗したincludeディレクティブを解決しようとします。この目的で、ウィザードはヘッダーを検索するためのパスを入力するようユーザーに求めます。デフォルトでは、これはプロジェクト・ソース・ルートです。
+
+
+== 一時マクロ
+
+プロジェクト・メタデータを予期せず変更する可能性があるものとして、揮発性のマクロ(`-D`オプション)もあります。たとえば、日付と現在のユーザー名に依存するマクロです。このようなマクロ値を格納するとプロジェクト・メタデータ・ファイルが変更されますが、これはあまり意味がありません。
+
+「一時マクロ」フィールドでこのようなマクロのリストを指定して無視することができます。これにより、IDEはプロジェクト・メタデータにこれらのマクロ値を格納しなくなります。マクロはマクロ=値の形式で指定します。プロジェクト・プロパティのスクリーンショットを次に示します。
+
+image:::images/proj_props_small.png[role="left", link="images/proj_props.png"]
+
+
+== 管理対象プロジェクト
+
+管理対象プロジェクト(「C/C++アプリケーション」、「C/C++動的ライブラリ」または「C/C++静的ライブラリ」プロジェクト)で、環境変数を使用してコンパイラ・オプションを指定することもできます。`${ALTBOOTDIR}/include`のように、これらの先頭にドル記号を付けて、中括弧で囲む必要があります。
+
+
+== C/C++/Fortranサポートに関する詳細情報
+
+* NetBeans IDEのC/C++機能の使用方法の詳細は、link:https://netbeans.org/kb/trails/cnd.html[+C/C++の学習+]を参照してください。
+* link:http://forums.netbeans.org/cnd-users.html[+NetBeans C/C++ユーザー・フォーラム+]に参加すると、NetBeans IDEを使用したC/C++開発に関連するディスカッションに参加したり、支援を求めたりできます。
+* bugの報告または機能強化の提案は、link:https://netbeans.org/bugzilla/enter_bug.cgi?component=cnd[+Bugzilla+]に提出できます(netbeans.orgへの登録が必要です)。
+* NetBeans IDEによる一般的なバージョン管理パッケージの使用の詳細は、_NetBeans IDEによるアプリケーションの開発_のlink:http://www.oracle.com/pls/topic/lookup?ctx=nb7400&id=NBDAG234[+バージョン管理によるアプリケーションのバージョニング+]を参照してください。
+link:mailto:users@cnd.netbeans.org?subject=subject=Feedback:%20Storing%20NetBeans%20C/++%20Projects%20Under%20Version%20Control%20System[+このチュートリアルに関するご意見をお寄せください+]

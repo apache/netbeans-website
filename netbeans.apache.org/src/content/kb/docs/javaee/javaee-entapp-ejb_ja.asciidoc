@@ -1,0 +1,668 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= EJB 3.1を使用したエンタープライズ・アプリケーションの作成
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: EJB 3.1を使用したエンタープライズ・アプリケーションの作成 - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, EJB 3.1を使用したエンタープライズ・アプリケーションの作成
+
+このチュートリアルでは、Java EE 6エンタープライズ・アプリケーションの開発方法の基本事項を説明し、Java EE 6仕様の一部として導入された一部のEJB 3.1テクノロジの機能のデモを示します。このチュートリアルでは、ユーザーがデータベースに対してメッセージの投稿や取得を行えるエンタープライズ・アプリケーションを作成します。
+
+このアプリケーションには、EJBモジュールとWebモジュールが含まれます。EJBモジュールには、エンティティ・クラス、エンティティ・クラス用のセッション・ファサードおよびメッセージ駆動型Beanが含まれます。Webモジュールには、メッセージを表示および投稿するためのサーブレットと、セッション内のユーザー数をカウントするシングルトン・セッションBeanが含まれます。
+
+このチュートリアルを開始する前に、必要に応じて次のドキュメントをお読みください。
+
+* link:javaee-gettingstarted.html[+Java EEアプリケーションの開始+]
+
+*チュートリアルの課題*
+
+image::images/netbeans-stamp-80-74-73.png[title="このページの内容は、NetBeans IDE 7.2、7.3、7.4および8.0に適用されます"]
+
+* <<intro,NewsAppエンタープライズ・アプリケーションについて>>
+* <<Exercise_1,エンタープライズ・アプリケーション・プロジェクトの作成>>
+* <<Exercise_2,EJBモジュールのコーディング>>
+* <<Exercise_2a,エンティティ・クラスの作成>>
+* <<Exercise_2b,メッセージ駆動型Beanの作成>>
+* <<Exercise_2c,セッション・ファサードの作成>>
+* <<Exercise_3,Webモジュールのコーディング>>
+* <<Exercise_3a,シングルトン・セッションBeanの作成>>
+* <<Exercise_3b,ListNewsサーブレットの作成>>
+* <<Exercise_3c,PostMessageサーブレットの作成>>
+* <<Exercise_4,プロジェクトの実行>>
+* <<Exercise_5,ソリューション・プロジェクトのダウンロード>>
+* <<Exercise_6,トラブルシューティング>>
+
+*このチュートリアルに従うには、次のソフトウェアとリソースが必要です。*
+
+|===
+|ソフトウェアまたはリソース |必須バージョン 
+
+|link:https://netbeans.org/downloads/index.html[+NetBeans IDE+] |7.2、7.3、7.4、8.0、Java EEバージョン 
+
+|link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+Java Development Kit (JDK)+] |バージョン7または8 
+
+|GlassFish Server Open Source Edition |3.x、4.x 
+|===
+
+*前提条件*
+
+このドキュメントは、次のテクノロジについて基本的な知識またはプログラミング経験を持つ読者を想定して書かれています。
+
+* Javaプログラミング
+* NetBeans IDE
+
+link:https://netbeans.org/projects/samples/downloads/download/Samples/JavaEE/NewsAppEE6.zip[+終了したプロジェクトのZIPアーカイブ+]はダウンロードできます。
+
+
+== NewsAppエンタープライズ・アプリケーションについて
+
+このチュートリアルでは、NewsAppという名前の、単純な多層構造のJava EE 6エンタープライズ・アプリケーションを作成します。NewsAppアプリケーションでは、Java EE 6仕様で導入された機能の一部が使用されます。
+
+NewsAppアプリケーションの構造は、一般的に次の層に対応しています。
+
+* *Web層。*Web層にはアプリケーションのプレゼンテーション・ロジックが含まれており、Java EEサーバーで実行されます。NewsAppアプリケーションでは、Web層はWebモジュールで表現され、EJBモジュールのビジネス・ロジックにアクセスするサーブレットが含まれます。
+* *ビジネス層。*ビジネス層のアプリケーションもJava EEサーバーで実行され、アプリケーションのビジネス・ロジックが含まれます。NewsAppアプリケーションでは、ビジネス層はEJBモジュールで表現されます。EJBモジュールには、Web層クライアントからのリクエストを処理し、トランザクションおよびオブジェクトがデータベースに維持される方法を管理するコードが含まれます。
+* *EIS層。*EIS層はアプリケーションの永続記憶域レイヤーです。NewsAppアプリケーションでは、この層は、メッセージが保存されているデータベースで表現されます。
+
+IDEでエンタープライズ・アプリケーションをビルドする際、EJBおよびWebアプリケーション・モジュールがEARアーカイブにパッケージされ、サーバーにデプロイされます。通常、アプリケーションは*クライアント層*からアクセスされます。クライアント層とはクライアントが実行される環境であり、多くの場合、ユーザーのローカル・システムにあるWebブラウザです。
+
+*注意:*このチュートリアルの例では、単一のマシンを使用して、Java EEサーバー(データベース)をホストし、Webページを表示します。大規模なエンタープライズ・アプリケーションでは、異なる層が複数のマシンにわたって分散されることがよくあります。Web層およびビジネス層のアプリケーションは通常、別々のマシンでホストされるJava EEサーバーにデプロイされます。
+
+Java EEエンタープライズ・アプリケーションの構造に関する詳細は、link:http://download.oracle.com/javaee/6/tutorial/doc/[+Java EE 6チュートリアル、パートI+]のlink:http://download.oracle.com/javaee/6/tutorial/doc/bnaay.html[+多層構造の分散アプリケーション+]の章を参照してください。
+
+
+== エンタープライズ・アプリケーション・プロジェクトの作成
+
+この課題の目標は、NewsAppエンタープライズ・アプリケーション・プロジェクトを作成することです。新規プロジェクト・ウィザードを使用して、EJBモジュールとWebモジュールを含むエンタープライズ・アプリケーションを作成します。
+
+1. メイン・メニューから「ファイル」>「新規プロジェクト」([Ctrl]-[Shift]-[N]、Macの場合は[⌘]-[Shift]-[N])を選択します。
+2. 「Java EE」カテゴリから「エンタープライズ・アプリケーション」を選択し、「次」をクリックします。
+3. プロジェクト名を*NewsApp*にし、プロジェクトの場所を設定します。
+4. 専用フォルダを使用するオプションが選択されている場合は選択を解除します。
+このチュートリアルでは、ライブラリを他のユーザーまたはプロジェクトと共有する必要がないので、プロジェクト・ライブラリを専用のフォルダにコピーする理由はほとんどありません。
+「次」をクリックします。
+5. サーバーを「GlassFish Server」に設定し、「Java EEバージョン」を「Java EE 6」または「Java EE 7」に設定します。
+6. 「EJBモジュールを作成」および「Webアプリケーション・モジュールを作成」を選択します。「終了」をクリックします。
+
+image::images/new-entapp-wizard.png[title="新規プロジェクト・ウィザード"]
+
+「終了」をクリックすると、NewsApp、NewsApp-ejb、NewsApp-warの3つのプロジェクトが作成されます。「プロジェクト」ウィンドウの「NewsApp」ノードを展開すると、エンタープライズ・アプリケーション・プロジェクトにソースが含まれていないことがわかります。すべてのソースは、ウィザードで作成された2つのモジュールに格納され、「Java EEモジュール」ノードに一覧表示されます。
+
+エンタープライズ・アプリケーション・プロジェクトには、アプリケーションに関する構成/パッケージングの詳細のみが含まれます。エンタープライズ・アプリケーションをビルドして実行すると、IDEでEARアーカイブが作成され、EARがサーバーにデプロイされます。場合によっては、エンタープライズ・アプリケーション・プロジェクトに追加情報を含むデプロイメント・ディスクリプタ・ファイルが含まれることがありますが、GlassFish ServerにデプロイされるJava EEエンタープライズ・アプリケーションを作成するときは、デプロイメント・ディスクリプタ・ファイルは必要ありません。
+
+image::images/ejb-projectswindow.png[title="アプリケーションの構造を示す「プロジェクト」ウィンドウ"] 
+
+
+== EJBモジュールのコーディング
+
+この課題では、EJBモジュールに、エンティティ・クラス、メッセージ駆動型Beanおよびセッション・ファサードを作成します。また、データ・ソースやエンティティの管理方法に関する情報をコンテナに提供する持続性ユニット、およびメッセージ駆動型Beanで使用されるJava Message Service (JMS)リソースも作成します。
+
+
+=== エンティティ・クラスの作成
+
+この課題では、 ``NewsEntity`` エンティティ・クラスを作成します。エンティティ・クラスは、通常はデータベース内の表を表す単純なJavaクラスです。このエンティティ・クラスを作成すると、クラスをエンティティ・クラスとして定義するための ``@Entity`` という注釈がIDEによって追加されます。このクラスを作成した後で、表に必要なデータを表すフィールドを、クラス内に作成します。
+
+各エンティティ・クラスは主キーを持つ必要があります。エンティティ・クラスを作成すると、IDEによって、どのフィールドを主キーとして使用するかを宣言するための ``@Id`` という注釈が追加されます。また、プライマリIDのキー生成の戦略を指定するための ``@GeneratedValue`` という注釈もIDEによって追加されます。
+
+ ``NewsEntity`` クラスを作成するには、次の手順を実行します。
+
+1. 「プロジェクト」ウィンドウでEJBモジュールを右クリックし、「新規」>「その他」を選択して新規ファイル・ウィザードを開きます。
+2. 「持続性」カテゴリから「エンティティ・クラス」を選択し、「次」をクリックします。
+3. クラス名に「*NewsEntity*」と入力します。
+4. 「パッケージ」に「*ejb*」と入力します。
+5. 新規エンティティ・クラス・ウィザードの「主キー型」は「 ``Long`` 」のままにします。
+6. 「持続性ユニットを作成」を選択します。「次」をクリックします。
+7. 持続性ユニットの名前はデフォルトのままにしておきます。
+8. 「持続性プロバイダ」には「 ``EclipseLink (JPA2.0)`` 」(デフォルト)を選択します。
+9. 「データ・ソース」にはデータ・ソースを選択します(たとえばJavaDBを使用する場合は ``jdbc/sample`` を選択します)。
+10. 持続性ユニットが「Java Transaction APIを使用」になっていること、アプリケーションデプロイ時にエンティティ・クラスに基づいた表が作成されるように「表生成戦略」が「作成」に設定されていることを確認します。
+image::images/new-pu-wizard.png[title="「プロバイダとデータベース」パネル"]
+11. 「終了」をクリックします。
+
+「終了」をクリックすると、 ``persistence.xml`` およびエンティティ・クラス ``NewsEntity.java`` が作成されます。 ``NewsEntity.java`` がソース・エディタで表示されます。
+
+ソース・エディタで、次の手順を実行します。
+
+1. このクラスに次のフィールド宣言を追加します。
+
+[source,java]
+----
+
+private String title;
+private String body;
+----
+2. ソース・エディタ内を右クリックして「コードを挿入」([Alt]-[Insert]、Macの場合は[Ctrl]-[I])を選択し、「取得メソッドおよび設定メソッド」を選択して「取得メソッドおよび設定メソッドの生成」ダイアログ・ボックスを開きます。
+3. ダイアログ・ボックスで、 ``body`` フィールドと ``title`` フィールドを選択します。「生成」をクリックします。
+image::images/ejb-gettersetter.png[title="「取得メソッドおよび設定メソッドの生成」ダイアログ・ボックス"]
+
+「生成」をクリックすると、フィールド用の取得メソッドと設定メソッドが追加されます。
+
+4. 変更内容を ``NewsEntity.java`` に保存します。
+
+ ``NewsEntity.java`` を閉じます。
+
+エンティティ・クラスに関する詳細は、link:http://download.oracle.com/javaee/6/tutorial/doc/[+Java EE 6チュートリアル、パートI+]のlink:http://java.sun.com/javaee/6/docs/tutorial/doc/bnbpz.html[+Java Persistence API入門+]の章を参照してください。
+
+
+=== メッセージ駆動型Beanの作成
+
+この課題では、ウィザードを使用して、EJBモジュールにNewMessageメッセージ駆動型Beanを作成します。ウィザードは、必要なJMSリソースを作成するのにも役立ちます。メッセージ駆動型Beanは、Webモジュール内のサーブレットによってキューに送信されたメッセージを受信および処理します。
+
+メッセージ駆動型Beanを作成するには、次の手順を行います:
+
+1. 「プロジェクト」ウィンドウでEJBモジュールを右クリックし、「新規」>「その他」を選択して新規ファイル・ウィザードを開きます。
+2. 「Enterprise JavaBeans」カテゴリから「メッセージ駆動型Bean」ファイル・タイプを選択します。「次」をクリックします。
+3. EJB名に「*NewMessage*」と入力します。
+4. 「パッケージ」ドロップダウン・リストから「 ``ejb`` 」を選択します。
+5. 「プロジェクトの送信先」フィールドの横の「追加」ボタンをクリックして「メッセージ送信先を追加」ダイアログ・ボックスを開きます。
+6. 「メッセージ送信先を追加」ダイアログ・ボックスで「*jms/NewMessage*」と入力し、送信先タイプに「キュー」を選択します。「OK」をクリックします。
+7. プロジェクトの送信先が正しいことを確認します。「終了」をクリックします。
+image::images/ejb-newmessage.png[title="新規メッセージ駆動型Beanウィザード"]
+
+「終了」をクリックすると、 ``NewMessage.java`` というBeanクラスがソース・エディタに表示されます。 ``@MessageDriven`` 注釈と構成プロパティがクラスに追加されたことがわかります。
+
+
+[source,java]
+----
+
+       
+@MessageDriven(mappedName = "jms/NewMessage", activationConfig =  {
+        @ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge"),
+        @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue")
+    })
+public class NewMessage implements MessageListener {
+----
+
+ ``@MessageDriven`` 注釈は、コンポーネントがメッセージ駆動型Beanであり、このBeanが使用するJMSリソースを指定していることをコンテナに示します。IDEによってクラスが生成されるとき、リソースのマップされた名前( ``jms/NewMessage`` )は、クラスの名前( ``NewMessage.java`` )から取得されます。このJMSリソースは送信先のJNDI名にマッピングされていて、そこからBeanがメッセージを受信します。新規メッセージ駆動型Beanウィザードでは、 ``glassfish-resources.xml`` にJMSリソースの情報も追加します。JMSリソースを指定するために、デプロイメント・ディスクリプタを構成する必要はありません。IDEで「実行」アクションを使用してアプリケーションをGlassFishにデプロイする場合は、デプロイメント時にJMSリソースがサーバー上に作成されます。
+
+EJB仕様では、注釈を使用して、クラスに直接リソースを導入できます。ここで、注釈を使用して、クラスに ``MessageDrivenContext`` リソースを導入し、持続性エンティティのインスタンス管理のためにEntityManager APIによって使用されることになる ``PersistenceContext`` リソースを注入します。クラスへの注釈の追加は、ソース・エディタで行います。
+
+1. 次の注釈済フィールド(太字部分)をクラスに追加することで、 ``MessageDrivenContext`` リソースをクラスに注入します。
+
+[source,java]
+----
+
+public class NewMessage implements MessageListener {
+
+*@Resource
+private MessageDrivenContext mdc;*
+----
+2. コード内を右クリックして「コードを挿入」([Alt]-[Insert]、Macの場合は[Ctrl]-[I])を選択し、ポップアップ・メニューから「エンティティ・マネージャの使用」を選択することで、クラスにエンティティ・マネージャを導入します。次の ``@PersistenceContext`` 注釈がソース・コードに追加されます。
+
+[source,java]
+----
+
+@PersistenceContext(unitName = "NewsApp-ejbPU")
+private EntityManager em;
+----
+また、次の ``persist`` メソッドも生成されます。
+
+[source,java]
+----
+
+public void persist(Object object) {
+    em.persist(object);
+}
+----
+3.  ``persist`` メソッドを変更して名前を ``save`` に変更します。メソッドは次のようになります。
+
+[source,java]
+----
+
+public void *save*(Object object) {     
+    em.persist(object);
+}
+----
+4. 次のコード(太字部分)をメソッドの本体に追加することで、 ``onMessage`` メソッドを変更します。
+
+[source,java]
+----
+
+public void onMessage(Message message) {
+    *ObjectMessage msg = null;
+    try {
+        if (message instanceof ObjectMessage) {
+            msg = (ObjectMessage) message;
+            NewsEntity e = (NewsEntity) msg.getObject();
+            save(e);            
+        }
+    } catch (JMSException e) {
+        e.printStackTrace();
+        mdc.setRollbackOnly();
+    } catch (Throwable te) {
+        te.printStackTrace();
+    }*
+}
+----
+5. エディタを右クリックして「インポートを修正」([Alt]-[Shift]-[I]、Macの場合は[⌘]-[Shift]-[I])を選択し、必要なインポート文を生成します。変更を保存します。
+
+*注意:*インポート文を生成するときは、* ``javax.jms`` ライブラリと ``javax.annotation.Resource`` ライブラリを必ずインポート*してください。
+
+メッセージ駆動型Beanの詳細は、link:http://download.oracle.com/javaee/6/tutorial/doc/[+Java EE 6チュートリアル、パートI+]のlink:http://java.sun.com/javaee/6/docs/tutorial/doc/gipko.html[+メッセージ駆動型Beanとは+]の章を参照してください。
+
+
+=== セッション・ファサードの作成
+
+この課題では、NewsEntityエンティティ・クラスのセッション・ファサードを作成します。EJB 3.0仕様では、必須コードの量を少なくし、注釈を使用してクラスをセッションBeanとして宣言できるようにすることで、セッションBeanの作成を簡素化します。さらに、EJB 3.1仕様では、ビジネス・インタフェースをオプションにすることで、セッションBeanの要件を簡素化します。セッションBeanには、ローカル・クライアントから、ローカル・インタフェースまたはインタフェースなしのビューを使用してアクセスできます。このチュートリアルでは、Bean用のインタフェースは作成しません。Webアプリケーションは、インタフェースなしのビューからBeanにアクセスします。
+
+セッション・ファサードを作成するには、次の手順を行います:
+
+1. EJBモジュールを右クリックし、「新規」>「その他」を選択します。
+2. 「持続性」カテゴリから「エンティティ・クラスのセッションBean」を選択します。「次」をクリックします。
+3. 利用可能なエンティティ・クラスのリストから ``ejb.NewsEntity`` を選択し、「追加」をクリックして、そのクラスを「選択されているエンティティ・クラス」ペインに移動します。「次」をクリックします。
+4. 「パッケージ」が ``ejb`` に設定されていることを確認します。「終了」をクリックします。
+image::images/ejb-sessionforentity.png[title="新規メッセージ駆動型Beanウィザード"]
+
+「終了」をクリックすると、IDEによってセッション・ファサード・クラス ``NewsEntityFacade.java`` および ``AbstractFacade.java`` が生成され、エディタでこれらのファイルが開きます。生成されたコードでわかるように、ステートレス・セッションBeanコンポーネントとして ``NewsEntityFacade.java`` を宣言するため、注釈 ``@Stateless`` が使用されます。さらに、 ``PersistenceContext`` 注釈が追加され、リソースが直接セッションBeanコンポーネントに注入されます。 ``NewsEntityFacade.java`` は、 ``AbstractFacade.java`` を拡張したもので、ビジネス・ロジックを含み、トランザクションを管理します。
+
+*注意:*リモート・クライアントからBeanにアクセスする場合は、引き続きリモート・インタフェースが必要です。
+
+セッションBeanの詳細は、link:http://download.oracle.com/javaee/6/tutorial/doc/[+Java EE 6チュートリアル、パートI+]のlink:http://java.sun.com/javaee/6/docs/tutorial/doc/gipjg.html[+セッションBeanとは+]の章を参照してください。
+
+
+== Webモジュールのコーディング
+
+このセクションでは、Webモジュールに2つのサーブレットを作成します。ListNewsサーブレットは、EJBモジュールのエンティティ・ファサードを介して、データベースからメッセージを取得します。PostMessageサーブレットは、JMSメッセージを送信するために使用されます。
+
+このセクションでは、Webモジュールに、現在セッションにいるユーザーの数をカウントするシングルトン・セッションBeanも作成します。EJB 3.1仕様により、WebアプリケーションにエンタープライズBeanを作成できます。EJB 3.1以前は、すべてのエンタープライズBeanをEJBモジュールに置く必要がありました。
+
+
+=== シングルトン・セッションBeanの作成
+
+EJB 3.1仕様では、シングルトン・セッションBeanを簡単に作成できる ``@Singleton`` 注釈が導入されています。また、EJB 3.1では、Beanが初期化される場合など、シングルトン・セッションBeanのプロパティを構成するためのその他の注釈も定義されています。
+
+シングルトン・セッションBeanは、インスタンス化された後、アプリケーションのライフサイクルの間は存在します。名前が示すとおり、アプリケーションでは、シングルトン・セッションBeanのインスタンスは1つしかありません。ステートレス・セッションBeanと同様、シングルトン・セッションBeanは複数のクライアントを持つことができます。
+
+シングルトン・セッションBeanを作成するには、次の手順を行います:
+
+1. Webモジュールを右クリックし、「新規」>「その他」を選択して新規ファイル・ウィザードを開きます。
+2. 「Enterprise JavaBeans」カテゴリで「セッションBean」を選択します。「次」をクリックします。
+3. 「EJB名」に「*SessionManagerBean*」と入力します。
+4. 「パッケージ名」に「*ejb*」と入力します。
+5. 「シングルトン」を選択します。「終了」をクリックします。
+image::images/ejb-newsingleton.png[title="新規セッションBeanウィザードでのシングルトン・セッションの作成"]
+
+「終了」をクリックするとシングルトン・セッションBeanクラスが作成され、そのクラスがエディタに表示されます。シングルトン・セッションBeanを宣言するための注釈 ``@Singleton`` がクラスに追加されたことがわかります。このウィザードでは、クラスに ``@LocalBean`` という注釈も追加されます。
+
+
+[source,java]
+----
+
+@Singleton
+@LocalBean
+public class SessionManagerBean {
+
+}
+----
+
+1.  ``@WebListener`` を使用してクラスに注釈を付け、 ``HttpSessionListener`` を実装します。
+
+[source,java]
+----
+
+@Singleton
+@LocalBean
+*@WebListener*
+public class SessionManagerBean *implements HttpSessionListener*{
+
+}
+----
+
+ ``@WebListener`` 注釈はServlet 3.0 APIの一部で、これによりコードで直接リスナーを実装できます。
+
+ ``HttpSessionListener`` を実装すると、マージンに警告が表示されます。
+
+2. 左マージンにある警告バッジをクリックして、「すべての抽象メソッドを実装」を選択します。
+image::images/ejb-implementabstract.png[title="抽象メソッドを実装するためのエディタのヒント"]
+
+ ``sessionCreated`` メソッドと ``sessionDestroyed`` メソッドが追加されます。
+
+3. 静的フィールド ``counter`` を追加し、初期値を ``0`` に設定します。
+
+[source,java]
+----
+
+@LocalBean
+@WebListener
+public class SessionManagerBean implements HttpSessionListener{
+    *private static int counter = 0;*
+----
+4. 生成された ``sessionCreated`` メソッドと ``sessionDestroyed`` メソッドの本体を、新しいセッションが開始されるときにフィールドの値を増やし、セッションが終了するときに値を減らすように変更します。値は、フィールド ``counter`` に保存されます。
+
+[source,java]
+----
+
+public void sessionCreated(HttpSessionEvent se) {
+    *counter++;*
+}
+
+public void sessionDestroyed(HttpSessionEvent se) {
+    *counter--;*
+}
+----
+5.  ``counter`` の現在の値を返す次のメソッドを追加します。
+
+[source,java]
+----
+
+public int getActiveSessionsCount() {
+        return counter;
+    }
+----
+
+このメソッドをサーブレットからコールし、現在のユーザー数または開かれているセッション数を表示します。
+
+6. 変更を保存します。
+
+セッションBeanのコードは、次のようになっているはずです。
+
+
+[source,java]
+----
+
+@Singleton
+@LocalBean
+@WebListener
+public class SessionManagerBean implements HttpSessionListener {
+    private static int counter = 0;
+
+    public void sessionCreated(HttpSessionEvent se) {
+        counter++;
+    }
+
+    public void sessionDestroyed(HttpSessionEvent se) {
+        counter--;
+    }
+
+    public int getActiveSessionsCount() {
+        return counter;
+    }
+
+}
+----
+
+シングルトン・セッションBeanの詳細は、link:http://download.oracle.com/javaee/6/tutorial/doc/[+Java EE 6チュートリアル、パートI+]のlink:http://java.sun.com/javaee/6/docs/tutorial/doc/gipjg.html[+セッションBeanとは+]の章を参照してください。
+
+
+===  ``ListNews`` サーブレットの作成
+
+この課題では、保存されているメッセージを表示するための単純なサーブレットを作成します。注釈を使用して、サーブレットからエンタープライズBeanのNewsEntityFacadeをコールします。
+
+1. Webモジュール・プロジェクトを右クリックし、「新規」>「サーブレット」を選択します。
+2. 「クラス名」に「*ListNews*」と入力します。
+3. パッケージ名に「*web*」と入力します。「終了」をクリックします。
+
+「終了」をクリックすると、 ``ListNews.java`` というクラスがソース・エディタに表示されます。ソース・エディタで、次の手順を実行します。
+
+1. ソース・エディタ内を右クリックして「コードを挿入」([Alt]-[Insert]、Macの場合は[Ctrl]-[I])を選択し、「エンタープライズBeanをコール」を選択します。
+2. 「エンタープライズBeanをコール」ダイアログ・ボックスで、「NewsApp-ejb」ノードを展開し、「NewsEntityFacade」を選択します。「OK」をクリックします。
+
+エンタープライズBeanを注入する ``@EJB`` 注釈が追加されます。
+
+3. もう一度「エンタープライズBeanをコール」ダイアログ・ボックスを使用して、「NewsApp-war」ノードの下にSessionManagerBeanを注入します。
+
+2つのエンタープライズBeanを注入する次の注釈がコードに表示されます。
+
+
+[source,java]
+----
+
+@WebServlet(name = "ListNews", urlPatterns = {"/ListNews"})
+public class ListNews extends HttpServlet {
+
+    @EJB
+    private SessionManagerBean sessionManagerBean;
+    @EJB
+    private NewsEntityFacade newsEntityFacade;
+                
+----
+
+また、クラス・サーブレットの宣言とサーブレット名の指定用に、 ``@WebServlet`` 注釈が使用されています。 ``@WebServlet`` 注釈は、Java EE 6仕様で導入されたServlet 3.0 APIの一部です。 ``web.xml`` デプロイメント・ディスクリプタで指定するかわりに、注釈を使用してサーブレットを特定できます。NewsAppアプリケーションには ``web.xml`` は含まれません。
+
+4.  ``processRequest`` メソッドに、現在のセッションを返すか新規に作成する、次のコード(太字部分)を追加します。
+
+[source,java]
+----
+
+protected void processRequest(HttpServletRequest request, HttpServletResponse response)
+        throws ServletException, IOException {
+        *request.getSession(true);*
+        response.setContentType("text/html;charset=UTF-8");
+----
+5.  ``processRequest`` メソッドにメッセージを出力する次のコード(太字部分)を追加して、リンクをPostMessageサーブレットに追加します。(必要な場合はメソッド内のコードをコメント解除します。)
+
+[source,xml]
+----
+
+out.println("<h1>Servlet ListNews at " + request.getContextPath () + "</h1>");
+
+*List news = newsEntityFacade.findAll();
+for (Iterator it = news.iterator(); it.hasNext();) {
+    NewsEntity elem = (NewsEntity) it.next();
+    out.println(" <b>"+elem.getTitle()+" </b><br />");
+    out.println(elem.getBody()+"<br /> ");
+}
+out.println("<a href='PostMessage'>Add new message</a>");*
+
+out.println("</body>");
+                    
+----
+6. ユーザー数または開かれているセッションの数を取得および出力する、次のコード(太字部分)を追加します。
+
+[source,xml]
+----
+
+out.println("<a href='PostMessage'>Add new message</a>");
+
+*out.println("<br><br>");
+out.println(sessionManagerBean.getActiveSessionsCount() + " user(s) reading the news.");*
+
+out.println("</body>");
+                    
+----
+7. [Ctrl]-[Shift]-[I]を押し、このクラスに必要なインポート文を生成します。インポート文を生成するときは、* ``java.util`` ライブラリをインポート*する必要があります。
+8. 変更内容をファイルに保存します。
+
+
+===  ``PostMessage`` サーブレットの作成
+
+この課題では、メッセージの投稿に使用される ``PostMessage`` サーブレットを作成します。注釈を使用して、作成したJMSリソースを直接このサーブレットに注入します。このとき、変数名と、このJMSリソースがマッピングされる名前を指定します。次に、JMSメッセージを送信するためのコードと、メッセージを追加するためのHTML形式のコードを追加します。
+
+1. Webモジュール・プロジェクトを右クリックし、「新規」>「サーブレット」を選択します。
+2. 「クラス名」に「 ``PostMessage`` 」と入力します。
+3. パッケージ名に「 ``web`` 」と入力し、「終了」をクリックします。
+
+「終了」をクリックすると、 ``PostMessage.java`` というクラスがソース・エディタに表示されます。ソース・エディタで、次の手順を実行します。
+
+1. 次のフィールド宣言(太字部分)を追加することにより、注釈を使用して ``ConnectionFactory`` および ``Queue`` リソースを注入します。
+
+[source,java]
+----
+
+@WebServlet(name="PostMessage", urlPatterns={"/PostMessage"})
+public class PostMessage extends HttpServlet {                
+    *@Resource(mappedName="jms/NewMessageFactory")
+    private  ConnectionFactory connectionFactory;
+
+    @Resource(mappedName="jms/NewMessage")
+    private  Queue queue;*
+----
+2. 今度は、次に示す太字のコードを ``processRequest`` メソッドに追加し、JMSメッセージを送信するためのコードの追加を行います。
+
+[source,java]
+----
+
+response.setContentType("text/html;charset=UTF-8");
+
+// Add the following code to send the JMS message
+*String title=request.getParameter("title");
+String body=request.getParameter("body");
+if ((title!=null) &amp;&amp; (body!=null)) {
+    try {
+        Connection connection = connectionFactory.createConnection();
+        Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+        MessageProducer messageProducer = session.createProducer(queue);
+
+        ObjectMessage message = session.createObjectMessage();
+        // here we create NewsEntity, that will be sent in JMS message
+        NewsEntity e = new NewsEntity();
+        e.setTitle(title);
+        e.setBody(body);
+
+        message.setObject(e);                
+        messageProducer.send(message);
+        messageProducer.close();
+        connection.close();
+        response.sendRedirect("ListNews");
+
+    } catch (JMSException ex) {
+        ex.printStackTrace();
+    }
+}*
+                        
+PrintWriter out = response.getWriter();
+                    
+----
+3.  ``processRequest`` メソッドに次の行(太字部分)を追加して、メッセージを追加するためのWebフォームを追加します。(必要な場合はHTMLを出力するコードをコメント解除します。)
+
+[source,xml]
+----
+
+out.println("Servlet PostMessage at " + request.getContextPath() + "</h1>");
+
+// The following code adds the form to the web page
+*out.println("<form>");
+out.println("Title: <input type='text' name='title'><br/>");
+out.println("Message: <textarea name='body'></textarea><br/>");
+out.println("<input type='submit'><br/>");
+out.println("</form>");*
+
+out.println("</body>");
+                
+----
+4. [Ctrl]-[Shift]-[I]を押し、このクラスに必要なインポート文を生成します。
+
+*注意:*  ``Connection`` 、 ``ConnectionFactory`` 、 ``Session`` および ``Queue`` 用にインポートするライブラリを選択するときは、* ``javax.jms`` ライブラリをインポートしていることを確認してください*。
+
+image::images/import-jms.png[title="「すべてのインポートを修正」ダイアログでのJMSライブラリの選択"]
+5. 変更内容をファイルに保存します。
+
+
+== プロジェクトの実行
+
+これでプロジェクトを実行できるようになりました。プロジェクトを実行すると ``ListNews`` サーブレットのページがブラウザで開かれるようにします。エンタープライズ・アプリケーションの「プロパティ」ダイアログ・ボックスでURLを指定することによって、この操作を行います。このURLはアプリケーションのコンテキスト・パスを基準にしたものです。この相対URLを入力した後、「プロジェクト」ウィンドウからアプリケーションのビルド、デプロイおよび実行を行うことができます。
+
+相対URLを設定し、アプリケーションを実行するには、次の手順を実行します。
+
+1. 「プロジェクト」ウィンドウで、NewsAppエンタープライズ・アプリケーション・ノードを右クリックし、ポップアップ・メニューの「プロパティ」を選択します。
+2. 「カテゴリ」ペインで、「実行」を選択します。
+3. 「相対URL」テキスト・フィールドに「*/ListNews*」と入力します。
+4. 「OK」をクリックします。
+5. 「プロジェクト」ウィンドウで、NewsAppエンタープライズ・アプリケーション・ノードを右クリックして「実行」を選択します。
+
+プロジェクトを実行すると、 ``ListNews`` サーブレットがブラウザで開き、データベース内のメッセージの一覧が表示されます。初めてプロジェクトを実行したときは、データベースは空ですが、「メッセージを追加」をクリックしてメッセージを追加できます。
+
+image::images/ejb-browser1.png[title="ListNewsサーブレット・ページ"]
+
+ ``PostMessage`` サーブレットを使用してメッセージを追加すると、永続記憶域に書き込むためのメッセージ駆動型Beanにそのメッセージが送信され、 ``ListNews`` サーブレットがコールされてデータベース内のメッセージが表示されます。このメッセージ・サービスは非同期のため、 ``ListNews`` によって取得されるデータベース内のメッセージ一覧には、新しいメッセージがまだ含まれていないことがよくあります。
+
+
+== ソリューション・プロジェクトのダウンロード
+
+次の方法で、このチュートリアルにソリューションをプロジェクトとしてダウンロードできます。
+
+* link:https://netbeans.org/projects/samples/downloads/download/Samples%252FJavaEE%252FNewsAppEE6.zip[+終了したプロジェクトのZIPアーカイブ+]をダウンロードします。
+* 次の手順を実行して、プロジェクト・ソースをNetBeansのサンプルからチェックアウトします。
+1. メイン・メニューから「チーム」>「Subversion」>「チェックアウト」を選択します。
+2. 「チェックアウト」ダイアログ・ボックスで次のリポジトリURLを入力します。
+ ``https://svn.netbeans.org/svn/samples~samples-source-code`` 
+「次」をクリックします。
+3. 「参照」をクリックして「リポジトリ・フォルダを参照」ダイアログ・ボックスを開きます。
+4. ルート・ノードを展開し、*samples/javaee/NewsAppEE6*を選択します。「OK」をクリックします。
+5. ソースのローカル・フォルダを指定します(ローカル・フォルダは空である必要があります)。
+6. 「終了」をクリックします。
+
+「終了」をクリックすると、IDEではローカル・フォルダがSubversionリポジトリとして初期化され、プロジェクト・ソースがチェックアウトされます。
+
+7. チェックアウトが完了するときに表示されるダイアログで、「プロジェクトを開く」をクリックします。
+
+*注意:*
+
+* ソースをチェックアウトするには、Subversionクライアントが必要です。Subversionのインストールの詳細は、link:../ide/subversion.html[+NetBeans IDEでのSubversionガイド+]のlink:../ide/subversion.html#settingUp[+Subversionの設定+]の項を参照してください。
+
+
+== トラブルシューティング
+
+プロジェクト作成時に発生する可能性がある問題の一部を次に示します。
+
+
+=== JMSリソースの問題
+
+ウィザードを使用してJMSリソースを作成するとき、出力ウィンドウに次のサーバー・エラー・メッセージが表示される場合があります。
+
+
+[source,java]
+----
+
+[com.sun.enterprise.connectors.ConnectorRuntimeException:
+                    JMS resource not created : jms/Queue]
+                
+----
+
+このメッセージは、JMSリソースが作成されなかったか、アプリケーション・サーバーに登録されなかったことを示している可能性があります。アプリケーション・サーバーの管理コンソールを使用すると、JMSリソースを確認、作成および編集できます。
+
+管理コンソールを開くには、次の手順を実行します。
+
+1. IDEの「サービス」ウィンドウにある「サーバー」ノードを展開して、アプリケーション・サーバーが実行中であることを確認します。アプリケーション・サーバーのノードの横に小さな緑の矢印が表示されていれば、サーバーは実行中です。
+2. アプリケーション・サーバーのノードを右クリックし、「管理コンソールを表示」を選択して、ブラウザでログイン・ウィンドウを開きます。
+3. サーバーにログインします。デフォルトのユーザー名とパスワードは、それぞれ ``admin`` と ``adminadmin`` です。
+4. ブラウザの管理コンソールで、左側フレームにある「リソース」ノードと「JMSリソース」ノードを展開します。
+5. 左側フレームの「接続ファクトリ」および「接続先リソース」リンクをクリックして、リソースがサーバーに登録されているかどうかを確認し、必要に応じてリソースを変更します。リソースが存在しない場合は、管理コンソールで作成できます。
+
+Sun Java System Application Serverに登録されているJMS接続ファクトリ・リソースの正しいJNDI名に、PostMessageサーブレットのJMS接続ファクトリ・リソースがマッピングされていることを確認する必要があります。
+
+Sun Java System Application Serverには、次のリソースが登録されている必要があります。
+
+* JNDI名が ``jms/NewMessage`` で、型が ``javax.jms.Queue`` の接続先リソース
+* JNDI名が ``jms/NewMessageFactory`` で、型が ``javax.jms.QueueConnectionFactory`` の接続ファクトリ・リソース
+
+
+link:/about/contact_form.html?to=3&subject=Feedback:%20Creating%20an%20Enterprise%20Application%20with%20EJB%203.1[+このチュートリアルに関するご意見をお寄せください+]
+
+
+
+== 関連項目
+
+NetBeans IDEを使用したJava EEアプリケーションの開発方法の詳細は、次のリソースを参照してください。
+
+* link:javaee-intro.html[+Java EEテクノロジ入門+]
+* link:javaee-gettingstarted.html[+Java EEアプリケーションの開始+]
+* link:../web/quickstart-webapps.html[+Webアプリケーション開発入門+]
+* link:../../trails/java-ee.html[+Java EEおよびJava Webの学習+]
+
+エンタープライズBeanの使用方法については、link:http://docs.oracle.com/javaee/7/tutorial/doc/ejb-intro.htm[+Java EE 7チュートリアル+]を参照してください。
+
+link:../../../community/lists/top.html[+nbj2eeメーリング・リストに登録する+]ことによって、NetBeans IDE Java EE開発機能に関するご意見やご提案を送信したり、サポートを受けたり、最新の開発情報を入手したりできます。
+

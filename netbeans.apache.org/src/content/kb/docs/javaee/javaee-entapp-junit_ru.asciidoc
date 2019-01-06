@@ -1,0 +1,577 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= Использование встроенного контейнера EJB для тестирования приложений уровня предприятия
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: Использование встроенного контейнера EJB для тестирования приложений уровня предприятия - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, Использование встроенного контейнера EJB для тестирования приложений уровня предприятия
+
+В этом учебном курсе демонстрируется создание и выполнение тестов JUnit для приложений Java EE уровня предприятия. В этом учебном курсе будет создано веб-приложение с классом сущности и сеансным компонентом. Сначала будет создан тестовый класс JUnit для сеансного компонента, потом тест будет выполнен во встроенном контейнере EJB. Затем к проекту будет добавлен класс сущности, а тестовый класс будет изменен, и к классу сущности будет добавлен тестовый метод.
+
+*Упражнения по темам руководства*
+
+image::images/netbeans-stamp-80-74-73.png[title="Содержимое этой страницы применимо к IDE NetBeans 7.2, 7.3, 7.4 и 8.0"]
+
+* <<Exercise_1,Тестирование сеансного компонента>>
+* <<Exercise_1a,Создание проекта>>
+* <<Exercise_1b,Создание сеансового компонента>>
+* <<Exercise_1c,Тестирование сеансного компонента>>
+* <<Exercise_1d,Изменение теста для указания свойств контейнера>>
+* <<Exercise_1e,Использование аннотаций @BeforeClass и @AfterClass>>
+* <<Exercise_2,Тестирование класса сущности>>
+* <<Exercise_2a,Создание класса сущностей>>
+* <<Exercise_2b,Изменение сеансного компонента>>
+* <<Exercise_2c,Тестирование класса сущности>>
+* <<Exercise_3,Загрузка проекта решения>>
+
+*Для работы с этим учебным курсом требуется следующее программное обеспечение и ресурсы.*
+
+|===
+|Программное обеспечение или материал |Требуемая версия 
+
+|link:/downloads/[+IDE NetBeans+] |7.2, 7.3, 7.4, 8.0, пакет Java EE 
+
+|link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+Комплект для разработчика на языке Java (JDK)+] |версия 7 или 8 
+
+|GlassFish Server Open Source Edition 3.1.2.2 |3.1.x или 4.x 
+|===
+
+*Примечания.*
+
+* Для этого учебного курса требуется подключаемый модуль JUnit. Если подключаемый модуль JUnit не установлен, при установке среды IDE откройте диспетчер подключаемых модулей, выберите вкладку "Доступные подключаемые модули" и установите подключаемый модуль JUnit.
+
+*Предпосылки*
+
+Предполагается, что читатель обладает базовыми знаниями по следующим технологиям или опытом программирования с их использованием:
+
+* Программирование на Java
+* IDE NetBeans
+
+Перед началом этого учебного курса рекомендуется ознакомиться со следующей документацией:
+
+* link:javaee-gettingstarted.html[+Начало работы с приложениями Java EE+]
+* link:../java/junit-intro.html[+Writing JUnit Tests in IDE NetBeans+]
+* link:http://download.oracle.com/docs/cd/E19798-01/821-1754/gjlde/index.html[+Использование встраиваемого интерфейса API EJB 3.1 вместе со встроенным сервером GlassFish+]
+
+Можно загрузить link:https://netbeans.org/projects/samples/downloads/download/Samples%252FJavaEE%252FWebAppJUnit.zip[+готовый проект в виде архива ZIP+].
+
+
+== Тестирование сеансного компонента
+
+В этом разделе будет создано простое веб-приложение Java EE, содержащее сеансный компонент и класс сущности.
+
+
+=== Создание проекта
+
+1. Выберите 'Файл' > 'Создать проект' (Ctrl-Shift-N; ⌘-Shift-N в Mac) в главном меню.
+2. Выберите "Веб-приложение" в категории "Java Web". Нажмите кнопку "Далее".
+3. Присвойте проекту имя *WebAppJUnit* и выберите его местоположение.
+4. Снимите флажок "Использовать отдельную папку", если он установлен.
+Нажмите кнопку "Далее".
+5. В качестве сервера выберите *GlassFish Server*, а в качестве версии Java EE - *Java EE 6 Web* или *Java EE 7 Web*. 
+Нажмите кнопку "Готово".
+
+
+=== Создание компонента сеанса
+
+В этом упражнении будет создан очень простой сеансный компонент, содержащий один метод для сложения двух чисел.
+
+1. Щелкните правой кнопкой мыши проект WebAppJUnit в окне "Проекты" и выберите Создать > Другое.
+2. Выберите "Сеансный компонент" в категории Enterprise JavaBeans. Нажмите кнопку "Далее".
+3. В качестве имени EJB введите *MyBean*.
+4. Для имени пакета введите *bean*.
+5. Для "Тип сеанса" выберите "Без сохранения состояния". Нажмите кнопку 'Готово'.
+
+При нажатии кнопки "Готово" в редакторе откроется новый класс.
+
+6. В редакторе добавьте к классу следующий метод  ``addNumbers`` .
+
+[source,java]
+----
+
+@Stateless
+public class MyBean {
+    *public int addNumbers(int numberA, int numberB) {
+        return numberA + numberB;
+    }*
+}
+----
+
+*Примечание.* Для выполнения заданий этого практического руководства не обязательно создавать аннотацию  ``@LocalBean``  или реализацию интерфейса. Если представление не указано явным образом, по умолчанию компонент предоставляет безынтерфейсное представление.
+
+7. Сохраните изменения.
+
+
+=== Тестирование сеансного компонента
+
+В этом упражнении будет создан тестовый класс для сеансного компонента, который будет тестировать метод  ``addNumbers`` . Среда IDE может создать новый тестовый класс и методы тестирования схемы на основе целевого класса.
+
+1. В окне 'Проекты' щелкните класс  ``MyBean``  правой кнопкой мыши и выберите Сервис > Создать тесты.
+2. Выберите JUnit в списке 'Платформы'.
+3. В диалоговом окне "Создать тесты" используйте значения по умолчанию. Нажмите кнопку "ОК".
+image::images/create-tests-dialog.png[title="Диалоговое окно 'Создать тесты'"]
+
+*Примечание.* При первом создании модульного теста JUnit необходимо указать версию JUnit. Выберите версию JUnit 4.x в диалоговом окне 'Выбор версии JUnit' и нажмите 'Выбрать'.
+
+При нажатии кнопки "ОК" среда IDE создает файл  ``MyBeanTest.java``  и открывает класс в редакторе.
+
+В окне 'Проекты' видно, что среда IDE создала класс теста в узле 'Пакеты тестов'. По умолчанию среда IDE создает каркасный тестовый метод в тестовом классе, который вызывает  ``javax.ejb.embeddable.EJBContainer.createEJBContainer()``  для создания экземпляра контейнера EJB. Метод  ``createEJBContainer()``  — это один из методов в классе link:http://download.oracle.com/javaee/6/api/javax/ejb/embeddable/EJBContainer.html[+  ``EJBContainer`` +], входящем в EJB 3.1 Embeddable API.
+
+Если развернуть узел 'Библиотеки тестов' в окне 'Проекты', можно увидеть, что среда IDE автоматически добавила сервер GlassFish (встраиваемый контейнер) и JUnit 4.x как библиотеки тестов. Если развернуть библиотеку "Сервер GlassFish", можно увидеть, что библиотека содержит файл  ``glassfish-embedded-static-shell.jar`` .
+
+image::images/embedded-static-shell-jar.png[title="Структура проекта в окне 'Проекты'"]
+
+*Примечание.* Файл JAR  ``glassfish-embedded-static-shell.jar``  не содержит источников для встроенного контейнера EJB. Для файла  ``glassfish-embedded-static-shell.jar``  требуется локальная установка GlassFish. Путь к классам для локальной установки GlassFish определяется целевым сервером для проекта. Целевой сервер можно изменить в диалоговом окне "Свойства" проекта.
+
+4. Измените созданный каркасный тестовый метод, чтобы указать значения для  ``numberA`` ,  ``numberB``  и  ``expResult``  и удалить вызов сбоя по умолчанию.
+
+[source,java]
+----
+
+@Test
+public void testAddNumbers() throws Exception {
+    System.out.println("addNumbers");
+    *int numberA = 1;
+    int numberB = 2;*
+    EJBContainer container = javax.ejb.embeddable.EJBContainer.createEJBContainer();
+    MyBean instance = (MyBean)container.getContext().lookup("java:global/classes/MyBean");
+    *int expResult = 3;*
+    int result = instance.addNumbers(numberA, numberB);
+    assertEquals(expResult, result);
+    container.close();
+}
+----
+5. Щелкните правой кнопкой мыши окно "Проекты" и выберите команду "Тест".
+
+При выполнении теста в среде IDE откроется окно "Результаты тестирования", в котором отобразятся ход выполнения и результаты теста.
+
+image::images/test-results1.png[title="Окно &quot;Результаты теста&quot;"]
+
+Результаты будут сходны с данными в окне вывода.
+
+
+[source,java]
+----
+
+Testsuite: bean.MyBeanTest
+addNumbers
+...
+Tests run: 1, Failures: 0, Errors: 0, Time elapsed: 31.272 sec
+
+------------- Standard Output ---------------
+addNumbers
+...
+------------- ---------------- ---------------
+test-report:
+test:
+BUILD SUCCESSFUL (total time: 35 seconds)
+----
+
+
+=== Изменение теста для указания свойств контейнера
+
+При использовании мастера создания тестов среда IDE создала каркасный тестовый класс по умолчанию, содержащий код для запуска контейнера EJB. В этом упражнении будет изменен созданный код для запуска контейнера, чтобы позволить указать дополнительные свойства для экземпляра встроенного контейнера.
+
+1. Добавьте следующий код (выделен полужирным) к тестовому классу.
+
+[source,java]
+----
+
+@Test
+public void testAddNumbers() throws Exception {
+    System.out.println("addNumbers");
+    int numberA = 1;
+    int numberB = 2;
+
+    // Create a properties map to pass to the embeddable container:
+    *Map<String, Object> properties = new HashMap<String, Object>();*
+    // Use the MODULES property to specify the set of modules to be initialized,
+    // in this case a java.io.File 
+    *properties.put(EJBContainer.MODULES, new File("build/jar"));*
+
+    // Create the container instance, passing it the properties map:
+    EJBContainer container = javax.ejb.embeddable.EJBContainer.createEJBContainer(*properties*);
+
+    // Create the instance using the container context to look up the bean 
+    // in the directory that contains the built classes
+    MyBean instance = (MyBean) container.getContext().lookup("java:global/classes/MyBean");
+
+    int expResult = 3;
+
+    // Invoke the addNumbers method on the bean instance:
+    int result = instance.addNumbers(numberA, numberB);
+
+    assertEquals(expResult, result);
+
+    // Close the embeddable container:
+    container.close();
+}
+----
+2. Щелкните правой кнопкой мыши в редакторе и выберите команду 'Исправить операторы импорта' (Alt-Shift-I; ⌘-Shift-I в Mac) для добавления операторов импорта для  ``java.util.HashMap``  и  ``java.util.Map`` .
+3. Снова выполните тест для подтверждения работы измененного теста и правильности создания контейнера.
+
+Можно нажать кнопку "Повторное выполнение" в окне "Результаты тестирования".
+
+ 
+
+
+=== Использование аннотаций  ``@BeforeClass``  и  ``@AfterClass`` 
+
+В этом упражнении будет изменен тестовый класс для создания отдельных методов для создания и отключения экземпляра контейнера. Это может быть полезным при необходимости выполнения нескольких тестов, которые могут использовать один экземпляр контейнера. При этом не требуется открывать и закрывать контейнер для каждого теста, вместо этого до запуска тестов создается один экземпляр, который закрывается после выполнения всех тестов.
+
+В этом упражнении код создания контейнера EJB будет перемещен в метод  ``setUpClass`` . Метод  ``setUpClass``  аннотирован строкой  ``@BeforeClass`` , используемой для обозначения метода, который будет выполнен первым до выполнения других методов в тестовом классе. В этом примере будет создан экземпляр контейнера до тестового метода  ``testAddNumbers`` , контейнер будет существовать до его закрытия.
+
+Аналогично код выключения контейнера будет перемещен в метод  ``tearDownClass`` , аннотированный строкой  ``@AfterClass`` .
+
+1. Добавьте следующую строку к тестовому классу.
+
+[source,java]
+----
+
+private static EJBContainer container;
+----
+2. Скопируйте код создания контейнера из тестового метода  ``testAddNumbers``  в метод  ``setUpClass`` .
+
+[source,java]
+----
+
+@BeforeClass
+public static void setUpClass() *throws Exception* {
+    *Map<String, Object> properties = new HashMap<String, Object>();
+    properties.put(EJBContainer.MODULES, new File("build/jar"));
+    container = EJBContainer.createEJBContainer(properties);
+    System.out.println("Opening the container");*
+}
+----
+3. Скопируйте код закрытия контейнера из тестового метода  ``testAddNumbers``  в метод  ``tearDownClass`` .
+
+[source,java]
+----
+
+@AfterClass
+public static void tearDownClass() *throws Exception* {
+    *container.close();
+    System.out.println("Closing the container");*
+}
+----
+4. Удалите избыточный код из метода  ``testAddNumbers`` . Сохраните изменения.
+
+Теперь тестовый класс должен выглядеть следующим образом.
+
+
+[source,java]
+----
+
+public class MyBeanTest {
+    private static EJBContainer container;
+
+    public MyBeanTest() {
+    }
+
+    @BeforeClass
+    public static void setUpClass() throws Exception {
+        Map<String, Object> properties = new HashMap<String, Object>();
+        properties.put(EJBContainer.MODULES, new File("build/jar"));
+        container = EJBContainer.createEJBContainer(properties);
+        System.out.println("Opening the container");
+    }
+
+    @AfterClass
+    public static void tearDownClass() throws Exception {
+        container.close();
+        System.out.println("Closing the container");
+    }
+
+    @Before
+    public void setUp() {
+    }
+
+    @After
+    public void tearDown() {
+    }
+
+    /**
+     * Test of addNumbers method, of class MyBean.
+     */ 
+    @Test
+    public void testAddNumbers() throws Exception {
+        System.out.println("addNumbers");
+        int numberA = 1;
+        int numberB = 2;
+
+        // Create the instance using the container context to look up the bean 
+        // in the directory that contains the built classes
+        MyBean instance = (MyBean) container.getContext().lookup("java:global/classes/MyBean");
+
+        int expResult = 3;
+
+        // Invoke the addNumbers method on the bean instance:
+        int result = instance.addNumbers(numberA, numberB);
+
+        assertEquals(expResult, result);
+    }
+}
+----
+
+При повторном выполнении теста для подтверждения правильности создания и выключения контейнера можно увидеть вывод, сходный со следующим окном "Результаты тестирования.
+
+image::images/test-results2a.png[title="Окно &quot;Результаты теста&quot;"]
+
+Можно увидеть, что метод  ``setUpClass``  выполнен до теста  ``addNumbers``  и напечатал строку "Открытие контейнера".
+
+
+== Тестирование класса сущности
+
+В этом разделе будет создан класс сущности и блок сохранения состояния, а также изменен сеансный компонент для внедрения диспетчера сущностей и доступа к сущностям. Также к новому классу сущности будет добавлен простой метод для печати номера идентификатора записи в вывод. После этого к сеансному компоненту будет добавлено несколько простых методов для создания и проверки записей в базе данных.
+
+
+=== Создание класса сущности
+
+В этом разделе будет использоваться мастер создания класса сущности для создания класса сущности и блока сохранения состояния с настройками подключения к базе данных .
+
+1. Щелкните правой кнопкой мыши проект WebAppJUnit в окне "Проекты" и выберите Создать > Другое.
+2. Выберите класс сущности в категории сохранения состояния. Нажмите кнопку "Далее".
+3. Введите *SimpleEntity* в качестве имени класса.
+4. Выберите базовый элемент в раскрывающемся списке "Пакет".
+5. Введите *int* как тип первичного ключа. Нажмите кнопку "Далее".
+6. Используйте имя блока сохранения состояния и поставщика сохранения состояния по умолчанию.
+7. Выберите  ``jdbc/sample``  в качестве источника данных и "Удалить и создать" в качестве стратегии. Нажмите кнопку "Готово".
+image::images/create-entity-wizard.png[title="Диалоговое окно создания классов сущностей"]
+
+При нажатии кнопки "Готово" в редакторе откроется новый класс сущности. Если развернуть узел "Файлы настройки" в окне "Проекты, можно увидеть, что среда IDE автоматически создала файл  ``persistence.xml`` , в котором определяются свойства единицы сохранения состояния  ``WebAppJUnitPU`` .
+
+8. В редакторе добавьте к классу сущности следующее закрытое поле.
+
+[source,java]
+----
+
+private String name;
+----
+9. Щелкните правой кнопкой мыши в редакторе исходного кода, выберите пункт "Вставить код" (Alt-Insert; Ctrl-I на Mac) и выберите пункт "Методы получения и установки", чтобы открыть диалоговое окно "Создать методы получения и установки".
+10. В диалоговом окне выберите поле  ``name`` . Нажмите кнопку 'Создать'.
+11. Добавьте к классу следующий метод.
+
+[source,java]
+----
+
+public SimpleEntity(int id) {
+    this.id = id;
+    name = "Entity number " + id + " created at " + new Date();
+}
+----
+12. Аннотации  ``@NamedQueries``  и  ``@NamedQuery``  используются для создания именованного запроса SQL.
+
+[source,java]
+----
+
+@Entity
+*@NamedQueries({@NamedQuery(name = "SimpleEntity.findAll", query = "select e from SimpleEntity e")})*
+public class SimpleEntity implements Serializable {
+----
+13. Создание конструктора по умолчанию.
+
+Можно щелкнуть значок предложения, отображающийся во внутреннем поле рядом с объявлением класса, чтобы среда IDE создала конструктор.
+
+14. Исправьте операторы импорта для добавления выражений импорта для  ``javax.persistence.NamedQueries`` ,  ``javax.persistence.NamedQuery``  и  ``java.util.Date`` . Сохраните изменения.
+
+Помимо созданного кода по умолчанию теперь класс сущности должен выглядеть так, как показано ниже:
+
+
+[source,java]
+----
+
+package bean;
+
+import java.io.Serializable;
+import java.util.Date;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+
+
+@Entity
+@NamedQueries({@NamedQuery(name = "SimpleEntity.findAll", query = "select e from SimpleEntity e")})
+public class SimpleEntity implements Serializable {
+    private static final long serialVersionUID = 1L;
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private int id;
+
+    private String name;
+
+    public SimpleEntity() {
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public SimpleEntity(int id) {
+        this.id = id;
+        name = "Entity number " + id + " created at " + new Date();
+    }
+
+    
+
+    ...
+
+}
+----
+
+
+=== Изменение сеансного компонента
+
+В этом упражнении изменяется сеансный компонент  ``MyBean``  для добавления методов для вставки и получения данных из таблицы базы данных.
+
+1. Откройте файл  ``MyBean.java``  в редакторе.
+2. Щелкните редактор правой кнопкой мыши и выберите "Вставка кода" (Alt-Insert; Ctrl-I в Mac), затем выберите "Использовать диспетчер сущностей" во всплывающем меню.
+
+При выборе "Использовать диспетчер сущностей" среда IDE добавляет к классу следующий код для вставки в диспетчер сущностей. Можно заметить, что имя блока сохранения состояния создается автоматически.
+
+
+[source,java]
+----
+
+@PersistenceContext(unitName="WebAppJUnitPU")
+private EntityManager em;
+----
+3. Добавьте следующие методы  ``verify``  и  ``insert`` .
+
+[source,java]
+----
+
+@PermitAll
+public int verify() {
+    String result = null;
+    Query q = em.createNamedQuery("SimpleEntity.findAll");
+    Collection entities = q.getResultList();
+    int s = entities.size();
+    for (Object o : entities) {
+        SimpleEntity se = (SimpleEntity)o;
+        System.out.println("Found: " + se.getName());
+    }
+
+    return s;
+}
+
+@PermitAll
+public void insert(int num) {
+    for (int i = 1; i <= num; i++) {
+        System.out.println("Inserting # " + i);
+        SimpleEntity e = new SimpleEntity(i);
+        em.persist(e);
+    }
+}
+----
+4. Исправьте операторы импорта, чтобы импортировать  ``javax.persistence.Query`` , и сохраните изменения.
+
+
+=== Тестирование класса сущности
+
+В этом упражнении будет изменяться тестовый класс для добавления метода для тестирования возможности поиска приложением EJB и правильности поведения методов  ``insert``  и  ``verify`` .
+
+1. Запустите базу данных JavaDB.
+2. Откройте тестовый класс  ``MyBeanTest.java``  в редакторе.
+3. К тестовому классу добавьте следующий тестовый метод  ``testInsert`` .
+
+[source,java]
+----
+
+@Test
+public void testInsert() throws Exception {
+
+    // Lookup the EJB
+    System.out.println("Looking up EJB...");
+    MyBean instance = (MyBean) container.getContext().lookup("java:global/classes/MyBean");
+
+    System.out.println("Inserting entities...");
+    instance.insert(5);
+    int res = instance.verify();
+    System.out.println("JPA call returned: " + res);
+    System.out.println("Done calling EJB");
+
+    Assert.assertTrue("Unexpected number of entities", (res == 5));
+    System.out.println("..........SUCCESSFULLY finished embedded test");
+}
+----
+4. Правой кнопкой мыши щелкните узел свойств в окне "Проекты" и выберите "Тест" во всплывающем меню.
+
+Откройте окно "Результаты тестирования", в котором будет отображен вывод, сходный со следующим.
+
+image::images/test-results2b.png[title="Окно результатов теста после добавления теста testInsert"]
+
+Сообщения печати, добавленные к тестовому классу, позволяют проследить ход выполнения тестов и порядок их запуска.
+
+Теперь, когда имеется тест для сеансного компонента, и известно, что класс сущности работает, можно приступить к созданию веб-интерфейса для приложения. 
+
+
+== Загрузка проекта решения
+
+Решение для данного учебного курса в виде проекта можно загрузить несколькими способами.
+
+* Загрузите link:https://netbeans.org/projects/samples/downloads/download/Samples%252FJavaEE%252FWebAppJUnit.zip[+архив завершенного проекта в формате zip+].
+* Выполните проверку исходных файлов проекта на выходе из примеров NetBeans, выполнив перечисленные ниже действия.
+1. Выберите в главном меню "Группа > Subversion > Проверить".
+2. В диалоговом окне "Проверка" введите следующий URL-адрес репозитория:
+ ``https://svn.netbeans.org/svn/samples~samples-source-code`` 
+Нажмите кнопку "Далее".
+3. Нажмите кнопку Browse ("Обзор") для открытия диалогового окна Browse Repository Folders ("Обзор папок репозитория").
+4. Разверните корневой узел и выберите *samples/javaee/WebAppJUnit*. Нажмите кнопку "ОК".
+5. Укажите локальную папку для исходных файлов (папка должна быть пустой).
+6. Нажмите кнопку 'Готово'.
+
+После нажатия кнопки "Готово" среда IDE инициализирует локальную папку в качестве репозитория Subversion и выполняет проверку исходных файлов проекта на выходе.
+
+7. Щелкните команду "Открыть проект" в диалоговом окне, которое появится после завершения проверки.
+
+*Примечания.*
+
+* Для получения исходных файлов на редактирование требуется клиент Subversion. For more about installing Subversion, see the section on link:../ide/subversion.html#settingUp[+Setting up Subversion+] in the link:../ide/subversion.html[+Guide to Subversion in IDE NetBeans+].
+
+
+link:/about/contact_form.html?to=3&subject=Feedback:%20Using%20the%20Embedded%20EJB%20Container[+Отправить отзыв по этому учебному курсу+]
+
+
+
+== Дополнительные сведения
+
+For more information about using IDE NetBeans to develop Java EE applications, see the following resources:
+
+* link:javaee-intro.html[+Введение в технологию Java EE +]
+* link:javaee-gettingstarted.html[+Начало работы с приложениями Java EE+]
+* link:../web/quickstart-webapps.html[+Введение в разработку веб-приложений+]
+* link:../../trails/java-ee.html[+Учебная карта по Java EE и Java Web+]
+
+Дополнительные сведения по использованию компонентов уровня предприятия EJB 3.1 см. в link:http://download.oracle.com/javaee/6/tutorial/doc/[+руководстве по Java EE 6+].
+
+To send comments and suggestions, get support, and keep informed on the latest developments on the IDE NetBeans Java EE development features, link:../../../community/lists/top.html[+join the nbj2ee mailing list+].
+

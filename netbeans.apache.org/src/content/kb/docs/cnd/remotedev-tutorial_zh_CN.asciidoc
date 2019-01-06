@@ -1,0 +1,331 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= C/C++ 远程开发 - NetBeans IDE 教程
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: C/C++ 远程开发 - NetBeans IDE 教程 - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, C/C++ 远程开发 - NetBeans IDE 教程
+
+2014 年 3 月 [修订版本号：V8.0-1]
+
+本文档介绍如何将 NetBeans IDE 的远程开发功能用于 C/C++/Fortran 项目。
+
+
+
+image::images/netbeans-stamp-80-74-73.png[title="此页上的内容适用于 NetBeans IDE 7.3、7.4 和 8.0"]
+
+|===
+|- |<<intro,简介>> 
+
+|- |<<concepts,远程开发概念>> 
+
+|- |<<system,设置系统>> 
+
+|- |<<setup,设置 IDE>> 
+
+|- |<<workflow,在远程主机上构建本地项目>> 
+
+|- |<<terminal,在远程主机上启动终端会话>> 
+
+|- |<<tips,远程开发提示>> 
+|===
+
+
+== 要求
+
+*要学习本教程，您需要具备以下软件。*
+
+|===
+|软件 |要求的版本 
+
+|NetBeans IDE（支持 C/C++） |link:https://netbeans.org/downloads/index.html[+带有 NetBeans C/C++ 插件的版本 7.3、7.4 或 8.0+] 
+
+|Java 开发工具包 (JDK) |link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+版本 7 或 8+] 
+|===
+
+
+有关下载并安装所需软件的信息，请参见 link:../../../community/releases/80/install.html[+NetBeans IDE 安装说明+]和link:../../../community/releases/80/cpp-setup-instructions.html[+配置 NetBeans IDE 以使用 C/C++/Fortran+]
+。
+
+
+== 简介
+
+本教程将演示如何使用 C/C++ 项目的远程开发功能。
+
+您可曾想过从运行 Windows 7 或 Mac OS X 的便携式计算机上开发 Solaris 或 Linux 应用程序？无需离开 IDE 就能在不同的操作系统上测试应用程序？或者只在快速的多核服务器上而不是在常规的工作站上就能编译大型应用程序。NetBeans IDE 中的远程开发功能可以满足所有上述需求。
+
+
+== 远程开发概念
+
+进行远程开发时，在客户端系统上运行 NetBeans IDE 后，您便可以创建项目、编辑文件以及使用代码帮助功能（与开发本地项目的方式相同）。但是当您构建、运行或调试项目时，就会在远程 Solaris 或 Linux 服务器上运行该进程，并将输出和输入传输到客户端系统。理想情况下，如果您已经设置远程构建主机，则在进行本地开发和远程开发的工作流程之间不会看到任何不同之处。
+
+IDE 支持 link:./remote-modes.html[+C/C++ 远程开发模式+]中描述的不同远程开发模式。您可以确定希望如何在远程主机上进行开发。
+
+
+=== 远程开发要求
+
+要启用运行工具的远程主机，必须满足以下条件：
+
+* 安装 IDE 的本地客户端系统必须运行 Windows、Mac OS、Oracle Solaris 10、Oracle Solaris 11 或 Linux。
+* 远程主机必须运行 Oracle Solaris 10、Oracle Solaris 11 或 Linux。
+* 本地客户端系统和远程系统必须具备访问项目文件的权限，这可以通过共享资源，也可以通过使用安全 Shell 协议 (SSH) 来实现。
+* 客户端必须能够通过安全 shell (ssh) 连接到远程系统，即使项目文件位于共享文件夹中也应如此。
+* 远程系统必须具备访问支持的工具集合的权限。
+* 远程系统必须具备项目启用代码帮助所需的支持系统库。
+
+
+=== 共享源
+
+客户端系统和远程服务器必须都能对源文件进行访问。源文件可以存放在共享的网络路径中，也可以由 IDE 从本地系统安全地复制到远程系统上。有关如何为不同的系统设置共享文件夹的更多详细信息，请参见<<system,设置系统>>。
+
+
+=== 连接性
+
+客户端和服务器之间的所有数据传输都是通过安全 Shell (SSH) 协议完成的。SSH 是一个用于在两个联网设备之间进行安全通信的公共协议。服务器必须安装 SSH 服务器，同时还必须允许在客户端系统和服务器之间建立 SSH 连接。
+
+
+=== 工具集合
+
+IDE 必须能够在远程主机上找到支持的工具集合：GNU 编译器集合、Sun Studio 或 Oracle Solaris Studio。工具的可执行文件应该包含在用于连接到远程主机的用户帐户路径中，这样 IDE 才可以方便地找到工具。在将工具安装在非默认位置时，这一点尤为重要。
+
+
+=== 代码帮助
+
+为了正确操作代码完成和语义突出显示等编辑器功能、“类”窗口以及其他功能，必须在正确的环境（包括系统包含文件、宏定义、平台等）中使用项目。所有这些信息将从远程服务器进行收集，并存储在本地客户端系统上，这样，在本地进行编辑时，即使项目设置为使用远程构建主机，代码帮助功能也可正常使用。
+
+
+== 设置系统
+
+远程 Linux 或 Solaris 服务器必须允许通过 SSH 协议从运行 IDE 的客户端进行通信。如果要使用文件共享而不允许 IDE 将文件复制到远程服务器，则必须在网络中为两个系统同时设置文件共享。
+
+
+=== SSH 协议
+
+Linux 和 Solaris 操作系统通常都带有 SSH 服务器，且该服务器在大多数情况下默认处于运行状态。否则，您可以从 link:http://en.wikipedia.org/wiki/Secure_Shell[+http://en.wikipedia.org/wiki/Secure_Shell+] 找到有关安装和管理 SSH 的信息。
+
+IDE 提供了自身的 ssh 客户端，因此您无需在本地计算机上安装 ssh 客户端。
+
+必须允许在客户端和服务器系统之间建立 SSH 连接，这通常意味着必须在服务器上打开端口 22。如果端口 22 处于禁用状态，您可能需要具备超级用户访问权限，或者向系统管理员寻求帮助。
+
+即使未使用“自动复制”或 "SFTP" 选项将项目文件传输到远程服务器，也必须在系统之间启用 SSH。
+
+
+=== 共享源
+
+如果您尚未在 Windows 系统和 Unix 远程主机之间设置文件共享以供其他之用，对于中小型项目使用“自动复制”或 "SFTP" 而非文件共享则要简单很多。如果您正在处理含有数千个文件参与构建的大型项目，则共享更加合理，因为复制操作会需要很长时间。
+
+对于 Windows-UNIX® 配置，主要有两种共享源的方法：
+
+* UNIX 系统上的 Samba 服务器
+* Windows 系统上安装的 Windows Services for UNIX (SFU) 软件包
+
+
+==== 使用 Samba 或 SMB 组织源
+
+使用 Samba 服务器（SMB 的开源版本），Windows 用户可以将共享的 NFS 文件夹映射为 Windows 网络驱动器。Linux 和 Solaris 操作系统的大多数发行版本都带有 Samba 软件包或其等效的 SMB 或 CIFS。如果您所用的操作系统发行版本中没有 Samba 软件包，则可以从 link:http://www.samba.org/[+www.samba.org+] 进行下载。
+
+如果您具备服务器的授权访问权限，则可以按照以下链接中的说明自行设置 Samba。否则，您必须与系统管理员联系。
+
+* Oracle Solaris 11：link:https://blogs.oracle.com/paulie/entry/cifs_sharing_on_solaris_11[+https://blogs.oracle.com/paulie/entry/cifs_sharing_on_solaris_11+]，了解简要信息。有关完整信息，请参见link:http://docs.oracle.com/cd/E26502_01/html/E29004/smboverview.html[+在 Oracle Solaris 11.1 中管理 SMB 文件共享和 Windows 互操作性+]。
+* Oracle Solaris 10：link:http://blogs.oracle.com/timthomas/entry/enabling_and_configuring_samba_as[+http://blogs.oracle.com/timthomas/entry/enabling_and_configuring_samba_as+]
+* Linux：link:http://www.linux.com/articles/58593[+http://www.linux.com/articles/58593+]
+
+在启动 Samba 之后，您可以采用与 Windows 文件夹相同的方式映射 UNIX 服务器的文件夹。
+
+
+==== Windows Services For UNIX (SFU)
+
+您也可以选择使用 Microsoft 提供的一组实用程序 Windows Services For UNIX 来从 Windows 访问 NFS 文件系统。
+可以从 link:http://www.microsoft.com/downloads/details.aspx?FamilyID=896c9688-601b-44f1-81a4-02878ff11778&displaylang=en[+Microsoft 下载中心+]下载这些实用程序，并从 link:http://technet.microsoft.com/en-us/library/bb496506.aspx[+Windows Services for Unix 页+]阅读相关文档。
+
+SFU 软件包对于 Windows Vista 或 Windows 7 用户不可用。Windows Vista 以及 Windows 7 Enterprise Edition 和 Ultimate Edition 包括 Services for Unix 组件，但这些组件已分别重命名为 Subsystem for UNIX-based Applications (SUA) 和 Client for NFS v3。有关详细信息，请参见 link:http://en.wikipedia.org/wiki/Microsoft_Windows_Services_for_UNIX#Subsystem_for_UNIX-based_Applications_.28SUA.29[+http://en.wikipedia.org/wiki/Microsoft_Windows_Services_for_UNIX+]
+
+
+==== Mac OS X 配置
+
+Mac OS X 支持连接到 Samba 服务器。Mac OS X 也可以从服务器挂载 NFS 共享。
+
+可以使用 "Finder" >“前往”>“连接服务器”，然后输入服务器地址。
+
+要连接到 SMB/CIFS (Windows) 服务器和共享文件夹，请采用以下一种形式输入服务器地址：
+
+[quote]
+----
+`smb://_DNSname/sharename_
+smb://_IPaddress/sharename_`
+----
+
+系统会提示您输入共享文件夹的用户名和口令。有关详细信息，请参见 Apple 知识库中的link:http://support.apple.com/kb/ht1568[+如何连接到 Windows 文件共享 (SMB)+]。
+
+要连接到 NFS 服务器，请采用以下一种形式键入服务器名称和 NFS 共享文件夹的路径：
+
+[quote]
+----
+`nfs://_servername/path/to/share/_
+nfs://_IPaddress/path/to/share_`
+----
+
+有关详细信息，请参见 Apple 知识库中的link:http://support.apple.com/kb/TA22243[+使用 Finder 挂载 NFS 导出+]。
+
+系统不会提示您输入用户名和口令，但会针对您的 Mac UID 进行授权检查。UID 是在类似 Unix 的操作系统（如 Mac OS X、Solaris 和 Linux）中为您的用户名指定的一个唯一整数。要使用 NFS，Mac UID 必须与您在服务器上的帐户的 UID 相同。
+
+
+==== UNIX-UNIX 配置
+
+对于 Solaris 或 Linux 系统之间的文件共享，您无需进行任何特殊设置。您只需在其中一个系统上共享文件夹，或者如果在网络文件服务器上挂载了主目录，并且从两个系统中都可对其进行访问，则可以使用主目录。
+
+
+=== 路径映射
+
+在使用共享源模型时，您可能需要将本地主机上的源位置映射到远程主机上使用的路径以获取源。
+
+例如，请参考以下配置：
+
+* 具有共享文件夹  ``/export/pub``  的 Solaris 服务器  ``solserver`` 
+* 运行 Windows XP 的工作站已安装为驱动器  ``P:`` ，在 Windows XP 上，安装了 SFU 且具有路径  ``\\solserver\export\pub`` 
+* 项目源文件位于  ``solserver``  上的文件夹  ``/export/pub/myproject``  中
+
+在这种情况下，如果从服务器端查看源文件，则路径为  ``/export/pub/myproject`` 。但是，如果从客户端查看源文件，则路径为  ``P:\myproject`` 。您需要让 IDE 知道这些路径是按照以下方式映射的：
+ ``/export/pub -> P:\`` 
+
+可以编辑构建主机的属性以设置路径映射。
+
+如果您在 NetBeans IDE 中配置远程主机之前为源文件设置了共享资源，则大多数情况下，IDE 将自动找出所需的路径映射。
+
+
+== 设置 IDE
+
+在下面的示例中，客户端主机为一台运行 Windows Vista 的工作站。名为  ``edgard``  的远程主机是一台运行 Oracle Solaris 操作系统的服务器。
+
+1. 选择 "Window"（窗口）> "Services"（服务）以打开 "Services"（服务）窗口。
+2. 右键单击 "C/C++ Build Hosts"（C/C++ 构建主机）节点，然后选择 "Add New Host"（添加新主机）。
+image::images/remotedev-add-host.png[]在 "New Remote Host Setup"（新建远程主机设置）对话框中，IDE 将会发现本地网络上的主机。主机名将添加到该对话框的表中，并且显示一个绿色指示符，指示这些主机是否正在运行 SSH 服务器。
+3. 双击所需服务器的名称，或者直接在 "Hostname"（主机名）字段中键入服务器名称。单击 "Next"（下一步）。
+image::images/remotedev-setup-host.png[]
+4. 在 "Setup Host"（设置主机）屏幕上，键入要用来登录到远程主机的用户名，然后选择验证方法。对于此教程，请选择 "Password"（口令），然后单击 "Next"（下一步）。image::images/remotedev-setup-host-auth.png[]
+
+如果要使用 ssh 密钥，必须首先在 IDE 外部设置它们。然后，您可以在 IDE 中指定 ssh 密钥的位置，这样，IDE 便可以使用这些密钥与远程构建主机建立 ssh 连接。
+
+5. 连接到服务器后，在 "Authentication"（验证）对话框中输入口令。
+6. （可选）单击 "Remember Password"（记住口令）以使 IDE 对口令加密并将其存储在本地磁盘上，这样，您便不必在 IDE 每次连接到远程主机时都输入口令。
+
+IDE 将配置远程主机，并在远程主机上查找工具集合。
+
+7. 在成功配置主机后，"Summary"（概要）页将显示有关远程主机的信息：平台、主机名、用于登录的用户名以及找到的工具集合。
+image::images/remotedev-setup-host-summary.png[]
+8. 在 "Summary"（概要）页底部，将显示另外两个选项。如果找到多个工具集合，则可以选择其中一个集合作为默认工具集合。
+9. 对于项目文件访问方式选项：
+* 如果客户端系统和远程构建主机不具有对项目文件的共享访问权限，则选择 "Automatic Copying"（自动复制）。在选择 "Automatic Copying"（自动复制）时，将使用 sftp 命令将项目文件复制到服务器上的主目录。这称为简单远程开发。
+* 如果客户端和服务器具有对相同文件夹的访问权限，则选择 "System level file sharing"（系统级别文件共享）。这称为共享或混合远程开发。
+* 选择 "SFTP"（仅在 NetBeans 7.4 和 8.0 上）可使用安全文件传输协议将项目文件复制到远程主机。类似于自动复制。
+10. 单击 "Finish"（完成）以完成向导。
+11. 在 "Services"（服务）窗口中的 "C/C++ Build Hosts"（C/C++ 构建主机）节点下，将显示新的远程主机。展开新主机的节点，"Tool Collection"（工具集合）列表中应该有一个或多个工具集合。
+image::images/remotedev-remote-toolchain.png[]
+
+
+=== 如果未列出任何工具集合
+
+如果您在远程主机节点下看不到任何工具集合，请尝试执行以下任务。
+
+* 在远程主机上，将工具集合的 bin 目录添加到您在该主机上的用户路径中。如果远程主机上没有可用的工具集合，则必须在远程主机上安装 GNU 编译器集合、Sun Studio 或 Oracle Solaris Studio 软件。
+* 当工具可执行文件的路径位于您在远程主机上的用户路径中时，可以尝试在本地系统上再次设置工具集合。在 "Services"（服务）窗口中右键单击主机，然后选择 "Restore Default Tool Collections"（恢复默认的工具集合），以使 IDE 尝试在远程主机上再次查找工具集合。
+* 或者，右键单击 "Services"（服务）窗口中的主机，然后选择 "Add Tool Collection"（添加工具集合）以指定或浏览到工具集合在远程主机上的路径。
+
+当列出了工具集合时，您便完成了创建新远程构建主机的过程。
+
+在下一部分中，您可以尝试简单远程开发。
+
+
+== 在远程主机上构建本地项目
+
+1. 通过选择 "File"（文件）> "New Project"（新建项目）来创建新样例项目。
+2. 展开 "Samples"（样例）> "C/C++"，然后选择 "Welcome"（欢迎使用）。单击 "Next"（下一步）。
+
+此示例不使用共享文件夹，因此可以保留建议的项目位置，该位置位于 Windows 用户目录中的 NetBeansProjects 文件夹下，且未被共享。
+
+如果要使用共享源文件，请确保指定的项目位置是与远程服务器共享的路径。
+
+3. 在 "Build Host"（构建主机）中选择新的远程主机。将会更新 "Tool Collection"（工具集合）列表，以显示远程主机上的可用工具。
+image::images/remotedev-new-project.png[]
+4. 单击 "Finish"（完成）以创建项目。 
+
+Welcome_1 项目在 "Projects"（项目）窗口中打开。
+
+5. 将鼠标光标放在 "Projects"（项目）窗口中的项目名称之上会看到一个工具提示，显示项目位置以及配置为要在其上构建此项目的远程主机。
+6. 单击工具栏上的 "Build"（构建）按钮，或者右键单击 "Welcome_1" 项目节点并选择 "Build"（构建）。将在所选构建主机上远程构建该样例项目。
+7. 打开源文件  ``welcome.cc`` 。
+
+在下面的屏幕快照中，将光标置于  ``argc``  符号上，同时按 Ctrl-空格键时，您会看到代码帮助正常使用。
+
+"Output"（输出）窗口显示构建应用程序的主机名称以及用于执行构建操作的远程编译器和 make 实用程序的名称。项目文件位于远程主机上用户的  ``.netbeans/remote/``  目录中。
+
+image::images/remotedev-built-small.png[]
+
+设置了远程主机之后，工作流程几乎没有出现任何不同。您可以使用在本地开发时所用的所有编辑器功能以及执行构建、运行、测试和调试的操作方式。
+
+
+== 在远程主机上启动终端会话
+
+您可以在 IDE 中启动安全 shell 终端会话，以便连接到远程系统或本地系统。尤其是对于本机不支持 SSH 的 Windows 平台，使用此功能会非常方便。
+
+1. 在 "Output"（输出）窗口的左旁注上，单击 "Terminal"（终端）图标。
+image::images/remotedev-terminal-icon.png[]
+
+IDE 将在当前项目（无论是本地项目还是远程项目）的工作目录中打开 "Terminal"（终端）标签。如果项目使用的是远程构建主机并且您已通过 IDE 建立连接，则不需要再次登录。
+
+image::images/remotedev-terminal.png[]
+
+您可以使用 IDE 内部终端对远程主机执行 SSH 会话中的任何常规操作。
+
+可以使用 "Terminal"（终端）标签左旁注中的图标或使用菜单选项 "Window"（窗口）> "Output"（输出）> "Terminal"（终端）来创建新的本地或远程终端会话。
+
+
+== 远程开发提示
+
+* 通过右键单击项目节点，然后选择 "Set Build Host"（设置构建主机），可以切换项目的构建主机。
+image::images/remotedev-set-remote-host-menu.png[]
+* 通过在 "Services"（服务）窗口中右键单击远程构建主机，然后选择 "Properties"（属性），可以在初始设置后更改远程构建主机的属性。
+* 如果使用远程主机构建和运行带有图形 UI 的应用程序，则可以在主机属性中选择 "Enable X11 Forwarding"（启用 X11 转发），以便在远程主机上运行该应用程序时，可以在本地系统看到 UI。
+* 如果远程构建项目时编译了库或除主要构建产品之外还构建了其他文件，IDE 会提示您将这些文件下载到本地系统。可以选择要对哪些更改后的文件进行下载。
+* 可以在项目和工具位于远程主机上的完全远程模式中使用项目。有关更多信息，请参见 IDE 的集成帮助或 link:./remote-modes.html[+C/C++ 远程开发模式+]一文。
+* 通过 IDE 的 "Tools"（工具）菜单和 "Services"（服务）窗口，可以访问远程主机和工具信息。方法是选择 "Tools"（工具）> "Options"（选项）> "C/C++" > "Build Tools"（构建工具），然后单击 "Build Host"（构建主机）列表旁边的 "Edit"（编辑）按钮。
+* 当对项目文件使用文件共享时，可以通过“路径映射”功能将本地和远程路径映射到共享文件夹。可以通过执行以下操作之一来设置映射：
+* 在 "Services"（服务）窗口中，打开 "C/C++ Build Hosts"（C/C++ 构建主机），右键单击主机名并选择 "Path Mapper"（路径映射器）。
+* 从 IDE 的 "Tools"（工具）菜单中，选择 "Options"（选项）> "C/C++" > "Build Tools"（构建工具），单击 "Edit"（编辑）按钮，选择远程主机并单击 "Path Mapping"（路径映射）按钮。
+
+
+== 详细信息
+
+有关详细信息，请参阅以下位置：
+
+* 通过 IDE 中的“帮助”菜单可以访问有关使用 IDE 的广泛信息。
+
+* link:./remote-modes.html[+C/C++ 远程开发模式+]一文描述使用远程开发的不同方式
+
+* link:https://netbeans.org/kb/trails/cnd.html[+C/C++ 学习资源+]提供几篇有关在 IDE 中使用 C/C++ 进行开发的文章和教程。
+
+link:mailto:users@cnd.netbeans.org?subject=Feedback:%20C/C++%20Remote%20Development%20-%20NetBeans%20IDE%208.0%20Tutorial[+发送有关此教程的反馈意见+]
+
+

@@ -1,0 +1,983 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= NetBeans IDEでのJunitテストの記述
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: NetBeans IDEでのJunitテストの記述 - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, NetBeans IDEでのJunitテストの記述
+
+このチュートリアルでは、NetBeans IDEでJUnit単体テストを記述および実行するための基本情報を紹介します。アプリケーションのテストは開発サイクルに不可欠な部分であり、単体テストの記述および管理はソース・コード内の個々のメソッドが正しく動作することを確実にするために役立ちます。JUnit単体テスト・フレームワークに対するIDEの統合サポートにより、JUnitテストとテスト・スイートを迅速かつ容易に作成することができます。
+
+このチュートリアルでは、Javaクラス・ライブラリ・プロジェクト用の、JUnit 3およびJUnit 4という単純な単体テストとテスト・スイートを作成します。チュートリアルの第一部では、JUnit 3でテストを作成する方法を説明します。第二部では、JUnitの注釈を使用して同じテストをJUnit 4で作成する方法を説明します。テストは同じであるためチュートリアルの両方の部分を完了する必要はありませんが、両方のバージョンでのテストの記述方法を見ることにより、JUnit 4で導入された変更のいくつかを確認できます。
+
+JUnitの使用方法の詳細は、link:http://www.junit.org[+www.junit.org+]を参照してください。
+
+
+image::images/netbeans-stamp-80-74-73.png[title="このページの内容は、NetBeans IDE 7.2、7.3、7.4および8.0に適用されます"]
+
+
+*このチュートリアルに従うには、次のソフトウェアとリソースが必要です。*
+
+|===
+|ソフトウェアまたはリソース |必須バージョン 
+
+|link:https://netbeans.org/downloads/index.html[+NetBeans IDE+] |7.2, 7.3, 7.4, 8.0 
+
+|link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+Java Development Kit (JDK)+] |バージョン7または8 
+
+|JUnitSampleSolプロジェクト |link:https://netbeans.org/projects/samples/downloads/download/Samples/Java/JUnitSampleSol.zip[+ダウンロード+] 
+|===
+
+このチュートリアルで手順を実行するには、アップデート・センターからJUnitをインストールする必要があります。IDEのインストール時にプラグインをインストールしていない場合は、プラグイン・マネージャでJUnitプラグインをインストールできます。
+
+
+== プロジェクトの作成
+
+このチュートリアルを完了するには、最初にJUnit-SampleというJavaクラス・ライブラリ・プロジェクトを作成します。プロジェクトを作成した後、サンプル・プロジェクトJUnitSampleSolの2つのクラスを、プロジェクトJUnit-Sampleにコピーします。
+
+
+=== Javaクラス・ライブラリ・プロジェクトの作成
+
+1. メイン・メニューから「ファイル」>「新規プロジェクト」を選択します。
+2. 「Java」カテゴリから「Javaクラス・ライブラリ」を選択し、「次」をクリックします。
+3. プロジェクトとして「*JUnit-Sample*」と入力し、プロジェクトの場所を設定します。
+4. 専用フォルダを使用するオプションが選択されている場合は選択を解除します。
+
+このチュートリアルでは、ライブラリを他のユーザーまたはプロジェクトと共有する必要がないので、プロジェクト・ライブラリを専用のフォルダにコピーする理由はほとんどありません。
+
+「終了」をクリックします。
+
+JUnitテストを初めて作成すると、IDEからバージョンを選択するよう求められ、その後に「テスト・ライブラリ」ノードとJUnitライブラリが追加されます。
+
+
+=== ソリューション・プロジェクトのダウンロード
+
+このチュートリアルで使用するプロジェクトJUnitSampleSolは、次の方法でダウンロードできます。
+
+* link:https://netbeans.org/projects/samples/downloads/download/Samples/Java/JUnitSampleSol.zip[+終了したプロジェクトのZIPアーカイブ+]をダウンロードします。
+* 次の手順を実行して、プロジェクト・ソースをNetBeansのサンプルからチェックアウトします。
+1. メイン・メニューから「チーム」>「Subversion」>「チェックアウト」を選択します。
+2. 「チェックアウト」ダイアログ・ボックスで次のリポジトリURLを入力します。
+ ``https://svn.netbeans.org/svn/samples~samples-source-code`` 
+「次」をクリックします。
+3. 「チェックアウトするフォルダ」パネルで、「参照」をクリックして「リポジトリ・フォルダを参照」ダイアログ・ボックスを開きます。
+4. ルート・ノードを展開し、*samples/java/JUnitSampleSol*を選択します。「OK」をクリックします。
+5. ソースのローカル・フォルダを指定します。「終了」をクリックします。
+
+「終了」をクリックすると、IDEではローカル・フォルダがSubversionリポジトリとして初期化され、プロジェクト・ソースがチェックアウトされます。
+
+6. チェックアウトが完了するときに表示されるダイアログで、「プロジェクトを開く」をクリックします。
+
+Subversionのインストールの詳細は、link:../ide/subversion.html[+NetBeans IDEでのSubversionガイド+]のlink:../ide/subversion.html#settingUp[+Subversionの設定+]の項を参照してください。
+
+*注意:*IDEのインストール時にJUnitプラグインをインストールしなかった場合は、NetBeansプロジェクトを開いたときに、JUnitライブラリへの参照を解決するためにJUnitプラグインをインストールするように求められます。
+
+
+=== Javaクラスの作成
+
+この課題では、JUnitSampleSolサンプル・プロジェクトから ``Utils.java`` ファイルおよび ``Vectors.java`` ファイルを、作成したクラス・ライブラリ・プロジェクトにコピーします。
+
+1. 「プロジェクト」ウィンドウで、*JUnit-Sample*プロジェクトの「ソース・パッケージ」ノードを右クリックし、ポップアップ・メニューから「新規」>「Javaパッケージ」を選択します。
+2. パッケージ名として「*sample*」と入力します。「終了」をクリックします。
+3. *JUnitSampleSol*プロジェクトを開き(まだ開いていない場合)、「プロジェクト」ウィンドウで「ソース・パッケージ」ノードを展開します。
+image::images/projects-window.png[title="「プロジェクト」ウィンドウ内のJUnit-SampleおよびJUnitSampleSolプロジェクト"]
+4. JUnitSampleSolプロジェクト内のクラス ``Utils.java`` と ``Vectors.java`` をコピーし、それらをJUnit-Sample内の ``sample`` ソース・パッケージに貼り付けます。
+
+クラスのソース・コードを見ると、 ``Utils.java`` に3つのメソッド( ``computeFactorial`` 、 ``concatWords`` 、および ``normalizeWord`` )があり、 ``Vectors.java`` に2つのメソッド( ``equal`` および ``scalarMultiplication`` )があることがわかります。次の手順では、各クラス用のテスト・クラスを作成し、メソッド用にいくつかのテスト・クラスを記述します。
+
+*注意:*JUnitSampleSolプロジェクトは必要がなくなったため閉じてかまいません。JUnitSampleSolプロジェクトには、このドキュメントで説明されているすべてのテストが含まれています。
+
+
+== JUnit 3単体テストの記述
+
+チュートリアルのこの部分では、 ``Vectors.java`` クラスおよび ``Utils.java`` クラス用の基本的なJUnit 3単体テストを作成します。IDEを使用して、プロジェクト内のクラスに基づいたスケルトン・テスト・クラスを作成します。次に、生成されたテスト・メソッドを変更し、新しいテスト・メソッドを追加します。
+
+IDEを使用して初めてプロジェクト用のテストを作成する場合、JUnitバージョンの選択を求めるメッセージが表示されます。選択したバージョンがデフォルトのJUnitバージョンになり、以降のすべてのテストおよびテスト・スイートがそのバージョンで生成されます。
+
+
+===  ``Vectors.java`` 用のテスト・クラスの作成
+
+この課題では、 ``Vectors.java`` 用のJUnitテスト・スケルトンを作成します。また、テスト・フレームワークとして「JUnit」を、バージョンとして「JUnit 3」を選択します。
+
+*注意:*7.1以前のNetBeans IDEを使用している場合は、JUnitがデフォルトで指定されるため、テスト・フレームワークを指定する必要はありません。NetBeans IDE 7.2では、テスト・フレームワークとしてJUnitまたはTestNGを指定するオプションがあります。
+
+1.  ``Vectors.java`` を右クリックし、「ツール」>「テストを作成」を選択します。
+2. 「テストを作成」ダイアログで、テスト・クラスの名前を*VectorsJUnit3Test*に変更します。
+
+テスト・クラスの名前を変更するときは、名前が変更されることを警告するメッセージが表示されます。デフォルト名は、テスト対象のクラス名をベースに、末尾に「Test」を追加したものです。たとえば、 ``MyClass.java`` クラスの場合、テスト・クラスのデフォルト名は「 ``MyClassTest.java`` 」です。通常はデフォルト名をそのまま使用するのが最適ですが、このチュートリアルでは、JUnit 4テストも同じパッケージ内に作成し、テスト・クラスの名前は一意にする必要があるため、名前を変更します。
+
+3. 「フレームワーク」ドロップダウン・リストで「JUnit」を選択します。
+4. 「テスト初期化」および「テスト終了」を選択解除します。「OK」をクリックします。
+image::images/junit3-vectors-createtests.png[title="「JUnitのバージョンを選択」ダイアログ・ボックス"]
+5. 「JUnitのバージョンを選択」ダイアログ・ボックスで「JUnit 3.x」を選択します。
+image::images/junit3-select-version.png[title="「JUnitのバージョンを選択」ダイアログ・ボックス"]
+
+JUnit 3.xを選択すると、プロジェクトにJUnit 3ライブラリが追加されます。
+
+「選択」をクリックすると、IDEによって、「プロジェクト」ウィンドウ内の「テスト・パッケージ」ノードの下にある ``sample`` パッケージ内に ``VectorsJUnit3Test.java`` テスト・クラスが作成されます。
+
+image::images/projects-window2.png[title="「プロジェクト」ウィンドウ内のJUnit-Sampleプロジェクトの構造"]
+
+プロジェクトには、テストを作成するためのテスト・パッケージ用ディレクトリが必要です。テスト・パッケージ・ディレクトリのデフォルトの場所はプロジェクトのルート・レベルですが、プロジェクトのタイプに応じて、プロジェクトの「プロパティ」ダイアログでディレクトリに別の場所を指定できます。
+
+生成したテスト・クラス ``VectorsJUnit3Test.java`` をエディタで表示すると、次のテスト・クラスが ``equal`` メソッドと ``scalarMultiplication`` メソッドに対するテスト・メソッドとともに生成されたことがわかります。
+
+
+[source,java]
+----
+
+public class VectorsJUnit3Test extends TestCase {
+    /**
+     * Test of equal method, of class Vectors.
+     */
+    public void testEqual() {
+        System.out.println("equal");
+        int[] a = null;
+        int[] b = null;
+        boolean expResult = false;
+        boolean result = Vectors.equal(a, b);
+        assertEquals(expResult, result);
+        // TODO review the generated test code and remove the default call to fail.
+        fail("The test case is a prototype.");
+    }
+
+    /**
+     * Test of scalarMultiplication method, of class Vectors.
+     */
+    public void testScalarMultiplication() {
+        System.out.println("scalarMultiplication");
+        int[] a = null;
+        int[] b = null;
+        int expResult = 0;
+        int result = Vectors.scalarMultiplication(a, b);
+        assertEquals(expResult, result);
+        // TODO review the generated test code and remove the default call to fail.
+        fail("The test case is a prototype.");
+    }
+}
+----
+
+生成された各テストのメソッド本体は、ガイドとしてのみ用意されており、実際のテスト・ケースにするには変更する必要があります。コードを生成しない場合は、「テストを作成」ダイアログの「デフォルトのメソッド本体」を選択解除します。
+
+IDEがテスト・メソッドの名前を生成する場合、各メソッド名の先頭に「 ``test`` 」が付加されます。これは、JUnit 3ではテストを識別するために命名規則とリフレクションが使用されるためです。テスト・メソッドを識別するために、各テスト・メソッドは「 ``test_<NAME>_`` 」という構文に従う必要があります。
+
+*注意:*JUnit 4では注釈を使用してテスト・メソッドを識別できるため、このテスト・メソッドの命名構文を使用する必要がなくなり、テスト・クラスは ``TestCase`` を拡張する必要がなくなりました。
+
+ 
+
+
+===  ``Vectors.java`` 用のテスト・メソッドの記述
+
+この課題では、生成したテスト・メソッドを変更してテストが機能するようにし、デフォルトの出力メッセージを変更します。テストを実行するために出力メッセージを変更する必要はありませんが、「JUnitテスト結果」出力ウィンドウに表示される結果を識別するのに役立つよう、出力を変更します。
+
+1. エディタで ``VectorsJUnit3Test.java`` を開きます。
+2.  ``println`` の値を変更し、生成された変数を除去することによって、 ``testScalarMultiplication`` のテスト・スケルトンを変更します。テスト・メソッドは次のようになるはずです(太字部分が変更箇所)。
+
+[source,java]
+----
+
+public void testScalarMultiplication() {
+    System.out.println("** VectorsJUnit3Test: testScalarMultiplication()*");
+    assertEquals(expResult, result);
+}
+----
+3. ここで、メソッドをテストするためのアサーションを追加します。
+
+[source,java]
+----
+
+public void testScalarMultiplication() {
+    System.out.println("* VectorsJUnit3Test: testScalarMultiplication()");
+    *assertEquals(  0, Vectors.scalarMultiplication(new int[] { 0, 0}, new int[] { 0, 0}));
+    assertEquals( 39, Vectors.scalarMultiplication(new int[] { 3, 4}, new int[] { 5, 6}));
+    assertEquals(-39, Vectors.scalarMultiplication(new int[] {-3, 4}, new int[] { 5,-6}));
+    assertEquals(  0, Vectors.scalarMultiplication(new int[] { 5, 9}, new int[] {-9, 5}));
+    assertEquals(100, Vectors.scalarMultiplication(new int[] { 6, 8}, new int[] { 6, 8}));*
+}
+----
+
+このテスト・メソッドでは、JUnitの ``assertEquals`` メソッドが使用されます。アサーションを使用するには、入力変数と、期待する結果を指定します。テストに合格するには、テスト済メソッドを実行したときに、テスト・メソッドが供給した変数に基づいて、期待されるすべての結果を正常に返す必要があります。様々な考えられる並べ替えを実行するため、十分な数のアサーションを追加するようにしてください。
+
+4. 生成されたメソッド本体を削除し、次の ``println`` を追加することによって、 ``testEqual`` のテスト・スケルトンを変更します。
+
+[source,java]
+----
+
+    *System.out.println("* VectorsJUnit3Test: testEqual()");*
+----
+
+テスト・メソッドは次のようになるはずです。
+
+
+[source,java]
+----
+
+public void testEqual() {
+    System.out.println("* VectorsJUnit3Test: testEqual()");
+}
+----
+5. 次のアサーションを追加することによって ``testEqual`` メソッドを変更します(太字部分が変更箇所)。
+
+[source,java]
+----
+
+public void testEqual() {
+    System.out.println("* VectorsJUnit3Test: testEqual()");
+    *assertTrue(Vectors.equal(new int[] {}, new int[] {}));
+    assertTrue(Vectors.equal(new int[] {0}, new int[] {0}));
+    assertTrue(Vectors.equal(new int[] {0, 0}, new int[] {0, 0}));
+    assertTrue(Vectors.equal(new int[] {0, 0, 0}, new int[] {0, 0, 0}));
+    assertTrue(Vectors.equal(new int[] {5, 6, 7}, new int[] {5, 6, 7}));
+
+    assertFalse(Vectors.equal(new int[] {}, new int[] {0}));
+    assertFalse(Vectors.equal(new int[] {0}, new int[] {0, 0}));
+    assertFalse(Vectors.equal(new int[] {0, 0}, new int[] {0, 0, 0}));
+    assertFalse(Vectors.equal(new int[] {0, 0, 0}, new int[] {0, 0}));
+    assertFalse(Vectors.equal(new int[] {0, 0}, new int[] {0}));
+    assertFalse(Vectors.equal(new int[] {0}, new int[] {}));
+
+    assertFalse(Vectors.equal(new int[] {0, 0, 0}, new int[] {0, 0, 1}));
+    assertFalse(Vectors.equal(new int[] {0, 0, 0}, new int[] {0, 1, 0}));
+    assertFalse(Vectors.equal(new int[] {0, 0, 0}, new int[] {1, 0, 0}));
+    assertFalse(Vectors.equal(new int[] {0, 0, 1}, new int[] {0, 0, 3}));*
+}
+----
+
+このテストはJUnitの ``assertTrue`` メソッドと ``assertFalse`` メソッドを使用して、考えられる様々な結果をテストします。このメソッドのテストに合格するには、 ``assertTrue`` がすべてtrue、 ``assertFalse`` がすべてfalseである必要があります。
+
+6. 変更を保存します。
+
+比較: <<Exercise_32, ``Vectors.java`` 用のテスト・メソッドの記述(JUnit 4)>>
+
+ 
+
+
+===  ``Utils.java`` 用のテスト・クラスの作成
+
+ここで、 ``Utils.java`` のテスト・スケルトンを作成します。前の課題でテストを作成したとき、JUnitのバージョンを確認するメッセージが表示されました。今回はバージョンの選択を求めるメッセージは表示されません。
+
+1.  ``Utils.java`` を右クリックし、「ツール」>「テストを作成」を選択します。
+2. 「フレームワーク」ドロップダウン・リストで「JUnit」が選択されていない場合は選択します。
+3. ダイアログ・ボックスで「テスト初期化」および「テスト終了」が選択されていない場合は選択します。
+4. 「テストを作成」ダイアログ・ボックスで、テスト・クラスの名前を*UtilsJUnit3Test*に変更します。「OK」をクリックします。
+
+「OK」をクリックすると、「テスト・パッケージ」のsamplesディレクトリに、テスト・ファイル ``UtilsJUnit3Test.java`` が作成されます。 ``Utils.java`` 内にあるメソッド用に ``testComputeFactorial`` 、 ``testConcatWords`` 、および ``testNormalizeWord`` のテスト・スケルトンを作成する以外に、テスト初期化メソッド ``setUp`` およびテスト終了メソッド ``tearDown`` も作成されます。
+
+ 
+
+
+===  ``Utils.java`` 用のテスト・メソッドの記述
+
+この課題では、共通のJUnitテスト要素の一部を示す、いくつかのテスト・ケースを追加します。一部のメソッドはデフォルトで出力をプリントしないため、 ``println`` もメソッドに追加します。 ``println`` をメソッドに追加することで、メソッドが実行されたかどうか、どの順番でメソッドが実行されたかを、後でJUnitテスト結果ウィンドウで確認できます。
+
+
+==== テスト初期化およびテスト終了
+
+ ``setUp`` メソッドおよび ``tearDown`` メソッドは、テスト条件を初期化および終了するために使用されます。 ``Utils.java`` のテストに ``setUp`` メソッドと ``tearDown`` メソッドは必要ありませんが、ここではこれらのメソッドの機能を示すために使用します。
+
+ ``setUp`` メソッドはテスト初期化メソッドであり、テスト・クラスの各テスト・ケースの前に実行されます。テストの実行にテスト初期化メソッドは必須ではありませんが、テストの実行前に一部の変数を初期化する必要がある場合は、テスト初期化メソッドを使用します。
+
+ ``tearDown`` メソッドはテスト終了メソッドであり、テスト・クラスの各テスト・ケースの後に実行されます。テストの実行にテスト終了メソッドは必須ではありませんが、テスト・ケースの実行時に求められたデータをクリーン・アップするために終了メソッドが必要になる場合があります。
+
+1. 次の変更(太字で表示)を実行して、各メソッドに ``println`` を追加します。
+
+[source,java]
+----
+
+@Override
+protected void setUp() throws Exception {
+    super.setUp();
+    *System.out.println("* UtilsJUnit3Test: setUp() method");*
+}
+
+@Override
+protected void tearDown() throws Exception {
+    super.tearDown();
+    *System.out.println("* UtilsJUnit3Test: tearDown() method");*
+}
+----
+
+テストを実行すると、各メソッドの ``println`` テキストが「JUnitテスト結果」出力ウィンドウに表示されます。 ``println`` を追加しないと、メソッドが実行されたことを示す出力は表示されません。
+
+
+==== 単純なアサーションを使用したテスト
+
+この単純なテスト・ケースでは、 ``concatWords`` メソッドをテストします。生成されたテスト・メソッドの ``testConcatWords`` を使用するかわりに、単一の単純なアサーションを使用してメソッドが文字列を正しく連結するかどうかをテストする、 ``testHelloWorld`` という新しいテスト・メソッドを追加します。テスト・ケースの ``assertEquals`` では、予想した結果と実際の結果が同じであるかどうかをテストするために、構文 ``assertEquals(_EXPECTED_RESULT, ACTUAL_RESULT_)`` が使用されます。この例では、 ``concatWords`` メソッドへの入力が「 ``Hello`` 」、「 ``,`` 」、「 ``world`` 」および「 ``!`` 」の場合、予想結果は「 ``Hello, world!`` 」と同じになるはずです。
+
+1.  ``UtilsJUnit3Test.java`` 内の生成されたテスト・メソッド ``testConcatWords`` を削除します。
+2.  ``concatWords`` メソッドをテストするため、次のメソッドを追加します。*public void testHelloWorld() {
+    assertEquals("Hello, world!", Utils.concatWords("Hello", ", ", "world", "!"));
+}*
+3. テストに関するテキストを「JUnitテスト結果」ウィンドウに表示するため、 ``println`` 文を追加します。
+
+[source,java]
+----
+
+public void testHelloWorld() {
+    *System.out.println("* UtilsJUnit3Test: test method 1 - testHelloWorld()");*
+    assertEquals("Hello, world!", Utils.concatWords("Hello", ", ", "world", "!"));
+----
+
+比較: <<Exercise_342,単純なアサーションを使用したテスト(JUnit 4)>>
+
+
+==== タイム・アウトを使用したテスト
+
+このテストでは、メソッドの完了までに時間がかかりすぎているかどうかを確認する方法を示します。メソッドの時間がかかりすぎている場合は、テスト・スレッドが割込みされ、テストは失敗します。テストでは時間制限を指定できます。
+
+テスト・メソッドにより、 ``Utils.java`` の ``computeFactorial`` メソッドが呼び出されます。 ``computeFactorial`` メソッドは正しいと想定できますが、ここでテストするのは、計算が1000ミリ秒以内に完了するかどうかです。 ``computeFactorial`` スレッドおよびテスト・スレッドは同時に開始されます。テスト・スレッドは1000ミリ秒後に停止し、 ``computeFactorial`` スレッドが先に完了しないかぎり、 ``TimeoutException`` をスローします。メッセージを追加すると、 ``TimeoutException`` がスローされたときにメッセージが表示されます。
+
+1. 生成されたテスト・メソッド ``testComputeFactorial`` を削除します。
+2. ランダムに生成された数字の階乗を計算する ``testWithTimeout`` メソッドを追加します。*public void testWithTimeout() throws InterruptedException, TimeoutException {
+    final int factorialOf = 1 + (int) (30000 * Math.random());
+    System.out.println("computing " + factorialOf + '!');
+
+    Thread testThread = new Thread() {
+        public void run() {
+            System.out.println(factorialOf + "! = " + Utils.computeFactorial(factorialOf));
+        }
+    };
+}*
+3.  ``java.util.concurrent.TimeoutException`` をインポートするために、インポートを修正します。
+4. テストの実行に時間がかかりすぎる場合にスレッドが割込みされてメッセージが表示されるように、次のコード(太字で表示)をメソッドに追加します。
+
+[source,java]
+----
+
+    Thread testThread = new Thread() {
+        public void run() {
+            System.out.println(factorialOf + "! = " + Utils.computeFactorial(factorialOf));
+        }
+    };
+
+    *testThread.start();
+    Thread.sleep(1000);
+    testThread.interrupt();
+
+    if (testThread.isInterrupted()) {
+        throw new TimeoutException("the test took too long to complete");
+    }*
+}
+----
+
+タイム・アウトがスローされる前にミリ秒の数字を変更するには、 ``Thread.sleep`` 行を変更します。
+
+5. テストに関するテキストを「JUnitテスト結果」ウィンドウに出力するには、次の ``println`` (太字で表示)を追加します。
+
+[source,java]
+----
+
+public void testWithTimeout() throws InterruptedException, TimeoutException {
+    *System.out.println("* UtilsJUnit3Test: test method 2 - testWithTimeout()");*
+    final int factorialOf = 1 + (int) (30000 * Math.random());
+    System.out.println("computing " + factorialOf + '!');
+            
+----
+
+比較: <<Exercise_343,タイム・アウトを使用したテスト(JUnit 4)>>
+
+
+==== 予想される例外のテスト
+
+このテストでは、予想される例外のテスト方法を示します。このメソッドは、予想される指定の例外がスローされない場合、失敗します。この例では、入力変数が負の数(-5)の場合に、 ``computeFactorial`` メソッドが ``IllegalArgumentException`` をスローするかどうかをテストします。
+
+1.  ``computeFactorial`` メソッドを呼び出す次の ``testExpectedException`` メソッドを、-5の入力とともに追加します。*public void testExpectedException() {
+    try {
+        final int factorialOf = -5;
+        System.out.println(factorialOf + "! = " + Utils.computeFactorial(factorialOf));
+        fail("IllegalArgumentException was expected");
+    } catch (IllegalArgumentException ex) {
+    }
+}*
+2. テストに関するテキストを「JUnitテスト結果」ウィンドウに出力するには、次の ``println`` (太字で表示)を追加します。
+
+[source,java]
+----
+
+public void testExpectedException() {
+    *System.out.println("* UtilsJUnit3Test: test method 3 - testExpectedException()");*
+    try {
+----
+
+比較: <<Exercise_344,予想される例外のテスト(JUnit 4)>>
+
+
+==== テストの無効化
+
+このテストでは、テスト・メソッドを一時的に無効にする方法を示します。JUnit 3では、名前の先頭が ``test`` でないメソッドはテスト・メソッドとして認識されません。この例では、テスト・メソッドの名前の前に ``DISABLED_`` を付加して無効にします。
+
+1. 生成されたテスト・メソッド ``testNormalizeWord`` を削除します。
+2. 次のテスト・メソッドをテスト・クラスに追加します。*public void testTemporarilyDisabled() throws Exception {
+    System.out.println("* UtilsJUnit3Test: test method 4 - checkExpectedException()");
+    assertEquals("Malm\u00f6", Utils.normalizeWord("Malmo\u0308"));
+}*
+
+テスト・クラスを実行すると、テスト・メソッド ``testTemporarilyDisabled`` が実行されます。
+
+3. テスト・メソッドの名前の先頭に ``DISABLED_`` (太字で表示)を付加します。
+
+[source,java]
+----
+
+public void *DISABLED_*testTemporarilyDisabled() throws Exception {
+    System.out.println("* UtilsJUnit3Test: test method 4 - checkExpectedException()");
+    assertEquals("Malm\u00f6", Utils.normalizeWord("Malmo\u0308"));
+}
+----
+
+比較: <<Exercise_345,テストの無効化(JUnit 4)>>
+
+これでテストが記述されたので、テストを実行し、テスト出力を「JUnitテスト結果」ウィンドウで確認できます。
+
+ 
+
+
+=== テストの実行
+
+JUnitテストを実行すると、結果がIDEの「テスト結果」ウィンドウに表示されます。個々のJUnitテスト・クラスを実行するか、またはメイン・メニューから「実行」>「_PROJECT_NAME_のテスト」を選択して、プロジェクトのすべてのテストを実行できます。「実行」>「テスト」を選択すると、「テスト・パッケージ」フォルダにあるすべてのテスト・クラスが実行されます。個々のテスト・クラスを実行するには、「テスト・パッケージ」ノードのテスト・クラスを右クリックし、「ファイルを実行」を選択します。
+
+1. メイン・メニューで「実行」>「メイン・プロジェクトとして設定」を選択し、JUnit-Sampleプロジェクトを選択します。
+2. メイン・メニューから「実行」>「プロジェクト(JUnit-Sample)をテスト」を選択します。
+3. 「ウィンドウ」>「IDEツール」>「テスト結果」を選択して、「テスト結果」ウィンドウを開きます。
+
+テストの実行時、「JUnitテスト結果」ウィンドウに次の結果のいずれかが表示されます。
+
+image::images/junit3-test-pass-sm.png[role="left", link="images/junit3-test-pass.png"]
+
+このイメージ(大きいイメージを表示するにはイメージをクリック)では、プロジェクトがすべてのテストに合格したことがわかります。左ペインには個々のテスト・メソッドの結果が表示され、右ペインにはテスト出力が表示されます。出力を確認すると、テストが実行された順序がわかります。各テスト・メソッドに追加した ``println`` により、テストの名前が出力ウィンドウに出力されます。 ``UtilJUnit3Test`` では、各テスト・メソッドの前に ``setUp`` メソッドが実行されたこと、および各メソッドの後に ``tearDown`` メソッドに実行されたことも確認できます。
+
+image::images/junit3-test-fail-sm.png[role="left", link="images/junit3-test-fail.png"]
+
+このイメージ(大きいイメージを表示するにはイメージをクリック)では、プロジェクトがテストの1つに失敗したことがわかります。 ``testTimeout`` メソッドの完了に時間がかかりすぎ、テスト・スレッドが割込みされたため、テストが失敗しました。ランダムに生成された数字(22991)の階乗の計算に1000ミリ秒以上かかりました。
+
+単体テスト・クラス作成後の次の手順は、テスト・スイートの作成です。指定されたテストをグループとして実行し、各テストを個々に実行しなくて済むようにする方法については、<<Exercise_41,JUnit 3テスト・スイートの作成>>を参照してください。
+
+
+== JUnit 4テストの記述
+
+この課題では、 ``Vectors.java`` クラスと ``Utils.java`` クラス用のJUnit 4単体テストを作成します。JUnit 4のテスト・ケースはJUnit 3のテスト・ケースと同じですが、テストを記述する構文が簡素化されています。
+
+IDEのウィザードを使用して、プロジェクト内のクラスに基づき、テスト・スケルトンを作成します。テスト・スケルトンを作成するためにIDEを初めて使用する際は、JUnitのバージョンを選択するよう求められます。
+
+*注意:*テストのデフォルト・バージョンとしてすでにJUnit 3.xを選択している場合は、デフォルト・バージョンをJUnit 4.xに変更する必要があります。JUnitのデフォルト・バージョンを変更するには、「テスト・ライブラリ」ノードを展開し、JUnitライブラリを右クリックして「除去」を選択します。これで、「ライブラリの追加」ダイアログ・ボックスを使用してJUnit 4ライブラリを明示的に追加するか、または新しいテストの作成時にJUnitバージョンの選択を求められたときにバージョン4.xを選択することができます。JUnit 3テストを実行することは可能ですが、新しく作成されるテストではJUnit 4が使用されます。
+
+
+===  ``Vectors.java`` 用のテスト・クラスの作成
+
+この課題では、 ``Vectors.java`` 用のJUnitテスト・スケルトンを作成します。
+
+*注意:*7.1以前のNetBeans IDEを使用している場合は、JUnitがデフォルトで指定されるため、テスト・フレームワークを指定する必要はありません。NetBeans IDE 7.2では、テスト・フレームワークとしてJUnitまたはTestNGを指定するオプションがあります。
+
+1.  ``Vectors.java`` を右クリックし、「ツール」>「テストを作成」を選択します。
+2. 「テストを作成」ダイアログで、テスト・クラスの名前を*VectorsJUnit4Test*に変更します。
+
+テスト・クラスの名前を変更するときは、名前が変更されることを警告するメッセージが表示されます。デフォルト名は、テスト対象のクラス名をベースに、末尾に「Test」を追加したものです。たとえば、 ``MyClass.java`` クラスの場合、テスト・クラスのデフォルト名は「 ``MyClassTest.java`` 」です。JUnit 3とは異なり、JUnit 4ではテスト名の末尾に「Test」を付ける必要はありません。通常はデフォルト名をそのまま使用するのが最適ですが、このチュートリアルでは、すべてのJUnitテストを同じパッケージ内に作成するため、テスト・クラスの名前は一意にします。
+
+3. 「フレームワーク」ドロップダウン・リストで「JUnit」を選択します。
+4. 「テスト初期化」および「テスト終了」を選択解除します。「OK」をクリックします。
+image::images/junit4-vectors-createtests.png[title="JUnit 4の「テストを作成」ダイアログ・ボックス"]
+5. 「JUnitのバージョンを選択」ダイアログ・ボックスで「JUnit 4.x」を選択します。「選択」をクリックします。
+image::images/junit4-select-version.png[title="「JUnitのバージョンを選択」ダイアログ・ボックス"]
+
+「OK」をクリックすると、IDEによって、「プロジェクト」ウィンドウ内の「テスト・パッケージ」ノードの下にある ``sample`` パッケージ内に ``VectorsJUnit4Test.java`` テスト・クラスが作成されます。
+
+image::images/projects-window3.png[title="JUnit 3およびJUnit 4テスト・クラスを含むJUnit-Sampleプロジェクトの構造"]
+
+*注意:*プロジェクトには、テストを作成するためのテスト・パッケージ用ディレクトリが必要です。テスト・パッケージ・ディレクトリのデフォルトの場所は、プロジェクトのルート・レベルですが、プロジェクトの「プロパティ」ダイアログでディレクトリ用の別の場所を指定することもできます。
+
+エディタで ``VectorsJUnit3Test.java`` を表示すると、テスト・メソッドの ``testEqual`` と ``testScalarMultiplication`` が生成されていることがわかります。 ``VectorsJUnit4Test.java`` では、各テスト・メソッドに ``@Test`` という注釈が付きます。 ``Vectors.java`` 内のメソッド名に基づいてテスト・メソッドの名前が生成されますが、テスト・メソッドの名前の先頭に ``test`` を付加する必要はありません。生成された各テスト・メソッドのデフォルトの本体はガイドとしてのみ用意され、実際のテスト・ケースになるように変更する必要があります。
+
+メソッドの本体を生成しないようにするには、「テストを作成」ダイアログの「デフォルトのメソッド本体」を選択解除します。
+
+また、次のテスト・クラスの初期化メソッドと終了メソッドが生成されました。
+
+
+[source,java]
+----
+
+@BeforeClass
+public static void setUpClass() throws Exception {
+}
+
+@AfterClass
+public static void tearDownClass() throws Exception {
+}
+----
+
+JUnit 4のテスト・クラスを作成するときに、クラスの初期化メソッドと終了メソッドがデフォルトで生成されます。注釈 ``@BeforeClass`` および ``@AfterClass`` は、テスト・クラスの実行前後に実行する必要があるメソッドをマークするために使用されます。メソッドを使用して ``Vectors.java`` をテストする必要はないため、これらのメソッドは削除してかまいません。
+
+「オプション」ウィンドウでJUnitオプションを構成することにより、デフォルトで生成されるメソッドを構成できます。
+
+*注意:*JUnit 4テストでは、IDEによって、 ``org.junit.Assert.*`` のための静的なインポート宣言がデフォルトで追加されることに注意してください。
+
+ 
+
+
+===  ``Vectors.java`` 用のテスト・メソッドの記述
+
+この課題では、JUnit ``assert`` メソッドを使用してメソッドをテストし、テスト・メソッドの名前を変更するため、生成された各テスト・メソッドを変更します。JUnit 4では、テスト・メソッドが ``@Test`` 注釈で示され、テスト・メソッド名の先頭に ``test`` を付ける必要がないため、テスト・メソッド名を柔軟に指定できます。
+
+1. エディタで ``VectorsJUnit4Test.java`` を開きます。
+2. メソッド名を変更し、 ``println`` の値を変更して生成された変数を除去することによって、 ``testScalarMultiplication`` のテスト・メソッドを変更します。テスト・メソッドは次のようになるはずです(太字部分が変更箇所)。
+
+[source,java]
+----
+
+@Test
+public void *ScalarMultiplicationCheck*() {
+    System.out.println("** VectorsJUnit4Test: ScalarMultiplicationCheck()*");
+    assertEquals(expResult, result);
+}
+----
+
+*注意:*テストを記述する際に、プリントされた出力を変更する必要はありません。これはこの課題で行うため、テスト結果を出力ウィンドウで確認しやすくなります。
+
+3. ここで、メソッドをテストするためのアサーションを追加します。
+
+[source,java]
+----
+
+@Test
+public void ScalarMultiplicationCheck() {
+    System.out.println("* VectorsJUnit4Test: ScalarMultiplicationCheck()");
+    *assertEquals(  0, Vectors.scalarMultiplication(new int[] { 0, 0}, new int[] { 0, 0}));
+    assertEquals( 39, Vectors.scalarMultiplication(new int[] { 3, 4}, new int[] { 5, 6}));
+    assertEquals(-39, Vectors.scalarMultiplication(new int[] {-3, 4}, new int[] { 5,-6}));
+    assertEquals(  0, Vectors.scalarMultiplication(new int[] { 5, 9}, new int[] {-9, 5}));
+    assertEquals(100, Vectors.scalarMultiplication(new int[] { 6, 8}, new int[] { 6, 8}));*
+}
+----
+
+このテスト・メソッドでは、JUnit ``assertEquals`` メソッドを使用します。アサーションを使用するには、入力変数と、期待する結果を指定します。テストに合格するには、テスト済メソッドを実行したときに、テスト・メソッドが供給した変数に基づいて、期待されるすべての結果を正常に返す必要があります。様々な考えられる並べ替えを実行するため、十分な数のアサーションを追加するようにしてください。
+
+4.  ``testEqual`` テスト・メソッドの名前を ``equalsCheck`` に変更します。
+5.  ``equalsCheck`` テスト・メソッドの生成されたメソッドの本文を削除します。
+6. 次の ``println`` を ``equalsCheck`` テスト・メソッドに追加します。*System.out.println("* VectorsJUnit4Test: equalsCheck()");*
+
+テスト・メソッドは次のようになるはずです。
+
+
+[source,java]
+----
+
+@Test
+public void equalsCheck() {
+    System.out.println("* VectorsJUnit4Test: equalsCheck()");
+}
+----
+7. 次のアサーション(太字で表示)を追加することによって、 ``equalsCheck`` メソッドを変更します。
+
+[source,java]
+----
+
+@Test
+public void equalsCheck() {
+    System.out.println("* VectorsJUnit4Test: equalsCheck()");
+    *assertTrue(Vectors.equal(new int[] {}, new int[] {}));
+    assertTrue(Vectors.equal(new int[] {0}, new int[] {0}));
+    assertTrue(Vectors.equal(new int[] {0, 0}, new int[] {0, 0}));
+    assertTrue(Vectors.equal(new int[] {0, 0, 0}, new int[] {0, 0, 0}));
+    assertTrue(Vectors.equal(new int[] {5, 6, 7}, new int[] {5, 6, 7}));
+
+    assertFalse(Vectors.equal(new int[] {}, new int[] {0}));
+    assertFalse(Vectors.equal(new int[] {0}, new int[] {0, 0}));
+    assertFalse(Vectors.equal(new int[] {0, 0}, new int[] {0, 0, 0}));
+    assertFalse(Vectors.equal(new int[] {0, 0, 0}, new int[] {0, 0}));
+    assertFalse(Vectors.equal(new int[] {0, 0}, new int[] {0}));
+    assertFalse(Vectors.equal(new int[] {0}, new int[] {}));
+
+    assertFalse(Vectors.equal(new int[] {0, 0, 0}, new int[] {0, 0, 1}));
+    assertFalse(Vectors.equal(new int[] {0, 0, 0}, new int[] {0, 1, 0}));
+    assertFalse(Vectors.equal(new int[] {0, 0, 0}, new int[] {1, 0, 0}));
+    assertFalse(Vectors.equal(new int[] {0, 0, 1}, new int[] {0, 0, 3}));*
+}
+----
+
+このテストはJUnitの ``assertTrue`` メソッドと ``assertFalse`` メソッドを使用して、考えられる様々な結果をテストします。このメソッドのテストに合格するには、 ``assertTrue`` がすべてtrue、 ``assertFalse`` がすべてfalseである必要があります。
+
+比較: <<Exercise_22, ``Vectors.java`` 用のテスト・メソッドの記述(JUnit 3)>>
+
+ 
+
+
+===  ``Utils.java`` 用のテスト・クラスの作成
+
+ここで、 ``Utils.java`` のJUnitテスト・メソッドを作成します。前の課題でテスト・クラスを作成したとき、JUnitのバージョンを確認するメッセージが表示されました。すでにJUnitバージョンを選択したため、以降に作成されたすべてのJUnitテストはそのバージョンなので、今回はバージョンの選択を求めるメッセージは表示されません。
+
+*注意:*バージョンとしてJUnit 4を選択してもJUnit 3のテストを記述して実行することはできますが、テスト・スケルトンの生成にはJUnit 4のテンプレートが使用されます。
+
+1.  ``Utils.java`` を右クリックし、「ツール」>「テストを作成」を選択します。
+2. 「フレームワーク」ドロップダウン・リストで「JUnit」が選択されていない場合は選択します。
+3. ダイアログ・ボックスで「テスト初期化」および「テスト終了」が選択されていない場合は選択します。
+4. 「テストを作成」ダイアログ・ボックスで、テスト・クラスの名前を*UtilsJUnit4Test*に変更します。「OK」をクリックします。
+
+「OK」をクリックすると、IDEによって、「テスト・パッケージ」のsampleディレクトリ内にテスト・ファイル ``UtilsJUnit4Test.java`` が作成されます。 ``Utils.java`` 内にあるメソッド用に、 ``testComputeFactorial`` 、 ``testConcatWords`` 、 ``testNormalizeWord`` の各テスト・メソッドが生成されたことがわかります。テストおよびテスト・クラスに対して初期化メソッドと終了メソッドも生成されます。
+
+ 
+
+
+===  ``Utils.java`` 用のテスト・メソッドの記述
+
+この課題では、JUnitで共通のテスト要素の一部を示すテスト・ケースを追加します。一部のメソッドは、メソッドが実行されたことやメソッドがテストに合格したことを示す出力を「JUnitテスト結果」ウィンドウにプリントしないため、メソッドに ``println`` も追加します。 ``println`` をメソッドに追加することで、メソッドが実行されたかどうか、およびどの順番でメソッドが実行されたかを確認できます。
+
+
+==== テスト初期化およびテスト終了
+
+ ``Utils.java`` 用のテスト・クラスを作成するとき、注釈付きの初期化メソッドと終了メソッドが生成されます。メソッド名には必須の命名規則がないため、任意の名前を付けることができます。
+
+*注意:* ``Utils.java`` のテストに初期化メソッドと終了メソッドは必要ありませんが、このチュートリアルではそれらの機能を示すために含めます。
+
+JUnit 4では、次のタイプの初期化メソッドと終了メソッドをマークするために注釈を使用できます。
+
+* *テスト・クラス初期化。* ``@BeforeClass`` 注釈により、メソッドがテスト・クラス初期化メソッドとしてマークされます。テスト・クラス初期化メソッドは、テスト・クラス内の他のメソッドの前に、1回のみ実行されます。たとえば、テスト初期化でデータベース接続を作成したり、各テスト・メソッドの前に新しい接続を作成するかわりに、テストを実行する前にテスト・クラス初期化を使用して接続を開きます。続いて、テスト・クラス終了を使用して接続を閉じます。
+* *テスト・クラス終了。* ``@AfterClass`` 注釈により、メソッドがテスト・クラス終了メソッドとしてマークされます。テスト・クラス終了メソッドは、テスト・クラス内の他のすべてのメソッドが終了した後、1回のみ実行されます。
+* *テスト初期化。* ``@Before`` 注釈により、メソッドがテスト初期化メソッドとしてマークされます。テスト初期化メソッドは、テスト・クラスの各テスト・ケースの前に実行されます。テストの実行にテスト初期化メソッドは必須ではありませんが、テストの実行前に一部の変数を初期化する必要がある場合は、テスト初期化メソッドを使用します。
+* *テスト終了。* ``@After`` 注釈により、メソッドがテスト終了メソッドとしてマークされます。テスト終了メソッドは、テスト・クラスの各テスト・ケースの後に実行されます。テストの実行にテスト終了メソッドは必須ではありませんが、テスト・ケースの実行時に求められたデータをクリーン・アップするために終了メソッドが必要になる場合があります。
+
+ ``UtilsJUnit4Test.java`` で、次の変更(太字で表示されています)を行います。
+
+
+[source,java]
+----
+
+@BeforeClass
+public static void setUpClass() throws Exception {
+    *System.out.println("* UtilsJUnit4Test: @BeforeClass method");*
+}
+
+@AfterClass
+public static void tearDownClass() throws Exception {
+    *System.out.println("* UtilsJUnit4Test: @AfterClass method");*
+}
+
+@Before
+public void setUp() {
+    *System.out.println("* UtilsJUnit4Test: @Before method");*
+}
+
+@After
+public void tearDown() {
+    *System.out.println("* UtilsJUnit4Test: @After method");*
+}
+----
+
+比較: <<Exercise_241,テストの初期化および終了(JUnit 3)>>
+
+テスト・クラスを実行すると、追加した ``println`` テキストが「JUnitテスト結果」ウィンドウの出力ペインに表示されます。 ``println`` を追加しない場合、初期化メソッドと終了メソッドが実行されたことを示す出力は表示されません。
+
+
+==== 単純なアサーションを使用したテスト
+
+この単純なテスト・ケースでは、 ``concatWords`` メソッドをテストします。生成されたテスト・メソッドの ``testConcatWords`` を使用するかわりに、単一の単純なアサーションを使用してメソッドが文字列を正しく連結するかどうかをテストする、 ``helloWorldCheck`` という新しいテスト・メソッドを追加します。テスト・ケースの ``assertEquals`` では、予想した結果と実際の結果が同じであるかどうかをテストするために、構文 ``assertEquals(_EXPECTED_RESULT, ACTUAL_RESULT_)`` が使用されます。この例では、 ``concatWords`` メソッドへの入力が「 ``Hello`` 」、「 ``,`` 」、「 ``world`` 」および「 ``!`` 」の場合、予想結果は「 ``Hello, world!`` 」と同じになるはずです。
+
+1. 生成された ``testConcatWords`` テスト・メソッドを削除します。
+2.  ``Utils.concatWords`` をテストするため、次の ``helloWorldCheck`` メソッドを追加します。*@Test
+public void helloWorldCheck() {
+    assertEquals("Hello, world!", Utils.concatWords("Hello", ", ", "world", "!"));
+}*
+3. テストに関するテキストを「JUnitテスト結果」ウィンドウに表示するため、 ``println`` 文を追加します。
+
+[source,java]
+----
+
+@Test
+public void helloWorldCheck() {
+    *System.out.println("* UtilsJUnit4Test: test method 1 - helloWorldCheck()");*
+    assertEquals("Hello, world!", Utils.concatWords("Hello", ", ", "world", "!"));
+----
+
+比較: <<Exercise_242,単純なアサーションを使用したテスト(JUnit 3)>>
+
+
+==== タイム・アウトを使用したテスト
+
+このテストでは、メソッドの完了までに時間がかかりすぎているかどうかを確認する方法を示します。メソッドの時間がかかりすぎている場合は、テスト・スレッドが割込みされ、テストは失敗します。テストでは時間制限を指定できます。
+
+テスト・メソッドにより、 ``Utils.java`` の ``computeFactorial`` メソッドが呼び出されます。 ``computeFactorial`` メソッドは正しいと想定できますが、ここでテストするのは、計算が1000ミリ秒以内に完了するかどうかです。これは、1000ミリ秒後にテスト・スレッドが割込みされることによって行います。スレッドが割込みされると、テスト・メソッドは ``TimeoutException`` をスローします。
+
+1. 生成されたテスト・メソッド ``testComputeFactorial`` を削除します。
+2. ランダムに生成された数字の階乗を計算する ``testWithTimeout`` メソッドを追加します。*@Test
+public void testWithTimeout() {
+    final int factorialOf = 1 + (int) (30000 * Math.random());
+    System.out.println("computing " + factorialOf + '!');
+    System.out.println(factorialOf + "! = " + Utils.computeFactorial(factorialOf));
+}*
+3. タイム・アウトを設定し、メソッドの実行に時間がかかりすぎる場合にスレッドが割込みされるようにするには、次のコード(太字で表示)を追加します。
+
+[source,java]
+----
+
+@Test*(timeout=1000)*
+public void testWithTimeout() {
+    final int factorialOf = 1 + (int) (30000 * Math.random());
+----
+
+タイム・アウトが1000ミリ秒に設定されていることがわかります。
+
+4. テストに関するテキストを「JUnitテスト結果」ウィンドウに出力するには、次の ``println`` (太字で表示)を追加します。
+
+[source,java]
+----
+
+@Test(timeout=1000)
+public void testWithTimeout() {
+    *System.out.println("* UtilsJUnit4Test: test method 2 - testWithTimeout()");*
+    final int factorialOf = 1 + (int) (30000 * Math.random());
+    System.out.println("computing " + factorialOf + '!');
+            
+----
+
+比較: <<Exercise_243,タイム・アウトを使用したテスト(JUnit 3)>>
+
+
+==== 予想される例外のテスト
+
+このテストでは、予想される例外のテスト方法を示します。このメソッドは、予想される指定の例外がスローされない場合、失敗します。この例では、入力変数が負の数(-5)の場合に、 ``computeFactorial`` メソッドが ``IllegalArgumentException`` をスローするかどうかをテストします。
+
+1.  ``computeFactorial`` メソッドを呼び出す次の ``testExpectedException`` メソッドを、-5の入力とともに追加します。*@Test
+public void checkExpectedException() {
+    final int factorialOf = -5;
+    System.out.println(factorialOf + "! = " + Utils.computeFactorial(factorialOf));
+}*
+2. テストが ``IllegalArgumentException`` をスローするように指定するには、次のプロパティ(太字で表示)を ``@Test`` 注釈に追加します。
+
+[source,java]
+----
+
+@Test*(expected=IllegalArgumentException.class)*
+public void checkExpectedException() {
+    final int factorialOf = -5;
+    System.out.println(factorialOf + "! = " + Utils.computeFactorial(factorialOf));
+}
+----
+3. テストに関するテキストを「JUnitテスト結果」ウィンドウに出力するには、次の ``println`` (太字で表示)を追加します。
+
+[source,java]
+----
+
+@Test (expected=IllegalArgumentException.class)
+public void checkExpectedException() {
+    *System.out.println("* UtilsJUnit4Test: test method 3 - checkExpectedException()");*
+    final int factorialOf = -5;
+    System.out.println(factorialOf + "! = " + Utils.computeFactorial(factorialOf));
+}
+----
+
+比較: <<Exercise_244,予想される例外のテスト(JUnit 3)>>
+
+
+==== テストの無効化
+
+このテストでは、テスト・メソッドを一時的に無効にする方法を示します。JUnit 4でテストを無効にするには、単純に ``@Ignore`` 注釈を追加します。
+
+1. 生成されたテスト・メソッド ``testNormalizeWord`` を削除します。
+2. 次のテスト・メソッドをテスト・クラスに追加します。*@Test
+public void temporarilyDisabledTest() throws Exception {
+    System.out.println("* UtilsJUnit4Test: test method 4 - checkExpectedException()");
+    assertEquals("Malm\u00f6", Utils.normalizeWord("Malmo\u0308"));
+}*
+
+テスト・クラスを実行すると、テスト・メソッド ``temporarilyDisabledTest`` が実行されます。
+
+3. テストを無効にするには、 ``@Test`` の上に ``@Ignore`` 注釈(太字で表示)を追加します。*@Ignore*
+
+[source,java]
+----
+
+@Test
+public void temporarilyDisabledTest() throws Exception {
+    System.out.println("* UtilsJUnit4Test: test method 4 - checkExpectedException()");
+    assertEquals("Malm\u00f6", Utils.normalizeWord("Malmo\u0308"));
+}
+----
+4.  ``org.junit.Ignore`` をインポートするために、インポートを修正します。
+
+比較: <<Exercise_245,テストの無効化(JUnit 3)>>
+
+これでテストが記述されたので、テストを実行し、テスト出力を「JUnitテスト結果」ウィンドウで確認できます。
+
+ 
+
+
+=== テストの実行
+
+アプリケーション全体または個々のファイルでJUnitテストを実行し、結果をIDEで確認できます。プロジェクトのすべての単体テストを最も簡単な方法で実行するには、メイン・メニューから「実行」>「_<プロジェクト名>_のテスト」を選択します。この方法を選択すると、「テスト・パッケージ」内のすべてのテストが実行されます。個々のテスト・クラスを実行するには、「テスト・パッケージ」ノードのテスト・クラスを右クリックし、「ファイルを実行」を選択します。
+
+1. 「プロジェクト」ウィンドウで ``UtilsJUnit4Test.java`` を右クリックします。
+2. 「ファイルをテスト」を選択します。
+3. 「ウィンドウ」>「IDEツール」>「テスト結果」を選択して、「テスト結果」ウィンドウを開きます。
+
+ ``UtilsJUnit4Test.java`` を実行するときは、テスト・クラス内のテストのみが実行されます。クラスがすべてのテストに合格すると、次のイメージに似た内容が「JUnitテスト結果」ウィンドウに表示されます。
+
+image::images/junit4-utilstest-pass-sm.png[role="left", link="images/junit4-utilstest-pass.png"]
+
+このイメージ(大きいイメージを表示するにはイメージをクリック)では、IDEにより ``Utils.java`` でJUnitテストが実行されたこと、およびクラスがすべてのテストに合格したことがわかります。左ペインには個々のテスト・メソッドの結果が表示され、右ペインにはテスト出力が表示されます。出力を確認すると、テストが実行された順序がわかります。各テスト・メソッドに追加した ``println`` により、テストの名前が「テスト結果」ウィンドウおよび「出力」ウィンドウに出力されます。
+
+ ``UtilsJUnit4Test`` で、 ``@BeforeClass`` という注釈が付いたテスト・クラス初期化メソッドが、他のメソッドより先に1回のみ実行されたことがわかります。 ``@AfterClass`` という注釈が付いたテスト・クラス終了メソッドが、クラス内の他のすべてのメソッドが実行された後で最後に実行されました。 ``@Before`` という注釈が付いたテスト初期化メソッドが各テスト・メソッドより先に実行されました。
+
+「テスト結果」ウィンドウの左側にあるコントロールを使用すると、テストを簡単に再実行できます。フィルタを使用すると、すべてのテスト結果の表示と失敗したテストのみの表示を切り替えることができます。矢印を使用して、次の失敗または前の失敗にスキップできます。
+
+「テスト結果」ウィンドウでテスト結果を右クリックすると、ポップアップ・メニューを使用してテストのソースに移動したり、テストを再度実行したり、テストをデバッグしたりできます。
+
+単体テスト・クラス作成後の次の手順は、テスト・スイートの作成です。指定されたテストをグループとして実行し、各テストを個々に実行しなくて済むようにする方法については、<<Exercise_42,JUnit 4テスト・スイートの作成>>を参照してください。
+
+
+== テスト・スイートの作成
+
+プロジェクト用のテストを作成するときは通常、多数のテスト・クラスができます。テスト・クラスを個別に実行することも、プロジェクト内のすべてのテストをまとめて実行することもできます。多くの場合、テストのサブセットを実行するか、特定の順序でテストを実行します。これは、1つまたは複数のテスト・スイートを作成することで実現できます。たとえば、コードの特定の側面または特定の条件をテストするテスト・スイートを作成できます。
+
+テスト・スイートとは、基本的にメソッドを持つクラスであり、特定のテスト・クラス、テスト・クラス内のテスト・メソッド、およびその他のテスト・スイートなどの指定したテスト・ケースを起動します。テスト・スイートはテスト・クラスの一部として含めることができますが、ベスト・プラクティスとしては、個々のテスト・スイート・クラスを作成することをお薦めします。
+
+プロジェクト用のJUnit 3およびJUnit 4のテスト・スイートは、手動で作成することも、IDEが生成することもできます。IDEを使用してテスト・スイートを生成すると、デフォルトで、同じパッケージ内のすべてのテスト・クラスをテスト・スイートとして呼び出すコードが生成されます。テスト・スイートを作成した後、スイートの一部として実行するテストを指定するようにクラスを変更できます。
+
+
+=== JUnit 3テスト・スイートの作成
+
+テストのバージョンとしてJUnit 3を選択した場合、IDEではテスト・パッケージのテスト・クラスに基づいてJUnit 3テスト・スイートが生成されます。JUnit 3では、 ``TestSuite`` のインスタンスを作成し、各テストに対して ``addTest`` メソッドを使用することによって、テスト・スイートに含めるテスト・クラスを指定します。
+
+1. 「プロジェクト」ウィンドウで「*JUnit-Sample*」プロジェクト・ノードを右クリックし、「新規」>「その他」を選択して新規ファイル・ウィザードを開きます。
+2. 「単体テスト」カテゴリで「テスト・スイート」を選択します。「次」をクリックします。
+3. 「クラス名」に「*JUnit3TestSuite*」と入力します。
+4. テスト・スイートを作成するため、テスト・パッケージ・フォルダのサンプル・フォルダにある ``sample`` パッケージを選択します。
+5. 「テスト初期化」および「テスト終了」を選択解除します。「終了」をクリックします。
+image::images/junit-testsuite-wizard.png[title="JUnitのテスト・スイート・ウィザード"]
+
+「終了」をクリックすると、 ``sample`` パッケージにテスト・スイート・クラスが作成され、クラスがエディタに表示されます。このテスト・スイートには次のコードが含まれます。
+
+
+[source,java]
+----
+
+public class JUnit3TestSuite extends TestCase {
+    public JUnit3TestSuite(String testName) {
+        super(testName);
+    }
+
+    public static Test suite() {
+        TestSuite suite = new TestSuite("JUnit3TestSuite");
+        return suite;
+    }
+}
+----
+6.  ``suite()`` メソッドを変更して、このスイートの一部として実行されるテスト・クラスを追加します。
+
+[source,java]
+----
+
+public JUnit3TestSuite(String testName) {
+    super(testName);
+}
+
+public static Test suite() {
+    TestSuite suite = new TestSuite("JUnit3TestSuite");
+    *suite.addTest(new TestSuite(sample.VectorsJUnit3Test.class));
+    suite.addTest(new TestSuite(sample.UtilsJUnit3Test.class));*
+    return suite;
+}
+----
+7. 変更を保存します。
+ 
+
+
+=== JUnit 4テスト・スイートの作成
+
+テストのバージョンとしてJUnit 4を選択した場合、IDEではJUnit 4テスト・スイートを生成できます。JUnit 4は下位互換性があるので、JUnit 4とJUnit 3のどちらのテストを含むJUnit 4テスト・スイートも実行できます。JUnit 4のテスト・スイートでは、テスト・スイートに含めるテスト・クラスを ``@Suite`` 注釈の値として指定します。
+
+*注意:*JUnit 3のテスト・スイートをJUnit 4のテスト・スイートとして実行するには、JUnit 4.4以上が必要です。
+
+1. 「プロジェクト」ウィンドウでプロジェクト・ノードを右クリックし、「新規」>「その他」を選択して新規ファイル・ウィザードを開きます。
+2. 「単体テスト」カテゴリで「テスト・スイート」を選択します。「次」をクリックします。
+3. ファイル名に「*JUnit4TestSuite*」と入力します。
+4. テスト・スイートを作成するため、テスト・パッケージ・フォルダのサンプル・フォルダにある ``sample`` パッケージを選択します。
+5. 「テスト初期化」および「テスト終了」を選択解除します。「終了」をクリックします。
+
+「終了」をクリックすると、 ``sample`` パッケージにテスト・スイート・クラスが作成され、クラスがエディタに表示されます。このテスト・スイートには次のようなコードが含まれます。
+
+
+[source,java]
+----
+
+@RunWith(Suite.class)
+@Suite.SuiteClasses(value={UtilsJUnit4Test.class, VectorsJUnit4Test.class})
+public class JUnit4TestSuite {
+}
+----
+
+このテスト・スイートを実行すると、IDEによって各テスト・クラスが、リストされている順序で実行されます。
+
+
+=== テスト・スイートの実行
+
+テスト・スイートは、個々のテスト・クラスを実行する場合と同じ方法で実行します。
+
+1. 「プロジェクト」ウィンドウで「テスト・パッケージ」ノードを展開します。
+2. テスト・スイート・クラスを右クリックし、「ファイルをテスト」を選択します。
+
+テスト・スイートを実行すると、スイートに含まれるテストが一覧表示された順に実行されます。結果は「JUnitテスト結果」ウィンドウに表示されます。
+
+image::images/junit3-suite-results-sm.png[role="left", link="images/junit3-suite-results.png"]
+
+このイメージ(大きいイメージを表示するにはイメージをクリック)では、JUnit 3テスト・スイートのテスト結果がわかります。テスト・スイートにより ``UtilsJUnit3Test`` テスト・クラスと ``VectorsJUnit3Test`` テスト・クラスが単一のテストとして実行され、単一テストの結果として、テスト結果が左ペインに表示されました。右ペインの出力は、テストを個別に実行した場合と同じ内容です。
+
+image::images/junit4-suite-results-sm.png[role="left", link="images/junit4-suite-results.png"]
+
+このイメージ(大きいイメージを表示するにはイメージをクリック)では、JUnit 4テスト・スイートのテスト結果がわかります。テスト・スイートにより ``UtilsJUnit4Test`` テスト・クラスと ``VectorsJUnit4Test`` テスト・クラスが単一のテストとして実行され、単一のテストの結果としてテスト結果が左ペインに表示されました。右ペインの出力は、テストを個別に実行した場合と同じ内容です。
+
+image::images/junitmix3and4-suite-results-sm.png[role="left", link="images/junitmix3and4-suite-results.png"]
+
+このイメージ(大きいイメージを表示するにはイメージをクリック)では、混合型のテスト・スイートのテスト結果がわかります。このテスト・スイートにはJUnit 4テスト・スイートとJUnit 3のテスト・クラスのうち1つが含まれています。テスト・スイートにより ``UtilsJUnit3Test.java`` テスト・クラスと ``JUnit4TestSuite.java`` テスト・クラスが単一のテストとして実行され、単一のテストの結果としてテスト結果が左ペインに表示されました。右ペインの出力は、テストを個別に実行した場合と同じ内容です。
+
+
+== サマリー
+
+このチュートリアルでは、NetBeans IDEでJUnit単体テストとテスト・スイートを作成するための基本を紹介しました。IDEではJUnit 3およびJUnit 4がサポートされており、このドキュメントでは、テストの作成および実行をより簡素化するように設計されているJUnit 4での変更点をいくつか示しました。
+
+このチュートリアルで示されているように、JUnit 4での主な改善点の1つは注釈のサポートです。JUnit 4では、注釈を使用して次を行うことができます。
+
+* 命名規則のかわりに ``@Test`` 注釈を使用してテストを識別する
+*  ``@Before`` 注釈および ``@After`` 注釈を使用して、 ``setUp`` メソッドおよび ``tearDown`` メソッドを識別する
+* テスト・クラス全体に適用する ``setUp`` メソッドおよび ``tearDown`` メソッドを識別する。 ``@BeforeClass`` という注釈が付いたメソッドは、クラス内の任意のテスト・メソッドが実行される前に、1回のみ実行されます。 ``@AfterClass`` という注釈が付いたメソッドも、すべてのテスト・メソッドが終了した後に、1回のみ実行されます。
+* 予期している例外を識別する
+*  ``@Ignore`` 注釈を使用して省略するテストを識別する
+* テストのタイム・アウト・パラメータを指定する
+
+JUnitの使用およびJUnit 4でのその他の変更点に関する詳細は、次のリソースを参照してください。
+
+* link:http://tech.groups.yahoo.com/group/junit/[+YahooグループのJUnitグループ+]
+* link:http://www.junit.org[+www.junit.org+]
+
+コードのテストは、コードにわずかな変更を加えてもアプリケーションが壊れないことを確認するのに役立ちます。JUnitなどの自動テスト・ツールを使用するとテストのプロセスを合理化でき、テストを頻繁に行うことでコード・エラーを早期に発見できます。
+
+
+link:https://netbeans.org/about/contact_form.html?to=3&subject=Feedback:%20Writing%20JUnit%20Tests%20in%20NetBeans%20IDE[+このチュートリアルに関するご意見をお寄せください+]
+
+
+
+== 関連項目
+
+NetBeans IDEを使用したJavaアプリケーションの開発方法の詳細は、次のリソースを参照してください。
+
+* _NetBeans IDEによるアプリケーションの開発_のlink:http://www.oracle.com/pls/topic/lookup?ctx=nb8000&id=NBDAG366[+Javaプロジェクトの作成+]
+* link:../../trails/java-se.html[+基本的なIDEおよびJavaプログラミングの学習+]

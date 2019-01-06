@@ -1,0 +1,312 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= Construindo Enterprise Beans Seguros no Java EE
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: Construindo Enterprise Beans Seguros no Java EE - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, Construindo Enterprise Beans Seguros no Java EE
+
+O suporte para a especificação Java EE no NetBeans IDE permite que você aproveite as muitas funcionalidades do Java EE , simplificando o desenvolvimento de aplicações. Um desenvolvimento significativo na especificação Java EE 5 foi a incorporação de anotações. O uso anotações permite que você elimine muito do código básico usado ao codificar aplicações e minimiza a quantidade de configuração necessária ao implantar uma aplicação.
+
+Uma área que se tornou muito simplificada por meio do uso de anotações é o desenvolvimento e a configuração de beans corporativos. As anotações permitem que você especifique muitas propriedades de configuração que foram especificadas anteriormente em arquivos do descritor de implantação, tornando desnecessários muitos arquivos do descritor de implantação. Embora as aplicações ainda requeiram alguns arquivos do descritor de implantação (como o  ``web.xml`` ), o editor do descritor de implantação com multiview do IDE facilita a edição dos arquivos.
+
+Usando anotações, construir enterprise beans seguros agora é muito mais fácil. Em vez de configurar a segurança do enterprise bean no descritor de implantação  ``ejb-jar.xml`` , você pode usar anotações de segurança para configurar a autorização diretamente no código-fonte. Aplicações corporativas Java EE 5 não requerem  ``ejb-jar.xml``  ou  ``application.xml`` .
+
+Para obter uma visão geral de algumas funcionalidades da especificação Java EE , consulte a link:javaee-intro.html[+Introdução à Tecnologia Java EE+]. Para obter mais informações sobre as especificações de anotação, consulte link:http://jcp.org/en/jsr/detail?id=250[+ JSR 250: Anotações Comuns da Plataforma Java+].
+
+
+image::images/netbeans-stamp-80-74-73.png[title="O conteúdo desta página se aplica ao NetBeans IDE 7.2, 7.3, 7.4 e 8.0"]
+
+
+*Para seguir este tutorial, são necessários os recursos e o software a seguir.*
+
+|===
+|Software ou Recurso |Versão Necessária 
+
+|link:https://netbeans.org/downloads/index.html[+NetBeans IDE+] |Versão Java EE 7.2, 7.3, 7.4, 8.0 
+
+|link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+JDK (Java Development Kit)+] |versão 7 ou 8 
+
+|GlassFish Server |3.1.x, 4.x 
+|===
+
+Para este tutorial, é necessário registrar uma instância local do GlassFish Server com o IDE. Se uma versão “Java EE” do IDE foi instalada, o servidor de aplicações já deve estar instalado e registrado. Se o servidor de aplicações não estiver registrado no IDE, selecione Ferramentas > Servidores para registrar o servidor no gerenciador de Servidores. Não é possível implantar aplicações corporativas no servidor Web Tomcat.
+
+*Pré-requisitos*
+
+Este tutorial pressupõe que você tenha algum conhecimento básico das tecnologias a seguir, ou alguma experiência de programação com elas:
+
+* Programação em Java
+* NetBeans IDE
+
+
+== Criando um Grupo de Segurança no Servidor de Aplicações
+
+Neste exemplo, é melhor que somente os usuários do grupo  ``bank_users``  acessem o enterprise bean. É preciso criar o usuário  ``manager``  no grupo  ``bank_users``  no realm de segurança  ``file``  no servidor de aplicações.
+
+1. Inicie o servidor de aplicações clicando com o botão direito do mouse em seu nó na janela Serviços e selecionando Iniciar.
+2. Clique com o botão direito do mouse no nó do servidor de aplicações e selecione Exibir Console de Admin do Domínio para abrir a Console de Admin do GlassFish Server no browser.
+3. Expanda o nó *server-config* sob o nó Configurações na barra de navegação esquerda.
+4. Clique em *Segurança > Realms > arquivo * para abrir o quadro Editar Realm.
+image::images/console-file-realm.png[title="Selecionando o nó realm de arquivo na console de admin do servidor de aplicações"]
+5. Clique no botão Gerenciar Usuários na parte superior do painel Editar Realm para abrir o painel Usuários do Arquivo.
+image::images/console-edit-realm.png[title="Nó do painel Editar Realm console de admin do servidor de aplicações"]
+6. Clique no botão Novo na parte superior da tabela Usuários do Arquivo no painel Usuários do Arquivo.
+7. Digite os seguintes dados no form Novo Usuário de Realm do Arquivo. Clique em OK.
+|===
+
+|Nome |Valor 
+
+|ID do Usuário |gerenciador 
+
+|Lista de Grupos |bank_users 
+
+|Password |senha 
+|===
+
+O form deve se parecer com a figura a seguir.
+
+image::images/console-new-user.png[title="Painel Novo Realm de Arquivo do Usuário na console de admin do servidor de aplicações"]
+
+Quando você clicar em OK, o servidor criará o usuário e abrirá o painel Usuários do Arquivo. Você verá que agora existe um usuário chamado ``manager (gerenciador)`` .
+
+image::images/console-file-users.png[title="Painel Usuários do Arquivo na console de admin com lista de usuários"]
+
+Agora que o usuário foi criado, você criará uma aplicação corporativa que verificará se o usuário é capaz de visualizar os dados.
+
+
+== Criando uma Biblioteca de Classe Java para a Interface Remota
+
+Neste exercício você criará um simples projeto de biblioteca de classe Java que conterá as interfaces remotas do bean de sessão. A biblioteca de classe JAR compilada será adicionada ao classpath do módulo EJB e ao cliente da aplicação que serão usados para chamar o bean de sessão.
+
+1. Selecione Arquivo > Novo Projeto e Biblioteca de Classe Java na categoria Java. Clique em Próximo.
+2. Digite SecureRemoteInterface como nome do projeto.
+3. Selecione uma localização para o projeto. Clique em Finalizar.
+
+Na próxima sessão, você criará um bean de sessão em uma aplicação corporativa. O bean de sessão será acessado usando uma interface remota. Quando você criar o bean de sessão, o IDE criará automaticamente a interface remota na biblioteca de classes e adicionará a biblioteca de classes JAR ao classpath da aplicação corporativa.
+
+
+== Criando e Protegendo a Aplicação Corporativa
+
+A aplicação corporativa consistirá de um simples bean de sessão que será acessado usando uma interface remota no projeto de biblioteca de classes.
+
+
+=== Criando o Projeto da Aplicação Corporativa
+
+Neste exercício você criará uma aplicação corporativa que contém um módulo EJB.
+
+1. Selecione Arquivo > Novo Projeto (Ctrl-Shift-N; ⌘-Shift-N no Mac) e selecione o modelo Aplicação Corporativa na categoria Java EE. Clique em Próximo.
+2. Digite *Secure* para o Nome do Projeto e defina o Local do Projeto.
+3. Desmarque a opção Usar Pasta Dedicada, se estiver selecionada.
+
+Para este tutorial, há pouco motivo para copiar as bibliotecas de projeto em uma pasta dedicada, pois você não precisará compartilhar bibliotecas com outros usuários ou projetos.
+
+Clique em Próximo.
+4. Defina o servidor como GlassFish e defina a Versão para Java EE 6.
+5. Selecione Criar Módulo EJB e desmarque a seleção Criar Módulo da Aplicação Web. Clique em Finalizar.
+image::images/new-entapp-wizard.png[title="Painel Novo Realm de Arquivo do Usuário na console de admin do servidor de aplicações"] 
+
+
+=== Protegendo um Método em um Bean de Sessão
+
+Neste exercício você criará um bean de sessão no projeto do módulo EJB. O bean de sessão não faz nada demais. Ele apenas retorna um saldo total de amostra. Você criará um método  ``getStatus``  e irá proteger o bean do método, anotando-o com a anotação  ``@RolesAllowed``  e especificará as atribuições de segurança permitidas para acessar o método. Essa atribuição de segurança é usada pela aplicação e não é a mesma que dos usuários e grupos no servidor. Você irá mapear a atribuição de segurança para os usuários e grupos mais tarde, quando configurar os descritores de implantação.
+
+As anotações de segurança podem ser aplicadas individualmente a cada método em uma classe, ou a uma classe inteira. Neste exercício simples, você utilizará o  ``@RolesAllowed``  para anotar um método, mas a especificação Java EE define outras anotações de segurança que podem ser usadas nos enterprise beans.
+
+1. Na janela Projetos, clique com o botão direito do mouse no nó do módulo EJB (Secure-ejb) e selecione Novo > Bean de Sessão.
+2. Digite *AccountStatus* como nome do bean, e *bean* para o pacote.
+3. Selecione Remoto no projeto para o tipo de interface.
+4. Selecione SecureRemoteInterface na lista drop-down. Clique em Finalizar.
+image::images/new-sessionbean-wizard.png[title="Interface remota selecionada no assistente Novo Bean de Sessão"]
+
+Quando você clica em Finalizar, o IDE cria a classe  ``AccountStatus``  e abre o arquivo no editor de código-fonte.
+
+O IDE também cria a interface remota  ``AccountStatusRemote``  para o bean no pacote  ``bean``  no projeto de biblioteca de classes SecureRemoteInterface e adiciona a biblioteca de classes JAR SecureRemoteInterface ao classpath do projeto do módulo EJB.
+
+image::images/projects-window-bean.png[title="Janela Projetos mostrando o bean de sessão e a biblioteca de classe no classpath"]
+
+Ao abrir a categoria Bibliotecas da caixa de diálogo Propriedades do módulo EJB, você verá que o JAR é adicionado às bibliotecas de tempo de compilação.
+
+5. No editor de código-fonte, adicione a declaração de campo a seguir (em negrito) em  ``AccountStatusBean`` :
+
+[source,java]
+----
+
+public class AccountStatus implements AccountStatusRemote {
+    *private String amount = "250";*
+----
+6. No editor de código fonte, clique com o botão direito do mouse na classe e selecione Inserir Código (Alt-Insert; Ctrl-I on Mac) e, então, selecione Adicionar Método de Negócios para abrir a caixa de diálogo Adicionar Método de Negócio.
+7. Digite *getStatus* como nome do método e defina o tipo de retorno como  ``String`` .
+
+O IDE expõe automaticamente o método de negócios na interface remota.
+
+8. No editor de código-fonte, adicione a linha a seguir em negrito ao método  ``getStatus`` .
+
+[source,java]
+----
+
+public String getStatus() {
+*    return "The account contains $" + amount;*
+}
+----
+9. Digite o seguinte (em negrito) para anotar o método  ``getStatus`` .*@RolesAllowed({"USERS"})*
+
+[source,java]
+----
+
+public String getStatus() {
+----
+
+Essa anotação significa que somente os usuários na atribuição de segurança  ``USERS``  podem acessar o método  ``getStatus`` .
+
+10. Clique com o botão direito do mouse no editor, selecione Corrigir Importações (Alt-Shift-I; ⌘-Shift-I no Mac) e salve as alterações. Certifique-se de que o  ``javax.annotation.security.RolesAllowed``  tenha sido adicionado ao arquivo.
+
+
+=== Configurando os Descritores de Implantação
+
+Em Java EE, as aplicações corporativas geralmente não requerem arquivos do descritor de implantação, tal como o  ``ejb-jar.xml`` . Se você expandir o nó Arquivos de Configuração sob Secure-ejb ou a aplicação corporativa Secure, é possível ver que não há descritores de implantação. É possível usar anotações para especificar muitas propriedades que foram configuradas no  ``ejb-jar.xml`` . Neste exemplo, você especificou as atribuições de segurança dos métodos EJB usando a anotação  ``@RolesAllowed``  no bean de sessão.
+
+Entretanto, ao configurar a segurança de uma aplicação, ainda é preciso especificar algumas propriedades nos descritores de implantação. Neste exemplo, é preciso mapear as atribuições de segurança na aplicação corporativa ( ``USERS`` ) para os usuários e grupos configurados no servidor de aplicações. Você criou o grupo  ``bank_users``  no servidor de aplicações, e agora você precisa mapear esse grupo para a atribuição de segurança  ``USERS``  na aplicação corporativa. Para fazer isso, você deve editar o descritor de implantação  ``glassfish-application.xml``  na aplicação corporativa.
+
+Como a aplicação corporativa não precisa de descritores de implantação para ser executada, o IDE não cria os descritores de implantação por default. Primeiro, você precisa criar o arquivo do descritor de implantação e, então, editar o arquivo no editor com multiview para configurar os mapeamentos de implementação de segurança.
+
+1. Clique com o botão direito do mouse no projeto Proteger da aplicação corporativa e selecione Novo > Outros para abrir o assistente Novo Arquivo.
+
+Outra opção é abrir o assistente Novo Arquivo selecionando Arquivo > Novo Arquivo no menu principal. Nesse caso, certifique-se de que o projeto Proteger seja selecionando na lista drop-down do Projeto.
+
+2. Selecione o tipo de arquivo Descritor GlassFish na categoria GlassFish. Clique em Próximo.
+image::images/new-gf-descriptor.png[title="Tipo de arquivo do descritor do GlassFish no assistente Novo Arquivo"]
+3. Aceite os valores default no assistente e clique em Finalizar.
+
+Quando você clica em Finalizar, o IDE cria  ``glassfish-application.xml``  e abre o arquivo no editor com multiview.
+
+Ao expandir o nó do projeto Proteger aplicação corporativa na janela Projetos, você pode ver que o arquivo do descritor é criado abaixo do nó dos Arquivos de Configuração.
+
+image::images/glassfish-application-descriptor.png[title="Guia Segurança no editor com multiview"]
+4. Na guia Segurança do editor com multiview, clique em Adicionar Mapeamento de Atribuição de Segurança e digite *USERS* como Nome da Atribuição de Segurança.
+5. Clique em Adicionar Grupo e digite *bank_users* como Nome do Grupo na caixa de diálogo. Clique em OK.
+
+O editor deve estar parecido com o mostrado a seguir.
+
+image::images/security-tab-descriptor.png[title="Guia Segurança no editor com multiview"]
+6. Salve as alterações.
+
+Você pode clicar na guia XML no editor com multiview para ver o arquivo do descritor de implantação na exibição XML. Você pode ver que o arquivo do descritor de implantação agora contém o seguinte:
+
+
+[source,xml]
+----
+
+<glassfish-application>
+  <security-role-mapping>
+    <role-name>USERS</role-name>
+    <group-name>bank_users</group-name>
+  </security-role-mapping>
+</glassfish-application>
+----
+
+O método  ``getStatus``  está agora seguro e somente os usuários do grupo  ``bank_users``  especificados no servidor podem acessar o método.
+
+Você agora precisa testar de alguma forma as definições de segurança. A forma mais simples é criar um cliente de aplicação básico que solicitará ao usuário o nome e a senha.
+
+
+== Criando o Cliente de Aplicação
+
+Nesta seção, você criará um cliente de aplicação simples para acessar o bean de sessão  ``AccountStatus`` . Você usará a anotação  ``@EJB``  no código para chamar o bean usando a interface remota. O IDE adicionará automaticamente a biblioteca de classes JAR que contém a interface para o classpath do cliente de aplicação.
+
+1. Selecione Arquivo > Novo Projeto e selecione Cliente de Aplicação Corporativa na categoria Java EE. Clique em Próximo.
+2. Digite SecureAppClient para o Nome do Projeto. Clique em Próximo.
+3. Selecione *<Nenhum>* na lista drop-down Adicionar Aplicação Corporativa.
+4. Selecione o GlassFish Server na lista drop-down Servidor e Java EE 6 ou Java EE 7 como a versão do Java EE. Clique em Finalizar.
+
+Quando você clicar em Finalizar, o  ``Main.java``  abrirá no editor de código-fonte.
+
+5. No editor de código-fonte, clique com o botão direito do mouse no arquivo  ``Main.java``  e selecione Inserir Código (Alt-Insert; Ctrl-I no Mac) e selecione Chamar Enterprise Beans.
+6. Na caixa de diálogo Chamar Enterprise Eean, expanda o nó Secure-ejb e selecione AccountStatus. Clique em OK.
+image::images/call-enterprise-bean.png[title="Interface selecionada na caixa de diálogo Chamar Enterprise Bean"]
+
+O IDE adiciona o seguinte código ao cliente da aplicação para procurar o bean de sessão.
+
+
+[source,java]
+----
+
+@EJB
+private static AccountStatusRemote accountStatus;
+----
+
+Se expandir o nó Bibliotecas na janela Projetos, você poderá ver que o IDE adicionou SecureRemoteInterface JAR ao classpath do projeto.
+
+7. Modifique o método  ``main``  para adicionar o código a seguir e salvar suas alterações.
+
+[source,java]
+----
+
+public static void main(String[] args) {
+    *System.out.println(accountStatus.getStatus());*
+}
+----
+
+Para obter mais informações sobre clientes de aplicações, consulte link:entappclient.html[+Criando e Executando um Cliente de Aplicação no GlassFish Server+].
+
+
+== Executando a Aplicação
+
+A aplicação agora está pronta. Primeiro, você implantará a aplicação corporativa no servidor. Após implantar a aplicação corporativa, você poderá executar o cliente de aplicação para testar se o método na aplicação corporativa está seguro e se as atribuições de usuário estão mapeadas corretamente. Ao executar o projeto, você será solicitado a fornecer um nome de usuário e senha para um usuário no grupo  ``bank_users`` .
+
+1. Clique com o botão direito do mouse no nó Proteger projeto de aplicação corporativa na janela Projetos e selecione Implantar.
+
+Quando você clica em Implantar, o IDE constrói o arquivo EAR, inicia o servidor de aplicações (se ainda não estiver em execução) e implanta o arquivo EAR no servidor.
+
+2. Clique com o botão direito do mouse no nó do projeto SecureAppClient na janela Projetos e selecione Executar. Aparecerá uma caixa de diálogo solicitando um nome de usuário e senha.
+image::images/login-window.png[title="Janela de Log-in para solicitar um nome de usuário e senha"]
+3. Digite o nome de usuário ( ``manager`` ) e a senha ( ``password`` ) na caixa de diálogo e clique em OK. A mensagem a seguir é exibida na janela de Saída:
+
+[source,java]
+----
+
+The account contains 250$
+----
+
+Este exemplo muito simples demonstra como proteger um método em um enterprise bean usando anotações Java.
+
+link:/about/contact_form.html?to=3&subject=Feedback:%20Building%20Secure%20Enterprise%20Beans[+Enviar Feedback neste Tutorial+]
+
+
+
+== Consulte Também
+
+Para obter mais informações sobre o uso de anotações e descritores de implantação para proteger enterprise beans, consulte os seguintes recursos:
+
+* Capítulos link:http://docs.oracle.com/javaee/7/tutorial/doc/security-intro003.htm[+Protegendo Contêineres+] e link:http://docs.oracle.com/javaee/7/tutorial/doc/security-advanced008.htm[+Configurando Segurança Usando Descritores de Implantação+] na seção link:http://docs.oracle.com/javaee/7/tutorial/doc/partsecurity.htm[+Segurança+] do Tutorial do Java EE 7
+
+Para obter mais informações sobre o uso do NetBeans IDE para desenvolver aplicações Java EE, consulte os seguintes recursos:
+
+* link:javaee-intro.html[+Introdução à Tecnologia Java EE+]
+* link:javaee-gettingstarted.html[+Conceitos Básicos sobre Aplicações do Java EE+]
+* link:../../trails/java-ee.html[+Trilha de Aprendizado do Java EE e Java Web+]
+
+Para enviar comentários e sugestões, obter suporte e se manter informado sobre os mais recentes desenvolvimentos das funcionalidades de desenvolvimento do Java EE do NetBeans IDE, link:../../../community/lists/top.html[+inscreva-se na lista de correspondência de nbj2ee+].
+

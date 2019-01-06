@@ -1,0 +1,128 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= Storing NetBeans C/C++ Projects Under Version Control Systems
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: Storing NetBeans C/C++ Projects Under Version Control Systems - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, Storing NetBeans C/C++ Projects Under Version Control Systems
+
+Contributed by Vladimir Kvashin, maintained by Alyona Stashkova
+March 2014 [Revision number: V8.0-1]
+
+Starting with NetBeans IDE 7.3 storing NetBeans C/C++ projects (mostly projects from existing code and projects from binary) under version control systems (VCS) became less tricky. This article covers the details of storing NetBeans C/C++ projects under VCS in NetBeans IDE.
+
+
+=== Contents
+
+image::images/netbeans-stamp-80-74-73.png[title="Content on this page applies to the NetBeans IDE 7.3 and more recent"]
+
+* <<requirements,Requirements>>
+* <<issue,VCS Controlled Project Issues Resolved in NetBeans IDE>>
+* <<unfriendly,VCS Unfriendly Project Data Storage>>
+* <<compiler,Compiler Options>>
+* <<variables,Environment Variables List>>
+* <<cannotbuild,Configuring Code Assistance When You Cannot Build the Project>>
+* <<macros,Transient Macros>>
+* <<prj,Managed Projects>>
+* <<info,More Information about C/C++/Fortran Support>>
+
+
+== Requirements
+
+*To follow this tutorial, you need the following software.*
+
+|===
+|Software |Version Required 
+
+|NetBeans IDE (including C/C++ support) |link:https://netbeans.org/downloads/index.html[+version 7.3 or more recent with NetBeans C/C++ plugin+] 
+
+|Java Development Kit (JDK) |link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+Version 6, 7, or 8 +] 
+|===
+
+
+See the link:../../../community/releases/74/install.html[+NetBeans IDE Installation Instructions+] and link:../../../community/releases/74/cpp-setup-instructions.html[+ Configuring the NetBeans IDE for C/C++/Fortran+] documents for information about downloading and installing the required software.
+
+
+== VCS Controlled Project Issues Resolved in NetBeans IDE
+
+The following issues were resolved in NetBeans IDE:
+
+* <<unfriendly,VCS unfriendly project data storage>>
+* <<compiler,Compiler options>>
+
+
+=== VCS Unfriendly Project Data Storage
+
+The NetBeans IDE used to change project metadata files too frequently. For example, you could just open a project that was under VCS, change nothing, and suddenly realize that some project metadata files was changed, so you needed to either check them in or roll back.
+
+This issue was mostly related to projects from existing code and projects from binary, in other words projects that are based on user make files.
+
+The root of the issue was due to the fact that the IDE had very little information about which files in such projects took part in build and what compiler options each file was build with. Without such knowledge, the Code Assistance feature could not be precise. So the IDE had to use some background intelligence to figure out the project content and Code Assistance configuration to parse right files with right options. Unfortunately, such intelligence stored its data in a VCS-unfriendly manner.
+
+
+=== Compiler Options
+
+The compiler issue stems from the fact that compiler options used for building a project can be very specific to the machine you build your project on. For example, OpenJDK build uses `ALT_BOOTDIR`, which needs to be set to the path to my JDK. This path can be different even on machines with the same operating system. The IDE stores all compiler options in project metadata – without knowing such options it won't be able to parse your code next time and be precise enough.
+
+When some machine or user specific information gets into VCS, the project metadata is changed after another user checks it out and builds a project (new options are stored), although the user did no changes in the project.
+
+
+== Environment Variables List
+
+For projects from existing code or from binary, you may specify the list of environment variables to be used when storing project metadata. When the IDE stores the compiler options and an option value coincides with a variable value, a macros will be written instead.
+
+Consider the following example. There `ALT_BOOTDIR=/usr/jdk/latest` and `ALT_BOOTDIR` variables are listed in the above mentioned field in my environment. If the IDE realizes that the `-I/usr/jdk/latest/include` option was used when compiling a file, it will store `${ALT_BOOTDIR}/include` in the project metadata.
+
+The Configure Code Assistance wizard also works on a per-configuration basis: it alters only the configuration that is currently active. So you can run it separately for each configuration, and get different code assistance settings for different platforms.
+
+
+== Configuring Code Assistance When You Cannot Build the Project
+
+The Configure Code Assistance wizard is most efficient if you build your code with the debugging information. The best options are `-g3 -gdwarf-2` for GNU compilers and just `-g` for Sun compilers.
+
+In case your project is not built or does not contain any debugging information, the Configure Code Assistance wizard has a special mode, Search file system for C/C++ header files. In this mode, the NetBeans IDE tries to resolve failed include directives by searching the file system for headers. For this purpose the wizard asks you to enter the path to search for headers. By default, it is a project source root.
+
+
+== Transient Macros
+
+Another thing that may alter project metadata unexpectedly are macros (`-D` options) that are volatile. For example a macros that depends on a date or current user name. Storing such macros values alters project metadata files, but this does not make much sense.
+
+You can specify the list of such macros to ignore in the "Transient macros" field. This prevents the IDE from storing these macros values in project metadata. Macros are to be specified in the macro=value form. Here is a screenshot of a project properties:
+
+image:::images/proj_props_small.png[role="left", link="images/proj_props.png"]
+
+
+== Managed Projects
+
+In managed projects ("C/C++ Application", "C/C++ Dynamic Library", or "C/C++ Static Library" projects) you can also use environment variables to specify the compiler options. They should be preceded with a dollar sign and placed in curly braces as follows: `${ALTBOOTDIR}/include`.
+
+
+== More Information about C/C++/Fortran Support
+
+* Please visit the link:https://netbeans.org/kb/trails/cnd.html[+C/C++ Learning Trail+] for more information about using the C/C++ features of the NetBeans IDE.
+* Join the link:http://forums.netbeans.org/cnd-users.html[+NetBeans C/C++ User Forum+] to take part in discussions related to C/C++ development using the NetBeans IDE or ask for help.
+* You can file a bug or suggest an enhancement to link:https://netbeans.org/bugzilla/enter_bug.cgi?component=cnd[+Bugzilla+] (netbeans.org registration is required).
+* For information on using popular version control packages with NetBeans IDE, see " link:http://www.oracle.com/pls/topic/lookup?ctx=nb7400&id=NBDAG234[+Versioning Applications with Version Control+]" in _Developing Applications with NetBeans IDE_.
+link:mailto:users@cnd.netbeans.org?subject=subject=Feedback:%20Storing%20NetBeans%20C/++%20Projects%20Under%20Version%20Control%20System[+Send Feedback on This Tutorial+]

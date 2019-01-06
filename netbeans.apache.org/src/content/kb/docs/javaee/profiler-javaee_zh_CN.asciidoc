@@ -1,0 +1,390 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= 在 NetBeans IDE 中对企业应用程序进行性能分析
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: 在 NetBeans IDE 中对企业应用程序进行性能分析 - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, 在 NetBeans IDE 中对企业应用程序进行性能分析
+
+NetBeans IDE 中包含一款功能强大的性能分析工具，可提供与企业应用程序的运行时行为有关的重要信息。使用性能分析工具，可以轻松地监视线程状态，并获取有关应用程序 CPU 性能和内存使用情况的数据。
+
+在本文档中，将使用性能分析工具，获取有关以 WAR 的形式部署到应用服务器上的简单企业应用程序的数据。本文档介绍了如何使用 IDE 获取有关以下内容的性能分析结果。
+
+* 应用程序的运行时行为
+* 应用程序的方法使用的 CPU 时间
+* 创建对象
+
+如果要将应用程序部署到本地注册的 Tomcat、GlassFish Server 或 JBoss 安装，只需单击几下鼠标并且几乎无需任何配置，即可对应用程序进行性能分析。在 IDE 中，项目的性能分析过程与使用 Run 命令非常类似。通过从主菜单中选择“性能分析”>“分析主项目”，可以轻松地开始对企业应用程序项目或单个 Web 和 EJB 模块进行分析。
+
+
+image::images/netbeans-stamp-80-74-73.png[title="此页上的内容适用于 NetBeans IDE 7.3、7.4 和 8.0"]
+
+
+*要学习本教程，您需要具备以下软件和资源。*
+
+|===
+|软件或资源 |要求的版本 
+
+|link:https://netbeans.org/downloads/index.html[+NetBeans IDE+] |7.3、7.4、8.0、Java EE 包 
+
+|link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+Java 开发工具包 (JDK)+] |JDK 7 或 8 
+
+|GlassFish Server |3.1, 4.0 
+|===
+
+*注：*
+
+* 如果是首次使用分析器，建议您阅读link:../java/profiler-intro.html[+在 NetBeans IDE 中对 Java 应用程序进行性能分析简介+]，其中概述了如何对任务进行监视和性能分析。
+* 如果您使用的是 NetBeans IDE 7.2 或早期版本，请参见link:../../72/javaee/profiler-javaee.html[+在 NetBeans IDE 7.2 中对企业应用程序进行性能分析+]
+* 在本文档中，将对部署到 GlassFish Server 的企业应用程序进行性能分析。在开发期间，对企业或 Web 应用程序进行性能分析时，最简单也是首选的配置是，让应用程序运行在本地 Tomcat、GlassFish 或 JBoss 服务器上。
+
+
+== 关于在 IDE 中对企业应用程序进行性能分析
+
+对企业应用程序进行性能分析时，在大多数情况下，需要分析应用程序的性能，以了解项目方法的执行时间。这样就可以解决应用程序疑难问题，并尝试提高其性能。在某些情况下，还需要获取有关内存使用情况的数据，以优化垃圾回收。
+
+对企业应用程序、EJB 模块和 Web 应用程序进行性能分析的过程与使用 Run 命令运行项目基本相同。选择性能分析任务并指定性能分析选项后，可以在“选择性能分析任务”对话框中单击“运行”，以启动性能分析会话。在启动性能分析会话后，IDE 将执行以下操作：
+
+* 编译应用程序
+* 在性能分析模式下启动目标服务器
+* 部署应用程序
+* 连接至应用程序
+* 在 Web 浏览器中打开 Web 页（如果在项目属性中已指定）
+* 打开“实时性能分析结果”标签
+
+根据您的性能分析选项，IDE 将立即开始在“实时性能分析结果”标签中显示性能分析结果。在某些情况下，如已指定性能分析根方法时，可能需要在 Web 浏览器中执行一些操作，然后才显示结果。
+
+
+=== 对企业应用程序项目进行性能分析
+
+通常，在 IDE 中创建的企业应用程序，不是作为 Web 档案 (WAR) 部署到应用服务器的 Web 应用程序项目，便是包含 Web 应用程序和其他库并部署为企业应用程序档案 (EAR) 的企业应用程序项目。
+
+如果要将应用程序部署为 EAR 档案，则可以创建 NetBeans 企业应用程序项目，其中包含子项目和库。企业应用程序项目中不包含任何源文件，只包含有关构建和部署应用程序的信息，以及服务器配置元数据。在企业应用程序项目中，应用程序的业务逻辑一般包含在 EJB 模块中，而表示层的源代码则包含在 Web 模块中。
+
+如果您拥有企业应用程序项目的所有源代码，则对应用程序进行性能分析时，最简单也是最佳的方法是，对企业应用程序项目而非该项目的其中一个子项目进行分析。这可以确保对所有必要的代码进行编译和部署，并确保应用程序正常运行。通过执行以下任一操作，可以对企业应用程序项目进行性能分析：
+
+* 如果将企业应用程序项目设置为“主项目”，请在 IDE 工具栏中单击“分析主项目”，或从主菜单中选择“性能分析”>“分析主项目”。
+* 在“项目”窗口中右键单击企业应用程序项目节点，然后从弹出式菜单中选择“性能分析”。
+
+对企业应用程序进行性能分析时，可以增加性能分析结果的相关性，方法是：指定性能分析根方法，然后使用分析过滤器限制所分析的类。这有助于最大限度减小性能分析开销对应用程序性能产生的影响，并增加性能分析结果的相关性。
+
+与 Web 应用程序不同的是，运行企业应用程序时，浏览器并非总是自动打开的。（这取决于项目配置。）这意味着，在某些情况下，可能需要手动启动 Web 应用程序前端，然后从 Web 浏览器中调用代码，如 EJB 模块中的业务逻辑。
+
+
+=== 对 EJB 和 Web 模块子项目进行性能分析
+
+性能分析会话可以从任何 EJB 模块或 Web 模块项目启动。在这种情况下，可能需要试用以下方法之一：
+
+* *对 EJB 模块进行性能分析*。如果采用此方法，您可能将需要手动从 Web 浏览器或其他客户端调用应用程序代码，因为 EJB 模块项目通常不会配置为打开 Web 浏览器。将 EJB 模块部署到服务器之后，应该调用其代码，方式与调试或评估应用程序功能时采用的方式相同，通常是先启动 Web 应用程序前端，然后在 Web 浏览器中执行相应操作。
+* *对 Web 模块进行性能分析*。如果采用此方法，则需要先编译 EJB 模块并将其部署到服务器，然后再对 Web 模块项目进行性能分析。通常情况下，在浏览器中执行某项用户操作后才会执行 EJB 的代码。如果此操作由 Web 应用程序代码执行/处理，则您会在其调用树中看到 EJB 代码。
+
+
+== 创建样例项目
+
+在本文档中，将对 ServletStateless 样例应用程序进行性能分析。ServletStateless 应用程序是简单的企业 Web 应用程序，它作为样例项目包含在 IDE 中。
+
+要创建 ServletStateless 应用程序，请执行以下步骤。
+
+1. 从主菜单中，选择“文件”>“新建项目”（Ctrl-Shift-N 组合键；在 Mac 上为 ⌘-Shift-N 组合键）。
+2. 在新建项目向导中，选择“样例”> "Java EE" 类别。
+3. 选择“Servlet 无状态”项目。单击“下一步”。
+4. 指定项目的位置。单击“完成”。
+
+单击“完成”，此时 IDE 将创建 ServletStateless 样例项目。在“项目”窗口中可看到 "ServletStateless" 项目。
+
+*注：*
+
+* 默认情况下，使用 IDE 对项目进行分析时，如果打开了多个项目，则 IDE 将会对“项目”窗口中处于选中状态的项目进行分析。如果从主菜单中选择“运行”>“设置为主项目”并将一个项目设置为主项目，则默认情况下对主项目进行分析。可在“项目”窗口中右键单击项目节点，然后在弹出式菜单中选择“分析”。
+* 如果要对  ``.jsp``  页或 Servlet 等文件进行分析，请右键单击该文件，然后从弹出式菜单中选择“分析文件”。其行为类似于“分析（主）项目”，但启动性能分析会话时，将在浏览器中打开选定 Web 页，而不是项目的默认 Web 页。
+
+
+== 监视应用程序
+
+通过监视应用程序，可以获取有关目标 JVM 属性的高级信息，其中包括线程活动和内存分配。监视应用程序产生的开销非常低，因此，应用程序可以在长时间内以这种模式运行。选择 "Monitor"（监视）任务时，将启动目标应用程序，而不进行任何分析。
+
+要监视 ServletStateless 应用程序，请执行以下步骤。
+
+1. 选择 "Run"（运行）> "Set Main Project"（设置为主项目）> "ServletStateless" 以将该项目设置为主项目。
+
+在将该项目设置为主项目后，该项目的名称将会在 "Projects"（项目）窗口中显示为粗体。
+
+2. 从主菜单中选择 "Profile"（性能分析）> "Profile Main Project"（分析主项目）。
+
+*注：*如果提示您选择要执行性能分析的 Java 平台，请选择 "JDK 1.7" 或 "JDK 1.8"。
+
+3. 在 "Select Profiling Task"（选择性能分析任务）对话框中选择 "Monitor"（监视）。
+4. 单击 "Run"（运行）。
+
+*注：*如果以前未使用过分析器，则可能会提示您先校准分析器，然后才能单击 "Run"（运行）。有关校准分析器的更多信息，请参见link:../java/profiler-intro.html[+在 NetBeans IDE 中对 Java 应用程序进行性能分析简介+]中有关link:../java/profiler-intro.html#calibrate[+首次使用分析器+]的部分。
+
+单击 "Run"（运行）后，IDE 将构建应用程序，并在性能分析模式下启动服务器，然后将该应用程序部署到该服务器。此后，IDE 将连接至应用程序，然后开始检索数据。
+
+目标 JVM 中线程的数据显示在 "Threads"（线程）标签中。"Threads"（线程）标签显示所有线程、服务器线程以及应用程序线程的数据。
+
+您还可以查看其他监视信息，方法是：在 "Profiler"（分析器）窗口中单击 "Telemetry Overview"（遥测概览）按钮，以打开 "VM Telemetry Overview"（VM 遥测概览）窗口。通过 "VM Telemetry Overview"（VM 遥测概览）窗口，可以快速实时地大致了解监视数据。在 "VM Telemetry Overview"（VM 遥测概览）窗口中，可以双击任何图形，以打开图形的较大版本。
+
+监视企业应用程序时，"Memory(Heap)"（内存（堆））和 "Memory (GC)"（内存（垃圾回收））图形可以帮助您快速了解应用程序的内存使用情况。您可以将光标放在图形上，以打开工具提示，其中包含更详细的信息。如果堆大小或存活年代数在稳步增加，则可能表明出现内存泄漏。如果怀疑出现内存泄漏，则可能需要对应用程序的内存使用情况进行分析。
+
+image::images/monitor-memory-telemetry.png[title="显示垃圾回收信息的内存（垃圾回收）图"] 
+
+
+== 分析应用程序的性能
+
+通过 "Analyze CPU Performance"（分析 CPU 性能）任务，可以查看有关应用程序方法级 CPU 性能（执行时间）的数据，以及有关方法调用次数的数据。您可以选择分析整个应用程序的性能，也可以选择性能分析根，只对部分应用程序代码进行分析。
+
+image::images/sample-task.png[title="在 &quot;Select Profiling Task&quot;（选择性能分析任务）对话框 &quot;CPU&quot; 窗格中选中了 &quot;Sample Application&quot;（样例应用程序）模式"]
+
+在 "Profiling Tasks"（性能分析任务）窗口中选择 "Analyze CPU Performance"（分析 CPU 性能）任务时，可以通过选择以下一个选项，选择要进行性能分析的应用程序数量。
+
+* *Quick (Sampled)*（快速（采样））。在此模式中，IDE 对应用程序进行采样并定期执行堆栈跟踪。此选项不如分析方法精确，但是开销较低。借助此选项，可以找到可能需要分析的方法。
+* *Advanced (Instrumented)*（高级（分析））。在此模式中，将对所分析的应用程序的方法进行分析。IDE 会记录线程进入和退出项目方法的时间，方便您查看在每个方法中花费的时间。在进入某个方法时，线程将生成“方法进入”事件。在退出该方法时，线程将生成相应的“方法退出”事件。系统将记录这两个事件的时间戳。该数据是实时处理的。
+
+您可以选择分析应用程序中的所有方法，也可以通过指定一个或多个*根方法*只分析部分应用程序代码。指定根方法可以大大减少性能分析开销。根方法是源代码中可指定为分析根的方法、类或包。当应用程序的某个线程进入和离开分析根时，系统将会收集性能分析数据。在应用程序的某个线程进入根方法之前，系统不会收集任何性能分析数据。要指定根方法，可以在源代码中使用弹出式菜单，也可以单击 *customize*（定制），打开 "Edit Profiling Roots"（编辑性能分析根目录）对话框。
+
+*Web 应用程序性能分析提示*
+
+* 除了 Java 核心类之外，企业应用程序通常还会在目标服务器的类中调用许多方法。因此，选择过滤器以限制所分析的源是很重要的。建议您在对企业应用程序进行性能分析时使用 *Profile only project classes*（只分析项目类）过滤器。
+* 一启动性能分析会话，就会立即收集性能分析结果。如果使用的是高级方法，并且未指定任何性能分析根方法，则服务器一启动，您就会立即获得某些所需的数据，确切地说是 Web 应用程序的监听程序和过滤器初始化数据。如果指定了某些性能分析根方法，则可能无法获得此数据，具体视所选根方法而定。
+* 通常，您不需要监听程序或过滤器数据，因此，可以单击 "Reset Collected Results"（重置收集的结果），以清除该数据。通过在 Web 浏览器中执行某项操作来调用某个代码后，将收集第一批可用数据，此时浏览器通常会显示使用 JavaBeans 和/或定制标记或处理 Servlet 的  ``doGet`` / ``doPost``  方法的 JSP 页。值得注意的是，第一次启动应用程序时收集的数据通常仅表示 Web 应用程序的启动行为。
+* 首次显示 JSP 页时，服务器会在内部将其编译为 Servlet，这会影响调用树和方法计时。此外，Servlet 和其他应用程序代码在第一次运行期间与实际生产环境中的行为略有不同，应用程序在实际的环境中通常处于持续运行状态。为了获取更好地表示实际应用程序性能的性能分析数据，您应该为所分析的代码生成一些工作负载，然后再随时进行度量（调用树不会受其影响）。负载生成器可以帮助您完成此操作。（有关详细信息，请参见link:../java/profile-loadgenerator.html[+使用 NetBeans IDE 中的负载生成器+]。）各种浏览器的缓存功能也可能会对性能产生影响。
+
+*注：*如果要在 Windows 计算机上对 GlassFish 应用服务器中的 Web 应用程序进行性能分析，则当 NetBeans IDE 安装路径（例如，默认安装路径  ``C:\Program Files\netbeans-7.4`` ）包含空格时，启动服务器进行性能分析的操作可能会失败。解决方法是，将 NetBeans IDE 安装到或将其安装目录复制到不包含空格的路径位置（如  ``C:\netbeans-7.4`` ）。
+
+
+=== 对应用程序进行采样
+
+如果需要大致了解整个应用程序的行为，但不需要对方法进行分析，则应选择 "Quick"（快速）选项。在 "Quick"（快速）性能分析模式下，IDE 会定期进行堆栈跟踪。"Quick"（快速）性能分析模式的开销低于 "Advanced"（高级）性能分析模式。
+
+在本练习中，将选择 "Quick"（快速）性能分析模式，以分析应用程序的性能。
+
+1. 在 "Profiler"（分析器）窗口中单击 "Stop"（停止）按钮，以停止监视会话。
+2. 从主菜单中选择 "Profile"（性能分析）> "Profile Main Project"（分析主项目）。
+3. 在 "Select Profiling Task"（选择性能分析任务）对话框中选择 "CPU"。
+4. 选择 *Quick (sampled)*（快速 (采样)）模式。
+5. 从 "Filter"（过滤器）下拉列表中选择 *Profile only project classes*（只分析项目类）。单击 "Run"（运行）。
+
+*注：*此过滤器将所分析的类限定为在企业应用程序项目中找到的类。单击 *Show Filter Value*（显示过滤器值），以查看过滤的类列表。
+
+image::images/sample-task.png[title="在 &quot;Select Profiling Task&quot;（选择性能分析任务）对话框 &quot;CPU&quot; 窗格中选中了 &quot;Sample Application&quot;（样例应用程序）模式"]
+
+通过该对话框中的比例，您可以看到开销相对较低。
+
+6. 在 "Profiler"（分析器）窗口中单击 "Live Profiling Results"（实时性能分析结果）按钮，以打开 "Live Profiling Results"（实时性能分析结果）标签。
+image::images/sample-task-results.png[title="&quot;Sample Application&quot;（样例应用程序）模式的结果"]
+
+在 "Live Profiling Results"（实时性能分析结果）标签中，您可以看到  ``Servlet2Stateless``  类中 Servlet 的  ``service``  方法的执行时间，以及该方法被调用了一次。
+
+
+=== 分析所有方法
+
+在 "Profile Application"（分析应用程序）模式下，将分析应用程序的方法。虽然您可以对应用程序性能进行更准确的度量，但与选择采样模式相比，产生的性能分析开销较高。您可以指定性能分析根方法，以限制所分析的方法，从而减少性能分析开销。对于某些应用程序，指定根方法可能是获取所有详细和/或实际性能数据的唯一方式，因为对整个应用程序进行性能分析时，可能会生成大量的性能分析数据，使应用程序无法使用，甚至可能导致其崩溃。
+
+在本练习中，将分析企业应用程序中的所有方法，以分析应用程序的性能。
+
+1. 在 "Profiler"（分析器）窗口中单击 "Stop"（停止）按钮，以停止监视会话。
+2. 从主菜单中选择 "Profile"（性能分析）> "Profile Main Project"（分析主项目）。
+3. 在 "Select Profiling Task"（选择性能分析任务）对话框中选择 "CPU"。
+4. 选择 *Advanced (instrumented)*（高级 (分析)）模式。
+5. 从 "Filter"（过滤器）下拉列表中选择 *Profile only project classes*（只分析项目类）。单击 "Run"（运行）。
+image::images/advanced-cpu-task.png[title="在 &quot;Select Profiling Task&quot;（选择性能分析任务）对话框 &quot;CPU&quot; 窗格中选中了 &quot;Profile Application&quot;（分析应用程序）模式"]
+
+通过该对话框中的比例可以看到，与 "Quick"（快速）性能分析模式相比，该模式下产生的开销将相对较高。
+
+6. 在 "Profiler"（分析器）窗口中单击 "Live Profiling Results"（实时性能分析结果）按钮，以打开 "Live Profiling Results"（实时性能分析结果）标签。
+
+您可以看到，"Live Profiling Results"（实时性能分析结果）标签显示  ``Servlet2Stateless``  类中 Servlet 的  ``init``  和  ``service``  方法的执行时间，并且每个方法都被调用了一次。此外，还调用了  ``StatelessSessionBean``  类中的  ``init``  方法。
+
+image::images/cpu-pane1-results.png[title="&quot;Profile Application&quot;（分析应用程序）模式的结果"]
+
+*注：*默认情况下，自动刷新模式处于活动状态，这样所显示的数据每几秒钟就会刷新一次。通过单击工具栏中的 "Auto-Refresh"（自动刷新）按钮，可以激活或取消激活自动刷新模式。
+
+为了更好地读取收集的数据，您可以在 "Live Profiling Results"（实时性能分析结果）窗口的 "Hot Spots"（热点）视图中使用 "Results"（结果）过滤器，以过滤显示的结果。"Results"（结果）过滤器仅过滤显示的结果，而不影响所分析的类。使用 "Results"（结果）过滤器时，可以按照定义的模式（起始为、包含、结束为）对结果进行过滤。此外，也可以使用更复杂的正则表达式进行过滤。数据是完全依据第一个结果表列中显示的包/类/方法名称过滤的。您可以指定多个模式，并用空格或逗号加空格来分隔这些模式。
+
+7. 在 Web 浏览器的相应字段中键入名称，然后单击 "Submit Query"（提交查询）。
+image::images/cpu-pane1-results1.png[title="&quot;Profile Application&quot;（分析应用程序）模式的结果"]
+
+单击 "Submit Query"（提交查询）后，可以看到系统更新了 "Live Profiling Results"（实时性能分析结果）标签以反映在 Web 浏览器中执行的操作。单击该按钮时调用了  ``StatelessSessionBean``  类中的  ``sayHello``  方法，并再次调用了  ``init``  方法。此外，还再次调用了  ``Servlet2Stateless``  中 Servlet 的  ``service``  方法。该标签还显示了在每个方法中花费的时间。
+
+单击 "DrillDown"（详细视图）按钮，可以查看显示花在应用程序各个方面（例如 Servlet 和监听程序等）中的相对时间的图形。单击图形即可详细查看显示的性能分析结果。
+
+image::images/drill-down.png[title="应用程序中的 Servlet 所花费的相对时间的详细视图图"]
+
+对应用程序进行性能分析时，总会产生一些应用程序性能分析开销。对于很简单的应用程序，开销并不显著，但是，对于复杂的应用程序，开销可能很大。要减小开销，可以选择性能分析根方法，以限制所分析的类。
+
+
+=== 使用性能分析根方法
+
+在本练习中，将仅对部分应用程序进行性能分析。如果您认为自己了解性能瓶颈之所在，或者只需对代码的某个特定部分（如一个或数个 Servlet）进行分析，则应使用此性能分析方法。与分析所有应用程序方法相比，使用此方法所产生的性能分析开销往往要低得多。由于仅对部分应用程序进行分析，因此，只收集并显示真正需要的数据。
+
+要对部分应用程序进行性能分析，需要设置一个或多个性能分析根方法。IDE 仅分析进入性能分析根方法的线程所调用的那些方法。例如，如果将  ``StatelessSessionBean``  类中的  ``sayHello``  方法设置为根方法，并使用 "Profile only project classes"（只分析项目类）过滤器，则 IDE 将在调用该方法且应用程序线程进入方法中时开始对方法进行分析。在此应用程序中，将不分析  ``init``  构造函数，因为它是在  ``sayHello``  之前调用的。
+
+image::images/profileroot-sayhello-project.png[title="应用程序中的 Servlet 所花费的相对时间的详细视图图"]
+
+如果选择 "Profile all classes"（分析所有类）过滤器，则 IDE 将分析  ``sayHello``  调用的所有方法，包括所有 Java 核心类。
+
+image::images/profileroot-sayhello-all.png[title="应用程序中的 Servlet 所花费的相对时间的详细视图图"]
+
+*注：*在更复杂的应用程序中，可能需要指定几个根方法。您可以选择单个方法、整个类和包作为性能分析根。
+
+要指定性能分析根并分析应用程序的性能，请执行以下步骤。
+
+1. 在 "Profiler"（分析器）窗口中单击 "Stop"（停止）按钮，以停止前一个性能分析会话（如果仍在运行）。
+2. 从主菜单中选择 "Profile"（性能分析）> "Profile Main Project"（分析主项目）。
+3. 在 "Select Profiling Task"（选择性能分析任务）对话框中选择 "CPU"。
+4. 选择 *Advanced (instrumented)*（高级 (分析)）模式。
+5. 单击 *Customize*（定制），打开 "Edit Profiling Roots"（编辑性能分析根目录）对话框。
+
+要对部分应用程序进行性能分析，需要首先指定根方法。通过选择性能分析根，可以只对进入性能分析根的线程所调用的方法进行分析。
+
+6. 在 "Edit Profiling Roots"（编辑性能分析根目录）对话框的 "Select View"（选择视图）下拉列表中，选择 "Web Application View"（Web 应用程序视图）。
+7. 展开 ServletStateless 节点，然后选择 Servlet 包中的  ``service``  方法。单击 "OK"（确定）。
+image::images/edit-profiling-roots.png[title="&quot;Edit Profiling Roots&quot;（编辑性能分析根目录）对话框中的 &quot;Web Application View&quot;（Web 应用程序视图）"]
+
+此外，也可以选择 "Package View"（包视图），以查看应用程序中的所有源包，然后在  ``servlet.stateless``  包中选择  ``Servlet2Stateless``  类中的  ``service``  方法。
+
+image::images/edit-profiling-roots-pkg.png[title="&quot;Edit Profiling Roots&quot;（编辑性能分析根目录）对话框中的 &quot;Package View&quot;（包视图）"]
+
+*注：*请注意未选择  ``Servlet2Stateless``  构造函数。您可以使用 "Edit Profiling Roots"（编辑性能分析根目录）对话框，仅对类中的特定方法进行分析。如果不需要仅对特定方法进行分析，则可以使用 "Package View"（包视图）来选择整个类或包。例如，如果在 "Edit Profiling Roots"（编辑性能分析根目录）对话框的 "Package View"（包视图）中选择  ``Servlet2Stateless``  类，则 IDE 将分析  ``init``  构造函数和  ``service``  方法。
+
+如果单击 "Advanced"（高级）按钮，则可以看到， ``service``  方法作为唯一的根方法列在 "Edit Profiling Roots (Advanced)"（编辑性能分析根目录（高级））对话框中。您可以单击 "Add"（添加），并键入方法签名和类，以明确定义方法。
+
+image::images/edit-profilingroots-pkg-adv.png[title="&quot;Edit Profiling Roots (Advanced)&quot;（编辑性能分析根目录 (高级)）对话框"]
+8. 单击 "Edit Profiling Roots"（编辑性能分析根目录）对话框中的 "OK"（确定）。
+
+在 "Select Profiling Task"（选择性能分析任务）对话框中，可以看到系统将使用定制性能分析根目录来运行 "Advanced"（高级）性能分析模式。您可以单击 *Edit*（编辑），以查看和修改选定的根方法。请注意，性能分析开销现在比尚未指定根方法时要少。
+
+9. 从 "Filter"（过滤器）下拉列表中选择 *Profile only project classes*（只分析项目类）。单击 "Run"（运行）。
+image::images/advanced-cpu-task-custom.png[title="对定制性能分析根目录选择了 &quot;Profile Application&quot;（性能分析应用程序）模式"]
+
+在单击 "Run"（运行）后，IDE 将构建和部署应用程序，并在 Web 浏览器中打开 Servlet 页。
+
+IDE 将在 "Live Profiling Results"（实时性能分析结果）标签中显示性能分析结果。
+
+image::images/cpu-pane2-results.png[title="使用性能分析根目录分析方法的结果"]
+
+您可以看到，IDE 仅显示指定为性能分析根的方法的结果。进入性能分析根之后，应用程序线程尚未进入应用程序中的其他任何方法。
+
+虽然应用程序在进入性能分析根之后已进入其他方法，但并不显示这些其他的方法，因为分析过滤器限制仅对项目中的类进行分析。
+
+10. 在 Web 浏览器的相应字段中键入名称，然后单击 "Submit Query"（提交查询）。
+image::images/cpu-pane2-results1.png[title="在调用 sayHello 方法后使用性能分析根目录分析方法的结果"]
+
+单击 "Submit Query"（提交查询）后，可以看到系统更新了 "Live Profiling Results"（实时性能分析结果）标签以反映在 Web 浏览器中执行的操作。单击该按钮时调用了一次  ``StatelessSessionBean``  类中的  ``sayHello``  方法。此外，还再次调用了  ``service``  方法。
+
+结果显示了应用程序性能，但可能无法准确地表示已持续运行一段时间的应用程序的性能。要在更为现实的情况下模拟 Web 应用程序的性能，一种方法是运行负载生成器脚本。
+
+11. 在浏览器中多次重复执行上一步，然后单击 "Live Profiling Results"（实时性能分析结果）标签中的 "Reset Results"（重置结果），以清除结果。
+12. 重置性能分析结果之后，键入名称，然后再单击一次 "Submit Query"（提交查询）。
+image::images/cpu-pane2-results2.png[title="在调用 sayHello 方法后使用性能分析根目录分析方法的结果"]
+
+如果查看性能分析结果，则在很多情况下，可以看到性能有所提高。
+
+
+=== 使用分析过滤器
+
+分析 CPU 性能时，可以从下拉列表中选择分析过滤器，仅对所需的源代码进行分析，以减少性能分析开销。您可以使用该过滤器指定所分析的包/类。您可以从以下默认过滤器中选择，也可以创建定制过滤器。
+
+* *Profile all classes*（分析所有类）。如果选择此过滤器，则在对 Web 应用程序或企业应用程序进行性能分析时，将分析所有类，包括核心 Java 类和服务器类。选择此过滤器选项时需要格外谨慎，因为分析如此多的类可能会产生*很大*的开销。
+* *Profile only project classes（只分析项目类）。*如果是对企业应用程序进行性能分析，则建议您使用此过滤器，将所分析的代码限制为项目中的类。服务器类将不进行分析。
+* *Profile project and subproject classes*（分析项目和子项目类）。如果要对包含子项目（例如 Web 应用程序、EJB 模块或类库）的企业应用程序项目进行性能分析，则可以选择此过滤器将所分析的代码限制为子项目中的类。
+
+您可以创建定制过滤器，以便在特定项目中使用或进行特定类型的性能分析。例如，如果对 Oracle WebLogic Server 上的 Web 应用程序进行性能分析时要使用分析过滤器，则可以单击 "Edit filter sets"（编辑过滤器集合），以创建排除 Java 核心类、Oracle WebLogic 类和 NetBeans 类的过滤器集合（在启用 HTTP 监视器时很有用）。然后，可以命名该过滤器集合，如 "WebLogic Webapp Exclusive"，然后对部署到 WebLogic Server 的应用程序进行性能分析时，从 "Filter"（过滤器）下拉列表中选择该过滤器。
+
+image::images/custom-filter.png[title="首次对项目进行性能分析时所显示的对话框"]
+
+您可以定义简单的分析过滤器，方法是：从 "Filter"（过滤器）下拉列表中选择 "Quick Filter"（快速过滤器），以打开 "Set Quick Filter"（设置快速过滤器）对话框。然后，可以快速编辑所分析的包或类的列表。此时将创建 "Quick Filter"（快速过滤器），您随后可以从 "Filter"（过滤器）下拉列表中选择该过滤器。
+
+image::images/set-quick-filter.png[title="首次对项目进行性能分析时所显示的对话框"]
+
+有关定义和使用分析过滤器的更多信息，请查阅 IDE 中的性能分析文档。
+
+
+== 分析应用程序的内存使用情况
+
+您可以使用 IDE 的性能分析工具，分析企业应用程序的内存使用情况，以获取有关对象分配和垃圾回收的详细数据。"Analyze Memory Usage"（分析内存使用情况）任务提供了与目标应用程序中已分配对象有关的数据，如已分配对象的数量、类型和位置。
+
+对内存使用情况进行分析时，不能设置性能分析根方法和/或分析过滤器，因此，将跟踪在服务器的生命周期内创建的所有对象。对于复杂的应用服务器，这可能会导致性能分析开销大，内存消耗高。因此，您应该先了解计算机潜在的限制因素，然后再进行这种类型的性能分析。要减少性能分析开销，可以修改设置，以便每次仅对第 10 个对象进行分析。您可能还需要禁止（限制）记录对象分配的堆栈跟踪。
+
+对企业应用程序进行性能分析以检测内存泄漏时，使用 "Surviving Generations"（存活的年代数）的度量数据会非常有用。通过跟踪各个对象经历垃圾回收周期的年代数数值，该工具可以帮助您尽早检测到内存泄漏，以防应用程序占用大量的内存。
+
+要分析内存性能，可以选择下列一个选项，以选择要获取的数据量：
+
+* *快速。*选择此选项后，分析器会对应用程序进行抽样，以便提供仅限于活动对象的数据。活动对象是垃圾收集器尚未回收的所有可访问（和不可访问）的对象。此选项仅跟踪活动对象，而不会跟踪分析时的分配。如果选择此选项，则无法记录堆栈跟踪或使用性能分析点。此选项导致的开销比“高级”选项要低得多。
+* *高级。*选择此选项后，您可以获取有关已分配对象的数量、类型和位置的信息。已分配对象是自启动应用程序以来（或自上次重置分析器中收集的结果以来）创建的对象。对当前由目标 JVM 加载的所有类（以及加载时生成的每个新类）进行分析以生成有关对象分配的信息。如果您希望在分析内存使用情况时使用性能分析点，或者如果您希望记录调用堆栈，则需要选择此选项。此选项导致的性能分析开销比“快速”选项要高得多。
+
+如果选择“高级”选项，则还可以设置以下选项。
+
+* *记录完整对象生命周期。*选择此选项可记录每个对象的所有信息，其中包括存活的年代数。
+* *记录分配的堆栈跟踪。*选择此选项可记录完整的调用堆栈。此选项用于在查看内存快照时查看方法调用的反向调用树。
+* *使用定义的性能分析点。*选择此选项可启用性能分析点。忽略禁用的性能分析点。取消选择此项后，将忽略项目中的所有性能分析点。
+
+在 "Select Profiling Tasks"（选择性能分析任务）窗口中，"Overhead"（开销）计数器将根据所选的性能分析选项粗略地估计性能分析开销的增减量。
+
+现在，您将使用 IDE 分析企业应用程序的内存性能。如果要获取有关存活的年代数的信息，您需要选择 *Advanced*（高级）选项。或者，如果您仅需要有关活动对象的信息，则可以选择 *Quick*（快速）选项。
+
+1. 在 "Profiler"（分析器）窗口中单击 "Stop"（停止）按钮，以停止前一个性能分析会话（如果仍在运行）。
+在单击 "Stop"（停止）后，IDE 将中断与应用程序的连接。
+2. 从主菜单中选择 "Profile"（性能分析）> "Profile Main Project"（分析主项目）。
+3. 在 "Select Profiling Task"（选择性能分析任务）对话框中选择 *Memory*（内存）。
+4. 选择 *Advanced*（高级）。
+5. 选择 *Record full object lifecycle*（记录完整对象生命周期）以便获取有关存活的年代数的数据。
+
+*注：*如果选择此选项，您会注意到 "Overhead"（开销）计数器显著增加。对企业应用程序进行性能分析时，考虑到收集的数据量，很可能需要增加 IDE 的内存。
+
+6. 取消选中 *Use defined Profiling Points*（使用定义的性能分析点）（如果已选中）。单击 "Run"（运行）。
+image::images/profile-memory-advanced.png[title="显示内存任务和选项的 &quot;Select Profiling Task&quot;（选择性能分析任务）对话框"]
+
+单击 "Run"（运行）后，IDE 将编译应用程序，在性能分析模式下启动服务器，然后将该应用程序部署到该服务器。要查看性能分析结果，请在 "Profiler"（分析器）窗口中单击 "Live Results"（实时结果）以打开 "Live Results"（实时结果）窗口。"Live Results"（实时结果）窗口将显示有关目标 JVM 中所分配对象的大小和数量的信息。除了由企业应用程序分配的对象，结果还包括由应用服务器分配的所有对象。
+
+image::images/profile-memory-results.png[title="显示内存使用情况性能分析结果的 &quot;Profiling Results&quot;（性能分析结果）标签"]
+
+默认情况下，将按 "Live Bytes"（活动字节）数对结果进行排序和显示，但是，您可以单击列标题，以更改结果的显示方式。此外，还可以在列表下方的过滤器框中键入类名，对结果进行过滤。
+
+link:/about/contact_form.html?to=3&subject=Feedback:%20Profiling%20Enterprise%20Applications[+发送有关此教程的反馈意见+]
+
+
+
+== 另请参见
+
+本文档介绍了对部署到 GlassFish 应用服务器的企业应用程序进行性能分析时获取性能分析数据的基本方法。
+
+有关本文档中未介绍的性能分析设置和功能的更详细信息，请查阅相关文档，后者是该产品附带的，可从“帮助”菜单项获得。
+
+有关相关文档，请参见以下资源：
+
+* link:http://wiki.netbeans.org/wiki/view/NetBeansUserFAQ#section-NetBeansUserFAQ-Profiler[+Netbeans 分析器常见问题解答+]
+一个包含在 NetBeans IDE 中对应用程序进行性能分析的常见问题的文档
+* link:http://wiki.netbeans.org/wiki/view/FaqProfilerProfileFreeForm[+常见问题解答：对自由格式项目进行性能分析+]
+* link:../java/profiler-screencast.html[+截屏视频：性能分析点、进一步浏览图和堆查看器+]
+介绍 NetBeans IDE 中的一些性能分析功能的演示。
+* link:../../../community/magazine/html/04/profiler.html[+高级性能分析：理论应用实践+]
+* link:http://profiler.netbeans.org/index.html[+profiler.netbeans.org+]
+Netbeans 分析器项目站点
+* link:http://blogs.oracle.com/nbprofiler/[+Netbeans 分析器博客+]
+* link:http://profiler.netbeans.org/mailinglists.html[+Netbeans 分析器邮件列表+]
+* link:http://profiler.netbeans.org/docs/help/5.5/index.html[+使用 Netbeans 分析器 5.5+]
+
+<<top,返回页首>>
+

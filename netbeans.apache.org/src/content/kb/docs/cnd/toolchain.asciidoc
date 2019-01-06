@@ -1,0 +1,529 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= Using the C/C++ Tool Collection Descriptor - NetBeans IDE Tutorial
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: Using the C/C++ Tool Collection Descriptor - NetBeans IDE Tutorial - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, Using the C/C++ Tool Collection Descriptor - NetBeans IDE Tutorial
+
+_Contributed by link:mailto:alexander.simon@oracle.com[+_Alexander Simon_+]
+March 2014_ [Revision number: V8.0-1]
+
+
+image::images/netbeans-stamp.png[title="Content on this page applies to the NetBeans IDE 8.0"]
+
+
+*To follow this tutorial, you need the following software.*
+
+|===
+|Software |Version Required 
+
+|NetBeans IDE (including C/C++ support) |link:https://netbeans.org/downloads/index.html[+Version 8.0+] 
+
+|Java Development Kit (JDK) |link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+Version 7 or 8+] 
+|===
+
+
+See the link:../../../community/releases/80/install.html[+NetBeans IDE Installation Instructions+] and link:../../../community/releases/80/cpp-setup-instructions.html[+ Configuring the NetBeans IDE for C/C++/Fortran+] for information about downloading and installing the required software.
+
+
+== Introduction
+
+This tutorial demonstrates how to edit existing tool collections or create a custom version of an existing tool collection in NetBeans IDE 8.0.
+
+The example shown applies to the GNU tool collection for Oracle Solaris and Linux, but the concepts can also apply to Windows and Mac. Using this information you can learn how to do the following:
+
+* Change compiler flags that the IDE uses by default for compiling C/C++ files
+* Add a compiler that is not supported by the IDE
+
+
+== Tool Collections
+
+A tool collection is a set of compilers, a make utility, and a debugger that is specified in the IDE through a _tool collection descriptor_. Every time you compile, make, or debug your code, the IDE runs an executable file that is described in the tool collection descriptor for the tool collection that the project is configured to use. Code Assistance features use include paths and macros taken from the tool collection descriptor.
+
+The tool collection descriptor is an XML file located in the module  ``_IDE_HOME_/cnd/modules/org-netbeans-modules-cnd-toolchain.jar``  in the folder  ``org/netbeans/modules/cnd/toolchain/resources/toolchaindefinition/`` . You should not edit these original IDE tool descriptor XML files.
+
+This article tells you how to create duplicates of the tool descriptors in your own NetBeans user directory that you can edit. The IDE will then use the information in the tool collection descriptors located in your user directory instead of the original versions.
+
+
+== Community-Contributed Tool Collections
+
+Some plugins for tool collections have been contributed by users in the NetBeans community:
+
+* link:http://plugins.netbeans.org/plugin/36176/cuda-plugin[+Cuda+]
+* link:http://plugins.netbeans.org/plugin/27033/msp430-toolchain[+TI msp430 microcontroller toolchain+]
+* link:http://plugins.netbeans.org/plugin/42519/[+Visual Studio+]
+
+Note that these plugins are not officially supported but are referenced here in case you find them helpful in creating your own plugins.
+
+Windows users might also be interested in an article from a user in the NetBeans community: link:http://minghuasweblog.wordpress.com/2012/09/27/netbeans-setup-and-gnu-cross-toolchain-configuration-for-arm-developmen/[+NetBeans Setup and GNU Cross-Toolchain Configuration for ARM Development+].
+
+
+== Editing Tool Collection Descriptors
+
+Editing a tool collection descriptor is a bit tricky since the NetBeans IDE does not provide a GUI for editing descriptors. This section describes how to make duplicate "shadow" copies of the tool collection descriptors which you can edit to change the way the IDE uses the tools.
+
+1. Exit the IDE if it is running.
+2. Edit the file  ``_IDE-HOME_/etc/netbeans.conf`` , where  ``_IDE-HOME_``  is the NetBeans installation directory.
+3. Add the following flag to the  ``netbeans_default_options``  entry:
+
+[source,java]
+----
+
+-J-Dcnd.toolchain.personality.create_shadow=true
+----
+4. Start the IDE, choose Tools > Options, and select C/C++ in the top pane of the Options window. 
+
+The IDE creates a directory containing "shadow" versions of the tool collection descriptors in your NetBeans user directory:
+
+_userdir_
+
+[source,java]
+----
+
+/config/CND/ToolChain
+----
+
+The location of your NetBeans user directory varies according to your operating system. Some possible locations of the  ``_userdir_/config/CND/ToolChain``  directory include:
+
+* ﻿Windows:  ``C:\Documents and Settings\_username_\Application Data\NetBeans\_version_\config\CND\ToolChain`` 
+* Mac:  ``/Users/_username_/Library/Application Support/NetBeans/_version_/config/CND/ToolChain`` 
+* Linux and Solaris:  ``/home/_username_/.netbeans/_version_/config/CND/ToolChain`` 
+
+The list of descriptors created should be similar to the following:
+
+
+[source,java]
+----
+
+CLang.xml                             SunStudio.xml
+CLang_mac.xml                         SunStudio_10.xml
+CLang_solaris.xml                     SunStudio_11.xml
+Cygwin.xml                            SunStudio_12.1_solaris-sparc.xml
+Cygwin_4.x.xml                        SunStudio_12.1_solaris-x86_linux.xml
+GNU.xml                               SunStudio_12.2_linuxCompatGNU.xml
+GNU_mac.xml                           SunStudio_12.2_solaris-sparc.xml
+GNU_solaris.xml                       SunStudio_12.2_solaris-x86_linux.xml
+Intel.xml                             SunStudio_12.3_linuxCompatGNU.xml
+Interix.xml                           SunStudio_12.3_solaris-sparc.xml
+MinGW.xml                             SunStudio_12.3_solaris-x86_linux.xml
+MinGW_TDM.xml                         SunStudio_12.xml
+OSS_linuxCompatGNU.xml                SunStudio_8.xml
+OSS_solaris-sparc.xml                 SunStudio_9.xml
+OSS_solaris-x86_linux.xml             WinAVR.xml
+OracleSolarisStudio.xml
+
+----
+
+You can edit the descriptor for the toolchain you are using. For example, if you are using GNU on Solaris, edit the  ``GNU_solaris.xml``  file; if you are using MinGW on Windows, you should edit the  ``MinGW.xml``  file.
+
+For information about the tags used in these descriptor XML fies, see <<details,Details for the Tool Collection XML File>>. You can change the values for the tags to change the behavior of the tools in the IDE.
+
+The descriptors in this directory take precedence over the official versions in the _IDE-HOME_ directory. You should delete the tool descriptors in your user directory that you do not want the IDE to use.
+
+5. Remove the  ``-J-Dcnd.toolchain.personality.create_shadow=true``  flag from the  ``_IDE-HOME_/etc/netbeans.conf``  so the IDE does not create shadow descriptors again.
+6. Restart the IDE to use the modified tool descriptor when you are finished making changes.
+
+
+== Creating a Custom Tool Collection
+
+This section shows how to create a tool collection that is based on the GNU tool collection with some changes to compiler flags for debugging. The example shows steps for creating a new NetBeans module that contains a new tool collection to enable you to share the tool collection or use it in other instances of the IDE.
+
+For general information about creating NetBeans modules, see link:http://platform.netbeans.org/tutorials/nbm-google.html[+NetBeans Plugin Quick Start+].
+
+
+*To create a custom tool collection:*
+
+1. Make sure your NetBeans installation includes the NetBeans Plugin Development module.
+
+Choose Tools > Plugins and click the Installed tab. If the NetBeans Plugin Development module is not installed, click the Available Plugins tab and install the module. You can find it quickly by typing "plugin" in the Search box.
+2. Create a new NetBeans module by choosing File > New Project. On the Choose Project page of the New Project wizard, select the category NetBeans Modules and the project Module in the first step of the wizard. Click Next.
+3. On the Name and Location page, type the project name, for example  ``mytoolchain``  and leave all other fields as is. Click Next.
+4. On the Basic Module Configuration page, type  ``org.myhome.mytoolchain``  for Code Name Base, which defines the unique string identifying the module you are creating. The code name base is also used as the main package of the module.
+5. Do not select the "Generate OSGi Bundle" checkbox, since you will be using the default NetBeans module system, rather than OSGi.
+6. Click Finish. The IDE creates a new project named mytoolchain.
+7. In the Projects tab, right click the mytoolchain project node and select New > Other.
+8. In the New File wizard, select the category Module Development and the file type XML Layer, then click Next and click Finish. 
+
+The IDE creates  ``layer.xml``  under the Source Packages node, inside the main package  ``org.myhome.mytoolchain``  and opens  ``layer.xml``  in the editor.
+9. If the file contains a  ``<filesystem/>``  tag, replace it with opening and closing  ``filesystem``  tags: ``<filesystem>`` 
+
+[source,xml]
+----
+
+
+ ``</filesystem>`` 
+----
+10. Copy and paste the following text in  ``layer.xml``  inside the  ``filesystem``  tag:
+
+[source,xml]
+----
+
+<folder name="CND">
+        <folder name="Tool">
+            <file name="GNU_tuned_flavor" url="toolchain/GNU_tuned_flavor.xml">
+                <attr name="extends" stringvalue="GNU_flavor"/>
+            </file>
+            <file name="GNU_tuned_cpp" url="toolchain/GNU_tuned_cpp.xml">
+                <attr name="extends" stringvalue="GNU_cpp"/>
+            </file>
+        </folder>
+        <folder name="ToolChains">
+            <folder name="GNU_tuned">
+                <attr name="position" intvalue="5000"/>
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="org.myhome.mytoolchain.Bundle"/>
+                <file name="flavor.shadow">
+                    <attr name="originalFile" stringvalue="CND/Tool/GNU_tuned_flavor"/>
+                </file>
+                <file name="c.shadow">
+                    <attr name="originalFile" stringvalue="CND/Tool/GNU_c"/>
+                </file>
+                <file name="cpp.shadow">
+                    <attr name="originalFile" stringvalue="CND/Tool/GNU_tuned_cpp"/>
+                </file>
+                <file name="fortran.shadow">
+                    <attr name="originalFile" stringvalue="CND/Tool/GNU_fortran"/>
+                </file>
+                <file name="assembler.shadow">
+                    <attr name="originalFile" stringvalue="CND/Tool/GNU_assembler"/>
+                </file>
+                <file name="scanner.shadow">
+                    <attr name="originalFile" stringvalue="CND/Tool/GNU_scanner"/>
+                </file>
+                <file name="linker.shadow">
+                    <attr name="originalFile" stringvalue="CND/Tool/GNU_linker"/>
+                </file>
+                <file name="make.shadow">
+                    <attr name="originalFile" stringvalue="CND/Tool/GNU_make"/>
+                </file>
+                <file name="debugger.shadow">
+                    <attr name="originalFile" stringvalue="CND/Tool/GNU_debugger"/>
+                </file>
+                <file name="qmake.shadow">
+                    <attr name="originalFile" stringvalue="CND/Tool/GNU_qmake"/>
+                </file>
+                <file name="cmake.shadow">
+                    <attr name="originalFile" stringvalue="CND/Tool/GNU_cmake"/>
+                </file>
+            </folder>
+        </folder>
+    </folder>
+    
+----
+11. Open the  ``Bundle.properties``  file and add the following string:
+ ``CND/ToolChains/GNU_tuned=My GNU Tuned Tool Collection`` 
+12. Create the subpackage  ``toolchain``  by right-clicking the  ``org.myhome.mytoolchain``  package under Source Packages and selecting New > Java Package. Replace the default package name  ``newpackage``  with  ``toolchain``  and click Finish. The IDE creates the subpackage  ``org.myhome.mytoolchain.toolchain`` .
+13. Create a new file by right-clicking the  ``org.myhome.mytoolchain.toolchain``  subpackage and selecting New > Empty File. Name the file  ``GNU_tuned_flavor.xml``  and click Finish.
+
+If you do not see Empty File as an option, select Other and then in the New File wizard, select the category Other and the file type Empty File and click Next.
+
+This file is the tool collection descriptor for the new tool collection.
+
+14. Copy and paste the following text in  ``GNU_tuned_flavor.xml`` :
+
+[source,xml]
+----
+
+<?xml version="1.0" encoding="UTF-8"?>
+<toolchaindefinition xmlns="https://netbeans.org/ns/cnd-toolchain-definition/1">
+    <toolchain name="GNU_tuned_flavor" display="GNU_tuned" family="GNU" qmakespec="${os}-g++"/>
+    <platforms stringvalue="linux,sun_intel,sun_sparc"/>
+</toolchaindefinition>
+
+----
+15. Create another new file by right-clicking the  ``org.myhome.mytoolchain.toolchain``  subpackage and selecting New > Empty File. Name the file  ``GNU_tuned_cpp.xml``  and click Next.
+16. Copy and paste the following text in  ``GNU_tuned_cpp.xml`` :
+
+[source,xml]
+----
+
+<?xml version="1.0" encoding="UTF-8"?>
+<toolchaindefinition xmlns="https://netbeans.org/ns/cnd-toolchain-definition/1">
+    <cpp>
+        <compiler name="g++"/>
+        <development_mode>
+            <fast_build flags=""/>
+            <debug flags="-g3 -gdwarf-2" default="true"/>
+            <performance_debug flags="-g -O"/>
+            <test_coverage flags="-g"/>
+            <diagnosable_release flags="-g -O2"/>
+            <release flags="-O2"/>
+            <performance_release flags="-O3"/>
+        </development_mode>
+    </cpp>
+</toolchaindefinition>
+
+----
+
+Notice the debug flags are set to -g3 and -gdwarf-2, which are different from the flags set in the default GNU tool collection description.
+
+The project tree should look similar to the following:
+
+image::images/project.png[title="Project tree"]
+
+The Unit Test folders might not exist.
+
+17. In the Projects window, right-click the  ``mytoolchain``  project node and choose Run. The module is built and installed in a new instance of the IDE, which is the default target platform of modules. The target platform opens so that you can try out the new module.
+18. In the running module, choose Tools > Options, select C/C++ from the top pane of the Options window, and select the Build Tools tab.
+19. If the new tool collection (GNU_tuned) is not shown, click Restore Default. Click Yes to continue when prompted to rescan your environment.
+
+The IDE shows the new tool collection:
+
+image::images/options.png[title="Options panel"]
+20. Create a new C/C++ sample project  ``Welcome``  by selecting File > New Project > Samples > C/C++ > Welcome.
+21. Right-click the project node and choose Properties. In the Project Properties dialog box, select the Build node, set the Tool Collection to your GNU_tuned tool collection and click OK.
+22. Build the project. Note that the compiler has flags  ``-g3 -gdwarf-2`` 
+
+[source,java]
+----
+
+g++ -c -g3 -gdwarf-2 -MMD -MP -MF build/Debug/GNU_tuned-Solaris-x86/welcome.o.d -o build/Debug/GNU_tuned-Solaris-x86/welcome.o welcome.cc
+----
+23. In the Project Properties dialog box, select the GNU tool collection and click OK.
+24. Build the project again, and compare the compile line in the output window:
+
+[source,java]
+----
+
+g++ -c -g -MMD -MP -MF build/Debug/GNU-Solaris-x86/welcome.o.d -o build/Debug/GNU-Solaris-x86/welcome.o welcome.cc
+----
+
+You should be able to see that the GNU_tuned tool collection has different compiler flags for debug, Development Mode for the GNU compiler.
+
+If you want to use the new module for the GNU_tuned tool collection in your regular IDE, you can create a binary (a .nbm file) and add it as a plugin:
+
+1. Right-click the mytoolchain module project and select Create NBM. The .nbm file is created in the build subdirectory of the project, which you can see in the Files tab.
+2. Select Tools > Plugins, then click the Downloaded tab in the Plugins dialog box.
+3. Click Add Plugins, navigate to the build directory, select the module .nbm file, and click Open. The plugin module is added to the list in the Downloaded tab.
+4. Click the checkbox to select the module in the Downloaded tab, then click the Install button. The NetBeans Plugin Installer opens.
+5. Click Next to advance through the installer, and continue until the installer is finished.
+6. Restart the IDE, and then choose Tools > Options, select C/C++ from the top pane of the Options window, and select the Build Tools tab.
+7. If the new tool collection (GNU_tuned) is not shown, click Restore Defaults. Click Yes to continue when prompted to rescan your environment.
+
+
+=== Details for the Tool Collection XML File
+
+This is a description of most important tags in the tool collection xml file.
+
+For the scheme of all supported tags and attributes of toolchain xml files, you can search for the file  ``toolchaindefinition.xsd``  in the link:http://hg.netbeans.org/cnd-main[+NetBeans IDE source tree +] .
+
+
+==== Tool collection definition tags
+
+|===
+|Tags |Attributes |Description 
+
+|toolchain |Name of tool collection 
+
+|name |Name of tool collection 
+
+|display |Display name of tool collection 
+
+|family |Group name of tool collection 
+
+|platforms |Supported platforms 
+
+|stringvalue |List of supported platforms separated by comma.
+Possible values are:
+
+* linux
+* unix
+* sun_intel
+* sun_sparc
+* windows
+* mac
+* none
+ 
+
+|makefile_writer |Custom makefile writer. 
+
+|class |Class name of custom makefile writer. It should implement
+org.netbeans.modules.cnd.makeproject.spi.configurations.MakefileWriter. 
+
+|drive_letter_prefix |Special prefix for file names 
+
+|stringvalue |"/" for unix
+"/cygdrive/" for cygwin on Windows 
+
+|base_folders |Container for base_folder tags. 
+One or more base_folder tags are contained in one base_folders tag. 
+
+|base_folder |Description of base directory for compilers.
+This tag can contain the following tags: 
+
+|regestry |Windows registry key of the tool. Note that the XML tag must be spelled "regestry" although this is a mispelling. 
+
+|pattern |Regular expression that allows NetBeans IDE to find compiler in registry 
+
+|suffix |Folder with executable files 
+
+|path_patern |Regular expression that allows NetBeans IDE to find compiler by scanning paths. Note that the XML tag must be spelled "path_patern" although this is a mispelling. 
+
+|command_folders |Container for command_folder tags. 
+One or more commander_folder tags are contained in one command_folders tag. 
+
+|command_folder |Describes the directory where UNIX-like commands are located.
+Only needed for MinGW compiler on Windows. The command_folder tag can contain the following tags: 
+
+|regestry |Windows registry key of commands. Note that the XML tag must be spelled "regestry" although this is a mispelling. 
+
+|pattern |Regular expression that allows NetBeans IDE to find the commands folder in the registry 
+
+|suffix |Folder with executable files 
+
+|path_patern |Regular expression that allows NetBeans IDE to find commands. Note that the XML tag must be spelled "path_patern" although this is a mispelling. 
+
+|scanner |Name of error parser service, see <<errorhandler,Creating a Custom Compiler Error Handler>> 
+
+|id |Name of error parser service 
+|===
+
+
+==== Compiler flags
+
+This table lists the tags used to describe the compilers and specify compiler flags for the toolchain.
+
+|===
+|Tags |Description |Example for GNU compiler 
+
+|c,cpp |Set of compiler flags are located in following sub nodes 
+
+|recognizer |Regular expression that allows the IDE to find compiler |For GNU under cygwin on Windows
+.*[\\/].*cygwin.*[\\/]bin[\\/]?$ 
+
+|compiler |Compiler name (name of executable file) |gcc or g++ 
+
+|version |Version flag |--version 
+
+|system_include_paths |Flags to get system include paths |-x c -E -v 
+
+|system_macros |Flags to get system macros |-x c -E -dM 
+
+|user_include |Flag to add user include path |-I 
+
+|user_file |Flag to include the contents of _file_ before other files |-include _file_ 
+
+|user_macro |Flag to add user macro |-D 
+
+|development_mode |Groups of flags for different development modes 
+
+|warning_level |Groups of flags for different warning level 
+
+|architecture |Groups of flags for different architecture 
+
+|strip |Flag for stripping debug information |-s 
+
+|c_standard |Specifies the flags to use for C standards. Use with c89, c99 and c11 tags. |c89 flags="-std=c89"
+c99 flags="-std=c99"
+c11 flags="-std=c11" 
+
+|cpp_standard |Specifies the flags to use for C++ standards. Use with cpp98 and cpp11 tags. |cpp98 flags="-std=c++98"
+cpp11 flags="-std=c++11"
+cpp11 flags="-std=gnu++0x" 
+
+|output_object_file |Flags for specifying object file |-o _(must have a space following -o)_ 
+
+|dependency_generation |Flags for dependency generation |-MMD -MP -MF $@.d 
+
+|precompiled_header |Flags for precompiled header |-o $@ 
+
+|important_flags |Regular expression that specifies which compiler flags change default system include paths and predefined macros for code assistance |-O1|-O2|-O3|-O4|-O5|-Ofast|-Og|-Os|-ansi|-fPIC|-fPIE|-fasynchronous-unwind-tables|-fbuilding-libgcc|-fexceptions|-ffast-math|-ffinite-math-only|-ffreestanding|-fgnu-tm|-fhandle-exceptions|-fleading-underscore|-fno-exceptions|-fno-rtti|-fnon-call-exceptions|-fnon-call-exceptions|-fopenmp|-fpic|-fpie|-fsanitize=address|-fshort-double|-fshort-wchar|-fsignaling-nans|-fstack-protector(\W|$|-)|-fstack-protector-all|-funsigned-char|-funwind-tables|-g(\W|$|-)|-ggdb|-gsplit-dwarf|-gtoggle|-m128bit-long-double|-m3dnow|-m64|-mabm|-madx|-maes|-march=.*|-mavx|-mavx2|-mbmi|-mbmi2|-mf16c|-mfma(\W|$|-)|-mfma4|-mfsgsbase|-mlong-double-64|-mlwp|-mlzcnt|-mpclmul|-mpopcnt|-mprfchw|-mrdrnd|-mrdseed|-mrtm|-msse3|-msse4(\W|$|-)|-msse4.1|-msse4.2|-msse4a|-msse5|-mssse3|-mtbm|-mtune=.*|-mx32|-mxop|-mxsave|-mxsaveopt|-pthreads|-std=.*|-xc($|\+\+$) 
+
+|multithreading |Groups of flags for multithreading support |Only for Oracle Solaris Studio tool collection, not used in GNU-based tool collections 
+
+|standard |Groups of flags for different language standards |Only for Oracle Solaris Studio tool collection, not used in GNU-based tool collections 
+
+|language_extension |Groups of flags for different language extensions |Only for Oracle Solaris Studio tool collection, not used in GNU-based tool collections 
+|===
+
+
+== Creating a Custom Compiler Provider
+
+NetBeans IDE has a default compiler provider:
+org.netbeans.modules.cnd.toolchain.compilers.MakeProjectCompilerProvider 
+This provider works well enough for most toolchains, but you can also create own provider.
+
+*To create your own compiler provider:*
+
+* extend abstract class org.netbeans.modules.cnd.api.compilers.CompilerProvider
+* define class as service and put it before default provider:
+
+[source,java]
+----
+
+@org.openide.util.lookup.ServiceProvider(service = org.netbeans.modules.cnd.spi.toolchain.CompilerProvider.class,
+position=500)
+public class CustomCompilerProvider extends CompilerProvider {
+...
+}
+
+----
+The position=500 attribute guarantees that the custom provider will be invoked before the default provider. The custom provider should return not NULL "Tool" in method "createCompiler()" for tool that should be overridden.
+
+
+== Creating a Custom Compiler Error Handler
+
+NetBeans IDE has a two default compiler error handlers.
+
+* for GNU compiler
+* for Sun Studio compiler
+
+The GNU compiler handler works well enough for any GNU compiler, but if you want you can define your own compiler error handlers.
+
+*To create your own compiler error handler: *
+
+* extend abstract class org.netbeans.modules.cnd.spi.toolchain.CompilerProvider
+* define class as service:
+
+[source,java]
+----
+
+@org.openide.util.lookup.ServiceProvider(service = org.netbeans.modules.cnd.spi.toolchain.CompilerProvider.class)
+      public class CustomCompilerProvider extends ErrorParserProvider {
+          ...
+          @Override
+          public String getID() {
+      	return "MyParser";  // NOI18N
+          }
+      }
+----
+* link error scanner and tool collection description by ID:
+
+[source,xml]
+----
+
+</scanner id="MyParser">
+...
+  </scanner>
+----
+
+
+== See Also
+
+Please see the link:https://netbeans.org/kb/trails/cnd.html[+C/C++ Learning Trail+] for more articles about developing with C/C++/Fortran in NetBeans IDE.
+
+link:mailto:users@cnd.netbeans.org?subject=Feedback:Using%20the%20C/C++%20Tool%20Collection%20Descriptors%20-%20NetBeans%20IDE%208.0%20Tutorial[+Send Feedback on This Tutorial+]
+
+

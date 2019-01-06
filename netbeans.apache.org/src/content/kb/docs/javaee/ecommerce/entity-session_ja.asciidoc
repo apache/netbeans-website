@@ -1,0 +1,674 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= NetBeans Eコマースのチュートリアル - エンティティ・クラスおよびセッションBeanの追加
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: NetBeans Eコマースのチュートリアル - エンティティ・クラスおよびセッションBeanの追加 - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, NetBeans Eコマースのチュートリアル - エンティティ・クラスおよびセッションBeanの追加
+
+
+
+1. link:intro.html[+概要+]
+2. link:design.html[+アプリケーションの設計+]
+3. link:setup-dev-environ.html[+開発環境の設定+]
+4. link:data-model.html[+データ・モデルの設計+]
+5. link:page-views-controller.html[+ページ・ビューおよびコントローラ・サーブレットの準備+]
+6. link:connect-db.html[+データベースへのアプリケーションの接続+]
+7. *エンティティ・クラスおよびセッションBeanの追加*
+8. link:manage-sessions.html[+セッションの管理+]
+9. link:transaction.html[+トランザクション・ビジネス・ロジックの統合+]
+10. link:language.html[+言語サポートの追加+]
+11. link:security.html[+アプリケーションの保護+]
+12. link:test-profile.html[+テストとプロファイリング+]
+13. link:conclusion.html[+まとめ+]
+
+image::../../../../images_www/articles/68/netbeans-stamp-68-69.png[title="このページの内容は、NetBeans IDEバージョン6.8および6.9に適用されます"]
+
+このチュートリアル・ユニットでは、EJB (link:http://java.sun.com/products/ejb/[+Enterprise JavaBeans+])およびJPA (link:http://java.sun.com/javaee/technologies/persistence.jsp[+Java Persistence+])テクノロジを紹介します。この中で、Java EE開発に不可欠な2つのIDEのウィザードを使用します。これらを次に示します。
+
+* *データベースからのエンティティ・クラス・ウィザード:* 選択したデータベースの表ごとに、名前付き問合せ注釈、各列を表すフィールド、および外部キーを表す関係を備えたJava Persistence APIエンティティ・クラスを作成します。
+* *エンティティ・クラスのセッションBean・ウィザード:* エンティティ・クラスごとに、基本的なアクセス・メソッドを備えたEJBセッション・ファサードを作成します。
+
+これらの2つのウィザードは、アプリケーションのモデルをすばやく設定するための効率的な方法を提供します。ビルドしているアプリケーションのlink:design.html#mvcDiagram[+MVC図+]をもう一度参照してください。MVCの構成内で、EJBセッションBeanおよびJPAエンティティ・クラスが対応する場所を確認できます。
+
+image::images/mvc-diagram.png[title="AffableBeanアプリケーションのMVC図"]
+
+このユニットでは、エンティティ・クラスを作成して、Java上で`affablebean`データベースを表します。各エンティティ・クラスがデータベースの表を表す一方で、エンティティ・クラスのインスタンスは、データベースに保存(つまり_持続_)可能なレコードに対応します。アプリケーションのビジネス・ロジックはセッションBeanによってカプセル化され、(ここで示すように)エンティティへのCRUD (Create-Read-Update-Delete)アクセスを可能にする_ファサード_・クラスとして使用したり、アプリケーション固有のアクションを実装するコードを含めたりできます。(この例は、link:transaction.html[+ユニット9: トランザクション・ビジネス・ロジックの統合+]に記載)。
+
+このチュートリアルでビルドするアプリケーションのライブ・デモを、link:http://dot.netbeans.org:8080/AffableBean/[+NetBeans Eコマースのチュートリアルのデモ・アプリケーション+]で表示できます。
+
+
+
+|===
+|ソフトウェアまたはリソース |必須バージョン 
+
+|link:https://netbeans.org/downloads/index.html[+NetBeans IDE+] |Javaバンドル版、6.8または6.9 
+
+|link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+Java Development Kit (JDK)+] |バージョン6 
+
+|<<glassFish,GlassFishサーバー>> |v3またはOpen Source Edition 3.0.1 
+
+|link:http://dev.mysql.com/downloads/mysql/[+MySQLデータベース・サーバー+] |バージョン5.1 
+
+|link:https://netbeans.org/projects/samples/downloads/download/Samples%252FJavaEE%252Fecommerce%252FAffableBean_snapshot3.zip[+AffableBeanプロジェクト+] |スナップショット3 
+|===
+
+*注意: *
+
+* NetBeans IDEが正常に動作するには、JDK (Java Development Kit)が必要です。上記に一覧表示されているいずれのリソースもインストールされていない場合は、最初にJDKをダウンロードしてインストールするようにしてください。
+* NetBeans IDEのJavaバンドル版には、このチュートリアルでビルドするアプリケーションに必要なJava WebおよびEEテクノロジが含まれています。
+* NetBeans IDEのJavaバンドル版には、このチュートリアルに必要なGlassFishサーバーも含まれています。link:https://glassfish.dev.java.net/public/downloadsindex.html[+GlassFishサーバーを別個にダウンロードする+]こともできますが、NetBeansダウンロードに付属するバージョンを使用すると、IDEに自動的に登録されるので便利です。
+* このチュートリアル・ユニットは、以前のユニットを完了させていなくても進めることができます。そのために、データベースの準備や、IDE、GlassFishおよびMySQL間の接続の確立について説明したlink:setup.html[+設定手順+]を参照してください。
+* `AffableBean`プロジェクトのlink:https://netbeans.org/projects/samples/downloads/download/Samples%252FJavaEE%252Fecommerce%252FAffableBean_snapshot4.zip[+スナップショット4+]をダウンロードでき、これはNetBeans IDE 6.9を使用してこのユニットを完了させた後の状態のプロジェクトに対応しています。
+
+
+
+[[whatEJB]]
+== EJBおよびJPAテクノロジとは
+
+このチュートリアルで今まで開発してきたプロジェクトは、Apache Tomcatなどのサーブレット・コンテナを使用して、Webブラウザで実行できました。結局のところ、ここまではJSTLおよびサーブレット・テクノロジを利用したのみで、JDBCを使用して直接データベースに接続しています。実際、アプリケーションのすべての側面(スレッドの安全性、トランザクション、セキュリティなど)のために手動でコーディングしながら、これらのテクノロジのみを使用してアプリケーションの開発を続けることも理論的には可能です。しかし、エンタープライズBeanとJPAエンティティ・クラスを使用すると、すでに十分に試行された信頼できるソリューションを使用しながら、アプリケーションのビジネス・ロジックに集中できるようになります。後続の各項ではこの2つのテクノロジを紹介し、EE開発でこれらが担う役割を説明します。
+
+* <<ejb,エンタープライズJavaBeans>>
+* <<jpa,Java Persistence>>
+
+
+[[ejb]]
+=== エンタープライズJavaBeans
+
+link:http://java.sun.com/products/ejb/[+EJB製品の公式ページ+]では、エンタープライズJavaBeansテクノロジを「分散型の、トランザクション可能な、セキュリティ保護された、可搬性があるアプリケーションの開発をすばやく簡単に行うことができるサーバー側コンポーネント・アーキテクチャ」と説明しています。EJB (エンタープライズBean)をプロジェクトに適用しても、このテクノロジが提供するサービスは開発者にとって透過的なままであり、EJBを使用しない場合に必要になる、大量のボイラープレート・コードを追加する退屈で間違えやすい作業を取り除くことができます。EE開発の経験が少ない場合、作成するJava WebアプリケーションでのEJBの必要性を疑問に思うかもしれません。Debu Panda氏、Reza Rahman氏およびDerek Lane氏による『link:http://www.manning.com/panda/[+EJB 3 In Action+]』の本では、EJBテクノロジの役割を次のようにうまく言い換えています。
+
+[quote]
+----
+_中規模の、比較的単純なWebアプリケーションの開発のためにEJBを使用することは大げさであると多くの人が考えていますが、これは大きな誤りです。家を建設するとき、すべてを一から造るわけではありません。かわりに資材を買ったり、必要に応じて請負業者のサービスを申し込んだりもします。同様に、エンタープライズ・アプリケーションを一からビルドすることはあまり現実的ではありません。ほとんどのサーバー側アプリケーションには、変動するビジネス・ロジック、アプリケーション状態の管理、リレーショナル・データベースに対する情報の格納および取得、トランザクションの管理、セキュリティの実装、非同期処理の実行、システムの統合など、多くの共通点があります。
+
+フレームワークとして、EJBコンテナはこの種の共通の機能をすぐに使用できるサービスとして提供しており、EJBコンポーネントが車輪を再発明することなくアプリケーション内でこれらのサービスを使用できるようになっています。たとえば、Webアプリケーションでクレジット・カード・モジュールをビルドするときに、トランザクションやセキュリティ・アクセス制御の管理のために複雑で間違えやすい大量のコードを書いているとします。これは、EJBコンテナが提供する宣言型のトランザクションやセキュリティ・サービスを使用すれば避けられるはずです。EJBコンポーネントがEJBコンテナへデプロイされると、これらのサービスの他にも数々のサービスを使用できるようになります。これにより、高品質で豊富な機能を持つアプリケーションが、想像を大きく上回るほどの速さで書けるようになります。_^<<footnote1,[1]>>^
+----
+
+EJBは、プロジェクトに組み込まれたコンポーネントまたはJavaクラスと考えることも、多数のエンタープライズ関連のサービスを提供する_フレームワーク_と考えることもできます。このチュートリアルで利用するサービスのいくつかについては、『link:http://www.manning.com/panda/[+EJB 3 In Action+]』で次のように説明されています。
+
+* *プール:* EJBプラットフォームは、EJBコンポーネントごとに、クライアントで共有されるコンポーネント・インスタンスのプールを作成します。どの時点でも、プールされた各インスタンスを使用できるのは単一のクライアントのみです。インスタンスがクライアントへのサービスを終了すると、再生用にガベージ・コレクタによって破棄されるのではなく、再利用のためにプールに返されます。
+* *スレッドの安全性:* EJBは、完全に見えない方法で、すべてのコンポーネントをスレッド・セーフおよび高性能にします。これは、シングル・スレッドのデスクトップ・アプリケーションのようにサーバー・コンポーネントを記述できることを意味します。コンポーネント自体がどれほど複雑であっても、EJBによって確実にスレッド・セーフになります。
+* *トランザクション:* EJBは宣言型のトランザクション管理をサポートします。宣言型のトランザクション管理では、コードのかわりに単純な構成を使用してコンポーネントにトランザクション可能な動作を追加できます。実質的に、どのようなコンポーネント・メソッドもトランザクション可能として指定できます。メソッドが正常に完了すると、EJBはトランザクションを確定して、メソッドによるデータの変更を永続的なものにします。それ以外の場合は、トランザクションがロール・バックされます。コンテナ管理対象EJBトランザクションについては、ユニット9のlink:transaction.html[+トランザクション・ビジネス・ロジックの統合+]で説明します。
+* *セキュリティ: *EJBは、JAAS (Java Authentication and Authorization Service) APIとの統合をサポートしているため、アプリケーションをセキュリティ・コードで複雑にするかわりに、セキュリティを完全に外部に切り離して単純な構成でアプリケーションをセキュリティ保護できます。^<<footnote2,[2]>>^ユニット11のlink:security.html#secureEJB[+アプリケーションの保護+]では、EJBの<a href="http://download.oracle.com/javaee/6/api/javax/annotation/security/RolesAllowed.html" target="_blank"`@RolesAllowed`注釈を示します。
+
+
+[[jpa]]
+=== Java Persistence
+
+Javaエンタープライズの文脈での「_持続性_」とは、Javaオブジェクトに含まれるデータを自動的にリレーショナル・データベースに格納する動作を指します。JPA (link:http://java.sun.com/javaee/technologies/persistence.jsp[+Java Persistence API+])は、開発者にとって透過的な方法で、アプリケーションがJavaオブジェクトとリレーショナル・データベース間でデータを管理できるようにするORM (Object-Relational Mapping: オブジェクト関係マッピング)テクノロジです。これは、データ・モデルをミラー化する一連のJavaクラス(_エンティティ_)を作成および構成することで、JPAをプロジェクトに適用できることを意味します。そうすると、アプリケーションがデータベースに直接アクセスしているようにこれらのエンティティにアクセスできます。
+
+プロジェクトでJPAを使用すると、次のような様々なメリットがあります。
+
+* JPAには、静的および動的な問合せのための、固有の充実したSQLのような問合せ言語があります。JPQL (Java Persistence Query Language)を使用することで、アプリケーションが異なるデータベース・ベンダー間の可搬性を維持できます。
+* 低レベル、冗長、そして間違えやすいJDBC/SQLコードを書く作業を避けることができます。
+* JPAは、データのキャッシュおよびパフォーマンスの最適化のサービスを透過的に提供します。
+
+
+
+[[whatSession]]
+== セッションBeanとは
+
+エンタープライズ・セッションBeanは、特定のビジネス操作を実行するためにクライアントによって呼び出されます。「_セッション_」という名前には、Beanインスタンスが「仕事の単位」の期間使用できるという意味が含まれています。link:http://jcp.org/aboutJava/communityprocess/final/jsr318/index.html[+EJB 3.1仕様+]では、一般的なセッション・オブジェクトを、次のような特長を持つものとして説明しています。
+
+* 単一のクライアントのかわりに実行
+* トランザクション対応可能
+* 配下のデータベースの共有データを更新
+* データベースの共有データを直接示すわけではないが、アクセスおよび更新ができる
+* 比較的存在期間が短い
+* EJBコンテナがクラッシュすると除去される。処理を続けるには、クライアントは新しいセッション・オブジェクトを再確立する必要があります。
+
+EJBは、_ステートフル_、_ステートレス_および_シングルトン_の3タイプのセッションBeanを提供します。次の説明は、link:http://download.oracle.com/docs/cd/E17410_01/javaee/6/tutorial/doc/index.html[+Java EE 6チュートリアル+]の内容を元にしたものです。
+
+* *ステートフル:* Beanの状態は、複数のメソッド・コールにわたって維持されます。「状態」とは、そのインスタンス変数の値を示します。クライアントがBeanと対話するため、この状態はよく「_対話形式の_」状態と呼ばれます。
+* *ステートレス:* ステートレスBeanは、単一のメソッド・コールで発生する可能性のある操作に使用されます。メソッドが処理を終了すると、クライアント固有のBeanの状態は保持されません。したがって、ステートレス・セッションBeanは、クライアントと対話形式の状態を維持しません。
+* *シングルトン:* シングルトン・セッションBeanは、アプリケーションごとに1度インスタンス化され、アプリケーションのライフサイクルの間存在します。シングルトン・セッションBeanは、単一のエンタープライズBeanインスタンスがクライアント間で共有され、並行してアクセスされる場合用に設計されています。
+
+EJBセッションBeanの詳細は、link:http://download.oracle.com/docs/cd/E17410_01/javaee/6/tutorial/doc/gipjg.html[+Java EE 6チュートリアル: セッションBeanとは+]を参照してください。
+
+このチュートリアルのEコマース・アプリケーション開発で使用するのは、ステートレス・セッションBeanのみです。
+
+
+
+[[specification]]
+== 仕様および実装について
+
+EJBおよびJPAテクノロジは、次の仕様によって定義されています。
+
+* link:http://jcp.org/en/jsr/summary?id=317[+JSR 317: Java Persistence 2.0+]
+* link:http://jcp.org/en/jsr/summary?id=318[+JSR 318: Enterprise JavaBeans 3.1+]
+
+これらの仕様はテクノロジを定義しています。しかし、テクノロジをプロジェクトに適用するには、仕様の_実装_を使用する必要があります。仕様が確定すると、テクノロジの無償の実装であるリファレンス実装が含まれます。この概念がわかりにくい場合は、次のような例で考えてください。音楽作品(つまり、ページ上の音符)とは、1つの曲のことです。演奏者は、その曲を学んで演奏を録音するときに、曲の_解釈_を提供します。このように、音楽作品は技術仕様に対応し、演奏者の録音は仕様の実装に対応します。
+
+Java技術仕様と、その正式な標準化定義については、link:intro.html#jcp[+Javaコミュニティ・プロセスとは+]を参照してください。
+
+EJBおよびJPA仕様の最終リリースのダウンロード・ページを調べると、次のリファレンス実装へのリンクが見つかります。
+
+* *JPA:* link:http://www.eclipse.org/eclipselink/downloads/ri.php[+http://www.eclipse.org/eclipselink/downloads/ri.php+]
+* *EJB:* link:http://glassfish.dev.java.net/downloads/ri[+http://glassfish.dev.java.net/downloads/ri+]
+
+JPA仕様の実装は_持続性プロバイダ_と呼ばれており、JPA 2.0仕様のリファレンス実装として選択された持続性プロバイダはlink:http://www.eclipse.org/eclipselink/[+EclipseLink+]です。
+
+EJBリファレンス実装のリンクを調べると、EJBの実装のみでなく、link:https://glassfish.dev.java.net/[+プロジェクトGlassFish+]が提供するすべてのリファレンス実装が一覧表示されたページに移動します。この理由は、プロジェクトGlassFishがJava EE 6プラットフォーム仕様(link:http://jcp.org/en/jsr/summary?id=316[+JSR 316+])のリファレンス実装を形成しているためです。このチュートリアルでEコマース・プロジェクトをビルドするのに使用するGlassFish v3アプリケーション・サーバー(Open Source Edition)には、プロジェクトGlassFishの元で開発されたすべてのテクノロジのリファレンス実装が含まれています。このことから、これはJava EE 6_コンテナ_と呼ばれています。
+
+Java EEコンテナには、Web (サーブレット)コンテナ、EJBコンテナおよび持続性プロバイダの3つの必須コンポーネントが含まれています。Eコマース・アプリケーションのデプロイメント・シナリオを次の図に示しています。このユニットで作成するエンティティ・クラスは、持続性プロバイダによって管理されます。このユニットで作成するセッションBeanは、EJBコンテナによって管理されます。ビューは、Webコンテナによって管理されるJSPページでレンダリングされます。
+
+image::images/java-ee-container.png[title="GlassFish v3には、Webコンテナ、EJBコンテナおよびEclipseLink (持続性プロバイダ)がJava EEコンテナとして格納される"]
+
+
+
+[[addEntity]]
+== エンティティ・クラスの追加
+
+まず、IDEのデータベースからのエンティティ・クラス・ウィザードを使用して、`affablebean`スキーマに基づくエンティティ・クラスを生成します。このウィザードは、配下の持続性プロバイダに依存してこの作業を行います。
+
+1. IDEでlink:https://netbeans.org/projects/samples/downloads/download/Samples%252FJavaEE%252Fecommerce%252FAffableBean_snapshot3.zip[+プロジェクト・スナップショット+]を開きます。IDEで、[Ctrl]-[Shift]-[O] (Macの場合は[⌘]-[Shift]-[O])を押し、ダウンロードしたファイルを解凍したコンピュータ上の場所に移動します。
+2. [Ctrl]-[N] (Macの場合は[⌘]-[N])を押して、ファイル・ウィザードを開きます。
+3. 「持続性」カテゴリから「データベースからのエンティティ・クラス」を選択します。「次」をクリックします。
+4. ステップ2の「データベース表」で、「データ・ソース」ドロップダウン・リストから「`jdbc/affablebean`」を選択します。ドロップダウン・リストは、アプリケーション・サーバーに登録されたデータ・ソースによって生成されます。
+
+`jdbc/affablebean`データ・ソースを選択すると、IDEによってデータベースがスキャンされ、「使用可能な表」ペインにデータベースの表が一覧表示されます。
+image::images/entity-from-database.png[title="使用可能なデータ・ソースの選択し、IDEでデータベースの表を読み取らせる"]
+5. 「すべてを追加」ボタンをクリックしてから「次」クリックします。
+6. データベースからのエンティティ・クラス・ウィザードのステップ3は、NetBeans IDE 6.8と6.9で少し異なります。使用するIDEのバージョンに応じて、以下の手順を実行します。
+* <<68,NetBeans IDE 6.8>>
+* <<69,NetBeans IDE 6.9>>
+
+
+[[68]]
+==== NetBeans IDE 6.8
+
+image::images/entity-classes-68.png[title="NetBeans 6.8 - データベースからのエンティティ・クラス・ウィザード、ステップ3: エンティティ・クラス"]
+1. 「パッケージ」フィールドに「*entity*」と入力します。ウィザードの完了時に、エンティティ・クラスの新しいパッケージが作成されます。
+2. 「持続性ユニットを作成」ボタンをクリックします。「持続性ユニットを作成」ダイアログが開きます。
+image::images/create-pu.png[title="「持続性ユニットを作成」ダイアログを使用したpersistence.xmlファイルの生成"]
+_持続性ユニット_とは、アプリケーション内に存在するエンティティ・クラスのコレクションのことです。上のダイアログで、持続性プロバイダが持続性ユニットの構成設定を指定するために使用する`persistence.xml`ファイルが生成されます。このプロジェクトに関連付けられたサーバーには、「EclipseLink (JPA 2.0)」がデフォルトで選択されています。「表生成の方針」は「`なし`」のままにします。これにより、持続性プロバイダがデータベースに影響しないようになります。(たとえば、持続性プロバイダに、データベースを削除してから既存のエンティティ・クラスに基づいてデータベースを再作成させる場合は、方針を「`ドロップして作成`」に設定します。この場合、このアクションはプロジェクトがデプロイされるたびに行われます。)
+3. 「作成」をクリックします。
+4. ステップ3の「エンティティ・クラス」に戻ると、エンティティのクラス名がデータベースの表に基づいたものになっています。たとえば、`CustomerOrder`エンティティは`customer_order`データベース表にマップされています。また、「持続フィールド用のNamedQuery注釈を生成」オプションがデフォルトで選択されています。このチュートリアルの後半で、様々な名前付き問合せを使用します。
+5. 下の<<step7,ステップ7>>に進みます。
+
+
+[[69]]
+==== NetBeans IDE 6.9
+
+image::images/entity-classes-69.png[title="NetBeans 6.9 - データベースからのエンティティ・クラス・ウィザード、ステップ3: エンティティ・クラス"]
+1. 「パッケージ」フィールドに「*entity*」と入力します。ウィザードの完了時に、エンティティ・クラスの新しいパッケージが作成されます。
+2. 次の点に注意してください。
+* エンティティのクラス名は、データベース表に基づきます。たとえば、`CustomerOrder`エンティティは`customer_order`データベース表にマップされます。
+* 「持続フィールド用のNamedQuery注釈を生成」オプションはデフォルトで選択されています。このチュートリアルの後半で、様々な名前付き問合せを使用します。
+* 「持続性ユニットを作成」オプションはデフォルトで選択されています。_持続性ユニット_は、アプリケーション内に存在するエンティティ・クラスのコレクションです。持続性ユニットは、持続性プロバイダが読み取る`persistence.xml`構成ファイルで定義されます。したがって、このオプションを有効にすることは、ウィザードによって`persistence.xml`ファイルが生成されてデフォルト設定が割り当てられることにもなります。
+7. 「終了」をクリックします。JPAエンティティ・クラスが`affablebean`データベース表に基づいて生成されます。「プロジェクト」ウィンドウで新しく作成された`entity`パッケージを展開すると、エンティティ・クラスを調べることができます。また、「構成ファイル」ノードの下には新しい持続性ユニットがあります。
+image::images/entity-classes.png[title="「プロジェクト」ウィンドウでの新しいエンティティ・クラスの表示"]
+
+ウィザードによって、追加のエンティティ・クラス`OrderedProductPK`が生成されています。データ・モデルの`ordered_product`表は、`customer_order`および`product`の両方の表の主キーで構成される複合主キーを使用することを思い出してください。(link:data-model.html#manyToMany[+データ・モデルの設計 - 多対多の関係の作成+]を参照。)このため、持続性プロバイダは複合キーのための別個のエンティティ・クラスを作成して、`OrderedProduct`エンティティに_埋込みます_。`OrderedProduct`をエディタで開くと、これを調べることができます。JPAは、組込み可能なクラスが複合主キーであることを示すために、`@EmbeddedId`注釈を使用します。
+
+[source,java]
+----
+
+public class OrderedProduct implements Serializable {
+    private static final long serialVersionUID = 1L;
+    *@EmbeddedId*
+    protected OrderedProductPK orderedProductPK;
+----
+
+`@EmbeddedId`注釈で[Ctrl]-[Space]を押してAPIドキュメントを呼び出します。
+
+image::images/embedded-id.png[title="[Ctrl]-[Space]の押下によるAPIドキュメントの呼出し"]
+8. エディタで持続性ユニット(`persistence.xml`)を開きます。IDEには「XML」ビューに加え、持続性ユニットのための「デザイン」ビューも用意されています。「デザイン」ビューは、プロジェクトの持続性プロバイダの管理構成を変更するための便利な方法を提供します。
+image::images/persistence-unit.png[title="AffableBeanPU持続性ユニットの「デザイン」ビュー"]
+9. `AffableBeanPU`持続ユニットの最上部にある「XML」タブをクリックして、「XML」ビューを開きます。ファイルに次のプロパティを追加します。
+
+[source,xml]
+----
+
+<persistence-unit name="AffableBeanPU" transaction-type="JTA">
+  <jta-data-source>jdbc/affablebean</jta-data-source>
+  *<properties>
+    <property name="eclipselink.logging.level" value="FINEST"/>
+  </properties>*
+</persistence-unit>
+----
+アプリケーションを実行したときに持続性プロバイダによって生成される出力がすべて表示されるように、ロギング・レベルのプロパティを`FINEST`に設定しました。これによって、持続性プロバイダがデータベースで使用しているSQLが確認できるようになり、どのようなデバッグが必要になったとしても、デバッグが容易になります。
+
+ロギングの説明およびすべてのロギング値の一覧については、公式のEclipseLinkドキュメント(link:http://wiki.eclipse.org/EclipseLink/Examples/JPA/Logging[+ロギングの構成方法+])を参照してください。
+
+
+
+[[addSession]]
+== セッションBeanの追加
+
+この項では、IDEのエンティティ・クラスのセッションBean・ウィザードを使用して、作成したばかりのエンティティ・クラスごとにEJB_セッション・ファサード_を生成します。各セッションBeanには、それぞれのエンティティ・クラスのための基本的なアクセス・メソッドが含まれます。
+
+_セッション・ファサード_とは、link:http://java.sun.com/blueprints/enterprise/index.html[+エンタープライズ・ブループリント・プログラム+]で公表されているデザイン・パターンです。link:http://java.sun.com/blueprints/corej2eepatterns/Patterns/SessionFacade.html[+コアJ2EEパターン・カタログ+]に記載されているように、これは多層アプリケーション環境で起こる次のような共通する問題の解決を図るものです。
+
+* 密結合による、クライアントとビジネス・オブジェクト間の直接の依存性
+* クライアントとサーバー間の過多のメソッド呼出しによる、ネットワーク・パフォーマンスの問題
+* クライアント・アクセス方針が一貫しないことによる、ビジネス・オブジェクトの誤用
+
+セッション・ファサードは、配下のビジネス・オブジェクトの相互作用を抽象化して、必要な機能のみを使用できるようにするサービス・レイヤーを提供します。これにより、参加者間の複雑な相互作用がクライアントに表示されなくなります。このようにして、セッションBean (セッション・ファサードを表します)はビジネス・オブジェクト間の関係を管理します。また、セッションBeanは、ワークフローの必要に応じて参加者を作成、配置、変更および削除することで、参加者のライフサイクルも管理します。
+
+1. [Ctrl]-[N] (Macの場合は[⌘]-[N])を押して、ファイル・ウィザードを開きます。
+2. 「持続性」カテゴリを選択してから「エンティティ・クラスのセッションBean」を選択します。
+image::images/session-beans-for-entity-classes.png[title="「エンティティ・クラスのセッションBean」を選択し、持続性モデルのセッション・ファサードを生成する"]
+3. 「次」をクリックします。
+4. ステップ2の「エンティティ・クラス」では、左側の「利用可能なエンティティ・クラス」の下に、プロジェクトに含まれているすべてのエンティティ・クラスが一覧表示されています。「すべてを追加」をクリックします。すべてのエンティティ・クラスが、右側の「選択されているエンティティ・クラス」の下に移動します。
+5. 「次」をクリックします。
+6. ステップ3の「生成されるセッションBean」で、「パッケージ」フィールドに「*session*」と入力します。
+image::images/generated-session-beans.png[title="新しいセッションBeanの場所およびインタフェース作成の有無の指定"]
+
+*注意:* このウィザードを使用して、セッションBeanのローカルおよびリモート・インタフェースを生成できます。セッションBeanをインタフェースとしてプログラミングするメリットはありますが(たとえば、ビジネス・オブジェクトの相互作用をインタフェースの後ろに隠すと、クライアントをビジネス・ロジックからさらに切り離すことができます。これにより、必要に応じてアプリケーション用にインタフェースの複数の実装をコーディングできるようになります)、これについてはこのチュートリアルでは扱いません。3.1より前のバージョンのEJBでは、セッションBeanごとにインタフェースを実装する_必要があります_。
+
+7. 「終了」をクリックします。IDEによって、プロジェクトに含まれるエンティティ・クラスごとにセッションBeanが生成されます。「プロジェクト」ウィンドウで、新しい`session`パッケージを展開してセッションBeanを調べます。
+
+|===
+|NetBeans 6.8 |NetBeans 6.9 
+
+|image::images/projects-window-session-beans.png[title="「プロジェクト」ウィンドウでの新しいセッションBeanの調査"] |image::images/projects-window-session-beans-69.png[title="「プロジェクト」ウィンドウでの新しいセッションBeanの調査"] 
+|===
+
+*注意: *上記のように、NetBeans IDE 6.9では、エンティティ・クラスのセッションBean・ウィザードがファサード・クラスを生成するようにわずかな改善が提供されます。つまり、すべてのクラスに共通するボイラープレート・コードが`AbstractFacade`という名前の抽象クラスに取り出されます。バージョン6.9を使用している場合は、生成されたいずれかのファサード・クラス(`AbstractFacade`を除く)を開いてください。そのクラスが`AbstractFacade`を継承していることがわかります。
+
+8. エディタでセッション・ファサード(たとえば、`ProductFacade`)を開きます。生成されたすべてのセッション・ファサードは、link:http://download.oracle.com/javaee/6/api/javax/persistence/PersistenceContext.html[+`@PersistenceContext`+]注釈を使用してlink:http://java.sun.com/javaee/6/docs/api/javax/persistence/EntityManager.html[+`EntityManager`+]をインスタンス化します。
+
+[source,java]
+----
+
+@PersistenceContext(unitName = "AffableBeanPU")
+private EntityManager em;
+----
+`@PersistenceContext`注釈は、コンテナ管理対象`EntityManager`をクラスに注入するために使用されます。つまり、必要に応じてGlassFishのEJBコンテナを利用して`EntityManager`を開いたり閉じたりします。`unitName`要素には、アプリケーションの`persistence.xml`ファイルで定義されている`AffableBeanPU`持続性ユニットを指定します。
+
+`EntityManager`はJava Persistence APIの重要なコンポーネントであり、データベースで持続性アクションを実行する役割を果たします。『link:http://www.manning.com/panda/[+EJB 3 In Action+]』の本では、`EntityManager`を次のように説明しています。
+[quote]
+----
+_JPA`EntityManager`インタフェースは、実際に持続性サービスを提供することでエンティティを管理します。エンティティは、JPAプロバイダに自身がデータベースにどのようにマップされているかを伝えますが、自身は持続しません。`EntityManager`インタフェースは、エンティティのORMメタデータを読み取って、持続性操作を実行します。_
+----
+
+アプリケーションに、JPAエンティティ・クラスの形式で`affablebean`データベースの持続性モデルが含まれるようになりました。また、エンティティ・クラスにアクセスするために使用できるエンタープライズBeanで構成されるセッション・ファサードも含まれています。次の項では、セッションBeanおよびエンティティ・クラスを使用してデータベースにアクセスする方法を示します。
+
+
+
+[[access]]
+== EJBによるデータへのアクセス
+
+link:connect-db.html[+前のチュートリアル・ユニット+]で、アプリケーションからデータベースにアクセスする方法を学習しました。この方法では、GlassFishにデータ・ソースを構成し、アプリケーションのデプロイメント・ディスクリプタにリソース参照を追加してから、アプリケーションのJSPページでJSTLの`<sql>`タグを使用することで、データベースにアクセスしました。データベースのデータを含むプロトタイプをすばやく設定できるため、これは重要な手法です。しかし、この手法では維持管理や拡大縮小が難しくなるため、中規模から大規模のアプリケーションや、複数開発者のチームによって管理されるアプリケーションに使用することは現実的ではありません。その上、多層にわたるアプリケーションを開発している場合や、MVCパターンに従っている場合、データにアクセスするコードをフロント・エンドに保持することは望ましくありません。エンタープライズBeanと持続性モデルを使用すると、プレゼンテーション・コンポーネントとモデル・コンポーネントを効果的に切り離して、MVCパターンにより準拠できるようになります。
+
+次の手順では、`AffableBean`プロジェクトでセッションおよびエンティティBeanの使用を開始するための方法を示します。以前にインデックス・ページおよびカテゴリ・ページのために設定したJSTLデータ・アクセス・ロジックは除去することになります。かわりに、セッションBeanによって提供されるデータ・アクセス・メソッドを利用して、スコープ指定された変数にデータを格納し、フロント・エンドのページ・ビューからデータを取り出せるようにします。まずインデックス・ページに取り組んでから、より複雑なカテゴリ・ページに進みます。
+
+* <<index,インデックス・ページ>>
+* <<category,カテゴリ・ページ>>
+
+
+[[index]]
+=== インデックス・ページ
+
+インデックス・ページには、4つの製品カテゴリのデータが必要です。現時点の設定では、インデックス・ページがリクエストされるたびに、JSTLの`<sql>`タグがカテゴリの詳細をデータベースに問い合せます。この情報はほとんど変更されないため、パフォーマンスの観点からすると、アプリケーションがデプロイされた後に問合せを1回のみ実行して、アプリケーション・スコープ指定された属性にデータを格納する方が効果的です。このコードを`ControllerServlet`の`init`メソッドに追加することで、これを実現できます。
+
+1. 「プロジェクト」ウィンドウで、「ソース・パッケージ」>「`controller`」>「`ControllerServlet`」ノードをダブルクリックしてエディタで開きます。
+2. `CategoryFacade`のインスタンスを宣言して、`@EJB`注釈をインスタンスに適用します。
+
+[source,java]
+----
+
+public class ControllerServlet extends HttpServlet {
+
+    *@EJB
+    private CategoryFacade categoryFacade;*
+
+    ...
+}
+----
+`@EJB`注釈は、`CategoryFacade`という名前のEJBで`categoryFacade`変数をインスタンス化するようにEJBコンテナに指示します。
+3. IDEのヒントを使用して、次のインポート文を追加します。
+* `javax.ejb.EJB`
+* `session.CategoryFacade`
+
+[Ctrl]-[Shift]-[I] (Macの場合は[⌘]-[Shift]-[I])を押すと、必要なインポートが自動的にクラスに追加されます。
+
+4. 以下の`init`メソッドをクラスに追加します。Webコンテナは、その`init`メソッドをコールしてサーブレットを初期化します。これは、サーブレットがロードされてからサービス・リクエストを開始するまでの間に1回のみ発生します。
+
+[source,java]
+----
+
+public class ControllerServlet extends HttpServlet {
+
+    @EJB
+    private CategoryFacade categoryFacade;
+
+    *public void init() throws ServletException {
+
+        // store category list in servlet context
+        getServletContext().setAttribute("categories", categoryFacade.findAll());
+    }*
+
+    ...
+}
+----
+ここで、`Category`のすべてのレコードをデータベースに問い合せる、ファサード・クラスの`findAll`メソッドを適用します。その後、結果として得られた`Category`オブジェクトの`List`を、「`categories`」の文字列で参照できる属性として設定します。`ServletContext`に参照を置くと、その参照はアプリケーション全体のスコープで存在することになります。
+
+`findAll`メソッドのメソッド署名をすばやく判定するには、[Ctrl]キー(Macの場合は[⌘])を押しながらカーソルをメソッドの上に移動します。(以下のイメージは、NetBeans IDE 6.8を使用して表示されるポップアップを示しています。)
+
+image::images/method-signature.png[title="[Ctrl]キーを押しながらカーソルをメソッド上に移動して署名を表示する"]
+ハイパーリンクをクリックすると、メソッドに直接移動できます。
+5. IDEのヒントを使用して、`@Overrides`注釈を追加します。`init`メソッドは、`HttpServlet`のスーパー・クラスである`GenericServlet`によって定義されます。
+image::images/override.png[title="IDEのヒントを使用した、メソッドへの@Overrides注釈の追加"]
+注釈を追加することは必須ではありませんが、これを行うと次のようないくつかの利点が得られます。
+* 本当にオーバーライドするつもりのメソッドをオーバーライドしているかどうかを確認するためのコンパイラ・チェックを使用できるようになります。
+* ソース・コードのメソッドがオーバーライドされている状態が明確になるため、読みやすさが向上します。
+
+注釈の詳細は、link:http://download.oracle.com/javase/tutorial/java/javaOO/annotations.html[+Javaチュートリアル: 注釈+]を参照してください。
+
+6. これで、カテゴリの一覧を含むアプリケーション・スコープ指定された属性を設定したので、新しく作成した属性にアクセスするようにインデックス・ページを変更します。
+
+「プロジェクト」ウィンドウで「Webページ」>「`index.jsp`」ノードをダブルクリックして、このファイルをエディタで開きます。
+7. ファイルの最上部に一覧表示されている`<sql:query>`文をコメントアウト(または削除)します。エディタでコードをコメントアウトするには、コードを強調表示してから[Ctrl]-[/](Macの場合は[⌘]-[/])を押します。
+image::images/commented-out.png[title="エディタでの[Ctrl]-[/]の押下によるコード・スニペットのコメントアウト"]
+8. `<c:forEach>`の開始タグを変更して、この`items`属性が、新しいアプリケーション・スコープ指定された`categories`属性を参照するようにします。
+
+[source,java]
+----
+
+<c:forEach var="category" items="*${categories}*">
+----
+9. プロジェクトのWebデプロイメント・ディスクリプタを開きます。[Alt]-[Shift]-[O] (Macの場合は[Ctrl]-[Shift]-[O])を押して、「ファイルに移動」ダイアログで「`web`」と入力してから「OK」をクリックします。
+image::images/go-to-file.png[title="「ファイルに移動」ダイアログを使用した、エディタへのファイルの速やかな表示"]
+10. `<resource-ref>`エントリをコメントアウト(または削除)します。このエントリは、サーバーに登録されたデータ・ソースを`<sql>`タグで識別するために必要でした。現時点では、JPAに依存してデータベースにアクセスしており、持続性ユニットに`jdbc/affablebean`データ・ソースがすでに指定されています。(上記の<<pu,プロジェクトの持続性ユニットの「デザイン」ビュー>>を参照。)
+
+`<resource-ref>`エントリ全体を強調表示してから[Ctrl]-[/](Macの場合は[⌘]-[/])を押します。
+
+[source,xml]
+----
+
+*<!-- *<resource-ref>
+         <description>Connects to database for AffableBean application</description>
+         <res-ref-name>jdbc/affablebean</res-ref-name>
+         <res-type>javax.sql.ConnectionPoolDataSource</res-type>
+         <res-auth>Container</res-auth>
+         <res-sharing-scope>Shareable</res-sharing-scope>
+     </resource-ref> *-->*
+----
+11. プロジェクトを実行します。「プロジェクトの実行」(image::images/run-project-btn.png[])ボタンをクリックします。プロジェクトのインデックス・ページがブラウザで開き、4つのすべてのカテゴリ名およびイメージが表示されるのが確認できます。
+image::images/index-page.png[title="インデックス・ページにカテゴリの詳細を取得できることの確認"]
+
+
+[[category]]
+=== カテゴリ・ページ
+
+link:design.html#category[+カテゴリ・ページ+]が正しくレンダリングされるには、次の3つのデータが必要です。
+
+1. *カテゴリ・データ:* 左の列のカテゴリ・ボタン用
+2. *選択されたカテゴリ:* 選択されたカテゴリは左の列で強調表示され、選択されたカテゴリの名前は製品の表の上に表示される
+3. *選択されたカテゴリの製品データ:* 製品の表に表示された製品用
+
+3つのデータを1つずつ処理していきましょう。
+
+* <<categoryData,カテゴリ・データ>>
+* <<selectedCategoryData,選択されたカテゴリ>>
+* <<productData,選択されたカテゴリの製品データ>>
+
+
+[[categoryData]]
+==== カテゴリ・データ
+
+インデックス・ページのために作成した、アプリケーション・スコープ指定された`categories`属性をカテゴリ・データ用に再利用します。
+
+1. エディタで`category.jsp`を開き、ファイルの最上部に一覧表示されているJSTLの`<sql>`文を([Ctrl]-[/]、Macの場合は[⌘]-[/]で)コメントアウトします。
+image::images/comment-out-sql.png[title="カテゴリ・ページでのJSTLの<sql>文のコメントアウト"]
+2. `<c:forEach>`の開始タグを変更して、この`items`属性が、アプリケーション・スコープ指定された`categories`属性を参照するようにします。(上記で`index.jsp`に対して実行した手順と同じです。)
+
+[source,java]
+----
+
+<c:forEach var="category" items="*${categories}*">
+----
+3. プロジェクトを実行して、カテゴリ・ページの現在の状態を調べます。「プロジェクトの実行」(image::images/run-project-btn.png[])ボタンをクリックします。プロジェクトのインデックス・ページがブラウザで開いたら、4つのカテゴリのいずれかをクリックします。左の列にカテゴリ・ボタンが表示され、想定したとおりに機能します。
+image::images/category-page-left-column.png[title="左の列にカテゴリのボタンが表示され、想定したとおりに機能する"]
+
+
+[[selectedCategoryData]]
+==== 選択されたカテゴリ
+
+選択されたカテゴリを取得するために、カテゴリIDとリクエスト問合せ文字列が一致する`Category`を見つけるためにすでに作成してある`categoryFacade`を使用できます。
+
+1. エディタで`ControllerServlet`を開きます。(すでに開いている場合は、[Ctrl]-[Tab]を押してポップアップ・リストから選択します。)
+2. 選択されたカテゴリを取得する機能の実装を開始します。`TODO: Implement category request`というコメントを見つけ、それを削除して以下の(*太字の*)コードを追加します。
+
+[source,java]
+----
+
+// if category page is requested
+if (userPath.equals("/category")) {
+
+    *// get categoryId from request
+    String categoryId = request.getQueryString();
+
+    if (categoryId != null) {
+
+    }*
+
+// if cart page is requested
+} else if (userPath.equals("/viewCart")) {
+----
+リクエストで`getQueryString()`をコールすることで、リクエストされたカテゴリIDを取得します。
+
+*注意:* 左の列のカテゴリ・ボタン内で選択されたカテゴリを判定するためのロジックは、EL式を使用する`category.jsp`ですでに実装されています。これは、サーブレットで`getQueryString()`をコールすることに相当します。このEL式は`pageContext.request.queryString`です。
+
+3. `if`文の中に、次のコード行を追加します。
+
+[source,java]
+----
+
+// get categoryId from request
+String categoryId = request.getQueryString();
+
+if (categoryId != null) {
+
+    *// get selected category
+    selectedCategory = categoryFacade.find(Short.parseShort(categoryId));*
+}
+----
+`CategoryFacade`の`find`メソッドを使用して、リクエストされたカテゴリIDに基づく`Category`オブジェクトを取得します。`categoryId`を、`Category`エンティティ・クラスの`id`フィールドに使用される型である`Short`にキャストする必要があります。
+4. 左マージンにあるバッジ(image::images/editor-badge.png[])をクリックしてエディタのヒントを使用し、`selectedCategory`を`doGet`メソッド内のローカル変数として宣言します。
+image::images/local-variable.png[title="エディタのヒントを使用してローカル変数を宣言する"]
+`selectedCategory`はこのクラスにまだインポートされていない`Category`型であるため、IDEは`entity.Category`のインポート文をファイルの先頭に自動的に追加します。
+5. 取得した`Category`オブジェクトをリクエスト・スコープに置くために次の行を追加します。
+
+[source,java]
+----
+
+// get categoryId from request
+String categoryId = request.getQueryString();
+
+if (categoryId != null) {
+
+    // get selected category
+    selectedCategory = categoryFacade.find(Short.parseShort(categoryId));
+
+    *// place selected category in request scope
+    request.setAttribute("selectedCategory", selectedCategory);*
+}
+----
+6. エディタで`category.jsp`に切り替えます。([Ctrl]-[Tab]を押してポップアップ・リストから選択します。)
+7. `<p id="categoryTitle">`を検索して、次のように変更します。
+
+[source,xml]
+----
+
+<p id="categoryTitle">
+    <span style="background-color: #f5eabe; padding: 7px;">*${selectedCategory.name}*</span>
+</p>
+----
+現時点で、`ControllerServlet`からリクエスト・スコープに置いたばかりの`selectedCategory`属性を使用しています。EL式の中で「`.name`」を使用すると、指定された`Category`オブジェクトで`getName`メソッドがコールされます。
+8. ブラウザに戻ってカテゴリ・ページをリフレッシュします。選択されたカテゴリの名前がページに表示されるようになっています。
+image::images/category-page-selected-category.png[title="選択されたカテゴリの名前がカテゴリ・ページに表示される"]
+
+
+[[productData]]
+==== 選択されたカテゴリの製品データ
+
+選択されたカテゴリのすべての製品を取得するために、`Category`エンティティの`getProductCollection()`を使用します。まず、`selectedCategory`上でこのメソッドをコールして、`selectedCategory`に関連付けられたすべての`Product`のコレクションを取得します。次に製品のコレクションをリクエスト・スコープ内の属性として格納し、最後にスコープ指定された属性を`category.jsp`ページ・ビューから参照します。
+
+1. `ControllerServlet`では、カテゴリ・リクエストを管理する以下の文をコードに追加します。
+
+[source,java]
+----
+
+// if category page is requested
+if (userPath.equals("/category")) {
+
+    // get categoryId from request
+    String categoryId = request.getQueryString();
+
+    if (categoryId != null) {
+
+        // get selected category
+        selectedCategory = categoryFacade.find(Short.parseShort(categoryId));
+
+        // place selected category in request scope
+        request.setAttribute("selectedCategory", selectedCategory);
+
+        *// get all products for selected category
+        categoryProducts = selectedCategory.getProductCollection();*
+    }
+----
+ここで`getProductCollection()`をコールして、`selectedCategory`に関連付けられたすべての`Product`のコレクションを取得できます。
+2. エディタのヒントを使用して、`categoryProducts`を`doGet`メソッドのローカル変数として定義します。
+image::images/local-variable2.png[title="エディタのヒントを使用してローカル変数を宣言する"]
+3. リクエスト・スコープに`Product`のコレクションを置いて、アプリケーションのフロント・エンドから取得できるようにします。
+
+[source,java]
+----
+
+// if category page is requested
+if (userPath.equals("/category")) {
+
+    // get categoryId from request
+    String categoryId = request.getQueryString();
+
+    if (categoryId != null) {
+
+        // get selected category
+        selectedCategory = categoryFacade.find(Short.parseShort(categoryId));
+
+        // place selected category in request scope
+        request.setAttribute("selectedCategory", selectedCategory);
+
+        // get all products for selected category
+        categoryProducts = selectedCategory.getProductCollection();
+
+        *// place category products in request scope
+        request.setAttribute("categoryProducts", categoryProducts);
+    }*
+----
+4. エディタで`category.jsp`ファイルを開き、製品の表を次のように変更します。
+
+[source,java]
+----
+
+<table id="productTable">
+
+    <c:forEach var="product" items="*${categoryProducts}*" varStatus="iter">
+----
+`<c:forEach>`タグは`categoryProducts`のコレクションを参照するようになりました。`c:forEach`ループはコレクションに含まれる各`Product`オブジェクトに対して繰り返され、それに応じてデータを抽出するようになりました。
+5. [F6] (Macの場合は[fn]-[F6])を押してプロジェクトを実行します。ブラウザでカテゴリ・ページに移動すると、各カテゴリですべての製品が表示されるようになっています。
+image::images/category-page-product-table.png[title="製品の表に指定のカテゴリの製品が表示される"]
+
+このチュートリアル・ユニットでは、JPAおよびEJBテクノロジを簡単に紹介しました。また、Java仕様の役割について、およびそのリファレンス実装をGlassFishアプリケーション・サーバーが使用する方法についても説明しました。その後、プロジェクト・データベースのJava実装を提供する一連のJPAエンティティ・クラスを作成する方法を示しました。さらに、_セッション・ファサード_・パターンに従って、エンティティ・クラス上に存在し、それらへの便利なアクセスを可能にする一連のEJBセッションBeanを作成する方法を示しました。最後に、`AffableBean`プロジェクトを変更して、インデックス・ページおよびカテゴリ・ページで必要なデータベースへのアクセスに、新しいセッションBeanおよびエンティティを利用するようにしました。
+
+`AffableBean`プロジェクトのlink:https://netbeans.org/projects/samples/downloads/download/Samples%252FJavaEE%252Fecommerce%252FAffableBean_snapshot4.zip[+スナップショット4+]をダウンロードでき、これはNetBeans IDE 6.9を使用してこのユニットを完了させた後の状態のプロジェクトに対応しています。
+
+次のユニットでは、セッション管理について学習し、ユーザーがサイトの中でクリックして実行したアクションをアプリケーションに覚えさせる方法について学習します。これは、Eコマース・アプリケーションでショッピング・カート機構を実装するためのキー・ポイントです。
+
+link:/about/contact_form.html?to=3&subject=Feedback: NetBeans E-commerce Tutorial - Adding Entity Classes and Session Beans[+ご意見をお寄せください+]
+
+
+
+
+[[seeAlso]]
+== 関連項目
+
+
+=== NetBeansリソース
+
+* link:../../../trails/java-ee.html[+Java EEおよびJava Webの学習+]
+* link:../javaee-intro.html[+Java EEテクノロジ入門+]
+* link:../javaee-gettingstarted.html[+Java EE 6アプリケーションの開始+]
+* link:../secure-ejb.html[+Java EEでのセキュリティ保護されたエンタープライズBeansのビルド+]
+* link:../javaee-entapp-ejb.html[+EJB 3.1を使用したエンタープライズ・アプリケーションの作成+]
+* link:../jpa-eclipselink-screencast.html[+EclipseLinkでJPAサポートを使用する+] [スクリーンキャスト]
+* link:../../screencasts.html[+NetBeans IDE 6.xのビデオ・チュートリアルとデモ+]
+* link:http://refcardz.dzone.com/refcardz/netbeans-java-editor-68[+NetBeans Javaエディタ6.8リファレンス・カード+]
+
+
+=== EJBリソース
+
+* *製品ページ:* link:http://java.sun.com/products/ejb/[+エンタープライズJavaBeansテクノロジ+]
+* *仕様のダウンロード:*link:http://jcp.org/aboutJava/communityprocess/final/jsr318/index.html[+ JSR 318: EJB 3.1最終リリース+]
+* *リファレンス実装:* link:http://glassfish.dev.java.net/downloads/ri[+http://glassfish.dev.java.net/downloads/ri+]
+* *公式フォーラム:* link:http://forums.sun.com/forum.jspa?forumID=13[+エンタープライズ・テクノロジ - エンタープライズJavaBeans+]
+* *Java EE 6チュートリアル:* link:http://download.oracle.com/docs/cd/E17410_01/javaee/6/tutorial/doc/bnblr.html[+パートIV - エンタープライズBean+]
+
+
+=== JPAリソース
+
+* *製品ページ:* link:http://java.sun.com/javaee/technologies/persistence.jsp[+Java Persistence API+]
+* *仕様のダウンロード:* link:http://jcp.org/aboutJava/communityprocess/final/jsr317/index.html[+JSR 317: Java Persistence 2.0最終リリース+]
+* *リファレンス実装:* link:http://www.eclipse.org/eclipselink/downloads/ri.php[+http://www.eclipse.org/eclipselink/downloads/ri.php+]
+* *Java EE 6チュートリアル:* link:http://download.oracle.com/docs/cd/E17410_01/javaee/6/tutorial/doc/bnbpy.html[+パートVI - 持続性+]
+
+
+=== GlassFishリソース
+
+* link:https://glassfish.dev.java.net/docs/index.html[+GlassFish v3ドキュメント+]
+* link:http://www.sun.com/offers/details/GlassFish_Tomcat.html[+Tomcatユーザー向けGlassFishの学習+]
+* link:https://glassfish.dev.java.net/javaee5/persistence/persistence-example.html[+GlassFishプロジェクト - Java Persistenceの例+]
+* link:http://docs.sun.com/app/docs/doc/820-7759[+Your First Cup: Java EE Platformの紹介+]
+* link:https://glassfish.dev.java.net/downloads/ri/[+リファレンス実装のダウンロード+]
+
+
+=== 技術記事
+
+* link:http://www.theserverside.com/news/1363656/New-Features-in-EJB-31[+EJB 3.1の新機能+]
+* link:http://www.ibm.com/developerworks/java/library/j-ejb1008.html[+EJBのベスト・プラクティス: エンティティBeanの保護+]
+* link:http://java.sun.com/blueprints/corej2eepatterns/Patterns/SessionFacade.html[+コアJ2EEパターン - セッション・ファサード+]
+* link:http://www.ibm.com/developerworks/websphere/library/techarticles/0106_brown/sessionfacades.html[+セッション・ファサードのルールおよびパターン+]
+* link:http://www.oracle.com/technology/sample_code/tech/java/j2ee/designpattern/businesstier/sessionfacade/readme.html[+デザイン・パターン・サンプル・アプリケーション - セッション・ファサード+]
+* link:http://www.ibm.com/developerworks/websphere/library/bestpractices/using_httpservlet_method.html[+ベスト・プラクティス: HttpServlet `init`メソッドの使用+]
+
+
+=== 書籍
+
+* link:http://www.amazon.com/Beginning-Java-EE-GlassFish-Second/dp/143022889X/ref=dp_ob_title_bk[+Beginning Java EE 6 with GlassFish 3+]
+* link:http://www.amazon.com/Java-EE-GlassFish-Application-Server/dp/1849510369/ref=sr_1_1?s=books&ie=UTF8&qid=1281888153&sr=1-1[+Java EE 6 with GlassFish 3 Application Server+]
+* link:http://www.apress.com/book/view/1590598954[+Pro NetBeans IDE 6 Rich Client Platform Edition+]
+* link:http://www.amazon.com/Real-World-Patterns-Rethinking-Practices/dp/0557078326/ref=pd_sim_b_4[+Real World Java EE Patterns Rethinking Best Practices+]
+* link:http://www.amazon.com/Patterns-Enterprise-Application-Architecture-Martin/dp/0321127420/ref=sr_1_1?s=books&ie=UTF8&qid=1281985949&sr=1-1[+Patterns of Enterprise Application Architecture+]
+* link:http://www.amazon.com/Domain-Driven-Design-Tackling-Complexity-Software/dp/0321125215/ref=sr_1_1?s=books&ie=UTF8&qid=1281985959&sr=1-1[+Domain-Driven Design: Tackling Complexity in the Heart of Software+]
+
+
+
+== 参考資料
+
+1. <<1,^>>出典: 『link:http://www.manning.com/panda/[+EJB 3 In Action+]』の第1章、1.1.2項: EJB as a framework
+2. <<2,^>>他にもEJBによって提供される多くのサービスがあります。より総合的な一覧については、『link:http://www.manning.com/panda/[+EJB 3 In Action+]』の第1章、1.3.3項: Gaining functionality with EJB servicesを参照してください。

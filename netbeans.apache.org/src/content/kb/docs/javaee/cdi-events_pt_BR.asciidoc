@@ -1,0 +1,258 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= Trabalhando com Eventos no CDI
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: Trabalhando com Eventos no CDI - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, Trabalhando com Eventos no CDI
+
+_Contribuição de Andy Gibson_
+
+
+=== Injeção de Dependência e Contextos
+
+1. link:cdi-intro.html[+Introdução ao CDI e ao JSF 2.0+]
+2. link:cdi-inject.html[+Trabalhando com Injeção e Qualificadores no CDI+]
+3. link:cdi-validate.html[+Aplicando Anotações @Alternative Beans e de Ciclo de Vida+]
+4. *Trabalhando com Eventos no CDI*
+* <<event,Utilizando Eventos>>
+* <<scopes,Tratando Escopos>>
+* <<seealso,Consulte Também>>
+
+image::images/netbeans-stamp-80-74-73.png[title="O conteúdo desta página se aplica ao NetBeans IDE 7.2, 7.3, 7.4 e 8.0"]
+
+A Injeção de Dependência e Contextos (CDI), especificada por link:http://jcp.org/en/jsr/detail?id=299[+JSR-299+], é parte integrante do Java EE 6 e fornece uma arquitetura que permite aos componentes do Java EE, como os servlets, enterprise beans e JavaBeans, existirem dentro do ciclo de vida de uma aplicação com escopos bem definidos. Além disso, os serviços CDI permitem que os componentes do Java EE, como beans de sessão EJB e beans gerenciados do JavaServer Faces (JSF), sejam injetados e interajam de maneira acoplada flexível, disparando e observando eventos.
+
+Este tutorial tem base no post do blog de Andy Gibson, intitulado link:http://www.andygibson.net/blog/index.php/2010/01/11/getting-started-with-jsf-2-0-and-cdi-part-3/[+Getting Started with CDI part 3 – Events+] (Introdução ao CDI parte 3 - Eventos). Ele demonstra como aproveitar o conceito do Java EE de _eventos_, em que você produz e se inscreve em (isto é, _observa_) eventos que ocorrem na sua aplicação, de maneira que o permite manter o código desacoplado entre produtores e observadores. A classe `javax.enterprise.event.Event` é utilizada para criar eventos e anotação `@Observes` de CDI para se inscrever em eventos.
+
+O NetBeans IDE fornece um suporte incorporado para a Injeção de Dependência e Contextos, incluindo a opção de geração do arquivo de configuração de CDI `beans.xml` durante a criação do projeto, do editor e do suporte de navegação para anotações, assim como vários assistentes para a criação de artefatos CDI comumente utilizados.
+
+
+Para concluir este tutorial, você precisa dos seguintes recursos e softwares.
+
+|===
+|Software ou Recurso |Versão Necessária 
+
+|link:https://netbeans.org/downloads/index.html[+NetBeans IDE+] |Versão Java EE 7.2, 7.3, 7.4, 8.0 
+
+|link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+JDK (Java Development Kit)+] |versão 7 ou 8 
+
+|link:http://glassfish.dev.java.net/[+GlassFish Server+] |Open Source Edition 3.x ou 4.x 
+
+|link:https://netbeans.org/projects/samples/downloads/download/Samples%252FJavaEE%252FcdiDemo3.zip[+cdiDemo3.zip+] |n/d 
+|===
+
+*Observações:*
+
+* O pacote Java EE do NetBeans IDE inclui também o GlassFish Server Open Source Edition, que é um contêiner compatível com Java EE.
+* É possível fazer download do projeto de amostra de solução para este tutorial em: link:https://netbeans.org/projects/samples/downloads/download/Samples%252FJavaEE%252FcdiDemoComplete.zip[+cdiDemoComplete.zip+]
+
+
+
+[[event]]
+== Utilizando Eventos
+
+No tutorial anterior, link:cdi-validate.html[+Aplicando Anotações de Ciclo de Vida e de Beans @Alternative+], tínhamos uma aplicação que obtinha uma lista de itens, validava-os e agia, de maneira específica, quando um item inválido era encontrado. Vamos dizer que no futuro queremos expandir nosso sistema para tratar todos os tipos de coisas que ocorrem quando encontramos um item inválido. Isso pode variar de um e-mail sendo enviado, alterações feitas a outros dados, como um pedido sendo cancelado ou o armazenamento de uma lista de rejeições em um arquivo ou tabela de banco de dados. Para desacoplar completamente a implementação, podemos utilizar _eventos_ no Java EE. Eventos são gerados pelo _produtor_ de eventos e a inscrição feita pelos _observadores_ de eventos. Como a maior parte do CDI, a produção e inscrição de eventos é segura para tipo e permite que os qualificadores determinem quais eventos os observadores irão observar.
+
+Utilizando a aplicação que estamos construindo desde os tutoriais anteriores da série, não precisamos de muitas alterações para implementar isso. Podemos fornecer apenas outra implementação de `ItemErrorHandler` (criado no link:cdi-validate.html[+tutorial anterior+]), que gera um evento toda vez que trata um item. Nomearemos essa classe `EventItemHandler`, a injetaremos no `ItemProcessor` e utilizaremos um qualificador `Notify`para selecioná-la para injeção.
+
+image::images/cdi-diagram-events.png[title="Use a injeção de CDI para acoplar, livremente, as classes na sua aplicação"]
+
+1. Comece extraindo o projeto de início de amostra do arquivo `cdiDemo3.zip` (Consulte a <<requiredSoftware,tabela que lista os recursos necessários>> acima.) Abra o projeto no IDE escolhendo Arquivo > Abrir Projeto (Ctrl-Shift-O; ⌘-Shift-O no Mac) e, em seguida, selecionando o projeto no seu local no computador.
+2. Crie uma classe denominada `EventItemHandler`. Clique no botão Novo Arquivo (image::images/new-file-btn.png[]) ou pressione CTRL-N (⌘-N no Mac) para abrir o assistente de Arquivo.
+3. Selecione a categoria Java e, em seguida, a Classe Java. Clique em Próximo.
+4. Digite *EventItemHandler* como o nome da classe e, em seguida, digite *exercise4* como o pacote.
+5. Clique em Finalizar. A nova classe e o novo pacote são gerados e a classe é aberta no editor.
+6. Implemente *EventItemHandler* como se segue.
+
+[source,java]
+----
+
+public class EventItemHandler *implements ItemErrorHandler* {
+
+    *@Inject
+    private Event<Item> itemEvent;
+
+    @Override
+    public void handleItem(Item item) {
+        System.out.println("Firing Event");
+        itemEvent.fire(item);
+    }*
+}
+----
+Injetamos uma instância de um `Event` em que a carga do evento será um `Item`. A carga do evento são os dados de estado passados do produtor de evento para o observador de evento que, nesse caso, passa o item rejeitado. Quando o item inválido é tratado, nós acionamos o evento e passamos no item inválido que recebemos. Esse handler de item com base em evento é injetado da mesma maneira que qualquer outro handler de item seria e, portanto, podemos colocá-lo ou tirá-lo sempre que precisarmos e também podemos substituí-lo durante os testes.
+7. Corrigir todas as importações. Clique com o botão direito do mouse no editor e selecione Corrigir importações ou pressione Ctrl-Shift-I (⌘-Shift-I no Mac). Certifique-se de selecionar `javax.enterprise.event.Event` como o nome completamente qualificado para a classe `Event`. 
+image::images/fix-all-imports.png[title="Clique com o botão direito do mouse no Editor e escolha corrigir importa para chamar a caixa de diálogo Importações de Correção"] 
+
+[tips]#Pressione Ctrl-Espaço em `Event` para exibir a definição Javadoc da classe. O método `fire()`, utilizado acima, também será definido.# 
+image::images/event-javadoc.png[title="Pressione CTRL-Espaço para exibir documentação de Javadoc em classes na API"]
+8. Crie um nome qualificador `Notify`. (Qualificadores foram discutidos em link:cdi-inject.html[+Trabalhando com Injeção e Qualificadores no CDI+].)
+9. Clique no botão Novo Arquivo (image::images/new-file-btn.png[]) ou pressione CTRL-N (⌘-N no Mac) para abrir o assistente de Arquivo.
+10. Selecione a categoria Injeção de Dependência e Contexto e, em seguida, selecione Tipo de Qualificador. Clique em Próximo.
+11. Digite *Notify* como o nome da classe e, em seguida, digite *exercise4* como o pacote.
+12. Clique em Finalizar. O novo qualificador `Notify` será aberto no editor.
+
+[source,java]
+----
+
+@Qualifier
+@Retention(RUNTIME)
+@Target({METHOD, FIELD, PARAMETER, TYPE})
+public @interface Notify {
+}
+----
+13. Adicione a anotação `@Notify` a `EventItemHandler`.
+
+[source,java]
+----
+
+*@Notify*
+public class EventItemHandler implements ItemErrorHandler {
+
+    ...
+}
+----
+Criamos uma anotação de qualificador `@Notify` para identificar esse handler de erros para injeção e podemos utilizá-lo em nosso `ItemProcessor` adicionando-o ao ponto de injeção.
+14. Adicione a anotação `@Notify` ao ponto de injeção do `EventItemHandler` no `exercise2.ItemProcessor`.
+
+[source,java]
+----
+
+@Named
+@RequestScoped
+public class ItemProcessor {
+
+    @Inject @Demo
+    private ItemDao itemDao;
+
+    @Inject
+    private ItemValidator itemValidator;
+
+    @Inject *@Notify*
+    private ItemErrorHandler itemErrorHandler;
+
+    public void execute() {
+        List<Item> items = itemDao.fetchItems();
+        for (Item item : items) {
+            if (!itemValidator.isValid(item)) {
+                itemErrorHandler.handleItem(item);
+            }
+        }
+    }
+}
+----
+(Utilize a dica do editor para adicionar a instrução de importação para `exercise4.Notify`.)
+15. Clique no botão Executar Projeto (image::images/run-project-btn.png[]) para executar o projeto.
+16. No browser, clique no botão "`Execute`" e, em seguida, retorne para o IDE e examine o log do servidor na janela Saída (Ctrl-4; ⌘-4 no Mac). Como a aplicação que você tem construído atualmente utiliza o `DefaultItemDao` para configurar quatro `Item`s, e, em seguida, aplica o `RelaxedItemValidator` nos `Iten`s, é esperado ver o acionamento de `itemErrorHandler` duas vezes. 
+image::images/output-window.png[title="Exibir o log do GlassFish Server exibido na janela Saída"] 
+Atualmente, no entanto, não temos nada observando o evento. Podemos corrigir isso criando um método _observador_ utilizando a anotação `@Observes`. Essa é a única coisa necessária para observar um evento. Para demonstrar, podemos modificar o `FileErrorReporter` (criado no link:cdi-validate.html[+tutorial anterior+]) para responder a eventos acionados adicionando um método observador que chama seu método `handleItem()`.
+17. Para fazer nosso `FileErrorReporter` responder ao evento, adicione o seguinte método à classe.
+
+[source,java]
+----
+
+public class FileErrorReporter implements ItemErrorHandler {
+
+    *public void eventFired(@Observes Item item) {
+        handleItem(item);
+    }*
+
+    ...
+}
+----
+(Utilize a dica do editor para adicionar uma instrução de importação para `javax.enterprise.event.Observes`.)
+18. Execute o projeto (F6; fn-F6 no Mac) novamente, clique no botão "`Execute`" e, em seguida, retorne para o IDE e examine o log do servidor na janela Saída. 
+image::images/output-window2.png[title="Exibir o log do GlassFish Server exibido na janela Saída"] 
+Você verá que os eventos são acionados nos objetos inválidos como eram anteriormente, mas agora as informações do item estão sendo salvas quando cada evento é acionado. Também é possível notar que os eventos de ciclo de vida estão sendo observados, já que um bean `FileErrorReporter` é criado e fechado para cada evento acionado. (Consulte link:cdi-validate.html[+Aplicando Anotações de Ciclo de Vida e de Beans @Alternative+] para obter uma discussão de anotações de ciclo de vida, como `@PostConstruct` e `@PreDestroy`.)
+
+Conforme mostrado nas etapas acima, a anotação `@Observes` fornece uma maneira fácil de observar um evento.
+
+Eventos e observadores também podem ser anotados com qualificadores para permitir que os observadores observem apenas eventos específicos de um item. Consulte link:http://www.andygibson.net/blog/index.php/2010/01/11/getting-started-with-jsf-2-0-and-cdi-part-3/[+Introdução ao CDI parte 3 – Eventos+] para uma demonstração.
+
+
+
+[[scopes]]
+== Tratando Escopos
+
+No estado atual da aplicação, um bean `FileErrorReporter` é criado toda vez que o evento é criado. Nesse caso, não queremos criar um novo bean toda vez, já que não queremos abrir e fechar o arquivo para cada item. Ainda queremos abrir o arquivo no início do processo e, em seguida, fechá-lo depois que o processo tiver sido concluído. Portanto, precisamos considerar o _escopo_ do bean `FileErrorReporter`.
+
+Atualmente, o bean `FileErrorReporter` não tem um escopo definido. Quando nenhum escopo é definido, o CDI utiliza o escopo pseudodependente default. Na prática, isso significa que o bean é criado e destruído em um espaço muito pequeno de tempo, normalmente em uma chamada de método. No nosso cenário atual, o bean é criado e destruído pela duração do evento sendo acionado. Para corrigir isso, podemos aumentar o escopo do bean adicionando manualmente uma anotação de escopo. Tornaremos esse bean `@RequestScoped`, de modo que quando o bean for criado com o primeiro evento sendo acionado, ele continuará a existir pela duração da solicitação. Isso também significa que para todos os pontos de injeção em que esse bean é qualificado para ser injetado, a mesma instância do bean será injetada.
+
+1. Adicione a anotação `@RequestScope` e a instrução de importação correspondente para `javax.enterprise.context.RequestScoped` à classe `FileErrorReporter`.
+
+[source,java]
+----
+
+*import javax.enterprise.context.RequestScoped;*
+...
+
+*@RequestScoped*
+public class FileErrorReporter implements ItemErrorHandler { ... }
+----
+[tips]#Pressione Ctrl-Espaço enquanto digita para chamar o suporte da funcionalidade autocompletar código do editor. Quando você escolhe um item por meio da funcionalidade autocompletar código, todas as instruções de importação associadas serão automaticamente adicionadas à classe.# 
+image::images/code-completion.png[title="Pressione Ctrl-Espaço ao digitar para chamar sugestões de autocompletar código"]
+2. Execute o projeto (F6; fn-F6 no Mac) novamente, clique no botão "`Execute`" e, em seguida, retorne para o IDE e examine o log do servidor na janela Saída. 
+image::images/output-window3.png[title="Exibir o log do GlassFish Server exibido na janela Saída"] 
+Note que o bean `FileErrorReporter` é criado apenas quando o primeiro evento é acionado e fechado depois de o evento final ter sido acionado.
+
+[source,java]
+----
+
+INFO: Firing Event
+*INFO: Creating file error reporter*
+INFO: Saving exercise2.Item@48ce88f6 [Value=34, Limit=7] to file
+INFO: Firing Event
+INFO: Saving exercise2.Item@3cae5788 [Value=89, Limit=32] to file
+*INFO: Closing file error reporter*
+
+----
+
+Os eventos são uma ótima maneira de desacoplar partes do sistema de maneira modular, já que os observadores e produtores de eventos não sabem nada um sobre o outro, nem exigem alguma configuração para isso. Você pode adicionar partes de códigos que se inscrevem a eventos, com o produtor de evento desconhecendo o observador. (Sem utilizar eventos, normalmente seria necessário fazer com que o produtor de eventos chamasse o observador manualmente.) Por exemplo, se alguém atualizar o status de um pedido, seria possível adicionar eventos por e-mail para o representante de vendas ou notificar um gerente de conta se um problema de suporte técnico estiver aberto há mais de uma semana. Esses tipos de regras podem ser implementados sem eventos, mas os eventos facilitam o desacoplamento da lógica de negócios. Além disso, não há nenhuma dependência de compilação ou de tempo de construção. Você pode apenas adicionar módulos à sua aplicação e eles começarão, automaticamente, a observar e produzir eventos.
+
+link:/about/contact_form.html?to=3&subject=Feedback:%20Working%20with%20Events%20in%20CDI[+Enviar Feedback neste Tutorial+]
+
+
+
+[[seealso]]
+== Consulte Também
+
+Para obter mais informações sobre o CDI e o Java EE, consulte os recursos a seguir.
+
+
+=== Recursos do NetBeans
+
+* link:cdi-intro.html[+Introdução à Injeção de Dependência e Contextos e JSF 2.0+]
+* link:cdi-inject.html[+Trabalhando com Injeção e Qualificadores no CDI+]
+* link:cdi-validate.html[+Aplicando Anotações @Alternative Beans e de Ciclo de Vida+]
+* link:javaee-gettingstarted.html[+Conceitos Básicos sobre Aplicações do Java EE+]
+* link:../web/jsf20-intro.html[+Introdução ao JavaServer Faces 2.0+]
+
+
+=== Recursos Externos
+
+* link:http://blogs.oracle.com/enterprisetechtips/entry/using_cdi_and_dependency_injection[+Dica Técnica do Enterprise: Utilizando Injeção de Dependência e de CDI para Java em uma Aplicação JSF 2.0+]
+* link:http://download.oracle.com/javaee/6/tutorial/doc/gjbnr.html[+O Tutorial do Java EE 6, Parte V: Injeção de Dependência e Contextos para a Plataforma Java EE+]
+* link:http://jcp.org/en/jsr/detail?id=299[+JSR 299: Especificação para Injeção de Dependência e Contextos+]
+* link:http://jcp.org/en/jsr/detail?id=316[+JSR 316: Plataforma Java, Especificação do Enterprise Edition 6+]

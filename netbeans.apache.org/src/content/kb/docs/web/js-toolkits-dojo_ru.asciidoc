@@ -1,0 +1,433 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= Присоединение дерева Dojo к ArrayList с помощью JSON
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: Присоединение дерева Dojo к ArrayList с помощью JSON - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, Присоединение дерева Dojo к ArrayList с помощью JSON
+
+Функции Web 2.0 приобретают все большее значение в веб-приложениях. Многие веб-приложения теперь используют наборы инструментов JavaScript, такие как link:http://www.dojotoolkit.org/[+Dojo+], что позволяет работать с веб-страницами как с интерфейсами рабочей среды и избавиться от проблем совместимости с браузерами, используя удобный в сопровождении, доступный и соответствующий стандартам код.
+
+Данное руководство является адаптацией курса link:http://developers.sun.com/learning/javaoneonline/j1lab.jsp?lab=LAB-5573&yr=2009&track=1[+JavaOne Hands-On Lab: Leveraging JavaScript Toolkits for End-to-End Connectivity in Web Applications ("Лабораторные работы по JavaOne: использование набора средств JavaScript для обеспечения сквозного соединения в веб-приложениях")+]; в нем показаны добавление и настройка link:http://dojocampus.org/explorer/#Dijit_Tree_Basic[+элемента оформления дерева Dojo+] на веб-странице с последующим приданием стороне сервера возможности отвечать на запросы в формате JSON. Выполнив это, вы будете использовать набор свободно доступных классов Java от link:http://json.org[+http://json.org+] для обработки данных из ArrayList в формате JSON.
+
+image::images/netbeans-stamp-80-74-73.png[title="Содержимое этой страницы применимо к IDE NetBeans 7.2, 7.3, 7.4 и 8.0"]
+
+
+
+*Для работы с этим документом требуются программное обеспечение и материалы, перечисленные ниже.*
+
+|===
+|Программное обеспечение или материал |Требуемая версия 
+
+|link:https://netbeans.org/downloads/index.html[+IDE NetBeans+] |7.2, 7.3, 7.4, 8.0, Java EE 
+
+|link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+Комплект для разработчика на языке Java (JDK)+] |7 или 8 
+
+|Сервер GlassFish 
+_или_ 
+Контейнер сервлетов Tomcat |Open Source Edition 3.1.x или 4.x 
+_ _ 
+7.x или 8.x 
+
+|link:http://www.dojotoolkit.org/download[+Набор средств Dojo+] |версия 1.8.x или более поздняя 
+
+|link:https://netbeans.org/projects/samples/downloads/download/Samples/Java%20Web/DojoTreeSample.zip[+Образец проекта Dojo+] |неприменимо 
+|===
+
+
+*Примечания:*
+
+* Выполнение некоторых из действий, предусмотренных данным руководством, требует подключения к Интернету.
+* Набор загрузки Java EE для среды IDE NetBeans позволяет при желании установить и зарегистрировать в среде IDE сервер приложений GlassFish Server Open Source Edition. Сервер необходим при работе с данным руководством для имитации связи клиент-сервер.
+* Завершенный проект выглядит следующим образом: 
+image::images/dojo-tree-complete.png[title="Выполненное упражнение можно просмотреть в браузере"]
+
+
+
+== Открытие примера проекта
+
+Начните с открытия образца проекта в среде IDE. Откройте проект и разверните узел проекта в окне "Проекты". Изучите ресурсы и библиотеки Dojo, используемые в проекте.
+
+1. Загрузите прилагающийся к этому руководству link:https://netbeans.org/projects/samples/downloads/download/Samples%252FJavaScript%252FDojoTreeSample.zip[+образец проекта Dojо+] в одну из папок на своем компьютере.
+2. Нажмите кнопку 'Открыть проект' ( image::images/open-project-btn.png[] ) на панели инструментов IDE, чтобы открыть диалоговое окно 'Открыть проект'.
+3. В диалоговом окне 'Открыть проект' найдите образец проекта Dojo на своем компьютере и нажмите 'Открыть проект'.
+
+При открытии проекта `DojoTreeSample` в IDE вы увидите, что проект отмечен значком ошибки. Это указывает на наличие проблемы со ссылкой.
+
+image::images/proj-win-ref-problems.png[title="Ошибки ссылок на проект указываются текстом, выделенным красным и меткой ошибки"]
+
+Проблема с ссылкой существует, потому что классы Java, используемые в проекте(`Tribe` и `TribeDataManager`) ссылаются на классы, находящиеся в файле JAR JSON, которые позже будут добавлены в раздел<<addJSON,Добавление файлов JAR JSON к проекту>>.
+
+*Примечание. *Окно 'Проекты' (Ctrl-1; ⌘-1 в Mac) обеспечивает _логическое представление_ содержимого важных проектов и является основной точкой ввода для исходного кода проекта. Окно "Файлы" (Ctrl-2; ⌘-2 в Mac) отображает _представление на основе каталогов_ проектов, включая файлы и папки, не выведенные в окне "Проекты".
+
+4. Разверните узел `Веб-страницы` в окне "Проекты".
+
+Вы увидите, что в списке под узлом `Веб-страницы` в окне "Проекты" появилась папка  ``resources`` . Папка  ``resources``  содержит ядро Dojo и библиотеки Dijit из link:http://www.dojotoolkit.org/download[+набора инструментов Dojo+]. В целях реализации виджета дерева Dojo требуется два существенных компонента: модуль `ItemFileReadStore` из базовой библиотеки и сам виджет`Tree`, содержащийся в библиотеке Dijit.
+
+* `link:http://docs.dojocampus.org/dojo/data/ItemFileReadStore[+dojo.data.ItemFileReadStore+]`: считывает содержимое, имеющее структуру JSON, с оконечной точки HTTP (в случае данного руководства это сервлет) и сохраняет все элементы в памяти для простого и быстрого доступа.
+* `link:http://docs.dojocampus.org/dijit/Tree[+dijit.Tree+]`: элемент оформления дерева, выводящий представление данных JSON, полученных от `ItemFileReadStore`.
+
+*Примечание.* Библиотека `DojoX` для данного проекта не требуется.
+
+5. Разверните узел `Библиотеки` в окне "Проекты" и убедитесь, что все требуемые библиотеки находятся на пути класса.
+
+*Примечание.* В зависимости от конфигурации может потребоваться устранить проблему, связанную с отсутствием сервера. Если в списке под узлом `Библиотеки` присутствует узел  ``<Отсутствующий сервер Java EE>`` , щелкните правой кнопкой мыши узел проекта и выберите "Устранить проблему отсутствующего сервера".
+
+image::images/proj-win-dojo-resources.png[title="Библиотеки Dojo и Dijit добавлены в папку 'ресурсов' проекта"]
+
+В диалоговом окне "Разрешить проблемы со ссылками" выберите GlassFish Server. Нажмите ОК.
+
+image::images/dojo-add-server.png[title="Библиотеки Dojo и Dijit добавлены в папку 'ресурсов' проекта"]
+
+Теперь проект `DojoTreeSample` открыт в IDE, и все библиотеки Dojo включены в приложение. На следующем шаге вы начнете работать с HTML-файлом, который будет отображать виджет Tree для конечного пользователя.
+
+
+== Создание ссылки на ресурсы набора средств из файла проекта
+
+Чтобы использовать ресурсы из набора инструментов, необходимо создать ссылку на файл `dojo.js`, который можно найти в библиотеке Core. Файл `dojo.js` является _загрузчиком источников_ для Dojo и определяет среду размещения, которую следует использовать. В процессе также можно настроить `djConfig`, добавив параметр `parseOnLoad`.
+
+1. В окне 'Проекты' дважды щелкните файл `dojoDemo.html`, чтобы открыть его в редакторе.
+2. В файле `dojoDemo.html` добавьте следующие теги `<script>` (выделены полужирным шрифтом) между тегами `<заголовков>`.
+
+[source,xml]
+----
+
+<!-- TODO: link to Dojo resources here -->
+
+*<script type="text/javascript">
+    var djConfig = {parseOnLoad: true,
+        isDebug: true};
+</script> 
+<script
+    type="text/javascript"
+    src="resources/dojo/dojo.js">
+</script>*
+    
+</head>
+----
+* `link:http://dojotoolkit.org/reference-guide/1.6/djConfig.html[+djConfig+]` позволяет переопределять глобальные параметры, управляющие работой Dojo (например, использование свойства `parseOnLoad`).
+* Установка `parseOnLoad` в `true` гарантирует, что элементы оформления и разметка страницы подвергаются синтаксическому анализу при загрузке страницы.
+3. Добавьте ссылку на `nihilo` link:http://docs.dojocampus.org/dijit/themes[+образец темы+], который содержится в наборе инструментальных средств путем добавления следующей инструкции `@import` (выделена полужирным шрифтом) между тегами `<заголовков>` тегами и ниже добавленных вами тегов `<сценария>`.
+
+[source,xml]
+----
+
+<script type="text/javascript">
+    var djConfig = {parseOnLoad: true,
+        isDebug: true};
+</script> 
+<script
+    type="text/javascript"
+    src="resources/dojo/dojo.js">
+</script>
+
+*<style type="text/css">
+    @import "resources/dijit/themes/nihilo/nihilo.css";
+</style>*
+----
+
+Тема `nihilo` включается по умолчанию в набор инструментальных средств. Вы можете развернуть папку `dijit/themes` в окне 'Проекты', чтобы увидеть другие образцы тем, которые предоставлены по умолчанию.
+
+4. Добавьте следующее средство выбора класса к тегу `<body>` страницы, чтобы указать имя темы, которая теперь используется. Когда мы это делаем, любой элемент оформления Dojo, загруженный на страницу, будет визуализирован с использованием стилей, связанных с заданной темой.
+
+[source,java]
+----
+
+<body *class="nihilo"*>
+----
+
+На данном этапе файл `dojoDemo.html` готов принять любой код, который ссылается на основную библиотеку Dojo и библиотеку Dijit, и будет визуализировать любые виджеты, используя тему `nihilo` Dojo.
+
+
+== Добавление и настройка элемента оформления дерева Dojo
+
+После создания ссылки на `dojo.js` можно начать добавлять код для использования модулей и виджетов Dojo. Сперва добавьте код для загрузки элемента оформления `dijit.Tree` и `dojo.data.ItemFileReadStore`, используя операторы `link:http://docs.dojocampus.org/dojo/require[+dojo.require+]`. Затем добавьте на страницу сам элемент оформления и модуль.
+
+1. Добавьте следующие операторы `dojo.require` (выделены полужирным шрифтом) к файлу между тегами  ``<body<`` .
+
+[source,xml]
+----
+
+<script type="text/javascript">
+
+    // TODO: add dojo.require statements here
+    *dojo.require("dojo.data.ItemFileReadStore");
+    dojo.require("dijit.Tree");*
+
+</script>
+----
+* `link:http://docs.dojocampus.org/dojo/data/ItemFileReadStore[+dojo.data.ItemFileReadStore+]`: считывает содержимое, имеющее структуру JSON, с оконечной точки HTTP (в разделе <<prepareServlet,Подготовка сервлета для инициализации ответа JSON>> мы применим сервлет для этого) и сохраняет все элементы в памяти для простого и быстрого доступа.
+* `link:http://docs.dojocampus.org/dijit/Tree[+dijit.Tree+]`: элемент оформления дерева, выводящий представление данных JSON, полученных от `ItemFileReadStore`.
+2. Добавьте следующий код (выделен полужирным шрифтом), чтобы добавить `ItemFileReadStore` и виджет `Tree`.
+
+[source,html]
+----
+
+<!-- TODO: specify AJAX retrieval -->
+
+<!-- TODO: add Tree widget and configure attributes -->
+*<div dojoType="dojo.data.ItemFileReadStore"
+     url="TribeServlet"
+     jsId="indianStore">
+</div>
+
+<div dojoType="dijit.Tree"
+     store="indianStore"
+     query="{type:'region'}"
+     label="North American Indians">
+</div>*
+----
+* `ItemFileReadStore` требует указания свойства`url` путем указания ресурса на стороне сервера, возвращающего данные JSON. Как будет показано ниже, это `TribeServlet`. Свойство `jsId` можно использовать для назначения полученным данным JSON идентификатора, который элементы управления смогут затем использовать для ссылок на хранилище данных.
+* `Tree` использует свойство `store` для указания на `ItemFileReadStore`, предоставляющий данные JSON. Свойство `query` позволяет упорядочить отображение данных, основываясь на ключевом слове, использованном в файле JSON.
+
+*Примечание.* Вы можете игнорировать предупреждения, которые появляются в редакторе после добавления этого кода.
+
+На этом этапе файл `dojoDemo.html` и все необходимые изменения, относящиеся к _стороне клиента_, внесены в проект. На двух следующих этапах мы внесем изменения в поведение проекта на _стороне сервера_ при выполнении запросов дерева.
+
+
+
+== Добавление источников преобразования JSON к проекту в форме файла JAR
+
+В этом руководстве логика, извлекающая образец данных ArrayList, уже подготовлена в классах `Tribe` и `TribeDataManager`. По сути, необходимо лишь включить классы Java от сторонних производителей, выполняющие преобразование JSON, в проект, а затем добавить операторы `import` для этих классов к классах `Tribe` и `TribeDataManager`. Но для выполнения этого сперва необходимо скомпилировать классы Java от сторонних производителей и создать архив Java (файл JAR). Среда IDE может помочь в этом, предоставляя мастер библиотеки классов Java.
+
+1. Посетите link:http://json.org/java[+http://json.org/java+] и обратите внимание, что классы Java для преобразования JSON доступны свободно. Нажмите ссылку 'Бесплатный исходный код доступен', чтобы скачать файл `JSON-java-master.zip`, который содержит источники.
+2. Распакуйте файл `JSON-java-master.zip` и обратите внимание, что извлеченная папка содержит источники, перечисленные в link:http://json.org/java[+http://json.org/java+].
+
+На данный момент необходимо скомпилировать эти источники и создать архив Java (файл JAR), который следует добавить к проекту `DojoTreeSample`.
+
+3. Нажмите кнопку 'Создать проект' ( image::images/new-project-btn.png[] ) на панели инструментов, чтобы открыть мастер создания проектов.
+4. В мастере создания проектов выберите шаблон проекта библиотеки классов Java в категории Java. Нажмите кнопку 'Далее'.
+5. На панели 'Имя и местоположение' мастера библиотек классов Java введите *`json`* в качестве имени проекта. Нажмите кнопку "Завершить".
+
+После нажатия кнопки 'Готово' новый проект будет создан и открыт в окне 'Проекты'.
+
+Теперь необходимо скопировать исходный код JSON, загруженный в проект ``json`` , аналогично копированию ресурсов набора инструментальных средств Dojo в проект  ``DojoTreeSample`` .
+
+6. Распакуйте архив `JSON-java-master.zip` и скопируйте (Ctrl-C; ⌘-C на Mac) исходные файлы Java, находящиеся в корневой папке.
+
+*Примечание.* Папку `zip` и ее содержимое копировать не требуется, так как она уже находится в корневой папке распакованного архива.
+
+7. В окне "Проекты" в IDE щелкните правой кнопкой мыши узел "Исходные пакеты" и выберите пункт меню "Создать > Пакет Java".
+8. В качестве имени пакета укажите *json*. Нажмите кнопку "Завершить".
+9. Щелкните правой кнопкой мыши исходный пакет `json` и выберите пункт меню "Вставить".
+
+Если развернуть пакет, будут видны исходные файлы  ``json`` .
+
+image::images/proj-win-json-sources.png[title="Источники теперь хранятся в новом проекте 'json'"]
+10. Щелкните правой кнопкой мыши узел проекта `json` в окне 'Проекты' и выберите 'Очистить' и 'Построить' для сборки проекта.
+
+При построении проекта все классы Java компилируются в файлы `.class`. Среда IDE создает папку `build`, содержащую скомпилированные классы, а также папку `dist`, содержащую файл JAR для проекта. Эти папки можно просматривать в окне Files ("Файлы") среды IDE.
+
+После сборки проекта `json` откройте окно 'Файлы' (Ctrl-2; ⌘ -2 в Mac) и разверните папку `json`. Папка `build` содержит скомпилированные источники из файла `JSON-java-master.zip` и папки `dist`. Папка содержит JAR-файл, на который должен ссылаться проект `DojoTreeSample`.
+
+image::images/files-win-compiled-classes.png[title="Скомпилированные источники можно просмотреть в папке 'сборки' проекта"]
+
+Теперь, когда у нас есть файл `json.jar`, можно разрешить проблему со ссылками, которая имелась у проекта `DojoTreeSample` с момента его открытия.
+
+11. В окне 'Проекты' щелкните правой кнопкой мыши узел Libraries `DojoTreeSample` и выберите 'Добавить файл JAR/папку'. Затем в диалоговом окне перейдите к местоположению папки `dist` проекта `json` и выберите файл `json.jar`.
+
+Также можно щелкнуть правой кнопкой мыши узел "Библиотеки", выбрать пункт меню "Добавить проект" и выбрать проект `json` в диалоговом окне "Добавить проект".
+
+После выхода из диалогового окна файл `json.jar` появится в узле `Libraries` проекта.
+
+image::images/libraries-json-jar.png[title="В проекте содержится ссылка на файл JAR"]
+
+*Примечание. *Хотя файл `json.jar` указан в узле проекта `Библиотеки`, ссылка на него находится в исходном местоположении - она не скопирована и добавлена к проекту (например, она отсутствует в проекте `DojoTreeSample` в окне 'Файлы'). Поэтому в случае изменения местоположения файла JAR ссылка будет нарушена.
+
+12. Разверните `Source Packages` ("Пакеты исходного кода") > пакет `dojo.indians` и дважды щелкните классы `Tribe` и `TribeDataManager`, чтобы открыть их в редакторе.
+13. Добавьте к обоим классам необходимые операторы импорта. Во всех классах щелкните правой кнопкой мыши в редакторе и выберите 'Исправить выражения импорта'. 
+
+Классу `Tribe` требуются следующие операторы импорта:
+
+[source,java]
+----
+
+import dojo.org.json.JSONException;
+import dojo.org.json.JSONObject;
+----
+Классу `TribeDataManager` требуются следующие операторы импорта:
+
+[source,java]
+----
+
+import dojo.org.json.JSONArray;
+import dojo.org.json.JSONException;
+import dojo.org.json.JSONObject;
+----
+
+Обратите внимание, что интерфейсы API для классов JSON также предоставлены на link:http://json.org/java[+http://json.org/java+] – эту страницу может быть желательно оставить открытой, так как ниже мы рассмотрим код в `Tribe` и `TribeDataManager`.
+
+14. Рассмотрение ArrayList в `TribeDataManager`. ArrayList является коллекцией объектов `Tribe`. Взглянув на первый элемент ArrayList, можно увидеть, что новый объект `Tribe` создан и добавлен к списку:
+
+[source,java]
+----
+
+indians.add(new Tribe("Eskimo-Aleut", "Arctic", "Alaska Natives"));
+----
+Каждый объект `Tribe` записывает три точки данных: _tribe_ ("племя"), _category_ ("группа") и _region_ ("регион"). Данные для этого упражнения взяты из статьи Википедии по link:http://en.wikipedia.org/wiki/Native_Americans_in_the_United_States#Ethno-linguistic_classification[+коренным народам США+]. Как можно увидеть, _племена_ разбиваются на _группы_, и несколько категорий могут быть охвачены более крупным _регионом_.
+15. Откройте класс `Tribe` в редакторе и обратите внимание, что он, по сути, является компонентом link:http://java.sun.com/docs/books/tutorial/javabeans/index.html[+JavaBean+], за исключением метода `toJSONObject()`:
+
+[source,java]
+----
+
+public JSONObject toJSONObject() throws JSONException {
+    JSONObject jo = new JSONObject();
+    jo.put("name", this.name);
+    jo.put("type", "tribe");
+
+    return jo;
+}
+----
+16. Переключитесь обратно на `TribeDataManager` (Ctrl-Tab) и изучите методы, входящие в класс. Откройте навигатор (Ctrl-7; ⌘-7 в Mac), чтобы просмотреть список полей и свойств, содержащихся в классе. 
+image::images/dojo-navigator.png[title="&quot;Навигатор компонентов&quot; обеспечивает просмотр полей и свойств классов."] 
+Наиболее важным методом здесь является`getIndiansAsJSONObject()`. Этот метод просматривает ArrayList, обрабатывает данные и возвращает их в форме `JSONObject`. Форма `String` JSONObject и является тем, что нужно модулю `ItemFileReadStore` Dojo.
+
+[source,java]
+----
+
+public static JSONObject getIndiansAsJSONObject() throws JSONException {
+
+    JSONObject jo = new JSONObject();
+    JSONArray itemsArray = new JSONArray();
+
+    jo.put("identifier", "name");
+    jo.put("label", "name");
+
+    // add regions
+    addRegionsToJSONArray(itemsArray);
+
+    // add categories
+    addCategoriesToJSONArray(itemsArray);
+
+    // add tribes
+    addTribesToJSONArray(itemsArray);
+
+    jo.put("items", itemsArray);
+    return jo;
+}
+----
+17. Откройте документацию Javadoc по методу `getIndiansAsJSONObject()`. Для этого вернитесь в навигатор (Ctrl-7; ⌘-7 в Mac) и подведите курсор к методу. В ином случае выберите Window ("Окно") > Other ("Прочие") > Javadoc ("Документация Java") из основного меню и щелкните сигнатуру метода в редакторе. 
+ image::images/javadoc-window.png[title="Javadoc для TribeDataManager обеспечивает пример данных JSON"]
+18. Изучите образец данных JSON, предоставленный документацией Javadoc. Обратите внимание, что формат данных соответствует примерам, предоставленным в link:http://o.dojotoolkit.org/book/dojo-book-0-9/part-3-programmatic-dijit-and-dojo/what-dojo-data/available-stores/dojo-data-item[+документации Dojo+].
+
+
+=== Отладчик Java IDE NetBeans
+
+На следующем этапе мы реализуем сервлет, вызывающий метод `getIndiansAsJSONObject()`. После этого можно выполнять следующие действия, чтобы использовать отладчик Java IDE для пошагового использования метода и анализа формата `JSONObject`.
+
+1. Установите точку останова на методе (нажмите номер строки (например, строка 99) в левом поле редактора). 
+image::images/debugger-breakpoint.png[title="Используйте отладчик Java для перехода по коду"]
+2. Выберите проект  ``DojoTreeSample``  в окне 'Проекты'.
+3. Запустите отладчик (нажмите кнопку 'Отладка проекта' ( image::images/debug-btn.png[] ) на панели инструментов).
+4. Используйте кнопки 'С заходом' ( image::images/step-into-btn.png[] ) и 'Без захода' ( image::images/step-over-btn.png[] ) на панели инструментов.
+5. Изучите значения переменных и выражений в окне 'Локальные переменные' ('Окно' > 'Отладка' > 'Переменные').
+
+Дополнительные сведения об отладчике Java приведены в следующих экранных демонстрациях:
+
+* link:../java/debug-stepinto-screencast.html[+Визуальное действие входа в процедуры в отладчике NetBeans+]
+* link:../java/debug-deadlock-screencast.html[+Обнаружение взаимоблокировки с помощью отладчика NetBeans+]
+* link:../java/debug-evaluator-screencast.html[+Использование вычисления фрагментов кода в отладчике NetBeans+]
+
+
+На данном этапе мы скомпилировали исходные коды от сторонних производителей, взятые с link:http://json.org[+http://json.org+], и добавили их как файл JAR к проекту `DojoTreeSample`. Затем мы добавили операторы импорта к классам из файла JAR в классах `Tribe` и `TribeDataManager`. Наконец, мы изучили некоторые из методов, содержащихся в `TribeDataManager`, и использовали их для преобразования данных ArrayList в строку JSON.
+
+На следующем этапе мы создадим сервлет, который будет обрабатывать входящие запросы, вызывая метод `getIndiansAsJSONObject()` класса `TribeDataManager`, и отправлять получающуюся строку JSON в качестве ответа клиенту.
+
+
+
+== Подготовка сервлета для инициирования ответа JSON
+
+<<TribeServlet,Вспомним, что мы указали '`TribeServlet`' в качестве значения свойства `url` при>> добавлении `ItemFileReadStore` к нашей веб-странице. Это сервлет назначения на стороне сервера, где осуществляется обработка данных JSON и возвращение их клиенту. Давайте создадим этот сервлет.
+
+1. В окне 'Проекты' щелкните правой кнопкой мыши исходный пакет `dojo.indians` и выберите 'Создать' > 'Сервлет'.
+2. В мастере создания сервлетов введите *`TribeServlet`* в качестве имени класса. Убедитесь, что `dojo.indians` указан как пакет. Нажмите кнопку 'Далее'. 
+image::images/new-servlet-wizard.png[title="Используйте мастер создания сервлетов для создания сервлетов"]
+3. Проверьте значения по умолчанию в полях "Имя сервлета" и "Шаблоны URL". Нажмите "Готово", чтобы создать класс skeleton для сервлета.
+
+Функция сервлета состоит в вызове метода `getIndiansAsJSONObject()` и использовании данных из этого метода для ответа на запрос клиента. Чтобы подготовить ответ в формате JSON, нам сперва надо установить формат JSON как тип MIME ответа.
+
+*Примечание.* Мастер автоматически добавит имя сервлета и шаблон URL в файл `web.xml`. Как следствие, все запросы к домену размещения (т. е., `http://localhost:8080/DojoTreeSample/`) для `TribeServlet` будут обрабатываться классом `dojo.indians.TribeServlet`. Если открыть файл `web.xml` в редакторе, можно увидеть, что в этом файле появились элементы `<servlet>` и `<servlet-mapping>`.
+
+4. Измените метод `processRequest()`, внеся следующие изменения (выделены полужирным шрифтом).
+
+[source,java]
+----
+
+response.setContentType("*application/json*");
+----
+
+Это изменение устанавливает заголовок `Content-Type` для отклика HTTP, чтобы указать, что все возвращаемое содержимое имеет формат JSON.
+
+5. Замените закомментированный код внутри блока `try` метода `processRequest()` на следующий код (изменения выделены *жирным шрифтом*):
+
+[source,java]
+----
+
+try {
+
+    *JSONObject jo = null;
+    try {
+        jo = TribeDataManager.getIndiansAsJSONObject();
+    } catch (JSONException ex) {
+        System.out.println("Unable to get JSONObject: " + ex.getMessage());
+    }
+
+    out.println(jo);*
+
+} finally {
+    out.close();
+}
+----
+
+Чтобы изменить формат кода, щелкните правой кнопкой мыши в редакторе и выберите 'Формат'.
+
+6. Используйте подсказки IDE, чтобы добавить следующие операторы импорта.
+
+[source,java]
+----
+
+import dojo.org.json.JSONException;
+import dojo.org.json.JSONObject;
+----
+7. Для запуска проекта выберите узел проекта `DojoTreeSample` в окне 'Проекты', затем нажмите кнопку 'Запустить проект' ( image::images/run-project-btn.png[] ) на панели инструментов IDE. 
+
+Браузер откроется на странице приветствия (`dojoDemo.html`), и можно будет увидеть, что элемент оформления Dojo Tree правильно отображает данные из ArrayList, как показано на <<final,снимке экрана>> выше.
+link:/about/contact_form.html?to=3&subject=Feedback:%20Connecting%20a%20Dojo%20Tree%20to%20an%20ArrayList[+Мы ждем ваших отзывов+]
+
+
+
+== Дополнительные сведения
+
+Дополнительные сведения о Dojo приведены в официальной документации:
+
+* Справочное руководство по набору средств Dojo: link:http://dojotoolkit.org/reference-guide/[+Справочное руководство+]
+* Интерактивная справка по интерфейсу API: link:http://api.dojotoolkit.org/[+http://api.dojotoolkit.org/+]
+* Демонстрация Dojo: link:http://demos.dojotoolkit.org/demos/[+http://demos.dojotoolkit.org/demos/+]
+
+Дополнительные сведения о JavaScript и функциях набора средств JavaScript на link:https://netbeans.org/[+netbeans.org+] приведены в следующих материалах:
+
+* link:js-toolkits-jquery.html[+Использование jQuery для улучшения внешнего вида веб-страницы и упрощения работы с ней+]. Дано введение в jQuery, показаны действия по применению элемента оформления "гармошки" jQuery к разметке HTML на веб-странице.
+* link:ajax-quickstart.html[+Введение в Ajax (Java)+]. Описана сборка простого приложения с использованием технологии сервлетов, в то же время показан внутренний процесс обработки запроса Ajax.
+* link:http://www.oracle.com/pls/topic/lookup?ctx=nb8000&id=NBDAG2272[+Создание файлов JavaScript+] в документе _Разработка приложений в IDE NetBeans_

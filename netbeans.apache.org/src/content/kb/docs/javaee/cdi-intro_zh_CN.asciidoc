@@ -1,0 +1,236 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= 上下文和依赖关系注入以及 JSF 2.x 入门
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: 上下文和依赖关系注入以及 JSF 2.x 入门 - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, 上下文和依赖关系注入以及 JSF 2.x 入门
+
+_撰稿人：Andy Gibson_
+
+
+=== 上下文和依赖关系注入
+
+1. *CDI 和 JSF 2.0 入门指南*
+* <<creating,创建支持 CDI 的 Java Web 项目>>
+* <<named,从 JSF 的表达式语言访问 Bean>>
+* <<upgrading,升级到 EJB>>
+* <<seealso,另请参见>>
+2. link:cdi-inject.html[+使用 CDI 中的注入和限定符+]
+3. link:cdi-validate.html[+应用 @Alternative Bean 和生命周期标注+]
+4. link:cdi-events.html[+使用 CDI 中的事件+]
+
+image::images/netbeans-stamp-80-74-73.png[title="此页上的内容适用于 NetBeans IDE 7.2、7.3、7.4 和 8.0"]
+
+link:http://jcp.org/en/jsr/detail?id=299[+JSR-299+] 指定的上下文和依赖关系注入 (CDI) 是 Java EE 6 的一个组成部分，提供了一个体系结构，以允许 Java EE 组件（例如 Servlet、企业 Bean 和 JavaBeans）在具有明确定义范围的应用程序生命周期内存在。此外，CDI 服务允许 Java EE 组件（例如 EJB 会话 Bean 和 JavaServer Faces (JSF) 受管 Bean）注入并通过触发和观察事件以松散耦合的方式进行交互。
+
+本教程基于 Andy Gibson 发布的博客，标题为：link:http://www.andygibson.net/blog/index.php/2009/12/16/getting-started-with-jsf-2-0-and-cdi-in-jee-6-part-1/[+JSF 2.0 和 JEE 6 中的 CDI 入门+]。本教程演示如何使用 IDE 设置支持 JSF 2.0 和 CDI 的 Java Web 项目。本教程还继续演示如何连接 CDI 受管 Bean 和 Facelets 页，并在末尾提供了 CDI 与 EJB 技术集成的简短示例。
+
+NetBeans IDE 为上下文和依赖关系注入提供了内置支持，包括在项目创建时构建 `beans.xml` CDI 配置文件的选项，为标注提供的编辑器和导航支持，以及用于创建常用 CDI 工件的各种向导。
+
+
+要学完本教程，您需要具备以下软件和资源。
+
+|===
+|软件或资源 |要求的版本 
+
+|link:https://netbeans.org/downloads/index.html[+NetBeans IDE+] |7.2、7.3、7.4、8.0、Java EE 包 
+
+|link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+Java 开发工具包 (JDK)+] |版本 7 或 8 
+
+|link:http://glassfish.dev.java.net/[+GlassFish Server+] |Open Source Edition 3.x 或 4.x 
+|===
+
+*注：*
+
+* NetBeans IDE Java 包中还含 GlassFish Server Open Source Edition，后者是与 Java EE 兼容的容器。
+
+
+
+[[creating]]
+== 创建支持 CDI 的 Java Web 项目
+
+在本练习中，将创建一个启用了 JSF 2.x 且支持 CDI 的 Java Web 项目。
+
+1. 在 IDE 的主工具栏中单击 "New Project"（新建项目）(image::images/new-project-btn.png[]) 按钮（Ctrl-Shift-N 组合键；在 Mac 上为 ⌘-Shift-N 组合键）。
+2. 在新建项目向导，选择 "Java Web" 类别，然后选择 "Web Application"（Web 应用程序）。单击 "Next"（下一步）。
+3. 键入 `cdiDemo` 作为项目名称，并设置项目位置。单击 "Next"（下一步）。
+4. 将服务器设置为 GlassFish Server。
+5. 将 "Java EE Version"（Java EE 版本）设置为 "Java EE 6 Web" 或 "Java EE 7 Web"。
+
+*注：*所选的 Java EE 版本确定为应用程序启用的 CDI 版本，并且 CDI 1.0 和 CDI 1.1 之间有一些重要的差异。
+
+* 如果指定 Java EE 6 Web 作为 Java EE 版本，请确认选中了 "Enable Contexts and Dependency Injection"（启用上下文和依赖关系注入）选项。如果选中 "Enable Contexts and Dependency Injection"（启用上下文和依赖关系注入）选项，则创建项目模板时，会在项目的 `WEB-INF` 文件夹中生成 `beans.xml` 文件。CDI 使用此 `beans.xml` 文件指示 Java EE 兼容的服务器，此项目是包含 CDI Bean 的模块。Java EE 6 Web 支持 CDI 1.0，并且生成的 `beans.xml` 文件指定 CDI 1.0 作为版本。
+* 如果指定 Java EE 7 Web 作为 Java EE 版本，则默认情况下会启用 CDI 1.1 并且不需要  ``beans.xml``  文件。在 Java EE 7 中，不存在  ``beans.xml``  时，部署的档案将为*隐式 Bean 档案*。如果您在 IDE 中使用新建文件向导在 Java EE 7 Web 应用程序中手动生成 `beans.xml` 文件，则默认情况下部署的档案将成为*显式 Bean 档案*，因为 `beans.xml` 文件指定 CDI 1.1 作为版本并且还将  ``bean-discovery-mode``  的属性设置为  ``all`` 。
+
+有关 CDI 档案类型的详细信息，请参见 Java EE 7 教程中的link:http://docs.oracle.com/javaee/7/tutorial/doc/cdi-adv001.htm[+打包 CDI 应用程序+]。
+
+image::images/new-web-application1.png[title="在选中时为项目生成 beans.xml 文件的 CDI 选项"]
+6. 单击 "Next"（下一步）。
+7. 在 "Frameworks"（框架）面板中，选择 "JavaServer Faces" 选项。
+8. 单击 "Configuration"（配置）标签，并确认将 Facelets 选作 "Preferred Page Language"（首选页面语言）。单击 "Finish"（完成）。
+
+单击 "Finish"（完成），此时 IDE 生成 Web 应用程序项目并在编辑器中打开 `index.xhtml` 欢迎页。
+
+9. 在 "Projects"（项目）窗口中，展开 "Libraries"（库）> "GlassFish Server" 节点，可以看到自动添加了 `weld-osgi-bundle.jar` 库。GlassFish Server 包含 Weld，这是 JBoss 的 JSR-299 CDI 规范的实现。 
+image::images/projects-window1.png[title="新项目包含 CDI 的 beans.xml 文件和 GlassFish 库，该库包括 Weld JAR 文件"]
+
+如果在创建项目时指定 Java EE 6 Web 作为 Java EE 版本，则会注意到 "Web Pages"（Web 页）> "WEB-INF" 文件夹包含 `beans.xml` 文件。此文件当前为空，但可用于将 Bean 相关的 XML 信息指定为标注的备用选项。
+
+
+[[named]]
+== 从 JSF 的表达式语言访问 Bean
+
+本练习演示如何使用 EL 语法将 CDI 受管 Bean 连接到 Facelets 页。
+
+1. 在 "Projects"（项目）窗口中，右键单击 "Source Packages"（源包）节点并选择 "New"（新建）> "Java Class"（Java 类）。
+2. 在新建 Java 类向导中，将类命名为 *MessageServerBean*，并键入 *exercise1* 作为包。（新包在完成向导时创建。）单击 "Finish"（完成）。
+image::images/new-java-class.png[title="使用 Java 类向导创建新 Java 类"]
+
+新类和包生成，并在编辑器中打开此类。
+
+3. 使用 `@Named` 和 `@Dependent` 标注对此类进行标注，并创建一个返回字符串的方法。
+
+[source,java]
+----
+
+package exercise1;
+
+*import javax.enterprise.context.Dependent;
+import javax.inject.Named;*
+
+*@Dependent
+@Named*
+public class MessageServerBean {
+
+    *public String getMessage() {
+        return "Hello World!";
+    }*
+}
+----
+
+键入 `@Dependent` 和 `@Named` 标注时，按 Ctrl-空格键可调用编辑器的代码完成支持，以及 Javadoc 文档。如果使用编辑器的代码完成功能应用标注（例如，选择相应的标注，然后按 Enter），`import` 语句将自动添加到文件中。在 Javadoc 弹出式窗口中，也可以单击 "Show documentation in external web browser"（在外部 Web 浏览器中显示文档）(image::images/external-web-browser-btn.png[]) 按钮以在单独的窗口中显示 Javadoc 全图。
+
+*注：* ``@Dependent``  标注定义受管 Bean 的范围。在 *implicit bean archive*（隐式 Bean 档案）中，仅当指定了范围时，受管 Bean 才可发现并且只能由容器管理。如果在创建项目时指定 Java EE 7 Web 作为 Java EE 版本并且未创建  ``beans.xml`` ，则会将本教程中的应用程序打包为隐式 Bean 档案。有关指定受管 Bean 的范围的详细信息，请参见 Java EE 7 教程中的link:http://docs.oracle.com/javaee/7/tutorial/doc/jsf-configure001.htm[+使用标注配置受管 Bean+]。
+
+4. 保存文件（Ctrl-S；在 Mac 上为 ⌘-S）。根据 CDI 的定义，通过添加 `@Named` 标注，`MessageServerBean` 类成为_受管 Bean_。
+5. 在编辑器中切换至 `index.xhtml` Facelets 页（按 Ctrl-Tab 组合键），然后在 `<h:body>` 标记中添加以下内容。
+
+[source,xml]
+----
+
+<h:body>
+    Hello from Facelets
+    *<br/>
+    Message is: #{messageServerBean.message}
+    <br/>
+    Message Server Bean is: #{messageServerBean}*
+</h:body>
+----
+[tips]#可以在 EL 表达式中按 Ctrl-空格键以使用代码完成建议。编辑器的代码完成列出了受管 Bean 及其属性。因为 `@Named` 标注将 `MessageServerBean` 类转换成 CDI 受管 Bean，该 CDI 受管 Bean 与作为 JSF 受管 Bean 时一样，可以在 EL 语法中访问。# 
+image::images/facelets-el-completion.png[title="使用 Java 类向导创建新 Java 类"]
+6. 在 IDE 的主工具栏中单击 "Run Project"（运行项目）(image::images/run-project-btn.png[]) 按钮。编译该项目并将其部署到 GlassFish，并在浏览器中打开应用程序欢迎页 (`index.xhtml`)。您将看到来自该页上显示的 `MessageServerBean` 的 "Hello World!" 消息。 
+image::images/browser-output1.png[title="应用程序欢迎页显示 MessageServerBean 详细信息"]
+7. 返回至消息 Bean 并将消息更改为其他内容（例如，"Hello Weld!"）。保存文件（Ctrl-S 组合键；在 Mac 上为 ⌘-S 组合键），然后刷新浏览器。将自动显示新消息。因为有了 IDE 的“在保存时部署”功能，保存的任何更改都会自动进行编辑并重新部署到服务器。
+
+从此页第三行，您可以看到类名为 `exercise1.MessageServerBean`。请注意，Bean 只是一个 POJO（Plain Old Java Object，简单传统 Java 对象）。即使您现在使用 Java EE 进行开发，事务、拦截器以及重复出现的所有“重型”功能等层中也不会包含复杂的类分层结构。
+
+
+=== 这是怎么回事？
+
+部署应用程序后，服务器将查找 CDI 受管 Bean。在 Java EE 7 应用程序中，默认情况下将扫描路径上的类是否有 CDI 标注。在 Java EE 6 应用程序中，如果模块包含 `beans.xml` 文件，则将扫描类是否有 CDI 标注。在 CDI 模块中，所有 Bean 会在 Weld 中注册，并使用 `@Named` 标注将 Bean 与注入点匹配。当呈现 `index.xhtml` 页时，JSF 会尝试使用 JSF 中注册的表达式解析器来解析本页中的 `messageServerBean` 值。其中一个解析器是 Weld EL 解析器，它以名称 `messageServerBean` 注册了 `MessageServerBean` 类。本可以使用 `@Named` 标注指定一个不同的名称，但是我们并没有这样做，因此它是以默认名称注册的，且类名的首字母为小写。Weld 解析器返回此 Bean 的实例以响应来自 JSF 的请求。Bean 命名仅在使用 EL 表达式时需要，且不应作为注入机制使用，因为 CDI 提供了按类类型和限定符标注的类型安全的注入。
+
+
+
+[[upgrading]]
+== 升级到 EJB
+
+由于有 EJB 3.1，即使现在使用的是 Java EE 堆栈，也只需进行小幅改动，即可轻松将 Bean 部署为 EJB。
+
+1. 打开 `MessageServerBean`，并在类级别添加 `javax.ejb.Stateless` 标注，然后将字符串更改为 "Hello EJB!"。
+
+[source,java]
+----
+
+package exercise1;
+
+*import javax.ejb.Stateless;*
+import javax.enterprise.context.Dependent;
+import javax.inject.Named;
+
+/**
+ *
+ * @author nbuser
+ */
+@Dependent
+@Named
+*@Stateless*
+public class MessageServerBean {
+
+    public String getMessage() {
+        return "*Hello EJB!*";
+    }
+}
+----
+2. 保存文件（Ctrl-S 组合键；在 Mac 上为 ⌘-S 组合键），然后转到浏览器并刷新。将看到类似于以下内容的输出： 
+image::images/browser-output-ejb1.png[title="使用 @Stateless 标注将 MessageServerBean 转换为 EJB"] 
+太奇妙了，只需一个标注即可将 POJO 转换为功能完善的 EJB。保存更改并刷新页面以后，即可显示更改。通过执行此操作，不需要创建任何古怪的项目配置、本地接口或深奥的部署描述符。
+
+
+=== 不同的 EJB 类型
+
+还可以尝试使用 `@Stateful` 标注。或者，您可以尝试对 singleton 实例使用新的 `@Singleton` 标注。如果执行此操作，会注意到其中存在两个标注：`javax.ejb.Singleton` 和 `javax.inject.Singleton`。为什么存在两个 singletons 标注？如果是在非 EJB 环境中使用 CDI，通过 CDI singleton (`javax.inject.Singleton`) 可以在 EJB 外定义 singleton 实例。EJB singleton (`javax.ejb.Singleton`) 提供了 EJB 的所有功能，例如事务管理。因此，您可以根据需要以及是否使用的是 EJB 环境来进行选择。
+
+link:/about/contact_form.html?to=3&subject=Feedback:%20Getting%20Started%20with%20CDI%20and%20JSF%202.0[+发送有关此教程的反馈意见+]
+
+
+
+[[seealso]]
+== 另请参见
+
+本系列的下一部分重点介绍 CDI 注入，并详细讲解在 Java EE 环境中使用 CDI 管理依赖关系。
+
+* link:cdi-inject.html[+使用 CDI 中的注入和限定符+]
+
+有关 CDI 和 JSF 2.0 的详细信息，请参见以下资源。
+
+
+=== 上下文和依赖关系注入
+
+* link:cdi-validate.html[+应用 @Alternative Bean 和生命周期标注+]
+* link:cdi-events.html[+使用 CDI 中的事件+]
+* link:http://blogs.oracle.com/enterprisetechtips/entry/using_cdi_and_dependency_injection[+企业技术提示：在 JSF 2.0 应用程序中使用面向 Java 的 CDI 和依赖关系注入+]
+* link:http://docs.oracle.com/javaee/7/tutorial/doc/cdi-basic.htm[+Java EE 6 教程：面向 Java EE 的上下文和依赖关系注入简介+]
+* link:http://jcp.org/en/jsr/detail?id=299[+JSR 299：上下文和依赖关系注入规范+]
+
+
+=== JavaServer Faces 2.0
+
+* link:../web/jsf20-intro.html[+JavaServer Faces 2.x 简介+]
+* link:../web/jsf20-crud.html[+通过数据库生成 JavaServer Faces 2.x CRUD 应用程序+]
+* link:../../samples/scrum-toys.html[+Scrum 玩具 - JSF 2.0 完整样例应用程序+]
+* link:http://www.oracle.com/technetwork/java/javaee/javaserverfaces-139869.html[+JavaServer Faces 技术+]（官方主页）
+* link:http://docs.oracle.com/javaee/7/tutorial/doc/jsf-page.htm[+Java EE 7 教程：在 Web 页中使用 JavaServer Faces 技术+]
+* link:http://jcp.org/en/jsr/summary?id=314[+JSR 314：JavaServer Faces 2.0 的规范+]

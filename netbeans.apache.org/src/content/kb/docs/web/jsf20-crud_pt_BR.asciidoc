@@ -1,0 +1,726 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= Gerando uma Aplicação CRUD JavaServer Faces 2.x Usando um Banco de Dados
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: Gerando uma Aplicação CRUD JavaServer Faces 2.x Usando um Banco de Dados - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, Gerando uma Aplicação CRUD JavaServer Faces 2.x Usando um Banco de Dados
+
+Neste tutorial, você utilizará o NetBeans IDE para criar uma aplicação Web que interaja com um banco de dados de backend. A aplicação oferece a capacidade de exibir e modificar os dados contidos no banco de dados, conhecida como recurso _CRUD_ (Create, Read, Update, Delete). A aplicação que você desenvolverá contará com as seguintes tecnologias.
+
+* *JavaServer Faces (JSF) 2.x* para páginas Web de frontend, manipulação de validação e gerenciamento do ciclo de solicitação-resposta.
+* *Java Persistence API (JPA) 2.0* utilizando EclipseLink para gerar classes de entidade a partir do banco de dados e gerenciar transações. (EclipseLink é a implementação de referência para JPA e é o provedor de persistência default para o GlassFish Server.)
+* *Enterprise JavaBeans (EJB) 3.1*, que oferece EJBs sem estado que acessam as classes de entidade e contém a lógica de negócios da aplicação.
+
+O IDE oferece dois assistentes que geram todos os códigos da aplicação. O primeiro é o <<generateEntity,assistente para Classes de Entidade do Banco de Dados>> que permite gerar as classes de entidade a partir do banco de dados fornecido. Após criar as classes de entidade, você utiliza o <<jsfPagesEntityClasses,assistente de Páginas JSF de Classes de Entidade>> para criar EJBs e beans gerenciados pelo JSF para as classes de entidade, bem como um conjunto de páginas de Facelets para manipular as views dos dados da classe de entidade. A seção final do tutorial, <<explore,Explorando a Aplicação>>, é opcional e oferece vários exercícios para ajudá-lo a entender melhor a aplicação e a se familiarizar mais com o IDE.
+
+image::images/netbeans-stamp-80-74-73.png[title="O conteúdo desta página se aplica ao NetBeans IDE 7.2, 7.3, 7.4 e 8.0"]
+
+
+
+
+Para concluir este tutorial, você precisa dos seguintes recursos e softwares.
+
+|===
+|Software ou Recurso |Versão Necessária 
+
+|link:https://netbeans.org/downloads/index.html[+NetBeans IDE+] |Pacote Java EE 7.2, 7.3, 7.4, 8.0 
+
+|link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+JDK (Java Development Kit)+] |7 ou 8 
+
+|link:http://glassfish.dev.java.net/[+GlassFish Server Open Source Edition+] |3.x, 4.x 
+
+|link:https://netbeans.org/projects/samples/downloads/download/Samples%252FJavaEE%252Fmysql-consult.zip[+mysql-consult.zip+] (MySQL) 
+_ou_
+link:https://netbeans.org/projects/samples/downloads/download/Samples%252FJavaEE%252Fjavadb-consult.zip[+javadb-consult.zip+] (JavaDB) |n/d 
+|===
+
+*Observações:*
+
+* O pacote Java EE do NetBeans IDE também inclui o GlassFish Server, um servidor compatível com Java EE necessário para este tutorial.
+* Para o projeto de solução deste tutorial, faça o download de link:https://netbeans.org/projects/samples/downloads/download/Samples%252FJavaEE%252FConsultingAgencyJSF20.zip[+ConsultingAgencyJSF20.zip+].
+
+
+
+[[createDB]]
+== Criando o Banco de Dados
+
+Este tutorial utiliza um banco de dados de agência de consultoria chamado `consult`. O banco de dados não é incluído quando você instala o IDE, portanto, é necessário criar primeiro o banco de dados para seguir este tutorial.
+
+O banco de dados `consult` foi projetado para demonstrar o escopo do suporte do IDE para manipular uma variedade de estruturas de banco de dados. Portanto, o banco de dados não é um exemplo de melhores práticas ou design de banco de dados recomendado. Em vez disso, ele tenta incorporar muitas funcionalidades relevantes encontradas em um design de banco de dados. Por exemplo, o banco de dados `consult` contém todos os tipos de relacionamento possíveis, chaves primárias compostas e muitos tipos de dados diferentes. Consulte as tabelas abaixo para obter uma visão geral mais detalhada da estrutura do banco de dados.
+
+*Observações:*
+
+* Este tutorial utiliza o servidor de banco de dados MySQL, mas também é possível concluí-lo utilizando o servidor do banco de dados JavaDB. Para criar o banco de dados no JavaDB, faça download e extraia o arquivo compactado link:https://netbeans.org/projects/samples/downloads/download/Samples%252FJavaEE%252Fjavadb-consult.zip[+javadb-consult.zip+]. O arquivo compactado contém scripts SQL para criar, eliminar e preencher o banco de dados de `consult`.
+* Para obter mais informações sobre a configuração do IDE para trabalhar com o MySQL, consulte o tutorial link:../ide/mysql.html[+Estabelecendo Conexão com um Banco de Dados MySQL+].
+* Para obter mais informações sobre como configurar o IDE para trabalhar com JavaDB, consulte o tutorial link:../ide/java-db.html[+Trabalhando com o Banco de Dados Java DB (Derby)+].
+
+*Combinação MySQL com GlassFish:*
+
+Se você estiver usando o MySQL, e estiver usando o GlassFish v3 ou Open Source Edition 3.0.1, será preciso garantir que seu banco de dados esteja protegido por senha. (Para obter mais informações, consulte GlassFish link:https://java.net/jira/browse/GLASSFISH-12221[+Edição 12221+].) Se você estiver utilizando a conta MySQL `root` sem senha, você poderá definir a senha usando um prompt de linha de comandos. 
+
+Por exemplo, para definir a senha para `_nbuser_`, digite os comandos a seguir no prompt de linha de comandos.
+
+
+[source,java]
+----
+
+shell> mysql -u root
+mysql> UPDATE mysql.user SET Password = PASSWORD('_nbuser_') WHERE User = 'root';
+mysql> FLUSH PRIVILEGES;
+----
+
+Se você receber um erro '`mysql: command not found`', será porque o comando `mysql` não foi adicionado à sua variável de ambiente `PATH`. É possível chamar o comando inserindo o caminho completo para o diretório `bin` da instalação do MySQL. Por exemplo, se o comando `mysql` estiver localizado no seu computador em `/usr/local/mysql/bin`, digite o seguinte:
+
+
+[source,java]
+----
+
+shell> /usr/local/mysql/bin/mysql -u root
+----
+
+Para obter mais informações, consulte o Manual de Referência oficial do MySQL:
+
+* link:http://dev.mysql.com/doc/refman/5.1/en/default-privileges.html[+Proteção das Contas MySQL Iniciais+]
+* link:http://dev.mysql.com/doc/refman/5.1/en/invoking-programs.html[+4.2.1. Chamando Programas MySQL+]
+* link:http://dev.mysql.com/doc/refman/5.1/en/setting-environment-variables.html[+4.2.4. Configurando Variáveis de Ambiente+]
+
+
+
+Execute as etapas a seguir para criar um banco de dados e conecte-o a partir do IDE.
+
+1. Faça download de link:https://netbeans.org/projects/samples/downloads/download/Samples%252FJavaEE%252Fmysql-consult.zip[+mysql-consult.zip+] e o extraia o arquivo compactado no seu sistema local. Quando você extrair o arquivo compactado, você verá os scripts SQL para criação e preenchimento do banco de dados. O arquivo compactado também tem scripts para eliminação de tabelas.
+2. Na janela Serviços, expanda o nó Bancos de Dados, clique com o botão direito do mouse no nó MySQL e selecione Iniciar Servidor.
+3. Clique com o botão direito do mouse no nó Servidor MySQL e escolha Criar Banco de Dados.
+4. Digite *consult* como o Nome do Banco de Dados na caixa de diálogo Criar Banco de Dados MySQL. Clique em OK. Um novo nó aparecerá sob o nó Bancos de Dados (`jdbc:mysql://localhost:3306/consult [raiz no esquema Default]`).
+5. Clique com o botão direito do mouse no novo nó e selecione Conectar.
+6. Selecione Arquivo > Abrir Arquivo, no menu principal e vá até o arquivo extraído `mysql_create_consult.sql`. Clique em Abrir. O arquivo abre automaticamente no editor SQL.
+image::images/run-sql-script.png[title="Abrir arquivos SQL no editor do IDE"]
+7. Certifique-se de que o banco de dados `consult` esteja selecionado na lista drop-down Conexão da barra de ferramentas do editor SQL. Em seguida, clique no botão ( image::images/run-sql-btn.png[] ) Executar SQL.
+
+Quando você clica em Executar SQL, a saída a seguir é exibida na janela de Saída.
+
+image::images/run-sql-output.png[title="A janela de Saída oferece informações sobre a execução SQL"]
+
+
+
+[[examineDB]]
+== Examinando a Estrutura do Banco de Dados
+
+Para confirmar se as tabelas foram criadas corretamente, expanda o nó Tabelas sob o nó da conexão do banco de dados. Você pode expandir um nó da tabela para ver suas colunas, índices e chaves estrangeiras. É possível clicar com o botão direito do mouse em uma coluna e selecionar Propriedades para exibir informações adicionais sobre a coluna.
+
+image::images/services-window-tables.png[title="A janela Serviços exibe conexões de bancos de dados, tabelas, colunas de tabelas, índices e chaves estrangeiras"]
+
+*Observação:* Se você não vir nenhuma tabela sob o nó Tabelas, clique com o botão direito do mouse no nó Tabelas e selecione Atualizar.
+
+Ao observar a estrutura do banco de dados `consult`, você pode ver que o banco de dados contém tabelas que possuem uma variedade de relacionamentos e vários tipos de campo. Quando você cria classes de entidade de um banco de dados, o IDE gera automaticamente o código apropriado para os vários tipos de campo.
+
+image::images/diagram_consult.png[title="Diagrama de relacionamento com entidades do banco de dados consult"]
+
+A tabela a seguir descreve as tabelas encontradas no banco de dados `consult`.
+
+|===
+|Tabela de Banco de Dados |Descrição |Funcionalidades de Design 
+
+|CLIENT |Um cliente da agência de consultoria |Chave primária composta, não gerada (cujos campos não constituem uma chave estrangeira) 
+
+|CONSULTANT |Um funcionário da agência de consultoria que os clientes podem contratar |Inclui um campo de retomada do tipo LONG VARCHAR 
+
+|CONSULTANT_STATUS |O status de um consultor na agência de consultoria (por exemplo, Ativo e Inativo são status possíveis) |Chave primária não gerada do tipo CHAR 
+
+|RECRUITER |Um funcionário da agência de consultoria responsável por conectar clientes e consultores |  
+
+|PROJECT |Um projeto cuja equipe é formada pelos consultores da agência de consultoria |Chave primária composta, não gerada que inclui dois campos que constituem uma chave estrangeira para a tabela CLIENT 
+
+|BILLABLE |Um conjunto de horas trabalhadas por um consultor em um projeto, o qual a agência de consultoria cobra do cliente relevante |Inclui um campo de artefato do tipo CLOB 
+
+|ADDRESS |O endereço de cobrança de um cliente |  
+
+|PROJECT_CONSULTANT |Tabela com junção indicando a quais projetos os consultores estão designados no momento |Faz referência cruzada entre PROJECT e CONSULTANT, a primeira possui uma chave primária composta 
+|===
+
+
+O banco de dados `consult` inclui uma variedade de relacionamentos. Quando você cria classes de entidade de um banco de dados, o IDE gera automaticamente as propriedades do tipo Java apropriado com base no tipo SQL das colunas. A tabela a seguir descreve os relacionamentos de entidade do banco de dados `consult`. (os relacionamentos inversos não são mostrados.)
+
+|===
+|Entidade |Entidade Relacionada |Informações sobre Relacionamento |Descrição 
+
+|CLIENT |RECRUITER |pode ser nulo, um para um com edição manual; pode ser nulo, um para muitos, caso não seja editado |CLIENT possui muitos RECRUITERs e RECRUITER não possui nenhum ou um CLIENT (se não for manualmente editado) 
+
+|CLIENT |ADDRESS |não pode ser nulo, um para um |CLIENT possui um ADDRESS e ADDRESS não possui nenhum ou um CLIENT 
+
+|CLIENT |PROJECT |não pode ser nulo, um para muitos; em uma entidade de Projeto, o valor do campo do cliente faz parte da chave primária do Projeto |CLIENT tem muitos PROJECTS e PROJECT tem um CLIENT 
+
+|CONSULTANT |PROJECT |muitos para muitos |CONSULTANT tem muitos PROJECTs e PROJECT tem muitos CONSULTANTs 
+
+|CONSULTANT |BILLABLE |não pode ser nulo, um para muitos |CONSULTANT possui muitos BILLABLEs e BILLABLE possui um CONSULTANT 
+
+|CONSULTANT_STATUS |CONSULTANT |não pode ser nulo, um para muitos |CONSULTANT_STATUS possui muitos CONSULTANTs e CONSULTANT possui um CONSULTANT_STATUS 
+
+|CONSULTANT |RECRUITER |pode ser nulo, um para muitos |CONSULTANT não possui nenhum ou um RECRUITER e RECRUITER possui muitos CONSULTANTs 
+
+|BILLABLE |PROJECT |não pode ser nulo, um para muitos |BILLABLE possui um PROJECT e PROJECT possui muitos BILLABLES 
+|===
+
+Agora que o banco de dados está criado, você pode criar a aplicação Web e utilizar o assistente de Classes de Entidade do Banco de Dados para gerar bancos de dados com base nas tabelas do banco de dados.
+
+
+[[createProject]]
+== Criando o Projeto de Aplicação Web
+
+Neste exercício, você criará um projeto Web e adicionará o framework JavaServer Faces ao projeto. Ao criar o projeto, você irá selecionar JavaServer Faces no painel Frameworks do assistente de Novo Projeto.
+
+1. Escolha Arquivo > Novo Projeto (Ctrl-Shift-N; &amp;#8984-Shift-N no Mac) no menu principal.
+2. Na categoria Java Web, selecione Aplicação Web. Clique em Próximo.
+3. Digite `ConsultingAgency ` para o nome do projeto e defina a localização do projeto. Clique em Próximo.
+4. Defina o servidor como GlassFish Server e defina a versão do Java EE para Java EE 6 Web ou Java EE 7 Web. Clique em Próximo.
+5. No painel Frameworks, selecione a opção JavaServer Faces. Clique em Finalizar.
+
+Quando você clicar em Finalizar, o IDE irá gerar o projeto de aplicação Web e abrir `index.xhtml` no editor.
+
+
+[[generateEntity]]
+== Gerando as Classes de Entidade do Banco de Dados
+
+Depois de se conectar a um banco de dados do IDE, você pode utilizar o assistente de Classes de Entidade do Banco de Dados para gerar rapidamente classes de entidade com base nas tabelas do banco de dados. O IDE pode gerar classes de entidade para cada tabela selecionada, e também pode gerar classes de entidade necessárias para tabelas relacionadas.
+
+1. Na janela Projetos, clique com o botão direito do mouse no nó do projeto ` ConsultingAgency` e selecione Novo > Classes de Entidade do Banco de Dados. (Se esta opção não estiver na lista, escolha Outros. Em seguida, no assistente de Arquivo, selecione a categoria Persistência e, depois, Classes de Entidade do Banco de Dados.)
+2. Selecione Nova Fonte de Dados na lista drop-down Fonte de Dados para abrir a caixa de diálogo Criar Fonte de Dados.
+3. Digite `jdbc/consult` como o Nome da JNDI e selecione a conexão `jdbc:mysql://localhost:3306/consult` como a Conexão do Banco de Dados. 
+image::images/create-datasource.png[title="Especificar um nome e uma conexão de banco de dados JNDI para criar uma fonte de dados"]
+4. Clique em OK para fechar a caixa de diálogo e retornar ao assistente. As tabelas no banco de dados `consult` serão exibidas na lista de conteúdo Tabelas Disponíveis.
+5. Clique no botão Adicionar Tudo para selecionar todas as tabelas contidas no banco de dados. Clique em Próximo. 
+image::images/new-entities-wizard.png[]
+6. Digite `jpa.entities` como o nome do Pacote.
+7. Verifique se as caixas de seleção para gerar as consultas nomeadas e criar uma unidade persistente estão marcadas. Clique em Finalizar.
+
+Quando você clicar em Finalizar, o IDE gerará as classes de entidade no pacote `jpa.entities` do projeto.
+
+Quando você utiliza o assistente para criar classes de entidade de um banco de dados, o IDE examina os relacionamentos entre as tabelas do banco de dados. Na janela Projetos, se você expandir o nó do pacote `jpa.entities`, você verá que o IDE gerou uma classe de entidade para cada tabela, exceto para a tabela `PROJECT_CONSULTANT`. O IDE não criou uma classe de entidade para `PROJECT_CONSULTANT` porque a tabela é uma tabela com junção.
+
+image::images/projects-window-entities.png[title="Tela da janela Projetos mostrando as classes de entidades geradas"]
+
+O IDE também gerou duas classes adicionais para as tabelas com chaves primárias compostas: `CLIENT` e `PROJECT`. As classes de chave primária dessas tabelas (`ClientPK.java` e `ProjectPK.java`) têm as letras `PK` acrescentadas ao nome.
+
+Se você observar o código gerado para as classes de entidade, você verá que o assistente adicionou anotações `@GeneratedValue` aos campos ID gerados automaticamente e anotações `@Basic(optional = "false")` a alguns dos campos das classes de entidade. Com base nas anotações `@Basic(optional = "false")`, o assistente de Páginas JSF de Classes de Entidade pode gerar o código que inclui verificações para evitar violações de coluna que não podem ser nulas para esses campos.
+
+
+
+[[jsfPagesEntityClasses]]
+== Gerando Páginas JSF de Classes de Entidade
+
+Agora que as classes de entidade estão criadas, você pode criar a interface Web para exibir e modificar os dados. Você utilizará o assistente de Páginas JSF de Classes de Entidade para gerar páginas JavaServer Faces. O código gerado pelo assistente baseia-se nas anotações de persistência contidas nas classes de entidade.
+
+Para cada classe de entidade o assistente gera os seguintes arquivos:
+
+* um bean de sessão sem estado que estende  ``AbstractFacade.java`` 
+* um bean gerenciado com escopo de sessão JSF
+* um diretório contendo quatro arquivos de Facelets para os recursos CRUD (`Create.xhtml`, `Edit.xhtml`, `List.xhtml` e `View.xhtml`)
+
+O assistente também gera os seguintes arquivos.
+
+* a classe  ``AbstractFacade.java``  que contém a lógica de negócio para criação, recuperação, modificação e remoção das instâncias da entidade
+* classes de utilitário utilizadas pelos beans gerenciados pelo JSF (`JsfUtil`, `PaginationHelper`)
+* um conjunto de propriedades para mensagens localizadas e uma entrada correspondente no arquivo de configuração Faces do projeto (será criado um arquivo `faces-config.xml`, caso já não exista um).
+* arquivos web auxiliares, incluindo uma folha de estilo default para componentes renderizados e um arquivo de modelo de Facelets
+
+Para gerar as páginas JSF:
+
+1. Na janela Projetos, clique com o botão direito do mouse no nó do projeto e selecione Novo > Páginas JSF de Classes de Entidade para abrir o assistente. (Se esta opção não estiver na lista, escolha Outros. Em seguida, no assistente de Arquivo, selecione a categoria JavaServer Faces e, depois, Páginas JSF de Classes de Entidade.)
+
+A caixa Classes de Entidade Disponíveis lista as sete classes de entidade contidas no projeto. A caixa não lista as classes incorporadas (`ClientPK.java` e `ProjectPK.java`).
+
+2. Clique em Adicionar Tudo para mover todas as classes para a caixa Classes de Entidade Selecionadas. 
+image::images/newjsf-wizard.png[title="O assistente de Novas Páginas JSF de Classes de Entidade exibe todas as classes de entidade contidas no projeto"] 
+Clique em Próximo.
+3. Na etapa 3 do assistente, Gerar Classes e Páginas JSF, digite `jpa.session` no Pacote de Bean de Sessão JPA.
+4. Digite `jsf` para o Pacote de Classes JSF.
+5. Digite '`/resources/Bundle`' no campo Nome do Pacote de Localização. Isso gerará um pacote com o nome `resources` no qual o arquivo `Bundle.properties` residirá. (Se deixá-lo em branco, o conjunto de propriedades será criado no pacote default do projeto.)
+image::images/newjsf-wizard2.png[title="Especificar pacote e nomes de pastas para os arquivos gerados"]
+
+Para que o IDE se ajuste melhor às convenções do projeto, você pode personalizar os arquivos gerados pelo assistente. Clique no link Personalizar Modelo para modificar os modelos de arquivo utilizados pelo assistente. 
+image::images/customize-template.png[title="Personalizar modelos de arquivos gerados pelo assistente"] 
+Em geral, você pode acessar e fazer alterações em todos os modelos mantidos pelo IDE utilizando o Gerenciador de Modelos (Ferramentas > Modelos).
+
+6. Clique em Finalizar. O IDE gera os beans de sessão sem estado no pacote `jpa.session`, e o escopo de sessão e beans gerenciados com JSF no pacote `jsf`. Cada bean de sessão sem estado manipula as operações da classe de entidade correspondente, incluindo a criação, edição e destruição de instâncias da classe de entidade por meio da API de Persistência Java. Cada Bean gerenciado pelo JSF implementa a interface `javax.faces.convert.Converter` e realiza as tarefas de conversão das instâncias da classe de entidade correspondente para objetos `String` e vice-versa.
+
+Se você expandir o nó Páginas Web, você poderá ver que o IDE gerou uma pasta para cada uma das classes de entidade. Cada pasta contém os arquivos `Create.xhtml`, `Edit.xhtml`, `List.xhtml` e `View.xhtml`. O IDE também modificou o arquivo `index.xhtml` inserindo links em cada uma das páginas `List.xhtml`.
+
+image::images/projects-jsfpages.png[title="Páginas de Facelets para cada classe de entidade são geradas pelo assistente"]
+
+Cada Bean gerenciado pelo JSF é específico dos quatro arquivos de Facelets correspondentes e inclui o código que chama os métodos no Bean de sessão apropriado.
+
+Expanda o nó da pasta `resources` para localizar a folha de estilo `jsfcrud.css` default gerada pelo assistente. Se você abrir a página de boas-vindas da aplicação (`index.xhtml`) ou o arquivo de modelo de Facelets (`template.xhtml`) no editor, verá que eles contêm uma referência à folha de estilo.
+
+
+[source,java]
+----
+
+<h:outputStylesheet name="css/jsfcrud.css"/>
+----
+
+O arquivo de modelo de Facelets é utilizado por cada um dos quatro arquivos de Facelets para cada classe de entidade.
+
+Se você expandir o nó Pacotes de Código-Fonte, você verá os Beans de sessão, os Beans gerenciados pelo JSF, as classes de utilitário e o conjunto de propriedades gerados pelo assistente.
+
+image::images/projects-generated-classes70.png[title="Tela do diretório de Pacotes de Código-Fonte na janela Projetos mostrando as classes geradas pelo assistente"]
+
+O assistente também gerou o arquivo de Configuração do Faces (`faces-config.xml`) a fim de registrar a localização do conjunto de propriedades. Se expandir o nó Arquivos de Configuração e abrir `faces-config.xml` no editor XML, você verá que a entrada a seguir está incluída.
+
+
+[source,xml]
+----
+
+<application>
+    <resource-bundle>
+        <base-name>/resources/Bundle</base-name>
+        <var>bundle</var>
+    </resource-bundle>
+</application>
+----
+
+Além disso, se expandir o novo pacote `resources`, você encontrará o arquivo `Bundle.properties` que contém mensagens no idioma default do cliente. As mensagens são obtidas das propriedades da classe de entidade.
+
+Para adicionar um novo conjunto de propriedades, clique com o botão direito do mouse no arquivo `Bundle.properties` e selecione Personalizar. A caixa de diálogo Personalizador permite adicionar novas configurações regionais à aplicação.
+
+
+
+[[explore]]
+== Explorando a Aplicação
+
+Agora que seu projeto contém classes de entidade, Beans de sessão EJB para controlar as classes de entidade e um frontend desenvolvido para JSF para exibir e modificar bancos de dados, tente executar o projeto para ver os resultados.
+
+A seguir, encontra-se uma série opcional de exercícios rápidos que ajudará você a se familiarizar com a aplicação, bem como com os recursos e as funcionalidades que o IDE oferece.
+
+* <<completedProject,Examinando o Projeto Concluído>>
+* <<populateDB,Preenchendo o Banco de Dados com um Script SQL>>
+* <<editorSupport,Explorando o Suporte do Editor em Páginas de Facelets>>
+* <<dbIntegrity,Explorando a Integridade do Banco de Dados com Validação de Campo>>
+* <<editEntity,Editando as Classes de Entidade>>
+
+
+[[completedProject]]
+=== Examinando o Projeto Concluído
+
+1. Para executar o projeto, clique com o botão direito do mouse no nó do projeto, na janela Projetos, e selecione Executar ou clique no botão ( image::images/run-project-btn.png[] ) Executar Projeto na barra de ferramentas principal.
+
+Quando a página de boas-vindas da aplicação é exibida, aparece uma lista de links que permite exibir as entradas contidas em cada uma das tabelas do banco de dados.
+
+image::images/welcome-page-links.png[title="Links para exibição do conteúdo do banco de dados para cada tabela"]
+
+Os links foram adicionados à página de boas-vindas (`index.xhtml`) ao concluir o assistente de Páginas JSF de Classes de Entidade. Esses links são fornecidos como pontos de entrada nas páginas de Facelets que oferecem a funcionalidade CRUD no banco de dados da Agência de Consultoria.
+
+
+[source,xml]
+----
+
+<h:body>
+    Hello from Facelets
+    <h:form>
+        <h:commandLink action="/address/List" value="Show All Address Items"/>
+    </h:form>
+    <h:form>
+        <h:commandLink action="/billable/List" value="Show All Billable Items"/>
+    </h:form>
+    <h:form>
+        <h:commandLink action="/client/List" value="Show All Client Items"/>
+    </h:form>
+    <h:form>
+        <h:commandLink action="/consultant/List" value="Show All Consultant Items"/>
+    </h:form>
+    <h:form>
+        <h:commandLink action="/consultantStatus/List" value="Show All ConsultantStatus Items"/>
+    </h:form>
+    <h:form>
+        <h:commandLink action="/project/List" value="Show All Project Items"/>
+    </h:form>
+    <h:form>
+        <h:commandLink action="/recruiter/List" value="Show All Recruiter Items"/>
+    </h:form>
+</h:body>
+----
+2. Clique no link '`Mostrar todos os Itens do Consultor`'. Ao observar o código acima, você pode ver que a página de destino é `/consultant/List.xhtml`. (No JSF 2.x, a extensão do arquivo é deduzida devido à navegação implícita.) 
+image::images/empty-consultants-list.png[title="A tabela Consultores está vazia no momento"] 
+Atualmente, o banco de dados não contém dados de amostra. É possível adicionar dados manualmente clicando no link '`Criar Novo Consultor`' e utilizando o Web form fornecido. A página `/consultant/Create.xhtml` é carregada para que seja exibida. Você também pode executar um script SQL no IDE para preencher as tabelas com os dados de amostra. As subseções a seguir exploram ambas as opções.
+
+Você pode clicar no link do índice para voltar à lista de links da página de boas-vindas. Os links oferecem uma view dos dados contidos em cada tabela do banco de dados e carrega o arquivo `List.xhtml` de cada pasta de entidade para que seja exibido. Conforme será demonstrado posteriormente, após adicionar os dados às tabelas, outros links serão exibidos em cada entrada permitindo que você exiba (`View.xhtml`), edite (`Edit.xhmtl`) e destrua os dados de um único registro da tabela.
+
+*Observação.* Se a implantação da aplicação falhar, consulte a <<troubleshooting,seção de solução de problemas>> a seguir. (Consulte também a seção de solução de problemas de link:mysql-webapp.html#troubleshoot[+Criando uma Aplicação Web Simples Usando um Banco de Dados MySQL+].)
+
+
+[[populateDB]]
+=== Preenchendo o Banco de Dados com um Script SQL
+
+Execute o script fornecido, que gera dados de amostra para as tabelas do banco de dados. O script (`mysql_insert_data_consult.sql`) está incluído no arquivo ZIP Consultando o Banco de Dados da Agência que pode ser obtido por download da <<requiredSoftware,tabela de software exigido>>.
+
+Dependendo do servidor de banco de dados com que estiver trabalhando (MySQL ou JavaDB), você poderá executar o script fornecido, que irá gerar dados de amostra para as tabelas de banco de dados. Para o MySQL, esse é o script `mysql_insert_data_consult.sql`. Para o JavaDB, esse é o script `javadb_insert_data_consult.sql`. Ambos os scripts são incluídos nos respectivos arquivos compactados, que podem ser obtidos por download na <<requiredSoftware,tabela de software exigido>>.
+
+1. Selecione Arquivo > Abrir Arquivo no menu principal e, em seguida, vá até o local do script no seu computador. Clique em Abrir. O arquivo é aberto automaticamente no editor SQL do IDE.
+2. Certifique-se de que o banco de dados `consult` esteja selecionado na lista drop-down Conexão da barra de ferramentas do editor SQL.
+image::images/run-sql-insert.png[title="Abrir o script no editor SQL do IDE"]
+
+Clique com o botão direito do mouse no editor e selecione Executar Instrução ou clique no botão ( image::images/run-sql-btn.png[] ) Executar SQL. É possível ver o resultado da execução do script na janela de Saída.
+
+3. Reinicie o GlassFish Server. Essa é uma etapa necessária para ativar o servidor e recarregar e armazenar no cache os novos dados contidos no banco de dados `consult`. Para isso, clique na guia do GlassFish Server na janela de Saída (A guia do GlassFish Server exibirá o log do servidor.), em seguida, clique no botão ( image::images/glassfish-restart.png[] ) Reiniciar Servidor na margem esquerda. O servidor para e, em seguida, reinicia.
+4. Execute o projeto novamente e clique no link '`Mostrar Todos os Itens do Consultor`'. Você verá que a lista não está mais vazia.
+image::images/consultants-list-small.png[role="left", link="images/consultants-list.png"]
+
+
+=== Suporte ao Banco de Dados NetBeans
+
+É possível utilizar o visualizador de tabelas do banco de dados do IDE para exibir e modificar os dados da tabela mantidos diretamente no banco de dados. Por exemplo, clique com o botão direito do mouse na tabela `consultant` na janela Serviços e selecione Exibir Dados.
+
+image::images/view-data.png[title="Selecione Exibir Dados no menu contextual das tabelas de banco de dados"]
+
+A consulta SQL utilizada para executar a ação é exibida na parte superior do editor e uma exibição gráfica da tabela é exibida abaixo.
+
+image:::images/view-data-table-small.png[role="left", link="images/view-data-table.png"]
+
+Clique duas vezes nas células da tabela para efetuar modificações diretamente nos dados. Clique no ícone ( image::images/commit-records-icon.png[] ) Confirmar Registros para confirmar as alterações feitas no banco de dados.
+
+A view gráfica oferece mais funcionalidade. Consulte link:../../docs/ide/database-improvements-screencast.html[+Suporte ao Banco de Dados no NetBeans IDE+] para obter mais informações.
+
+
+
+[[editorSupport]]
+=== Explorando o Suporte do Editor em Páginas de Facelets
+
+1. Abra a página `/consultant/List.xhtml` no editor. A linha 8 indica que a página depende do arquivo de Facelets `template.xhtml` para que ser renderizada.
+
+[source,java]
+----
+
+<ui:composition template="/template.xhtml">
+----
+
+Para exibir os números das linhas, clique com o botão direito do mouse na margem esquerda do editor e selecione Mostrar Números de Linhas.
+
+2. Utilize a caixa de diálogo Ir para Arquivo do IDE para abrir o arquivo `template.xhtml`. Pressione Alt-Shift-O (Ctrl-Shift-O no Mac) e, em seguida, digite `modelo`.
+image::images/go-to-file.png[title="Utilizar a caixa de diálogo Ir para Arquivo para abrir rapidamente arquivos do projeto"]
+
+Clique em OK (ou pressione Enter).
+
+3. O modelo aplica as tags `<ui:insert>` para inserir o conteúdo de outros arquivos no título e corpo. Coloque o cursor na tag `<ui:insert>` e pressione Ctrl-Espaço para chamar uma janela pop-up de documentação.
+image::images/doc-popup.png[title="Pressione Ctrl-Espaço para chamar um pop-up de documentação nas tags de Facelets"]
+
+É possível pressionar Ctrl-Espaço nas tags JSF e seus atributos para chamar o pop-up da documentação. A documentação exibida é obtida das descrições fornecidas na link:http://javaserverfaces.java.net/nonav/docs/2.1/vdldocs/facelets/index.html[+Documentação da Biblioteca de Tags JSF+] Oficial.
+
+4. Volte para o arquivo `List.xhtml` (pressione Ctrl-Tab). As tags `<ui:define>` são utilizadas para definir o conteúdo que será aplicado ao título e ao corpo do modelo. Esse padrão é utilizado nos quatro arquivos de Facelets (`Create.xhtml`, `Edit.xhtml`, `List.xhtml` e `View.xhtml`) gerados para cada classe de entidade.
+5. Coloque seu cursor em qualquer uma das expressões EL utilizadas nas mensagens localizadas contidas no arquivo `Bundle.properties`. Pressione Ctrl-Espaço para exibir a mensagem localizada. 
+image::images/localized-messages-small.png[role="left", link="images/localized-messages.png"]
+
+Na imagem acima, você pode ver que a expressão EL é determinada como '`List`', que é aplicada ao título do modelo e pode ser verificada na página renderizada no browser.
+
+6. Navegue até a parte inferior do arquivo e localize o código do link `Criar novo consultor` (Linha 92). Trata-se do seguinte:
+
+[source,java]
+----
+
+<h:commandLink action="#{consultantController.prepareCreate}" value="#{bundle.ListConsultantCreateLink}"/>
+----
+7. Pressione Ctrl-Espaço no atributo `action` do `commandLink` para chamar a janela pop-up da documentação. 
+
+O atributo `ação` indica o método que manipula a solicitação quando o link é clicado no browser. A documentação a seguir será fornecida: 
+
+_MethodExpression, que representa a ação da aplicação a qual será chamada quando este componente for ativado pelo usuário. A expressão deve ser interpretada como um método público que não toma nenhum parâmetro e retorna um Object (o toString() do qual é chamado para gerar o resultado lógico) que será passado para o NavigationHandler desta aplicação._
+Em outras palavras, o valor de `action` se refere normalmente a um método em um bean gerenciado pelo JSF que é avaliado como uma `String`. Então, a string é utilizada pelo `NavigationHandler` do JSF para encaminhar a solicitação para a view apropriada. É possível verificar isso nas etapas a seguir.
+8. Coloque o cursor no `consultantController` e pressione Ctrl-Espaço. A funcionalidade autocompletar código do editor indica que `consultantController` é um Bean gerenciado pelo JSF.
+image::images/code-completion-managed-bean.png[title="A funcionalidade autocompletar código é fornecida para Beans gerenciados pelo JSF"]
+9. Mova o cursor para `prepareCreate` e pressione Ctrl-Espaço. A funcionalidade autocompletar código lista os métodos contidos no Bean gerenciado `ConsultantController`.
+image::images/code-completion-properties.png[title="A funcionalidade autocompletar código é fornecida para métodos de classe"]
+10. Pressione Ctrl (&amp;#8984 no Mac) e, em seguida mova o mouse sobre `prepareCreate`. É formado um link, que permite ir diretamente para o método `prepareCreate()` no Bean gerenciado `ConsultantController`.
+image::images/editor-navigation.png[title="Utilizar a navegação do editor para ir rapidamente até o código-fonte"]
+11. Clique no link e exiba o método `prepareCreate()` (exibido a seguir).
+
+[source,java]
+----
+
+public String prepareCreate() {
+    current = new Consultant();
+    selectedItemIndex = -1;
+    return "Create";
+}
+----
+O método retornará `Create`. O `NavigationHandler` coleta informações em segundo plano e aplica a string `Create` ao caminho que indica a view enviada em resposta à solicitação: `/consultant/*Create*.xhtml`. (No JSF 2.x, a extensão do arquivo é deduzida devido à navegação implícita.)
+
+
+[[dbIntegrity]]
+=== Explorando a Integridade do Banco de Dados com Validação de Campo
+
+1. Na <<consultantsList,página Lista de Consultores>> do browser, clique no link '`Criar Novo Consultor`'. Conforme demonstrado na subseção anterior, isso carrega a página `/consultant/Create.xhtml` para que seja renderizada.
+2. Informe os detalhes a seguir no form: Temporariamente, deixe os campos `RecruiterId` e `StatusId` em branco.
+
+|===
+|Campo |Valor 
+
+|ConsultantId |2 
+
+|Email |jack.smart@jsfcrudconsultants.com 
+
+|Password |jack.smart 
+
+|HourlyRate |75 
+
+|BillableHourlyRate |110 
+
+|HireDate |22/07/2008 
+
+|Retomar |Sou um ótimo consultor. Contrate-me - Você não vai se arrepender! 
+
+|RecruiterId |--- 
+
+|StatusId |--- 
+|===
+3. Clique em Salvar. Quando você fizer isso, um erro de validação será sinalizado no campo `StatusId`. 
+image::images/create-new-consultant.png[title="Informar os dados de amostra no form"] 
+Por que aconteceu isso? Examine novamente o <<er-diagram,diagrama de relacionamento com entidades do banco de dados da Agência de Consultoria>>. Conforme apresentado na <<relationships,tabela de relacionamentos>> acima, as tabelas `CONSULTANT` e `CONSULTANT_STATUS` compartilham um relacionamento que não pode ser nulo, um para muitos. Portanto, cada entrada da tabela `CONSULTANT` deve conter uma referência a uma entrada na tabela `CONSULTANT_STATUS`. Isso é indicado pela chave estrangeira `consultant_fk_consultant_status` que vincula as duas tabelas.
+
+É possível exibir as chaves estrangeiras contidas nas tabelas expandindo o nó Chaves Estrangeiras da tabela na janela Serviços (Ctrl-5; &amp;#8984-5 no Mac).
+
+image::images/consultant-fk.png[title="Examinar os atributos da chave estrangeira na janela Serviços"]
+4. Para solucionar o erro de validação, selecione `entity.ConsultantStatus[statusId=A]` na lista drop-down `StatusId`. 
+
+*Observação: *Você pode deixar o campo `RecruiterId` em branco. Conforme indicado no <<er-diagram,diagrama de relacionamento com as entidades do banco de dados>>, há um relacionamento que pode ser nulo, um para muitos entre as tabelas `CONSULTANT` e `RECRUITER`, indicando que as entradas em `CONSULTANT` não precisam estar associadas a uma entrada de `RECRUITER`.
+5. Clique em Salvar. Será exibida uma mensagem indicando que a entrada do consultor foi salva com êxito. Se você clicar em `Exibir Todos os Itens do Consultor`, você verá a nova entrada listada na tabela.
+
+Em geral, as páginas de Facelets geradas produzem erros para entradas do usuário que introduz:
+
+* campos vazios em células de tabela que não podem ser nulas.
+* modificações em dados que não podem ser alterados (por exemplo, chaves primárias).
+* inserção de dados que não são do tipo correto.
+* modificações em dados quando uma view do usuário não estiver mais sincronizada com o banco de dados.
+
+
+[[editEntity]]
+=== Editando as Classes de Entidade
+
+Na subseção anterior, você viu como a lista drop-down `StatusId` forneceu a opção mais complexa `entity.ConsultantStatus[statusId=A]`. Você já deve ter notado que o texto exibido em cada item desta lista drop-down é a representação de uma string de cada entidade `ConsultantStatus` encontrada (por exemplo, o método `toString()` da classe de entidade é chamado).
+
+Essa subseção demonstra como você pode utilizar a funcionalidade autocompletar código, a documentação e o suporte à navegação do editor para chegar a essa conclusão. Também oferece uma mensagem mais amigável para a lista drop-down.
+
+1. Abra o arquivo `/consultant/Create.xhtml` no editor. Trata-se do form Criar Novo Consultor que você acaba de exibir no browser. Role para baixo até o código da lista drop-down `StatusId` (ilustrado em *negrito* abaixo).
+
+[source,xml]
+----
+
+    <h:outputLabel value="#{bundle.CreateConsultantLabel_resume}" for="resume" />
+    <h:inputTextarea rows="4" cols="30" id="resume" value="#{consultantController.selected.resume}" title="#{bundle.CreateConsultantTitle_resume}" />
+    *<h:outputLabel value="#{bundle.CreateConsultantLabel_statusId}" for="statusId" />
+    <h:selectOneMenu id="statusId" value="#{consultantController.selected.statusId}" title="#{bundle.CreateConsultantTitle_statusId}" required="true" requiredMessage="#{bundle.CreateConsultantRequiredMessage_statusId}">
+        <f:selectItems value="#{consultantStatusController.itemsAvailableSelectOne}"/>
+    </h:selectOneMenu>*
+    <h:outputLabel value="#{bundle.CreateConsultantLabel_recruiterId}" for="recruiterId" />
+    <h:selectOneMenu id="recruiterId" value="#{consultantController.selected.recruiterId}" title="#{bundle.CreateConsultantTitle_recruiterId}" >
+        <f:selectItems value="#{recruiterController.itemsAvailableSelectOne}"/>
+    </h:selectOneMenu>
+</h:panelGrid>
+----
+2. Examine o `value` aplicado à tag `<f:selectItems>`. O atributo `value` determina o texto exibido para cada item na lista drop-down. 
+
+Pressione Ctrl-Espaço em `itemsAvailableSelectOne`. A funcionalidade autocompletar código do editor indica que o método `getItemsAvailableSelectOne()` do `ConsultantStatusController` retorna um array de objetos `SelectItem`.
+image::images/code-completion-returned-object.png[title="A funcionalidade autocompletar código exibe as classes retornadas para os métodos"]
+3. Pressione Ctrl (&amp;#8984 no Mac) e, em seguida, mova o mouse sobre `itemsAvailableSelectOne`. É formado um link que permite ir diretamente para o método `getItemsAvailableSelectOne()` no código-fonte da entidade `ConsultantStatus`. Clique neste link.
+4. Coloque o cursor sobre o valor de retorno `SelectItem[]` na assinatura do método e pressione Ctrl-Espaço para chamar a janela pop-up da documentação.
+image::images/documentation-select-item.png[title="Pressione Ctrl-Espaço para chamar o suporte à documentação"]
+
+Clique no ícone ( image::images/web-browser-icon.png[] ) Web browser na janela da documentação para abrir o Javadoc em um Web browser externo.
+
+Como você pode ver, a classe `SelectItem` pertence ao framework JSF. O componente `UISelectOne`, conforme mencionado na documentação, é representado pela tag `<h:selectOneMenu>` da marcação que você examinou na <<markup,Etapa 1>> acima.
+5. Pressione Ctrl (&amp;#8984 no Mac) e, em seguida, mova o mouse sobre `findAll()`. Uma janela pop-up será exibida com a assinatura do método. 
+image::images/method-signature.png[title="Exibir pop-ups das assinaturas do método no editor"] 
+É possível observar que aqui o `ejbFacade.findAll()` retorna uma `Lista` de objetos `ConsultantStatus`.
+6. Vá para `JsfUtil.getSelectItems`. Coloque o mouse sobre `getSelectItems` e pressione Ctrl (&amp;#8984 no Mac), a seguir, clique no link exibido. 
+
+*Observação: *Lembre-se de que `JsfUtil` é uma das classes de utilitário geradas ao concluir o <<jsfPagesEntityClasses,assistente de Páginas JSF de Classes de Entidade>>. 
+
+O método cria o loop por meio da lista de entidades (por exemplo, a `List` de objetos `ConsultantStatus`), criando um `SelectItem` para cada entidade. Conforme indicado abaixo em *negrito*, cada `SelectItem` é criado utilizando o objeto da entidade e um _label_ para o objeto.
+
+[source,java]
+----
+
+public static SelectItem[] getSelectItems(List<?> entities, boolean selectOne) {
+    int size = selectOne ? entities.size() + 1 : entities.size();
+    SelectItem[] items = new SelectItem[size];
+    int i = 0;
+    if (selectOne) {
+        items[0] = new SelectItem("", "---");
+        i++;
+    }
+    *for (Object x : entities) {
+        items[i++] = new SelectItem(x, x.toString());
+    }*
+    return items;
+}
+----
+
+O label é criado utilizando o método `toString()` da entidade e corresponde à representação do objeto quando renderizado na resposta. (Consulte a definição do Javadoc para o construtor `SelectItem(java.lang.Object value, java.lang.String label)`.)
+
+Agora que você verificou que o método `toString()` da entidade é o método renderizado no browser ao exibir os itens em uma lista drop-down, modifique o método `toString()` do `ConsultantStatus`.
+
+7. Abra a classe de entidade `ConsultantStatus` no editor. Modifique o método `toString` para retornar `statusId` e `description`. Trata-se das propriedades da entidade que correspondem às duas colunas da tabela `CONSULTANT_STATUS`.
+
+[source,java]
+----
+
+public String toString() {
+    return *statusId + ", " + description;*
+}
+----
+8. Execute o projeto novamente. Quando o browser exibir a página de boas-vindas, clique no link `Mostrar Todos os Itens do Consultor` e, em seguida, em `Criar Novo Consultor`.
+
+Inspecione a lista drop-down `StatusId`. Você verá que agora ela exibe o ID de status e a descrição do registro contido na tabela `CONSULTANT_STATUS` do banco de dados.
+
+image::images/drop-down.png[title="A lista drop-down StatusId exibe itens de acordo com o método toString() da entidade ConsultantStatus"]
+
+
+[[troubleshooting]]
+== Solução de Problemas
+
+Dependendo da sua configuração, a implantação da aplicação no servidor poderá falhar e você talvez veja a seguinte mensagem na janela Saída.
+
+
+[source,java]
+----
+
+GlassFish Server 4 is running.
+In-place deployment at /MyDocuments/ConsultingAgency/build/web
+GlassFish Server 4, deploy, null, false
+/MyDocuments/ConsultingAgency/nbproject/build-impl.xml:1045: The module has not been deployed.
+See the server log for details.
+----
+
+A causa mais comum da falha é um problema ao gerar os recursos JDBC no servidor. Se esse for o caso, você provavelmente verá uma mensagem semelhante à seguinte na guia de log do servidor, na janela Saída.
+
+
+[source,java]
+----
+
+Severe:   Exception while preparing the app : Invalid resource : jdbc/consult__pm
+com.sun.appserv.connectors.internal.api.ConnectorRuntimeException: Invalid resource : jdbc/consult__pm
+----
+
+Se a guia de log do servidor não for aberta, será possível abri-la clicando com o botão direito do mouse no nó GlassFish Server, na janela Serviços, e escolhendo Exibir Log do Servidor de Domínio.
+
+Essa aplicação exige dois recursos JDBC:
+
+* Recurso ou Fonte de Dados JDBC. A aplicação usa a pesquisa JNDI para localizar o recurso JDBC. Se você examinar a unidade de persistência (`persistence.xml`), poderá ver que o nome da JNDI para a fonte de dados JTA dessa aplicação é `jdbc/consult`.
+
+O recurso JDBC identifica o pool de conexões atualmente utilizado pela aplicação.
+
+* Pool de Conexões JDBC. O pool de conexões especifica os detalhes da conexão do banco de dados, o que inclui local, nome do usuário e senha. O pool de conexões usado nessa aplicação é `consultPool`.
+
+O recurso JDBC e o pool de conexões são especificados no arquivo `glassfish-resources.xml`. Você pode abrir `glassfish-resources.xml` no editor expandindo o nó Recursos do Servidor na janela Projetos e clicando duas vezes no arquivo. O arquivo será semelhante ao seguinte:
+
+
+[source,xml]
+----
+
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE resources PUBLIC "-//GlassFish.org//DTD GlassFish Application Server 3.1 Resource Definitions//EN" "http://glassfish.org/dtds/glassfish-resources_1_5.dtd">
+<resources>
+  <jdbc-connection-pool allow-non-component-callers="false" associate-with-thread="false" connection-creation-retry-attempts="0" connection-creation-retry-interval-in-seconds="10" connection-leak-reclaim="false" connection-leak-timeout-in-seconds="0" connection-validation-method="auto-commit" datasource-classname="com.mysql.jdbc.jdbc2.optional.MysqlDataSource" fail-all-connections="false" idle-timeout-in-seconds="300" is-connection-validation-required="false" is-isolation-level-guaranteed="true" lazy-connection-association="false" lazy-connection-enlistment="false" match-connections="false" max-connection-usage-count="0" max-pool-size="32" max-wait-time-in-millis="60000" name="consultPool" non-transactional-connections="false" ping="false" pool-resize-quantity="2" pooling="true" res-type="javax.sql.DataSource" statement-cache-size="0" statement-leak-reclaim="false" statement-leak-timeout-in-seconds="0" statement-timeout-in-seconds="-1" steady-pool-size="8" validate-atmost-once-period-in-seconds="0" wrap-jdbc-objects="false">
+    <property name="serverName" value="localhost"/>
+    <property name="portNumber" value="3306"/>
+    <property name="databaseName" value="consult"/>
+    <property name="User" value="root"/>
+    <property name="Password" value="nb"/>
+    <property name="URL" value="jdbc:mysql://localhost:3306/consult?zeroDateTimeBehavior=convertToNull"/>
+    <property name="driverClass" value="com.mysql.jdbc.Driver"/>
+  /<jdbc-connection-pool>
+  <jdbc-resource enabled="true" jndi-name="jdbc/consult" object-type="user" pool-name="consultPool"/>
+/<resources>
+----
+
+Em `glassfish-resources.xml`, você poderá ver que o recurso JDBC `jdbc/consult` identifica `consultPool` como nome do pool de conexões. É possível também ver as propriedades de `consultPool`. Nessa aplicação, apenas uma fonte de dados e um pool de conexões são definidos em `glassfish-resources.xml`. Em alguns casos, convém especificar recursos adicionais, por exemplo, para identificar um armazenamento de dados temporário usado apenas para fins de desenvolvimento ou teste.
+
+Se o recurso JDBC e o pool de conexões não tiverem sido gerados automaticamente no servidor quando você executou a aplicação, será possível realizar as etapas a seguir para criar manualmente os recursos na Console Admin do GlassFish.
+
+1. Abra `glassfish-resources.xml` no editor se não tiver feito isso ainda.
+
+Use os valores de propriedade especificados em `glassfish-resources.xml` ao criar o recurso JDBC e o pool de conexões.
+
+2. Clique com o botão direito no nó GlassFish Server, na janela Serviços, e escolha Abrir Console Admin do Domínio no menu pop-up para abrir a Console do GlassFish no browser.
+3. No painel de navegação Tarefas Comuns da Console do GlassFish, expanda o nó *JDBC* e os nós *Recursos JDBC* e *Pool de Conexões JDBC*. 
+image:::images/gf-admin-console-sm.png[role="left", link="images/gf-admin-console-lg.png"]
+
+Você pode ver os recursos JDBC que estão registrados atualmente no servidor. Será necessário criar `jdbc/consult` e `consultPool` se não estiverem listados sob o nó JDBC no painel de navegação Tarefas Comuns. Alguns recursos JDBC foram criados por padrão quando você instalou o servidor e são exibidos como subnós.
+
+4. Clique no nó *Pools de Conexões JDBC* e clique em Novo no painel Novo Pool de Conexões JDBC. 
+image::images/gf-new-jdbc-pool1.png[title="Painel Novo Pool de Conexões JDBC na Console Admin do GlassFish"]
+5. Digite *consultPool* como Nome do Pool, selecione *javax.sql.ConnectionPoolDataSource* como Tipo de Recurso e selecione *MySql* como Fornecedor do Driver de Banco de Dados. Clique em Próximo.
+6. Na Etapa 2, localize e especifique os valores das propriedades *URL*, *nome do usuário* e *senha*. Clique em Finalizar. 
+image::images/gf-new-jdbc-pool2.png[title="Painel Novo Pool de Conexões JDBC na Console Admin do GlassFish"]
+
+Os valores das propriedades se encontram em `glassfish-resources.xml`.
+
+O novo pool de conexões é criado no servidor quando você clica em Concluir e um nó do pool de conexões é exibido sob o nó Pools de Conexões JDBC.
+
+7. Clique no nó *Recursos JDBC* no painel de navegação Tarefas Comuns e clique em Novo.
+8. Digite *jdbc/consult* como Nome da JNDI e selecione *consultPool* na lista drop-down Nome do Pool. Clique em OK. 
+image::images/gf-new-jdbc-resource.png[title="Painel Novo Recurso JDBC na Console Admin do GlassFish"]
+
+O novo recurso JDBC é criado no servidor quando você clica em OK e um nó para o recurso é exibido sob o nó Recursos JDBC.
+
+Na janela Serviço do IDE, você pode expandir o nó Recursos no GlassFish Server e ver se o IDE adicionou os novos recursos. Pode ser necessário atualizar a view (clique com o botão direito do mouse em Recursos e escolha Atualizar) para exibir as alterações.
+
+image::images/gf-services-jdbc-resources.png[title="Recursos JDBC exibidos na janela Serviços do IDE"]
+
+Para obter mais dicas sobre solução de problemas ao usar o MySQL e o IDE, consulte os seguintes documentos:
+
+* Tutorial link:../ide/mysql.html[+Estabelecendo Conexão com um Banco de Dados MySQL+].
+* A seção de solução de problemas de link:mysql-webapp.html#troubleshoot[+Criando uma Aplicação Web Simples Usando um Banco de Dados MySQL+]
+link:/about/contact_form.html?to=3&subject=Feedback:%20Creating%20a%20JSF%202.0%20CRUD%20Application[+Enviar Feedback neste Tutorial+]
+
+
+
+[[seealso]]
+== Consulte Também
+
+Para obter mais informações sobre o JSF 2.x, consulte os recursos a seguir:
+
+
+=== Tutoriais e Artigos NetBeans
+
+* link:jsf20-intro.html[+Introdução ao JavaServer Faces 2.x no NetBeans IDE+]
+* link:jsf20-support.html[+Suporte a JSF 2.x no NetBeans IDE+]
+* link:../../samples/scrum-toys.html[+Scrum Toys: A Aplicação de Amostra Completa do JSF 2.0+]
+* link:../javaee/javaee-gettingstarted.html[+Conceitos Básicos sobre Aplicações do Java EE+]
+* link:../../trails/java-ee.html[+Trilha do Aprendizado do Java EE e Java Web+]
+
+
+=== Recursos Externos
+
+* link:http://www.oracle.com/technetwork/java/javaee/javaserverfaces-139869.html[+Tecnologia JavaServer Faces+] (homepage Oficial)
+* link:http://jcp.org/aboutJava/communityprocess/final/jsr314/index.html[+Especificação do JSR 314 para o JavaServer Faces 2.0+]
+* Capítulo link:http://docs.oracle.com/javaee/7/tutorial/doc/jsf-intro.htm[+Tecnologia do JavaServer Faces+] no Tutorial Java EE 7
+* link:http://javaserverfaces.dev.java.net/[+Projeto Mojarra GlassFish+] (Implementação oficial de referência do JSF 2.x)
+* link:http://forums.oracle.com/forums/forum.jspa?forumID=982[+Fóruns de Discussão OTN: JavaServer Faces+]
+* link:http://www.jsfcentral.com/[+Central do JSF+]
+
+
+=== Blogs
+
+* link:http://www.java.net/blogs/edburns/[+Ed Burns+]
+* link:http://www.java.net/blogs/driscoll/[+Jim Driscoll+]

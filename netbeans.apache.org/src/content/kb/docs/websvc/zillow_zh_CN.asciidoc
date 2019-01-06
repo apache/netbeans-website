@@ -1,0 +1,265 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= SaaS（服务型软件）：Zillow 教程
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: SaaS（服务型软件）：Zillow 教程 - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, SaaS（服务型软件）：Zillow 教程
+
+NetBeans IDE 提供一个支持服务型软件 (SaaS) 应用程序的 Web 服务管理器。SaaS 指的是一个软件应用程序交付模型，软件供应商通过它开发 Web 性质的软件应用程序，并承载和运行供其客户通过 Internet 使用的应用程序。SaaS 是一个越来越普及的软件功能提供模型，因为无论从成本角度，还是从客户硬件资源角度而言，它都很经济划算。现在，Java 开发者可以很轻松地在 IDE 中访问 Web 上所有流行的 SaaS 服务。
+
+本教程演示如何使用 link:http://www.zillow.com/[+zillow.com+] 提供的简单 SaaS。Zillow.com 是一家位于华盛顿西雅图的在线房地产服务公司，成立于 2005 年，其创建者是前 Microsoft 管理人员以及 Expedia 创建者 Rich Barton 和 Lloyd Frink。Zillow 使用户可以看到全美国数百万座房屋的价格，而不仅仅是那些正在出售的房屋的价格。除了给出房屋的估价外，它还提供几项独特的功能，包括每座房屋在给定时间段（例如，1 年、5 年或 10 年）内的价格波动、房屋的鸟瞰图以及某个地区房屋的价格。如果可以访问相应的数据，它还可以提供给定房屋的基本信息，例如，平方英尺数、卧室的数量以及卫生间的数量。如果发生了显著的变化，用户还可以获得房屋的最新估价。
+
+在本教程中，将显示一个图表，该图表显示美国 12 个月的平均房屋价格。为了对此进行设置，请首先使用服务管理器将 ZillowRealEstateService.GetRegionChart 操作插入一个 Servlet 中。IDE 会处理基本结构，但还必须修改 Servlet 代码以提取区域图的 URL。本教程说明如何使用 JAXB 对象提取该 URL。这是最简单的方法。
+
+
+image::images/netbeans-stamp-80-74-73.png[title="此页上的内容适用于 NetBeans IDE 7.2、7.3、7.4 和 8.0"]
+
+
+*要学习本教程，您需要具备以下软件和资源。*
+
+|===
+|软件或资源 |要求的版本 
+
+|link:https://netbeans.org/downloads/index.html[+NetBeans IDE+] |Java EE 下载包 
+
+|link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+Java 开发工具包 (JDK)+] |版本 7 或 8 
+
+|符合 Java EE 规范的 Web 服务器或应用服务器 |Tomcat Web 服务器 7.x、8.x、GlassFish Server Open Source Edition 3.1.x、4.x 或 link:http://www.oracle.com/technetwork/middleware/weblogic/overview/index.html[+Oracle WebLogic Server 11g-12c+]
+*重要信息：*如果在本教程中使用 Tomcat，请参见 
+link:http://wiki.netbeans.org/DeployREST2Tomcat55[+关于在 Tomcat 上部署 REST 风格服务的 NetBeans Wiki+] 
+|===
+
+
+== 注册以接收 Zillow API 密钥
+
+Zillow 服务使用 API 密钥验证。link:http://www.zillow.com/webservice/Registration.htm[+在此向 Zillow 注册+]以接收一个 API 密钥。您必须填写一个注册表，但注册是免费的。
+
+其他服务使用 HTTP 验证、标头签名或用户登录来进行验证。这些机制将在后面的教程中介绍。
+
+
+== 创建 Servlet
+
+在 IDE 中可以向 Servlet、现有 REST 风格的服务、JSP 页或简单的传统 Java 对象 (POJO) 中插入 SaaS 操作。在本教程中，将创建一个包含 Servlet 的 Web 应用程序。
+
+*要创建 Servlet，请执行以下操作：*
+
+1. 选择 "File"（文件）> "New Project"（新建项目）。在 "Categories"（类别）下，选择 "Java Web"。在 "Projects"（项目）下选择 "Web Application"（Web 应用程序），然后单击 "Next"（下一步）。
+2. 在 "Project Name"（项目名称）字段中键入  ``ZillowRegionChart`` 。
+3. 选择 GlassFish Server 或 Tomcat 服务器以及 Java EE 6 或 Java EE 7。单击其余选项，然后单击 "Finish"（完成）。
+4. 右键单击 ZillowRegionChart 项目节点，并从上下文窗口中选择 "Properties"（属性）。"Project Properties"（项目属性）对话框打开。
+5. 右键单击项目节点，然后选择 "New"（新建）> "Servlet"。此时将打开新建 Servlet 向导。 
+image::images/new-zillow-servlet.png[title="带有 ZillowRegionChartServlet 的新建 Servlet 向导"]
+6. 将此 Servlet 命名为 ZillowRegionChartServlet。为它创建一个任意的包，如 zillow.regionchart。保留所有其他设置为默认值不变，然后单击 "Finish"（完成）。
+
+该 Servlet 在一个编辑器标签中打开，该 Servlet 及其父包显示在 "Projects"（项目）视图中项目的 "Source Packages"（源包）节点下。
+
+image::images/zillow-project-new.png[title="显示新 servlet 的 IDE 中的 "Projects"（项目）标签"]
+
+
+== 将 Zillow GetRegionChart 操作添加到 Servlet
+
+使用服务管理器将 Zillow 的 SaaS 功能添加到 Servlet。IDE 会创建所有的基础结构。
+
+*要添加 GetRegionChart 操作，请执行以下操作：*
+
+1. 在 IDE 中打开 "Services"（服务）标签。展开 "Web Services"（Web 服务）节点。定位到 Zillow GetRegionChart 操作。 
+image::images/z-llow-getregionchart.png[title="展开了 Web 服务和 Zillow 节点的 "Services"（服务）标签"]
+2. 在编辑器中，定位到 ZillowRegionChartServlet.java 中的 processRequest 方法。在 try 代码块的开头添加一个空行。将 getRegionChart 操作拖放至 processRequest() 的 try 代码块中。
+3. “定制 GET Saas 服务”对话框打开。可以输入实际的美国城市、州以及邮政编码值，也可以将它们保留为空值。（如果保留空值，将获得全国平均房屋价格表。）单击 "OK"（确定）。
+
+IDE 将生成 GET SaaS 服务的代码。完成后，processRequest() 方法应如下所示。
+
+
+image::images/droppedcode.png[title="显示插入的 getRegionChart try 代码块的 servlet 代码"]
+
+IDE 还创建两个新包  ``org.netbeans.saas``  和  ``org.netbeans.saas.zillow`` ，分别包含 REST 风格的连接以及特定于 Zillow 的类。完整的包结构如下所示。IDE 还将  ``RestConnection``  和  ``ZillowRealEstateService``  类导入 Servlet 中。
+
+image::images/zillow-project-complete.png[title="ZillowRegionChart 项目的完整结构"]
+
+
+== 将 API 密钥添加到项目
+
+为了使项目能够访问 Zillow 服务，必须传递<<get-api-key,注册>>时获取的 API 密钥。打开  ``zillowrealestateserviceauthenticator.properties``  文件，复制并粘贴收到的 API 密钥（来自 Zillow 的注册确认电子邮件）。
+
+
+== 修改 Servlet 以返回图表图
+
+已创建的 Servlet 不会产生任何可用的输出。为了使区域图表图显示在浏览器中，必须从 Zillow 服务返回的字符串中提取该图表的 URL（采用的是 XML 文件的形式）。一种方法是解析该 XML 文件并将 URL 传递到一个 JSP 页。此方法在 NetBeans Zone 中 Adam Myatt 所撰写的link:http://netbeans.dzone.com/news/consuming-zillow-web-services-[+使用 Zillow Web 服务+]一文中有所介绍。在本教程中，使用一种涉及 JAXB 对象的更简单的方法。
+
+*要返回图表图，请执行以下操作：*
+
+1. 修改输出行  ``[Code]#//out.println("The SaasService returned: "+result.getDataAsString());#`` 。取消注释该行，并将它改为生成 HTML <img> 标记，而不是生成文本。请注意要对 URL 两侧的引号进行转义！此代码行现在应如下所示。
+
+[source,java]
+----
+
+out.println("<img src=\""+result.getDataAsString() + "\" />");
+----
+2. 将输出行移至  ``if``  块内的结尾处。现在， ``if``  块显示如下：
+
+[source,java]
+----
+
+if (result.getDataAsObject(zillow.realestateservice.regionchart.Regionchart.class) instanceof
+  zillow.realestateservice.regionchart.Regionchart) {
+        zillow.realestateservice.regionchart.Regionchart resultObj = result.getDataAsObject(zillow.realestateservice.regionchart.Regionchart.class);
+        out.println("<img src=\"" + result.getDataAsString() + "\" />");
+}
+----
+3. 将输出中的  ``result.getDataAsString()``  方法替换为  ``resultObj.getResponse().getUrl()`` 。可以使用代码完成功能从不同的  ``resultObj``  方法中选择  ``getResponse()`` （如下所示），然后使用代码完成功能从  ``getResponse``  方法中选择  ``getUrl()`` 。 
+image::images/zillow-getresponse-cc.png[title="显示 resultObj 方法的代码完成的编辑器"]
+4. 将 catch 代码块更改为捕获  ``JAXBException`` ，而不是  ``Exception`` 。还可以使用  ``Logger.getLogger(...)``  方法，而不是打印堆栈跟踪。必须导入相关的类。请确定是否可以使用代码完成和 "Fix Imports"（修复导入）上下文菜单操作来重新产生下面的 catch 代码块：
+
+[source,java]
+----
+
+} catch (JAXBException ex) {
+    Logger.getLogger(ZillowRegionChartServlet.class.getName()).log(Level.SEVERE, null, ex);
+}
+----
+5. 从 Servlet 代码中的父 try 代码块中删除被注释掉的输出部分。
+
+至此，对代码的修改已完成！最终的 Servlet 代码应如下所示：
+
+
+[source,java]
+----
+
+package zillow.regionchart;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.xml.bind.JAXBException;
+import org.netbeans.saas.zillow.ZillowRealEstateService;
+import org.netbeans.saas.RestResponse;
+
+/**
+ *
+ * @author jeff
+ */
+public class ZillowRegionChartServlet extends HttpServlet {
+
+    /** 
+     * Processes requests for both HTTP 
+
+[source,java]
+----
+
+GET
+----
+ and 
+
+[source,java]
+----
+
+POST
+----
+ methods.
+     * @param request servlet request
+     * @param response servlet response
+     * @throws ServletException if a servlet-specific error occurs
+     * @throws IOException if an I/O error occurs
+     */
+    protected void processRequest(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        response.setContentType("text/html;charset=UTF-8");
+        PrintWriter out = response.getWriter();
+        try {
+
+            try {
+                String unittype = "dollar";
+                String city = null;
+                String state = null;
+                String zIP = null;
+                String width = null;
+                String height = null;
+                String chartduration = null;
+
+                RestResponse result = ZillowRealEstateService.getRegionChart(
+                        unittype, city, state, zIP, width, height, chartduration);
+                if (result.getDataAsObject(
+                        zillow.realestateservice.regionchart.Regionchart.class) instanceof zillow.realestateservice.regionchart.Regionchart) {
+                    zillow.realestateservice.regionchart.Regionchart resultObj =
+                            result.getDataAsObject(
+                            zillow.realestateservice.regionchart.Regionchart.class);
+                    out.println("<img src=\"" + resultObj.getResponse().getUrl() + "\" />");
+
+                }
+                //TODO - Uncomment the print Statement below to print result.
+
+            } catch (JAXBException ex) {
+                Logger.getLogger(ZillowRegionChartServlet.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        } finally {
+            out.close();
+        }
+    }
+----
+
+
+== 运行 Zillow 区域图 Servlet
+
+运行 Servlet 的最简单方法是在 "Projects"（项目）视图中右键单击该 Servlet，然后选择 "Run File"（运行文件）。或者，右键单击 "Project"（项目）节点，然后选择 "Properties"（属性）。在 "Properties"（属性）树中选择 "Run"（运行）。在 "Relative URL"（相对 URL）字段中，键入 /ZillowRegionChartServlet，如下所示。单击 "OK"（确定），然后运行该项目。
+
+image::images/zillow-run-properties.png[title="ZillowRegionChart 项目的 "Properties"（属性）对话框"]
+
+成功地运行此项目时，会打开一个显示区域图的浏览器窗口。
+
+image::images/zillow-chart.png[title="Zillow 区域图"]
+
+
+== 更多练习
+
+下面是供您探讨的更多思路：
+
+* 尝试对城市、州和邮政编码使用不同的实际值。再次运行该 Servlet。
+* 编写一个可以将城市、州和邮政编码传递到该服务并返回匹配区域图的客户端。
+* 使用 JSP 页（而不是 JAXB 对象）来返回该图表，如此 link:http://netbeans.dzone.com/news/consuming-zillow-web-services-[+NetBeans Zone 文章+]中所示。
+
+
+link:/about/contact_form.html?to=3&subject=Feedback:%20Using%20SaaS%20Zillow[+发送有关此教程的反馈意见+]
+
+
+
+== 另请参见
+
+有关使用 NetBeans IDE 开发 REST 风格的 Web 服务、SaaS 以及其他 Java EE 应用程序的详细信息，请参见以下资源：
+
+* link:./rest.html[+REST 风格的 Web 服务入门指南+]
+* link:http://wiki.netbeans.org/JavaClientForDeliciousUsingNetBeans[+Creating a Java Client for del.icio.us RESTful Web Services+]（为 del.icio.us REST 风格的 Web 服务创建 Java 客户端），作者：Amit Kumar Saha
+* link:http://wiki.netbeans.org/RESTRemoting[+NetBeans Wiki: RESTful Web Service Client Stub+]（REST 风格的 Web 服务客户端桩模块）
+* link:../../trails/web.html[+Web 服务学习资源+]
+* YouTube：link:http://www.youtube.com/watch?v=cDdfVMro99s[+REST 风格的 Web 服务，构建和部署（第 1 部分）+]
+* YouTube：link:http://www.youtube.com/watch?v=_c-CCVy4_Eo[+NetBeans REST 风格的测试和调用 REST 风格的资源（第 2 部分）+]
+
+要发送意见和建议、获得支持以及随时了解 NetBeans IDE Java EE 开发功能的最新开发情况，请link:../../../community/lists/top.html[+加入 nbj2ee@netbeans.org 邮件列表+]。
+

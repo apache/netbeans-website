@@ -1,0 +1,184 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= Configuring PHP, Apache, MySQL, and Xdebug for PHP development in MAC OS X
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: Configuring PHP, Apache, MySQL, and Xdebug for PHP development in MAC OS X - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, Configuring PHP, Apache, MySQL, and Xdebug for PHP development in MAC OS X
+
+This tutorial shows you how to set up PHP on the link:http://www.mamp.info/en/index.php[+MAMP+] (*M*acintosh,* A*pache, *M*ySQL, *P*HP) package, which includes the Apache web server, the MySQL database server, and the PHP engine. MAMP is intended as a PHP development environment for the Mac, which can work seamlessly with the NetBeans IDE.
+
+link:http://www.Xdebug.org/[+Xdebug+] is an extension for PHP that aids in providing information valuable for debugging PHP scripts. The NetBeans debugger works on top of the Xdebug extension, providing an effective debugging tool in your development environment.
+
+
+image::images/netbeans-stamp-80-74-73.png[title="Content on this page applies to the NetBeans IDE 7.2, 7.3, 7.4 and 8.0"]
+
+
+*To complete this tutorial, you need the following software and resources.*
+
+|===
+|Software or Resource |Version Required 
+
+|link:https://netbeans.org/downloads/index.html[+NetBeans IDE+] |PHP download bundle 
+
+|link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+Java Development Kit (JDK)+] |7 or 8 
+
+|link:http://www.mamp.info/en/download.html[+MAMP+] |1.7.x 
+
+|link:http://www.Xdebug.org/download.php[+Xdebug+] (optional) |2.x 
+|===
+
+*Note: *The MAMP package includes the Apache web server, PHP engine, and MySQL database. Mac OS X 10.5 and later include the MySQL database and Apache server with PHP support. While it certainly is possible to configure the built-in database and server with the IDE, MAMP's all-in-one bundle provides a convenient and easily configurable solution.
+
+
+== Installing and Configuring MAMP
+
+1. Download the latest version of link:http://www.mamp.info/en/download.html[+MAMP+].
+2. Extract the downloaded file and run the `.dmg` file. When the installer displays, drag MAMP into your `/Applications` folder. 
+image::images/mamp-install.png[title="MAMP installer panel showing MAMP and MAMP-Pro options"]
+3. Navigate to `/Applications/MAMP` and double-click `MAMP.app`. The MAMP Control Panel opens. 
+
+You can also install the MAMP Control dashboard widget as described in `MAMP/README.rtf`, which enables you to start and stop servers. 
+image::images/mamp-control-panel.png[]
+4. Click Preferences to open the Preferences panel, then select the Ports tab.
+5. Click Set to Default Apache and MySQL ports. Apache port is reset to 80 and MySQL to 3306. 
+image::images/mamp-control-panel-preferences-ports.png[title="MAMP control panel with Ports tab, after ports have been changed to default values"]
+
+
+== Registering MAMP's MySQL Database
+
+MAMP's MySQL database is located by default at `/Applications/MAMP/db/MySQL`. The default username and password are both `root`, which you can verify by viewing the details in MAMP's welcome page which opens in a browser when you run MAMP.
+
+The IDE interfaces with databases from the Services window (⌘-5). You can register the MAMP's MySQL database by doing the following:
+
+1. Right-click the Databases > MySQL Server node and choose Properties. The MySQL Server Properties dialog displays. You can configure all MySQL settings from this dialog.
+2. Enter the database server's host name and port number, as well as its username and password. All of this information is displayed on MAMP's welcome page when you run the server and database. The default settings for running MAMP locally are: 
+
+* *Server Host Name: *`localhost`
+* *Server Port Number: *`3306`
+* *Administrator User Name: *`root`
+* *Administrator Password: *`root`
+image::images/mysql-basic-properties.png[title="MySQL Basic Properties dialog containing MAMP's default connectivity settings"]
+3. Select the Admin Properties tab to display settings that enable you to start and stop the database server from the IDE. MAMP maintains shell scripts in its `bin` folder. You can find scripts for starting and stopping servers there. For the path to the Admin tool, you have a choice; you can link to `MAMP.app` so that you can use the IDE to open MAMP's control panel. To do so, enter `/Applications/MAMP/MAMP.app`. However, an alternative option would be to use the link:http://dev.mysql.com/downloads/workbench/[+MySQL Workbench+], which provides an intuitive GUI interface for performing administrative operations (i.e., configuring and monitoring the MySQL server, managing users and connections, performing backups, etc.). To use MySQL Workbench, first download and install it, then enter the following settings into the dialog: 
+
+* *Path/URL to admin tool: *`/Applications/MySQL Tools/MySQLWorkbench.app` _(default installation for MySQL Workbench)_
+* *Path to start command: *`/Applications/MAMP/bin/startMysql.sh`
+* *Path to stop command: *`/Applications/MAMP/bin/stopMysql.sh`
+image::images/mysql-admin-props.png[title="MySQL Admin Properties dialog containing sample administration settings"]
+4. If you choose to use the MySQL Workbench as your MySQL admin tool, you need to specify the socket for the connection to MAMP's database. Start MySQL Workbench and from the main page, click New Server Instance in the Server Administration column.
+image::images/mysql-workbench-home.png[]
+5. The Create New Server Instance Profile dialog opens. Select the Local Socket/Pipe connection method and add the path to the socket file in the Parameters tab. The default location of the socket is: `/Applications/MAMP/tmp/mysql/mysql.sock`. 
+image::images/socket-path.png[]
+
+
+[[phpProject]]
+== Creating PHP Projects
+
+When you create a PHP project in the IDE using MAMP's resources, you should specify that the IDE copy your sources to Apache's `htdocs` folder. That way, when you save your files after making changes, your sources are automatically updated in the deployed version.
+
+For example, when creating a new PHP project use the New Project Wizard (click the New Project icon in the IDE's toolbar ( image::images/new-project-icon.png[] ). In the third step of the wizard, Run Configuration, select the Copy files from Sources Folder to another location option and type in the path to the `htdocs` folder.
+
+image:::images/new-php-project.png[role="left", link="images/new-php-project.png"]
+
+The IDE remembers this location for future projects. For further instructions on creating PHP projects in NetBeans IDE, see link:project-setup.html[+Setting Up a PHP Project+].
+
+
+== Enabling Xdebug with MAMP
+
+MAMP contains a pre-compiled  ``xdebug.so``  file. To use this file, enable it in MAMP's  ``php.ini`` . Xdebug does not work together with Zend Optimizer, so you also have to disable Zend Optimizer in  ``php.ini`` .
+
+*To enable Xdebug with MAMP:*
+
+1. Open the `php.ini` file in an editor. This file is located in: 
+
+`/Applications/MAMP/conf/php5/php.ini`.
+2. Locate the  ``[Zend]``  section and comment out every line.
+
+[source,java]
+----
+
+;[Zend]
+;zend_optimizer.optimization_level=15
+;zend_extension_manager.optimizer=/Applications/MAMP/bin/php5/zend/lib/Optimizer-3.3.3
+;zend_optimizer.version=3.3.3
+ 
+;zend_extension=/Applications/MAMP/bin/php5/zend/lib/ZendExtensionManager.so
+----
+3. Locate the  ``[xdebug]``  section and activate Xdebug (replace `xxxxxxxx` with the actual number). Add this section to the end of  ``php.ini``  if it is not there.
+
+[source,java]
+----
+
+[xdebug]
+ 
+xdebug.default_enable=1
+ 
+xdebug.remote_enable=1
+xdebug.remote_handler=dbgp
+xdebug.remote_host=localhost
+xdebug.remote_port=9000
+xdebug.remote_autostart=1
+ 
+zend_extension="/Applications/MAMP/bin/php5/lib/php/extensions/no-debug-non-zts-xxxxxxxx/xdebug.so"
+----
+For an explanation of these properties, see Related Settings in the link:http://www.Xdebug.org/docs/remote[+Xdebug Remote Debugging+] documentation.
+4. Note that the remote port specified for Xdebug in the previous step is: 9000. This is the default debugger port used in NetBeans. To verify this, choose NetBeans > Preferences from the main menu, then select PHP in the Options window. 
+ image::images/php-options68.png[title="The debugging port can be set in the PHP Options window"] 
+If needed, you can change the debugger port here.
+5. Open the MAMP control panel and select the PHP tab. Deselect Zend Optimizer. 
+image::images/mamp-control-panel-preferences-php.png[title="MAMP Control Panel with PHP tab, after Zend Optimizer has been unselected"]
+6. Start (or restart) the MAMP Apache server.
+
+
+== Debugging PHP Projects
+
+To debug a PHP project in the IDE, right-click the project in the Projects window and choose Debug. Alternately, if the project is highlighted in the Projects window, you can click the Debug Project icon ( image::images/debug-icon.png[] ) in the main toolbar.
+
+You can set the debugger to suspend on the first line of code by enabling this option in the <<phpOptions,PHP Options window>>.
+
+When a debugger session is active, the debugger toolbar displays above the editor.
+
+image::images/debugger-toolbar.png[title="The debugger toolbar in a suspended state"]
+
+You can also verify that a PHP debugging session is active by opening the Sessions window. Choose Window > Debugging > Sessions from the main menu.
+
+image::images/debugger-sessions-win.png[title="The Sessions window indicates that an Xdebug debugger session is active"]
+
+
+link:/about/contact_form.html?to=3&subject=Feedback:%20Configuring%20PHP%20on%20Mac%20OS[+Send Feedback on This Tutorial+]
+
+
+
+== See Also
+
+For more information about PHP technology on link:https://netbeans.org/[+netbeans.org+], see the following resources:
+
+* link:project-config-screencast.html[+The PHP Editor in NetBeans IDE 6.9-7.0+]. A screencast demonstrating new PHP editor support.
+* link:debugging.html[+Debugging PHP Source Code+]. A document describing how to debug in the IDE using Xdebug.
+* link:wish-list-tutorial-main-page.html[+Creating a CRUD Application+]. A 9-part tutorial demonstrating how to create a CRUD application using the IDE's PHP editor.
+* link:remote-hosting-and-ftp-account.html[+Deploying a PHP Application on a Remote Web Server+]. A document providing guidelines on how to deploy a PHP application to a remote server where you have a hosting account.
+
+To send comments and suggestions, get support, and keep informed on the latest developments on the NetBeans IDE PHP development features, link:../../../community/lists/top.html[+join the users@php.netbeans.org mailing list+].
+

@@ -1,0 +1,1117 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= Java WebアプリケーションでのAjax入門
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: Java WebアプリケーションでのAjax入門 - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, Java WebアプリケーションでのAjax入門
+
+このドキュメントでは、Ajaxの概要を説明し、Ajax関連のテクノロジを使用するときにより短時間で効率よくプログラミングできるNetBeans IDEの機能を示します。Ajaxの基本的な機能を学びながら、テキスト・フィールドの自動補完を行う単純なアプリケーションをビルドします。このドキュメントでは、link:http://weblogs.java.net/blog/gmurray71/archive/2005/12/using_ajax_with_1.html[+Javaテクノロジを使用するAjaxの使用+]に公開しているGreg Murrayの記事とサンプル・アプリケーションを使用します。
+
+Ajaxは「Asynchronous JavaScript and XML」(非同期JavaScriptとXML)の略です。Ajaxは基本的に、ユーザーによるWebページの操作をWebアプリケーションで効率的に処理する方法であり、ユーザーが操作するたびにページをリフレッシュしたり、ページ全体を再ロードしたりする必要を減らします。その結果、デスクトップ・アプリケーションやプラグインに基づいたWebアプリケーションのような、ブラウザを使用したスムーズな操作が可能になります。Ajaxの相互作用はバックグラウンドで非同期で処理されます。このとき、ユーザーはページの操作を続けることができます。Ajaxの相互作用はJavaScriptコードによって開始されます。Ajaxの相互作用が完了したら、JavaScriptがそのページのHTMLソースを更新します。変更は、ページをリフレッシュすることなく、すぐに反映されます。Ajaxの相互作用を使用して、ユーザーがフォームに入力している間にサーバー側ロジックを使用してフォーム・エントリを検証したり、サーバーから詳細なデータを取り出したり、ページ上のデータを動的に更新したり、ページから部分フォームを送信したりできます。
+
+
+image::images/netbeans-stamp-80-74-73.png[title="このページの内容は、NetBeans IDE 7.2、7.3、7.4および8.0に適用されます"]
+
+
+*このチュートリアルを完了するには、次のソフトウェアとリソースが必要です。*
+
+|===
+|ソフトウェアまたはリソース |必須バージョン 
+
+|link:https://netbeans.org/downloads/index.html[+NetBeans IDEのJava EEバンドル版+] |7.3, 7.4, 8.0 
+
+|link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+Java Development Kit (JDK)+] |7または8 
+
+|link:https://glassfish.java.net/[+GlassFishサーバー+]
+_または_
+link:http://tomcat.apache.org/index.html[+Tomcatサーバー+] |Open Source Edition 3.1.xまたは4.x
+_ _
+バージョン7.xまたは8.x 
+|===
+
+*注意: *
+
+* IDEのJava EEインストール版では、GlassFishサーバーとApache Tomcatサーブレット・コンテナをオプションでインストールできます。
+* このチュートリアルは、使用する様々なテクノロジ(HTML、CSS、JavaScript、Java、JSPなど)についての実用的な知識がある方を対象としています。コードによって提供される機能の概要は説明しますが、コード行ごとの処理は_説明しません_。
+* プロジェクトを、正常に機能するソリューションと比較する必要がある場合は、link:https://netbeans.org/projects/samples/downloads/download/Samples%252FJavaScript%252FMyAjaxApp.zip[+サンプル・アプリケーションをダウンロード+]できます。
+
+
+
+[[overview]]
+== アプリケーションの概要
+
+ユーザーが作曲家に関する情報を検索できるWebページを考えます。このページには、ユーザーが作曲家の名前を入力できるフィールドがあります。サンプル・アプリケーションのエントリ・フィールドには、オートコンプリート機能があります。つまり、ユーザーが作曲家の名前の一部を入力すると、Webアプリケーションでは、入力した文字から名または姓のいずれかが始まるすべての作曲家のリストを表示してその名前を補完します。オートコンプリート機能によってユーザーは作曲家の名前を完全に覚えている必要がなく、また求めている情報を直観的かつ容易に入手できます。
+
+image::images/sample-app.png[title="ブラウザに表示されたサンプル・アプリケーション"]
+
+検索フィールドへの自動補完の実装は、Ajaxを使用して実行できます。Ajaxは、`XMLHttpRequest`オブジェクトを使用してクライアントとサーバーの間でリクエストとレスポンスを非同期で受け渡しすることで機能します。次の図は、クライアントとサーバーの間で行われる通信のプロセス・フローを示します。
+
+image::images/ajax-process-flow.png[title="Ajaxのプロセス・フロー図"]
+
+
+この図には、次の手順のプロセス・フローを示しています。
+
+1. ユーザーが、たとえば名前を入力しているときにキーを解除して、イベントをトリガーします。すると、`XMLHttpRequest`オブジェクトを初期化する関数へのJavaScriptコールが行われます。
+2. `XMLHttpRequest`オブジェクトが、イベントをトリガーしたコンポーネントのIDを含むリクエスト・パラメータと、ユーザーが入力した値で構成されます。次に、`XMLHttpRequest`オブジェクトがWebサーバーへの非同期リクエストを実行します。
+3. Webサーバーでは、サーブレットやリスナーなどのオブジェクトがリクエストを処理します。データ・ストアからデータが取り出され、XMLドキュメント形式のデータを含むレスポンスが作成されます。
+4. 最後に、コールバック関数を使用して`XMLHttpRequest`オブジェクトがXMLデータを受け取って処理し、新しいデータを含むページを表示するようにHTMLのDOM (Document Object Model)を更新します。
+
+このチュートリアルでは、前述の図で示したプロセス・フローに従ってオートコンプリートのシナリオを構築する方法を示します。最初に、プレゼンテーション用、および`XMLHttpRequest`オブジェクトの生成に必要な機能用のクライアント側ファイルを作成します。次に、Javaベースのテクノロジを使用してデータ・ストアとビジネス・ロジックを作成し、サーバー側を設定します。最後に、クライアント側に戻り、`callback()`と、HTMLのDOMを更新するためのその他のJavaScript機能を実装します。
+
+
+
+[[client1]]
+== クライアント側のプログラミング: 第1部
+
+最初にIDEで新しいWebアプリケーション・プロジェクトを作成します。IDEには、様々なタイプのプロジェクト用のテンプレートが組み込まれています。
+
+1. 「ファイル」>「新規プロジェクト」を選択します。「カテゴリ」から「Java Web」を選択します。「プロジェクト」で「Webアプリケーション」を選択して、「次」をクリックします。
+2. 「名前と場所」パネルでプロジェクト名として「`MyAjaxApp`」と入力します。「プロジェクトの場所」フィールドでコンピュータ上でのプロジェクトの場所を指定できます。他のオプションはデフォルトのままにして、「次」をクリックします。
+image::images/java-name-location.png[title="アプリケーション・プロジェクトでの名前と場所の指定"]
+3. 「サーバーと設定」パネルで、アプリケーションをデプロイするサーバーを選択します。IDEに登録されているサーバーのみ表示されます。
+image::images/java-server-settings.png[title="アプリケーションのデプロイ先サーバーの指定"]
+4. その他のデフォルト設定を受け入れ、「終了」をクリックします。プロジェクトがファイル・システムに生成され、IDEで開きます。
+
+JavaベースのWebプロジェクトが作成されると、link:http://ant.apache.org/[+Ant+]ビルド・スクリプトが自動的に生成されます。このスクリプトによってプロジェクトをコンパイルし、IDEに登録されているサーバーにすぐにデプロイして実行できます。
+
+デフォルトのエントリ・ページが生成され、IDEのソース・エディタで開きます。エントリ・ページは、ターゲット・サーバーに応じて`index.jsp`または`index.html`のいずれかです。
+
+image::images/java-proj-win.png[title="MyAjaxAppプロジェクトが表示された「プロジェクト」ウィンドウ"]
+
+コーディングを始める前に、アプリケーションを実行してみて、IDE、サーバー、ブラウザの間の構成が正しく設定されていることを確認します。
+
+1. 「プロジェクト」ウィンドウでプロジェクト・ノードを右クリックし、「実行」を選択します。
+
+アプリケーションがコンパイルされ、アプリケーション・サーバーが起動し、アプリケーションがサーバーにデプロイされて実行されます。デフォルト・ブラウザが開き、デフォルト・エントリ・ページが表示されます。
+
+
+=== HTMLエディタの使用
+
+image::images/palette.png[title="HTML要素が表示されたパレット"] 
+
+環境が正しく設定されていることを確認できたら、まずindexページを、ユーザーに表示する自動補完インタフェースに変更します。
+
+IDEを使用する利点の1つは、作業を行うエディタには一般にコード補完機能が用意されていて、コーディングするときに適用すれば生産性を大幅に向上できることです。IDEのソース・エディタは通常、使用しているテクノロジに適応するので、HTMLページの作業を実行しているときにコード補完のキーの組合せ([Ctrl]-[Space])を押すとHTMLのタグと属性の候補が表示されます。後述するように、CSSやJavaScriptなどその他のテクノロジも同様です。
+
+IDEのパレットも便利な機能です。パレットには、コーディングするテクノロジで一般的に適用される要素の使いやすいテンプレートが用意されています。項目をクリックして、ソース・エディタで開いているファイル内の任意の位置にドラッグするのみです。
+
+この図のように大きなアイコンを表示するには、パレット内を右クリックし、「大きなアイコンを表示」を選択します。
+
+
+1. `<title>`タグおよび`<h1>`タグの内容を「`Auto-Completion using AJAX`」に変更します。indexページにはサーバー側スクリプト・コードは必要ないので、デフォルトで作成された残りの部分を削除してもかまいません。indexページは次のようになります。
+
+[source,xml]
+----
+
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>Auto-Completion using AJAX</title>
+    </head>
+    <body>
+        <h1>Auto-Completion using AJAX</h1>
+    </body>
+</html>
+
+----
+2. テキスト・フィールドの目的を説明するテキストを追加します。次のテキストをコピーして、`<h1>`タグのすぐ下に貼り付けることもできます。
+
+[source,html]
+----
+
+<p>This example shows how you can do real time auto-completion using Asynchronous
+    JavaScript and XML (Ajax) interactions.</p>
+
+<p>In the form below enter a name. Possible names that will be completed are displayed
+    below the form. For example, try typing in "Bach," "Mozart," or "Stravinsky,"
+    then click on one of the selections to see composer details.</p>
+
+----
+3. ページにHTMLフォームを追加します。この操作を行うには、IDEのパレットに表示されている要素を使用します。パレットが開いていない場合は、メイン・メニューから「ウィンドウ」>「パレット」を選択します。次に「HTMLフォーム」の下にある「フォーム」要素をクリックし、ページ内に追加した`<p>`タグの下までドラッグします。「挿入フォーム」ダイアログ・ボックスが表示されます。次の値を指定します。
+
+* アクション: autocomplete
+* メソッド: GET
+* 名前: autofillform
+image::images/insert-form.png[title="「挿入フォーム」ダイアログ"]
+
+「OK」をクリックします。指定した属性を含むHTMLの`<form>`タグがページに挿入されます。(GETはデフォルトで適用されるので、明示的に宣言しません。)
+
+4. HTML表をページに追加します。パレットの「HTML」カテゴリの下で「表」要素をクリックし、`<form>`タグの間の位置までドラッグします。「挿入表」ダイアログ・ボックスが開きます。次の値を指定します。
+
+* 行: 2
+* 列: 2
+* 境界線のサイズ: 0
+* セルのパディング: 5
+image::images/insert-table.png[title="「挿入表」ダイアログ"]
+5. ソース・エディタ内を右クリックし、「フォーマット」を選択します。これでコードの体裁が整います。フォームは次のようになります。
+
+[source,xml]
+----
+
+<form name="autofillform" action="autocomplete">
+  <table border="0" cellpadding="5">
+    <thead>
+      <tr>
+        <th></th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td></td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+</form>
+
+----
+6. 表の1行目の1列目に次のテキストを入力します(*太字*部分が変更箇所)。
+
+[source,xml]
+----
+
+<td>*<strong>Composer Name:</strong>*</td>
+----
+7. 1行目の2列目では、パレットから「テキスト入力」フィールドをドラッグしないで、次のコードを手動で入力します(*太字*部分が変更箇所)。
+
+[source,xml]
+----
+
+<td>
+    *<input type="text"
+        size="40"
+        id="complete-field"
+        onkeyup="doCompletion();">*
+</td>
+
+----
+入力するときは、IDEに組み込まれているコード補完サポートを使用してみてください。たとえば、「`<i`」と入力して[Ctrl]-[Space]を押します。カーソルの下に候補のリストが表示され、選択されている要素の説明が上のボックスに表示されます。ソース・エディタでコーディングしているときはいつでも[Ctrl]-[Space]を押して候補を表示できます。候補が1つのみの場合は、[Ctrl]-[Space]を押すと要素名が自動的に補完されます。
+image::images/code-completion.png[title="エディタでの[Ctrl]-[Space]の押下によるコード補完およびドキュメントのサポートの呼出し"]
+
+入力した`onkeyup`属性はJavaScript関数`doCompletion()`を指しています。この関数は、フォームのテキスト・フィールド内でキーが押されるたびにコールされ、Ajaxの<<flow-diagram,フロー図>>に示したJavaScriptコールに対応します。
+
+
+[[javascript]]
+=== JavaScriptエディタの使用
+
+IDEのJavaScriptエディタには、インテリジェントなコード補完、意味解釈の強調表示、名前の即時変更機能とリファクタリング機能など、多数の高度な編集機能が用意されています。
+
+JavaScriptのコード補完は、`.js`ファイル内でコーディングするとき、および他のテクノロジ(HTML、RHTML、JSP、PHPなど)を使用しているときに`<script>`タグ内で自動的に提供されます。IDEは、JavaScriptコードの編集時にヒントを提供できます。「ツール」→「オプション」(Macでは「NetBeans」→プリファレンス)を選択して「オプション」ウィンドウを開き、「エディタ」カテゴリの「ヒント」タブでJavaScript言語を選択することにより、JavaScriptヒント・オプションを指定できます。「オプション」ウィンドウの「コード・テンプレート」タブで、独自のJavaScriptコード・テンプレートを追加することもできます。
+
+image::images/javascript-options.png[title="「オプション」ウィンドウの「JavaScript」ヒント・オプション"]
+
+アプリケーションにJavaScriptファイルを追加し、`doCompletion()`の実装を始めます。
+
+1. 「プロジェクト」ウィンドウで「Webページ」ノードを右クリックし、「新規」>「JavaScriptファイル」を選択します。(「JavaScriptファイル」がリストにない場合は「その他」を選択します。次に、新規ファイル・ウィザードで「Web」カテゴリからJavaScriptファイルを選択します。
+2. ファイル名を`javascript`にし、「終了」をクリックします。新しいJavaScriptファイルが「プロジェクト」ウィンドウで「Webページ」フォルダ内に表示されることを確認します。
+3. 次のコードを`javascript.js`に入力します。
+
+[source,java]
+----
+
+var req;
+var isIE;
+
+function init() {
+    completeField = document.getElementById("complete-field");
+}
+
+function doCompletion() {
+        var url = "autocomplete?action=complete&amp;id=" + escape(completeField.value);
+        req = initRequest();
+        req.open("GET", url, true);
+        req.onreadystatechange = callback;
+        req.send(null);
+}
+
+function initRequest() {
+    if (window.XMLHttpRequest) {
+        if (navigator.userAgent.indexOf('MSIE') != -1) {
+            isIE = true;
+        }
+        return new XMLHttpRequest();
+    } else if (window.ActiveXObject) {
+        isIE = true;
+        return new ActiveXObject("Microsoft.XMLHTTP");
+    }
+}
+----
+
+上のコードは、Firefox 3およびInternet Explorerバージョン6と7の単純なブラウザ互換性チェックを行います。互換性の問題に対してさらに堅牢なコードを取り込むには、link:http://www.quirksmode.org[+http://www.quirksmode.org+]のlink:http://www.quirksmode.org/js/detect.html[+ブラウザ検出スクリプト+]を使用することを検討してください。
+
+4. indexページに戻り、JavaScriptファイルへの参照を`<head>`タグの間に追加します。
+
+[source,xml]
+----
+
+<script type="text/javascript" src="javascript.js"></script>
+----
+
+[Ctrl]-[Tab]を押すと、ソース・エディタ内で開いているページ間を簡単に切り替えることができます。
+
+5. `init()`へのコールを開始`<body>`タグ内に挿入します。
+
+[source,java]
+----
+
+<body *onload="init()"*>
+----
+このようにすると、ページがロードされるたびに`init()`がコールされます。
+
+`doCompletion()`には次の役割があります。
+
+* サーバー側で利用できるデータを含むURLを作成すること
+* `XMLHttpRequest`オブジェクトを初期化すること
+* 非同期リクエストをサーバーに送信するように`XMLHttpRequest`オブジェクトに要求すること
+
+`XMLHttpRequest`オブジェクトはAjaxの中核であり、HTTPを使用してXMLデータを非同期で送信するときの事実上の標準になっています。相互作用が_非同期_であるということは、リクエストの送信後にブラウザではページ内で引続きイベントを処理できることを意味します。データはバックグラウンドで送信され、ページをリフレッシュしないで自動的にページにロードできます。
+
+`XMLHttpRequest`オブジェクトは実際には`initRequest()`で作成し、これは`doCompletion()`からコールされます。この関数では、ブラウザで`XMLHttpRequest`を認識できるかどうかを確認し、認識できる場合は`XMLHttpRequest`オブジェクトを作成します。そうでない場合は、`ActiveXObject` (Internet Explorer 6で`XMLHttpRequest`に相当する)を確認し、識別された場合は`ActiveXObject`を作成します。
+
+相互作用が非同期であるかどうかに関係なく、`XMLHttpRequest`オブジェクトを作成するときは、URL、HTTPメソッド(`GET`または`POST`)の3つのパラメータを指定します。前述の例では、これらのパラメータは次のとおりです。
+
+* URL`autocomplete`と、ユーザーが`complete-field`に入力したテキスト
+
+[source,java]
+----
+
+var url = "autocomplete?action=complete&amp;id=" + escape(completeField.value);
+----
+* `GET` (HTTPの相互作用で`GET`メソッドを使用することを示します)
+* `true` (相互作用は非同期であることを示します)
+
+[source,java]
+----
+
+req.open("GET", url, true);
+----
+
+相互作用を非同期に設定する場合は、コールバック関数を指定します。この相互作用のコールバック関数は次の文で設定します。
+
+
+[source,java]
+----
+
+req.onreadystatechange = callback;
+----
+
+そして、`callback()`関数を<<callback,後で定義>>する必要があります。HTTPの相互作用は`XMLHttpRequest.send()`のコール時に開始します。このアクションは、前述の<<flow-diagram,フロー図>>でWebサーバーに送信されているHTTPリクエストに対応します。
+
+
+
+[[serverside]]
+== サーバー側のプログラミング
+
+IDEでは、サーバー側のWebプログラミングが総合的にサポートされています。これには多くの一般的なプログラミング言語とスクリプト言語の基本的なエディタ・サポートが含まれており、SOAP、REST、SaaSなどのWebサービスと、JSF、Spring、StrutsなどのMVC指向フレームワークなども網羅されています。link:https://developers.google.com/web-toolkit/[+GWT+]やlink:http://struts.apache.org/2.x/[+Struts2+]など、Ajax駆動フレームワークのlink:http://plugins.netbeans.org/[+NetBeansプラグイン・ポータル+]から複数のNetBeansプラグインを使用できます。
+
+アプリケーションのビジネス・ロジックでは、データ・ストアからデータを取出し、レスポンスを作成して送信することで、リクエストを処理します。ここではサーブレットを使用してこの処理を実装します。サーブレットのコーディングを始める前に、データ・ストアと、サーブレットからデータにアクセスするために必要な機能を設定します。
+
+* <<data,データ・ストアの作成>>
+* <<servlet,サーブレットの作成>>
+
+
+=== データ・ストアの作成
+
+この単純なアプリケーションでは、link:http://download.oracle.com/javase/1.5.0/docs/api/java/util/HashMap.html[+`HashMap`+]を使用して作曲家のデータを保持する`ComposerData`というクラスを作成します。`HashMap`によって、リンクされている項目のペアをキーと値のペアで保存できます。また、サーブレットで、`HashMap`内のエントリからデータを取り出すための`Composer`クラスも作成します。
+
+1. 「プロジェクト」ウィンドウでプロジェクト・ノードを右クリックし、「新規」>「Javaクラス」を選択します。
+2. クラス名を`ComposerData`にし、「パッケージ」フィールドに「`com.ajax`」と入力します。このクラス、および後で作成する他のクラスを含めるための新しいパッケージが作成されます。
+3. 「終了」をクリックします。クラスが作成され、ソース・エディタで開きます。
+4. ソース・エディタ内に、次のコードを貼り付けます。
+
+[source,java]
+----
+
+package com.ajax;
+
+import java.util.HashMap;
+
+/**
+ *
+ * @author nbuser
+ */
+public class ComposerData {
+
+    private HashMap composers = new HashMap();
+
+    public HashMap getComposers() {
+        return composers;
+    }
+
+    public ComposerData() {
+
+        composers.put("1", new Composer("1", "Johann Sebastian", "Bach", "Baroque"));
+        composers.put("2", new Composer("2", "Arcangelo", "Corelli", "Baroque"));
+        composers.put("3", new Composer("3", "George Frideric", "Handel", "Baroque"));
+        composers.put("4", new Composer("4", "Henry", "Purcell", "Baroque"));
+        composers.put("5", new Composer("5", "Jean-Philippe", "Rameau", "Baroque"));
+        composers.put("6", new Composer("6", "Domenico", "Scarlatti", "Baroque"));
+        composers.put("7", new Composer("7", "Antonio", "Vivaldi", "Baroque"));
+
+        composers.put("8", new Composer("8", "Ludwig van", "Beethoven", "Classical"));
+        composers.put("9", new Composer("9", "Johannes", "Brahms", "Classical"));
+        composers.put("10", new Composer("10", "Francesco", "Cavalli", "Classical"));
+        composers.put("11", new Composer("11", "Fryderyk Franciszek", "Chopin", "Classical"));
+        composers.put("12", new Composer("12", "Antonin", "Dvorak", "Classical"));
+        composers.put("13", new Composer("13", "Franz Joseph", "Haydn", "Classical"));
+        composers.put("14", new Composer("14", "Gustav", "Mahler", "Classical"));
+        composers.put("15", new Composer("15", "Wolfgang Amadeus", "Mozart", "Classical"));
+        composers.put("16", new Composer("16", "Johann", "Pachelbel", "Classical"));
+        composers.put("17", new Composer("17", "Gioachino", "Rossini", "Classical"));
+        composers.put("18", new Composer("18", "Dmitry", "Shostakovich", "Classical"));
+        composers.put("19", new Composer("19", "Richard", "Wagner", "Classical"));
+
+        composers.put("20", new Composer("20", "Louis-Hector", "Berlioz", "Romantic"));
+        composers.put("21", new Composer("21", "Georges", "Bizet", "Romantic"));
+        composers.put("22", new Composer("22", "Cesar", "Cui", "Romantic"));
+        composers.put("23", new Composer("23", "Claude", "Debussy", "Romantic"));
+        composers.put("24", new Composer("24", "Edward", "Elgar", "Romantic"));
+        composers.put("25", new Composer("25", "Gabriel", "Faure", "Romantic"));
+        composers.put("26", new Composer("26", "Cesar", "Franck", "Romantic"));
+        composers.put("27", new Composer("27", "Edvard", "Grieg", "Romantic"));
+        composers.put("28", new Composer("28", "Nikolay", "Rimsky-Korsakov", "Romantic"));
+        composers.put("29", new Composer("29", "Franz Joseph", "Liszt", "Romantic"));
+
+        composers.put("30", new Composer("30", "Felix", "Mendelssohn", "Romantic"));
+        composers.put("31", new Composer("31", "Giacomo", "Puccini", "Romantic"));
+        composers.put("32", new Composer("32", "Sergei", "Rachmaninoff", "Romantic"));
+        composers.put("33", new Composer("33", "Camille", "Saint-Saens", "Romantic"));
+        composers.put("34", new Composer("34", "Franz", "Schubert", "Romantic"));
+        composers.put("35", new Composer("35", "Robert", "Schumann", "Romantic"));
+        composers.put("36", new Composer("36", "Jean", "Sibelius", "Romantic"));
+        composers.put("37", new Composer("37", "Bedrich", "Smetana", "Romantic"));
+        composers.put("38", new Composer("38", "Richard", "Strauss", "Romantic"));
+        composers.put("39", new Composer("39", "Pyotr Il'yich", "Tchaikovsky", "Romantic"));
+        composers.put("40", new Composer("40", "Guiseppe", "Verdi", "Romantic"));
+
+        composers.put("41", new Composer("41", "Bela", "Bartok", "Post-Romantic"));
+        composers.put("42", new Composer("42", "Leonard", "Bernstein", "Post-Romantic"));
+        composers.put("43", new Composer("43", "Benjamin", "Britten", "Post-Romantic"));
+        composers.put("44", new Composer("44", "John", "Cage", "Post-Romantic"));
+        composers.put("45", new Composer("45", "Aaron", "Copland", "Post-Romantic"));
+        composers.put("46", new Composer("46", "George", "Gershwin", "Post-Romantic"));
+        composers.put("47", new Composer("47", "Sergey", "Prokofiev", "Post-Romantic"));
+        composers.put("48", new Composer("48", "Maurice", "Ravel", "Post-Romantic"));
+        composers.put("49", new Composer("49", "Igor", "Stravinsky", "Post-Romantic"));
+        composers.put("50", new Composer("50", "Carl", "Orff", "Post-Romantic"));
+
+    }
+}
+----
+
+ ``Composer`` クラスが見つからないため、エディタの左マージンに警告が表示されます。`Composer`クラスを作成するには、次の手順を実行します。
+
+1. 「プロジェクト」ウィンドウでプロジェクト・ノードを右クリックし、「新規」>「Javaクラス」を選択します。
+2. クラス名を`Composer`にし、「パッケージ」フィールドのドロップダウン・リストから「`com.ajax`」を選択します。「終了」をクリックします。
+
+「終了」をクリックすると、IDEによってクラスが作成され、ファイルがソース・エディタで開きます。
+
+3. ソース・エディタ内に、次のコードを貼り付けます。
+
+[source,java]
+----
+
+package com.ajax;
+
+public class Composer {
+
+    private String id;
+    private String firstName;
+    private String lastName;
+    private String category;
+
+    public Composer (String id, String firstName, String lastName, String category) {
+        this.id = id;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.category = category;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+}
+----
+
+ ``Composer`` クラスの作成後、エディタで ``ComposerData`` クラスを参照すると、警告注釈が表示されていないことがわかります。 ``ComposerData`` に警告注釈がまだ表示されている場合は、不足しているインポート文を追加してエラーが解決されるか試みます。
+
+
+[[servlet]]
+=== サーブレットの作成
+
+受信リクエストで受け取る`autocomplete` URLを処理するサーブレットを作成します。
+
+1. 「プロジェクト」ウィンドウでプロジェクト・ノードを右クリックし、「新規」→「サーブレット」を選択して新規サーブレット・ウィザードを開きます。(「サーブレット」がデフォルトでポップアップ・メニューに表示されない場合は、「その他」を選択し、「Web」カテゴリから「サーブレット」を選択します。)
+2. サーブレット名を`AutoCompleteServlet`にし、「パッケージ」フィールドのドロップダウン・リストから「`com.ajax`」を選択します。「次」をクリックします。
+image::images/newservlet-name-location.png[]
+3. 「サーブレット・デプロイメントを構成」パネルで、URLパターンを*`/autocomplete`*にし、`XMLHttpRequest`オブジェクトで以前に設定したURLと一致するようにします。
+image::images/newservlet-configure-deployment.png[]
+
+このパネルによって、これらの詳細をデプロイメント・ディスクリプタに手動で追加する必要がなくなります。
+
+4. オプションで、「サーブレット情報をデプロイメント・ディスクリプタに追加」を選択します。これにより、プロジェクトがダウンロードしたサンプルと同じになります。最近のバージョンのIDEでは、サーブレットはデフォルトで`@WebServlet`注釈によって登録され、デプロイメント・ディスクリプタには登録されません。デプロイメント・ディスクリプタのかわりに`@WebServlet`注釈を使用した場合も、プロジェクトは引続き機能します。
+5. 「終了」をクリックします。サーブレットが作成され、ソース・エディタで開きます。
+
+オーバーライドする必要があるメソッドは、サーブレットで`autocomplete``GET`リクエストを処理する方法を定義する`doGet()`と、サービスを開始後にサーブレットからアプリケーション内の他のクラスにアクセスできるように`ServletContext`を初期化する`init()`のみです。
+
+スーパー・クラスのメソッドは、IDEの「コードを挿入」ポップアップ・メニューを使用してオーバーライドできます。次の手順を実行して`init()`を実装します。
+
+1. ソース・エディタで、`AutoCompleteServlet`クラスの宣言の下にカーソルを置きます。[Alt]-[Insert](Macでは[Ctrl]-[I])を押して「コードを生成」ポップアップ・メニューを開きます。
+image::images/insert-code.png[title="ソース・エディタに表示された「コードを挿入」ポップアップ・メニュー"]
+2. 「メソッドをオーバーライド」を選択します。表示されるダイアログで、`AutoCompleteServlet`の継承元クラスがすべて表示されます。「GenericServlet」ノードを展開し、「`init(Servlet Config config)`」を選択します。
+image::images/new-override.png[title="継承されたクラスが表示されたオーバーライド・ダイアログ"]
+3. 「OK」をクリックします。`init()`メソッドがソース・エディタに追加されます。
+4. `ServletContext`オブジェクトの変数を追加し、`init()`を変更します(*太字*部分が変更箇所)。
+
+[source,java]
+----
+
+*private ServletContext context;*
+
+@Override
+public void init(ServletConfig *config*) throws ServletException {
+    *this.context = config.getServletContext();*
+}
+----
+5. `ServletContext`のインポート文を追加します。そのためには、ソース・エディタの左マージンに表示される電球のアイコンをクリックします。
+image::images/import-hint.png[title="ソース・エディタの左マージンに表示されたインポートのヒント"]
+
+`doGet()`メソッドではリクエストのURLを解析し、データ・ストアからデータを取出し、XML形式でレスポンスを作成する必要があります。メソッドの宣言は、クラスの作成時に生成されています。これを表示するには、左マージンにある展開アイコン(image::images/expand-icon.png[])をクリックしてHttpServlet メソッドを展開する必要があります。
+
+1. `AutocompleteServlet`クラスの宣言の下に次の変数宣言を追加します。
+
+[source,java]
+----
+
+private ComposerData compData = new ComposerData();
+private HashMap composers = compData.getComposers();
+----
+これで、すべての作曲家データの`HashMap`が作成されます。これは`doGet()`で使用されます。
+2. `doGet()`までスクロールし、次のようにメソッドを実装します。
+
+[source,xml]
+----
+
+@Override
+public void doGet(HttpServletRequest request, HttpServletResponse response)
+        throws IOException, ServletException {
+
+    String action = request.getParameter("action");
+    String targetId = request.getParameter("id");
+    StringBuffer sb = new StringBuffer();
+
+    if (targetId != null) {
+        targetId = targetId.trim().toLowerCase();
+    } else {
+        context.getRequestDispatcher("/error.jsp").forward(request, response);
+    }
+
+    boolean namesAdded = false;
+    if (action.equals("complete")) {
+
+        // check if user sent empty string
+        if (!targetId.equals("")) {
+
+            Iterator it = composers.keySet().iterator();
+
+            while (it.hasNext()) {
+                String id = (String) it.next();
+                Composer composer = (Composer) composers.get(id);
+
+                if ( // targetId matches first name
+                     composer.getFirstName().toLowerCase().startsWith(targetId) ||
+                     // targetId matches last name
+                     composer.getLastName().toLowerCase().startsWith(targetId) ||
+                     // targetId matches full name
+                     composer.getFirstName().toLowerCase().concat(" ")
+                        .concat(composer.getLastName().toLowerCase()).startsWith(targetId)) {
+
+                    sb.append("<composer>");
+                    sb.append("<id>" + composer.getId() + "</id>");
+                    sb.append("<firstName>" + composer.getFirstName() + "</firstName>");
+                    sb.append("<lastName>" + composer.getLastName() + "</lastName>");
+                    sb.append("</composer>");
+                    namesAdded = true;
+                }
+            }
+        }
+
+        if (namesAdded) {
+            response.setContentType("text/xml");
+            response.setHeader("Cache-Control", "no-cache");
+            response.getWriter().write("<composers>" + sb.toString() + "</composers>");
+        } else {
+            //nothing to show
+            response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+        }
+    }
+    if (action.equals("lookup")) {
+
+        // put the target composer in the request scope to display 
+        if ((targetId != null) &amp;&amp; composers.containsKey(targetId.trim())) {
+            request.setAttribute("composer", composers.get(targetId));
+            context.getRequestDispatcher("/composer.jsp").forward(request, response);
+        }
+    }
+}
+----
+
+サーブレットを見ればわかるように、Ajax処理用のサーバー側コードを記述するために新たに覚えることはありません。XMLドキュメントを交換する場合は、レスポンスのコンテンツ・タイプを`text/xml`に設定します。Ajaxでは、プレーン・テキストを交換でき、クライアントのコールバック関数によって評価または実行できるJavaScriptのスニペットを交換することもできます。一部のブラウザでは結果がキャッシュに保存される場合があるので、Cache-Control HTTPヘッダーを`no-cache`に設定する必要がある場合もあります。
+
+この例では、氏名のいずれかが、ユーザーが入力した文字から始まる作曲家がすべて含まれるXMLドキュメントがサーブレットによって生成されます。このドキュメントは、前述の<<flow-diagram,フロー図>>に示すXMLデータに対応します。`XMLHttpRequest`オブジェクトに返されるXMLドキュメントの例を示します。
+
+
+[source,xml]
+----
+
+<composers>
+    <composer>
+        <id>12</id>
+        <firstName>Antonin</firstName>
+        <lastName>Dvorak</lastName>
+    </composer>
+    <composer>
+        <id>45</id>
+        <firstName>Aaron</firstName>
+        <lastName>Copland</lastName>
+    </composer>
+    <composer>
+        <id>7</id>
+        <firstName>Antonio</firstName>
+        <lastName>Vivaldi</lastName>
+    </composer>
+    <composer>
+        <id>2</id>
+        <firstName>Arcangelo</firstName>
+        <lastName>Corelli</lastName>
+    </composer>
+</composers>
+
+----
+
+アプリケーションが完成したら、返されるXMLデータを表示するためにIDEの<<httpMonitor,HTTPモニター>>を使用できます。
+
+
+[[client2]]
+== クライアント側のプログラミング: 第2部
+
+サーバーのレスポンスを処理するコールバック関数を定義し、ユーザーに表示するページに変更を反映するために必要な機能を追加する必要があります。そのためには、HTMLのDOMを変更する必要があります。JSPページを作成して、成功したリクエストの結果または失敗したリクエストのエラー・メッセージを表示します。次に、プレゼンテーションの単純なスタイルシートを作成できます。
+
+* <<callback,コールバック機能の追加>>
+* <<htmldom,HTML DOMの更新>>
+* <<displayresults,結果の表示>>
+* <<stylesheet,スタイル・シートの添付>>
+
+
+=== コールバック機能の追加
+
+コールバック関数は、HTTPの相互作用中に`XMLHttpRequest`オブジェクトの「`readyState`」プロパティが変化したとき、非同期でコールされます。ここでビルドしているアプリケーションでは、コールバック関数は`callback()`です。`doCompletion()`では、`callback`を関数の「`XMLHttpRequest.onreadystatechange`」プロパティとして設定しました。ここで、コールバック関数を次のように実装します。
+
+1. `javascript.js`をソース・エディタで開き、次のコードを入力します。
+
+[source,java]
+----
+
+function callback() {
+    if (req.readyState == 4) {
+        if (req.status == 200) {
+            parseMessages(req.responseXML);
+        }
+    }
+}
+----
+
+`readyState`が「4」のとき、HTTPの相互作用は完了しています。`XMLHttpRequest.readState`のAPIは、設定できる値が5つあることを示します。これらを次に示します。
+
+|===
+|`readyState`の値 |オブジェクト・ステータスの定義 
+
+|0 |非初期化 
+
+|1 |ロード中 
+
+|2 |ロード済 
+
+|3 |対話式 
+
+|4 |完了 
+|===
+
+`parseMessages()`関数は、`XMLHttpRequest.readyState`が「4」で、`status` (リクエストのHTTPステータス・コード定義)が「200」、つまり成功の場合にのみコールされます。`parseMessages()`は、次の<<htmldom,HTML DOMの更新>>で定義します。
+
+
+=== HTML DOMの更新
+
+受信するXMLデータは`parseMessages()`関数で処理します。このとき、`appendComposer()`、`getElementY()`、および`clearTable()`などの補助的関数を使用します。また、オートコンプリート・ボックスとして機能する2番目のHTML表、要素を`javascript.js`で参照可能にするための要素のIDなど、新しい要素をindexページに追加する必要があります。最後に、indexページ内の要素のIDに対応する新しい変数を作成し、前に実装した`init()`関数で初期化し、indexページがロードされるたびに必要とされる機能を追加します。
+
+*注意: *次の手順で作成する関数と要素は、相互に依存して動作します。この項の手順を最後まで行い、コードが完成してからその内容を確認することをお薦めします。
+
+1. indexページをソース・エディタで開き、前に作成したHTML表の2行目として次のコードを入力します。
+
+[source,xml]
+----
+
+<tr>
+    *<td id="auto-row" colspan="2">
+        <table id="complete-table" />
+    </td>*
+</tr>
+----
+表の2番目の行は、別のHTML表を含んでいます。この表は、作曲家の名前を挿入するためのオートコンプリート・ボックスを表します。
+2. `javascript.js`をソース・エディタで開き、次の3つの変数をファイルの先頭に追加します。
+
+[source,java]
+----
+
+var completeField;
+var completeTable;
+var autoRow;
+----
+3. 次の*太字*の行を`init()`関数に追加します。
+
+[source,java]
+----
+
+function init() {
+    completeField = document.getElementById("complete-field");
+    *completeTable = document.getElementById("complete-table");
+    autoRow = document.getElementById("auto-row");
+    completeTable.style.top = getElementY(autoRow) + "px";*
+}
+----
+`init()`の目的の1つは、indexページのDOMを変更する他の関数からindexページ内の要素にアクセスできるようにすることです。
+4. `appendComposer()`を`javascript.js`に追加します。
+
+[source,java]
+----
+
+function appendComposer(firstName,lastName,composerId) {
+
+    var row;
+    var cell;
+    var linkElement;
+
+    if (isIE) {
+        completeTable.style.display = 'block';
+        row = completeTable.insertRow(completeTable.rows.length);
+        cell = row.insertCell(0);
+    } else {
+        completeTable.style.display = 'table';
+        row = document.createElement("tr");
+        cell = document.createElement("td");
+        row.appendChild(cell);
+        completeTable.appendChild(row);
+    }
+
+    cell.className = "popupCell";
+
+    linkElement = document.createElement("a");
+    linkElement.className = "popupItem";
+    linkElement.setAttribute("href", "autocomplete?action=lookup&amp;id=" + composerId);
+    linkElement.appendChild(document.createTextNode(firstName + " " + lastName));
+    cell.appendChild(linkElement);
+}
+----
+この関数は、表の新しい行を作成し、3つのパラメータによって関数に渡されたデータを使用して作曲家へのリンクを挿入してから、行をindexページの`complete-table`要素に挿入します。
+5. `getElementY()`を`javascript.js`に追加します。
+
+[source,java]
+----
+
+function getElementY(element){
+
+    var targetTop = 0;
+
+    if (element.offsetParent) {
+        while (element.offsetParent) {
+            targetTop += element.offsetTop;
+            element = element.offsetParent;
+        }
+    } else if (element.y) {
+        targetTop += element.y;
+    }
+    return targetTop;
+}
+----
+この関数は、親要素の縦方向表示位置を見つけるために適用します。これは、要素の実際の表示位置はブラウザのタイプとバージョンによって異なることが多いため必要です。`complete-table`要素は、作曲家の名前が表示されるときに、この要素が存在する表の右下にシフトします。正しい縦方向の配置は`getElementY()`で決まります。
+
+*注意: *link:http://www.quirksmode.org/[+http://www.quirksmode.org/+]にある`offset`に関するlink:http://www.quirksmode.org/js/findpos.html[+説明+]を参照してください。
+
+6. `clearTable()`を`javascript.js`に追加します。
+
+[source,java]
+----
+
+function clearTable() {
+    if (completeTable.getElementsByTagName("tr").length > 0) {
+        completeTable.style.display = 'none';
+        for (loop = completeTable.childNodes.length -1; loop >= 0 ; loop--) {
+            completeTable.removeChild(completeTable.childNodes[loop]);
+        }
+    }
+}
+----
+この関数は`complete-table`要素の表示を'none'に設定し(非表示にし)、作成された既存の作曲家の名前エントリを除去します。
+7. `callback()`関数を変更して、サーバーから新しいデータを受け取るたびに`clearTable()`をコールするようにします。オートコンプリート・ボックスに作曲家のエントリがある場合は、新しいエントリが入力される前に除去されます。
+
+[source,java]
+----
+
+function callback() {
+
+    *clearTable();*
+
+    if (req.readyState == 4) {
+        if (req.status == 200) {
+            parseMessages(req.responseXML);
+        }
+    }
+}
+----
+8. `parseMessages()`を`javascript.js`に追加します。
+
+[source,java]
+----
+
+function parseMessages(responseXML) {
+
+    // no matches returned
+    if (responseXML == null) {
+        return false;
+    } else {
+
+        var composers = responseXML.getElementsByTagName("composers")[0];
+
+        if (composers.childNodes.length > 0) {
+            completeTable.setAttribute("bordercolor", "black");
+            completeTable.setAttribute("border", "1");
+
+            for (loop = 0; loop < composers.childNodes.length; loop++) {
+                var composer = composers.childNodes[loop];
+                var firstName = composer.getElementsByTagName("firstName")[0];
+                var lastName = composer.getElementsByTagName("lastName")[0];
+                var composerId = composer.getElementsByTagName("id")[0];
+                appendComposer(firstName.childNodes[0].nodeValue,
+                    lastName.childNodes[0].nodeValue,
+                    composerId.childNodes[0].nodeValue);
+            }
+        }
+    }
+}
+----
+
+`parseMessages()`関数は、`AutoComplete`サーブレットから返されるXMLドキュメントのオブジェクト表現をパラメータとして受け取ります。この関数はプログラムでXMLドキュメント内を横断し、各エントリの`firstName`、`lastName`、および`id`を抽出して、このデータを`appendComposer()`に渡します。その結果、`complete-table`要素の内容が動的に更新されます。たとえば、次のようなエントリが生成され、`complete-table`に挿入されます。
+
+
+[source,xml]
+----
+
+<tr>
+    <td class="popupCell">
+        <a class="popupItem" href="autocomplete?action=lookup&amp;id=12">Antonin Dvorak</a>
+    </td>
+</tr>
+----
+
+`complete-table`要素の動的な更新は、Ajaxを使用して行われる通信のプロセス・フローの中で最後の手順を表します。この更新は、前述の<<flow-diagram,フロー図>>のプレゼンテーションに送信されるHTMLとCSSデータに対応します。
+
+
+[[displayresults]]
+=== 結果の表示
+
+結果を表示するには、`composers.jsp`という名前のJSPファイルが必要です。このページは、ルックアップ処理中に`AutoCompleteServlet`からコールされます。`error.jsp`ファイルも必要で、これはコンポーザが見つからない場合に `AutoCompleteServlet`からコールされます。
+
+*結果とエラーを表示するには:*
+
+1. 「プロジェクト」ウィンドウで、アプリケーションの「Webページ」フォルダを右クリックし、「新規」>「JSP」を選択します。新規JSPウィザードが開きます。
+2. 「ファイル名」フィールドに「`composer`」と入力します。「作成されるファイル」フィールドに、`/web/composer.jsp`で終わるパスが表示されるはずです。
+3. 「終了」をクリックします。ファイル`composer.jsp`がエディタで開きます。「プロジェクト」ウィンドウの「Webページ」フォルダに、このファイルのノードが表示されます。
+4. `composer.jsp`内のプレースホルダ・コードを次のコードで置き換えます。
+
+[source,html]
+----
+
+<html>
+  <head>
+    <title>Composer Information</title>
+
+    <link rel="stylesheet" type="text/css" href="stylesheet.css">
+  </head>
+  <body>
+
+    <table>
+      <tr>
+        <th colspan="2">Composer Information</th>
+      </tr>
+      <tr>
+        <td>First Name: </td>
+        <td>${requestScope.composer.firstName}</td>
+      </tr>
+      <tr>
+        <td>Last Name: </td>
+        <td>${requestScope.composer.lastName}</td>
+      </tr>
+      <tr>
+        <td>ID: </td>
+        <td>${requestScope.composer.id}</td>
+      </tr>
+      <tr>
+        <td>Category: </td>
+        <td>${requestScope.composer.category}</td>
+      </tr>      
+    </table>
+
+    <p>Go back to <a href="index.html" class="link">application home</a>.</p>
+  </body>
+</html>
+----
+
+*注意:*indexページが ``index.jsp`` の場合、indexページに戻るためのリンクを変更する必要があります。
+
+5. プロジェクトの「Webページ」フォルダに、別のJSPファイルを作成します。ファイルに`error.jsp`という名前を付けます。
+6. `error.jsp`内のプレースホルダ・コードを次のコードで置き換えます。
+
+[source,html]
+----
+
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <link rel="stylesheet" type="text/css" href="stylesheet.css">      
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>Seach Error</title>
+    </head>
+    <body>
+        <h2>Seach Error</h2>
+        
+        <p>An error occurred while performing the search. Please try again.</p>
+        
+        <p>Go back to <a href="index.html" class="link">application home</a>.</p>
+    </body>
+</html>
+----
+
+*注意:*indexページが ``index.jsp`` の場合、indexページに戻るためのリンクを変更する必要があります。
+
+
+[[stylesheet]]
+=== スタイル・シートの添付
+
+これで、アプリケーションの機能に必要なコードが完成しました。作業の結果を確認するため、今すぐアプリケーションを実行してみてください。
+
+1. 「プロジェクト」ウィンドウでプロジェクト・ノードを右クリックし、「実行」を選択します。プロジェクトが再コンパイルされ、ターゲット・サーバーにデプロイされます。ブラウザが開き、indexページが表示されます。
+image::images/no-css.png[title="スタイル・シートなしでの正常なデプロイメント"]
+
+アプリケーションにスタイル・シートを追加するには、`.css`ファイルを作成し、プレゼンテーション・ページからそのファイルにリンクします。`.css`ファイルで作業する場合、IDEには、コード補完機能や、スタイルシート・ルールの生成と編集に役立つ次のウィンドウが提供されています。
+
+* *「CSSスタイル」ウィンドウ。*「CSSスタイル」ウィンドウでは、CSSファイルのHTML要素およびセレクタのルールの宣言を編集できます。
+* *CSSルールの作成ダイアログ・ボックス。*「CSSルールの作成」ダイアログ・ボックスでは、CSSスタイル・シートに新規ルールを作成できます。
+* *CSSプロパティの追加ダイアログ・ボックス。*CSSプロパティの追加ダイアログ・ボックスでは、プロパティと値を追加することで、スタイル・シートのCSSルールに宣言を追加できます。
+
+アプリケーションにスタイルシートを追加するには、次の手順を実行します。
+
+1. 「プロジェクト」ウィンドウで「Webページ」ノードを右クリックし、「新規」>「Cascading Style Sheet」を選択します(「Cascading Style Sheet」が表示されない場合は、「その他」を選択します。その後、新規ファイル・ウィザードで「Web」カテゴリから「Cascading Style Sheet」を選択します。)
+2. 「CSSファイル名」テキスト・フィールドに、「*`stylesheet`*」と入力します。「終了」をクリックします。
+
+新規ファイルが作成され、エディタで開きます。
+
+3. エディタで`stylesheet.css`に次のルールを入力します。IDEのコード補完サポートを利用するには、候補を呼び出したい場所で[Ctrl]-[Space]を押します。
+
+[source,java]
+----
+
+body {
+   font-family: Verdana, Arial, sans-serif;
+   font-size: smaller;
+   padding: 50px;
+   color: #555;
+   width: 650px;
+}
+
+h1 {
+   letter-spacing: 6px;
+   font-size: 1.6em;
+   color: #be7429;
+   font-weight: bold;
+}
+
+h2 {
+   text-align: left;
+   letter-spacing: 6px;
+   font-size: 1.4em;
+   color: #be7429;
+   font-weight: normal;
+   width: 450px;
+}
+
+table {
+   width: 550px;
+   padding: 10px;
+   background-color: #c5e7e0;
+}
+
+td {
+   padding: 10px;
+}
+
+a {
+  color: #be7429;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.popupBox {
+  position: absolute;
+  top: 170px;
+  left: 140px;
+}
+
+.popupCell {
+   background-color: #fffafa;
+}
+
+.popupCell:hover {
+  background-color: #f5ebe9;
+}
+
+.popupItem {
+  color: #333;
+  text-decoration: none;
+  font-size: 1.2em;
+}
+----
+4. 「ウィンドウ」→「Web」→「CSSスタイル」を選択して、「CSSスタイル」ウィンドウを開きます。
+image::images/css-styles-window.png[title="h1ルールのプロパティを表示している「CSSスタイル」ウィンドウ"]
+
+「CSSスタイル」ウィンドウを使用して、プロパティをすばやく表示し、スタイル・ルールを編集できます。「CSSスタイル」ウィンドウの上部ペインでルールを選択すると、下部ペインにルールのプロパティが表示されます。上部ペインのツールバーで「CSSルールの編集」アイコン(image::images/newcssrule.png[title="新規CSSプロパティ・アイコン"])をクリックして、スタイルシートにCSSルールを追加できます。プロパティ・シートを編集して下部ペインでルールを変更したり、下部ペインのツールバーで「プロパティの追加」アイコン(image::images/newcssproperty.png[title="新規CSSプロパティ・アイコン"])をクリックしてプロパティを追加したりできます。
+
+5. ソース・エディタでindexページに切り替え、`<head>`タグの間にスタイル・シートへの参照を追加します。
+
+[source,java]
+----
+
+<link rel="stylesheet" type="text/css" href="stylesheet.css">
+----
+6. スタイル・シートで定義されている`popupBox`クラスを`complete-table`要素に追加します(*太字*部分が変更箇所)。
+
+[source,xml]
+----
+
+<tr>
+    <td id="auto-row" colspan="2">
+        <table id="complete-table" *class="popupBox"* />
+    </td>
+</tr>
+----
+
+エディタでコード補完を使用して、セレクタに適用するスタイル・ルールを選択できます。
+
+image::images/css-completion.png[title="エディタでのCSSコード補完"]
+
+`stylesheet.css`で指定されているように、このルールでは、`complete-table`要素が親要素の少し右に表示されるように配置されます。
+
+indexページを保存すると、アプリケーションがサーバーに自動的に再デプロイされます。ページがまだブラウザに開いている場合は、ページを再ロードして、CSSスタイルシートのルールに従ってページがレンダリングされることを確認できます。
+
+
+
+[[run]]
+== プロジェクトの実行
+
+アプリケーションを再実行すると、作成したスタイル・シートを使用してブラウザに表示されます。文字を入力するたびに非同期のリクエストがサーバーに送信され、`AutoCompleteServlet`によって作成されたXMLデータが返されます。さらに文字を入力すると、新しい一致リストを反映して作曲家の名前の数が減ります。
+
+
+[[httpMonitor]]
+=== HTTPサーバー・モニターの使用
+
+IDEのHTTPサーバー・モニターを使用して、リクエストとレスポンスがクライアントとサーバーの間で受け渡されるときに実行されるHTTP通信を確認できます。HTTPサーバー・モニターには、クライアントとサーバーのヘッダー、セッション・プロパティ、Cookieの詳細、リクエスト・パラメータなどの情報が表示されます。
+
+HTTPモニターを使用する前に、使用しているサーバーでモニターを有効にする必要があります。
+
+1. メイン・メニューから「ツール」>「サーバー」を選択して、「サーバー」ウィンドウを開きます。
+2. 左ペインで、プロジェクトで使用しているサーバーを選択します。次に右ペインで、「HTTPモニターを有効化」オプションを選択します。
+
+*注意:* このオプションは、GlassFishサーバーでは「共通」タブに表示されます。Tomcatでは「接続」タブに表示されます。
+
+3. 「閉じる」をクリックします。
+
+サーバーが実行中の場合、変更を有効にするにはサーバーを再起動する必要があります。サーバーを再起動するには、「サービス」ウィンドウを開き(「ウィンドウ」>「サービス」)、「サーバー」ノードの下で使用しているサーバーを右クリックし、「再起動」を選択します。
+
+次にアプリケーションを実行すると、IDEの下部にHTTPモニターが開きます。左ペインでレコードを選択し、メイン・ウィンドウ内のタブをクリックすると、各リクエストに関する情報が表示されます。
+
+image::images/http-monitor.png[title="IDEに表示されたHTTPサーバー・モニター"]
+
+ユーザーがオートコンプリート・フィールドに文字を入力したときに送信される非同期リクエストの結果としてサーバーから送信されるXMLデータを確認できます。
+
+1. HTTPモニターの左側にあるツリー表示で、リクエスト・レコードを右クリックし、「再実行」を選択します。
+
+レスポンスがブラウザに生成されます。この場合、レスポンスはXMLデータから構成されるので、ブラウザではデータがネイティブXMLビューアで表示されます。
+
+image::images/xml-data.png[title="IDEに表示されたHTTPサーバー・モニター"]
+
+
+[[conclusion]]
+=== まとめ
+
+これでAjax入門を終了します。ここでは、Ajaxは単にHTTPを使用してバックグラウンドで情報を交換し、その結果に基づいてページを動的に更新していることを学習しました。
+
+ここでビルドしたアプリケーションは、オートコンプリート・ボックスで作曲家の名前を選択しても何も起こらないなど、完全ではありません。link:https://netbeans.org/projects/samples/downloads/download/Samples%252FJavaScript%252FMyAjaxApp.zip[+ソリューション・プロジェクトをダウンロード+]し、JSPテクノロジを使用して、この処理を実装する方法を確認できます。また、ユーザーがデータ・ストアにない名前をリクエストしないようにサーバー側で検証する方法を検討することもできます。これらの手法とテクノロジについては、link:../../trails/java-ee.html[+Java EEおよびJava Webの学習+]にある、他のチュートリアルで紹介しています。
+
+link:/about/contact_form.html?to=3&subject=Feedback:%20Introduction%20to%20Ajax%20(Java)[+ご意見をお寄せください+]
+
+
+
+[[seeAlso]]
+== 関連項目
+
+link:https://netbeans.org/[+netbeans.org+]でのAjaxおよびJavaテクノロジの詳細は、次のリソースを参照してください。
+
+* link:../../docs/web/js-toolkits-jquery.html[+jQueryを使用した、Webページの見た目と使いやすさの向上+]。jQueryコアおよびUIライブラリをNetBeansプロジェクトに統合する方法について説明しています。
+* link:../../docs/web/js-toolkits-dojo.html[+JSONを使用したDojoツリーのArrayListへの接続+]。JavaOneハンズオン・ラボに基づいて、このドキュメントではDojoツリー・ウィジェットをWebページに統合する方法や、サーバー側からJSON形式でツリー・リクエストにレスポンスできるようにする方法について説明しています。
+* _NetBeans IDEによるアプリケーションの開発_のlink:http://www.oracle.com/pls/topic/lookup?ctx=nb8000&id=NBDAG2272[+JavaScriptファイルの作成+]
+* link:quickstart-webapps-wicket.html[+Wicket Webフレームワーク入門+]。Wicketフレームワークを使用して再利用可能なコンポーネントを作成し、Webアプリケーションに適用する方法です。

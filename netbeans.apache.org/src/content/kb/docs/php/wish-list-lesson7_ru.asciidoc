@@ -1,0 +1,562 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= Создание приложения на основе базы данных на языке PHP
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: Создание приложения на основе базы данных на языке PHP - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, Создание приложения на основе базы данных на языке PHP
+
+= Урок 7. Обновление и удаление записей в базе данных
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: Урок 7. Обновление и удаление записей в базе данных - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, Урок 7. Обновление и удаление записей в базе данных
+
+
+
+1. link:wish-list-tutorial-main-page.html[+Создание приложения на основе базы данных с помощью языка PHP – главная страница+]
+2. 
+Создание базы данных
+
+1. link:wish-list-lesson1.html[+Создание базы данных MySQL+]
+2. link:wish-list-oracle-lesson1.html[+Создание таблиц базы данных Oracle+]
+3. 
+link:wish-list-lesson2.html[+Проектирование приложения. Чтение из базы данных+]
+
+4. link:wish-list-lesson3.html[+Создание нового пользователя приложения+]
+5. link:wish-list-lesson4.html[+Усовершенствование кода+]
+6. link:wish-list-lesson5.html[+Добавление функций безопасности. Реализация входа пользователя в приложение+]
+7. link:wish-list-lesson6.html[+Добавление нового пожелания в базу данных+]
+8. 
+*=> Обновление и удаление записей в базе данных*
+
+9. link:wish-list-lesson8.html[+Усовершенствование внешнего вида приложения с использованием технологии CSS+]
+10. link:wish-list-lesson9.html[+Развертывание приложения на удаленном веб-сервере+]
+
+image::images/netbeans-stamp-80-74-73.png[title="Содержимое этой страницы применимо к IDE NetBeans 7.2, 7.3, 7.4 и 8.0"]
+
+В этом уроке функциональные возможности приложения будут расширены двумя компонентами:
+
+
+Для реализации этих функций следует изменить файлы  ``editWishList.php``  и  ``editWish.php`` . Кроме этого, следует создать новый файл с именем  ``deleteWish.php`` .
+
+image::images/page-flow-diagram-l7.png[]
+
+Текущий документ является частью краткого учебного курса "Создание приложения CRUD в IDE NetBeans для PHP".
+
+
+
+== Исходный код приложения из предыдущего урока
+
+Для пользователей MySQL: перейдите по link:https://netbeans.org/files/documents/4/1932/lesson6.zip[+этой ссылке+] для загрузки исходного кода, описывающего состояние проекта на момент завершения предыдущего урока.
+
+Для пользователей баз данных Oracle: перейдите по link:https://netbeans.org/projects/www/downloads/download/php%252Foracle-lesson6.zip[+этой+] для загрузки исходного кода, описывающего состояние проекта на момент завершения предыдущего урока.
+
+
+== Редактирование пожелания
+
+Функциональные возможности поддерживают следующий вариант использования:
+
+* На странице  ``editWishList.php``  пользователь нажимает кнопку "Edit" справа от пожелания. Откроется страница  ``editWish.php``  с данными выбранного пожелания.
+* Пользователь изменяет описание и/или срок выполнения пожелания, а затем нажимает кнопку "Save Changes".
+* Если описание _не_ заполнено, то выводится сообщение об ошибке, после чего выполняется возврат к странице  ``editWish.php`` .
+* Если описание заполнено, то выполняется возврат к странице  ``editWishList.php`` , на которой можно обновить данные пожелания.
+
+Реализация состоит из следующих действий:
+
+* <<addEditButton,Добавление кнопки "Edit" на страницу "editWishList">>
+* <<wishArrayUpdate,На странице editWish.php — обновление массива $wish для хранения данных пожеланий>>
+* <<updateInputForm,Обновление формы ввода на странице editWish.php>>
+* <<updateWishRecord,Проверка правильности переданных данных и обновление пожелания в базе данных>>
+
+
+=== Реализация кнопки "Edit"
+
+Таблица  ``editWishList.php``  (таблица, включающая все пожелания, созданные пользователем) реализуется с помощью цикла (оператор  ``while`` ), который выводит на экран строки с пожеланиями, в то время как пожелания выбираются из базы данных. Добавьте кнопку "Edit" как крайнюю правую ячейку в ряду.
+
+1. Для обеспечения передачи идентификатора пожелания посредством формы ввода HTML он должен быть сохранен в виде переменной. Введите следующую строку кода в конце цикла  ``while `` :
+
+[source,java]
+----
+
+while ($row = ...) {echo ...echo ...*$wishID = $row["id"];*}
+?>
+----
+2. Создайте кнопку правки. С помощью формы editWish добавьте еще одну ячейку таблицы перед закрывающим тегом </table>. Эта форма содержит компонент кнопки и скрытый компонент, который при нажатии кнопки отправляет значение  ``$wishID`` . (Показан код для базы данных MySQL, но добавлен тот же код и в то же место, что и для базы данных Oracle.)
+
+[source,php]
+----
+
+   Hello <?php echo $_SESSION["user"]; ?><br/><table border="black"><tr><th>Item</th><th>Due Date</th></tr><?phprequire_once("Includes/db.php");$wisherID = WishDB::getInstance()->get_wisher_id_by_name($_SESSION["user"]);$result = WishDB::getInstance()->get_wishes_by_wisher_id($wisherID);while ($row = mysqli_fetch_array($result)) {echo "<tr><td>" . htmlentities($row["description"]) . "</td>";echo "<td>" . htmlentities($row["due_date"]) . "</td></tr>\n";}mysqli_free_result($result);?>
+            *<td>
+                <form name="editWish" action="editWish.php" method="GET">
+                    <input type="hidden" name="wishID" value="<?php echo  ``$wish`` ID; ?>">
+                    <input type="submit" name="editWish" value="Edit">
+                    </form>
+            </td>*</table>
+----
+3. Измените цикл  ``while`` , чтобы использовать link:http://www.php.net/manual/en/control-structures.alternative-syntax.php[+альтернативный синтаксис+]. Это облегчает выполнение блоков HTML внутри цикла  ``while`` . В альтернативном синтаксисе цикла  ``while``  открывающая фигурная скобка "{" заменяется двоеточием ":", а завершающая фигурная скобка "}" заменяется оператором  ``endwhile;`` . Замените открывающую фигурную скобку двоеточием, удалите закрывающую фигурную скобку и перед закрывающим тегом </table> добавьте новый блок PHP с оператором  ``endwhile;`` . Это приводит к добавлению новой ячейки таблицы в цикле  ``while`` . Переместите код оператора free result/free на место после оператора  ``endwhile;`` . (И вновь приведен код для MySQL, но изменение кода и его местоположение точно такие же, как для базы данных Oracle.)
+
+[source,php]
+----
+
+    while ($row = mysqli_fetch_array($result))[.line-through]#{#*:*echo "<tr><td>" . htmlentities($row["description"]) . "</td>";echo "<td>" . htmlentities($row["due_date"]) . "</td></tr>\n";[.line-through]#    }mysqli_free_result($result);#?>
+    <td>
+        <form name="editWish" action="editWish.php" method="GET">
+           <input type="hidden" name="wishID" value="<?php echo  ``$wish`` ID; ?>">
+           <input type="submit" name="editWish" value="Edit">
+        </form>
+    </td>
+*    <?php
+    endwhile;
+    mysqli_free_result($result);
+    ?>*
+</table>
+----
+4. 
+Исправьте синтаксис для строки таблицы. Переместите закрывающие строку символы </tr>\n из оператора echo для срока выполнения в новый оператор echo непосредственно над оператором  ``endwhile;`` .
+
+
+[source,php]
+----
+
+    while ($row = mysqli_fetch_array($result))*:*echo "<tr><td>" . htmlentities($row["description"]) . "</td>";echo "<td>" . htmlentities($row["due_date"]) . "</td>[.line-through]#</tr>\n#";?>
+    <td>
+        <form name="editWish" action="editWish.php" method="GET">
+           <input type="hidden" name="wishID" value="<?php echo  ``$wish`` ID; ?>">
+           <input type="submit" name="editWish" value="Edit">
+        </form>
+    </td>
+    <?php
+    *echo "</tr>\n";*
+    endwhile;
+    mysqli_free_result($result);
+    ?>
+</table>
+----
+5. 
+Код для таблицы, включая форму с кнопкой "Edit" (Изменить), в цикле  ``while ``  выглядит следующим образом.
+
+*Для базы данных MySQL*
+
+
+[source,php]
+----
+
+<table border="black">
+    <tr><th>Item</th><th>Due Date</th></tr>
+    <?php
+    require_once("Includes/db.php");
+    $wisherID = WishDB::getInstance()->get_wisher_id_by_name($_SESSION["user"]);
+    $result = WishDB::getInstance()->get_wishes_by_wisher_id($wisherID);
+    while($row = mysqli_fetch_array($result)):
+        echo "<tr><td>" . htmlentities($row['description']) . "</td>";
+        echo "<td>" . htmlentities($row['due_date']) . "</td>";
+        $wishID = $row["id"];
+    ?>
+    <td>
+        <form name="editWish" action="editWish.php" method="GET">
+            <input type="hidden" name="wishID" value="<?php echo $wishID; ?>"/>
+            <input type="submit" name="editWish" value="Edit"/>
+        </form>
+    </td>
+    <?php
+    echo "</tr>\n";
+    endwhile;
+    mysqli_free_result($result);
+    ?>
+</table>
+----
+
+*Для базы данных Oracle:*
+
+
+[source,php]
+----
+
+<table border="black">
+    <tr><th>Item</th><th>Due Date</th></tr>
+    <?php
+    require_once("Includes/db.php");
+    $wisherID = WishDB::getInstance()->get_wisher_id_by_name($_SESSION["user"]);
+    $stid = WishDB::getInstance()->get_wishes_by_wisher_id($wisherID);
+    while ($row = oci_fetch_array($stid)):
+        echo "<tr><td>" . htmlentities($row["DESCRIPTION"]) . "</td>";
+        echo "<td>" . htmlentities($row["DUE_DATE"]) . "</td>";
+        $wishID = $row["ID"];
+    ?>
+    <td>
+        <form name="editWish" action="editWish.php" method="GET">
+            <input type="hidden" name="wishID" value="<?php echo $wishID; ?>"/>
+            <input type="submit" name="editWish" value="Edit"/>
+        </form>
+    </td>
+    <td>
+        <form name="deleteWish" action="deleteWish.php" method="POST">
+            <input type="hidden" name="wishID" value="<?php echo $wishID; ?>"/>
+            <input type="submit" name="deleteWish" value="Delete"/>
+        </form>
+    </td>
+    <?php
+    echo "</tr>\n";
+    endwhile;
+    oci_free_statement($stid);
+   ?>
+</table>
+----
+
+
+=== Расширение массива  ``$wish`` 
+
+После нажатия кнопки "Edit" на странице  ``editWishList.php``  идентификатор выбранного пожелания передается на страницу  ``editWish.php``  с использованием метода запроса к серверу "GET". Для сохранения идентификатора пожелания следует добавить новый элемент к массиву  ``$wish`` .
+
+Так же, как и при добавлении нового пожелания, в случае неудачной попытки сохранения можно перейти в форму ввода может как со страницы  ``editWishList.php`` , так и со страницы  ``editWish.php`` . Отличие между вариантами заключается в методе запроса к серверу, посредством которого осуществляется передача данных. Метод "GET" указывает, что форма отображается при первом переходе пользователя на эту страницу при нажатии на кнопку "Edit Wish". Метод POST указывает на то, что пользователь был перенаправлен в форму после попытки сохранения пожелания без описания.
+
+В файле  ``editWish.php``  замените блок PHP в HTML <body> выше формы ввода  ``EditWish``  на расширенный код для массива  ``$wish`` .
+
+*Для базы данных MySQL*
+
+
+[source,php]
+----
+
+<?phpif ($_SERVER["REQUEST_METHOD"] == "POST")$wish = array("id" => $_POST["wishID"], "description" => 
+        $_POST["wish"], "due_date" => $_POST["dueDate"]);else if (array_key_exists("wishID", $_GET))$wish = mysqli_fetch_array(WishDB::getInstance()->get_wish_by_wish_id($_GET["wishID"]));else$wish = array("id" => "", "description" => "", "due_date" => "");?>
+----
+
+*Для базы данных Oracle*
+
+
+[source,php]
+----
+
+<?php
+if ($_SERVER["REQUEST_METHOD"] == "POST")
+    $wish = array("id" => $_POST["wishID"], "description" =>
+            $_POST["wish"], "due_date" => $_POST["dueDate"]);
+else if (array_key_exists("wishID", $_GET)) {
+    $stid = WishDB::getInstance()->get_wish_by_wish_id($_GET["wishID"]);
+    $row = oci_fetch_array($stid, OCI_ASSOC);
+    $wish = array("id" => $row["ID"], "description" =>
+                $row["DESCRIPTION"], "due_date" => $row["DUE_DATE"]);
+    oci_free_statement($stid);
+} else
+$wish = array("id" => "", "description" => "", "due_date" => "");
+?>
+----
+
+Код инициализирует массив  ``$wish``  с тремя элементами –  ``id`` ,  ``description``  и  ``due_date`` . Значения этих элементов зависят от метода запроса к серверу. Если используется метод запроса к серверу "POST", то значения извлекаются из формы ввода. В противном случае, если используется метод запроса к серверу "GET", и при этом массив "$_GET" содержит элемент с ключом "wishID", значения извлекаются из базы данных функцией "get_wish_by_wish_id". Наконец, если не используется ни один из методов запроса ("POST" или "GET"), то это означает вариант добавления нового пожелания, т.е. что элементы пусты.
+
+Указанный код включает все варианты создания и редактирования желаний. Теперь следует обновить код формы ввода таким образом, чтобы она подходила для обоих вариантов.
+
+
+=== Обновление формы ввода HTML
+
+Пока форма ввода работает в том случае, когда требуется создать новое пожелание и отсутствует идентификатор пожелания. Чтобы форма работала в том случае, когда требуется редактировать существующее пожелание, необходимо добавить скрытое поле для передачи идентификатора пожелания. Значение этого скрытого поля должно извлекаться из массива $wish. На этапе создания нового пожелания значению должна соответствовать пустая строка. При редактировании пожелания значение скрытого поля должно измениться на идентификатор пожелания. Для создания скрытого поля добавьте следующую строку вверху формы ввода  ``EditWish``  в файле  ``editWish.php`` .
+
+[source,php]
+----
+
+<input type="hidden" name="wishID" value="<?php echo  ``$wish`` ["id"];?>" />
+----
+
+
+=== Обновление пожелания в базе данных
+
+Теперь необходимо обновить код, который проверяет входные данные и вставляет пожелание в базу данных. Текущий код не различает варианты создания нового пожелания и обновления существующего. В текущей реализации к базе данных в любом случае добавляется новая запись, так как код не проверяет значение идентификатора пожелания, передаваемого из формы ввода.
+
+Необходимо добавить следующие функции:
+
+* Если передаваемый элемент "wishID" является пустой строкой, то должно быть создано новое пожелание.
+* В противном случае, если элемент "wishID" не является пустой строкой, то пожелание должно быть обновлено.
+
+*Для обновления файла editWish.php для выполнения проверки того, является ли пожелание новым или требуется его обновить, необходимо выполнить следующее:*
+
+1. Добавьте функцию  ``update_wish``  к  ``db.php`` .
+
+*Для базы данных MySQL*
+
+
+[source,java]
+----
+
+public function update_wish($wishID, $description, $duedate){
+    $description = $this->real_escape_string($description);if ($duedate==''){$this->query("UPDATE wishes SET description = '" . $description . "',due_date = NULL WHERE id = " . $wishID);} else$this->query("UPDATE wishes SET description = '" . $description ."', due_date = " . $this->format_date_for_sql($duedate). " WHERE id = " . $wishID);}  
+----
+
+*Для базы данных Oracle*
+
+
+[source,java]
+----
+
+public function update_wish($wishID, $description, $duedate) {
+    $query = "UPDATE wishes SET description = :desc_bv, due_date = to_date(:due_date_bv, 
+              'YYYY-MM-DD')  WHERE id = :wish_id_bv";
+    $stid = oci_parse($this->con, $query);
+    oci_bind_by_name($stid, ':wish_id_bv', $wishID);
+    oci_bind_by_name($stid, ':desc_bv', $description);
+    oci_bind_by_name($stid, ':due_date_bv', $this->format_date_for_sql($duedate));
+    oci_execute($stid);
+
+}
+----
+2. 
+Добавьте функцию  ``get_wish_by_wish_id``  к  ``db.php`` .
+
+*Для базы данных MySQL*
+
+
+[source,java]
+----
+
+public function get_wish_by_wish_id ($wishID) {return $this->query("SELECT id, description, due_date FROM wishes WHERE id = " . $wishID);}
+----
+
+*Для базы данных Oracle*
+
+
+[source,java]
+----
+
+public function get_wish_by_wish_id($wishID) {
+    $query = "SELECT id, description, due_date FROM wishes WHERE id = :wish_id_bv";
+    $stid = oci_parse($this->con, $query);
+    oci_bind_by_name($stid, ':wish_id_bv', $wishID);
+    oci_execute($stid);
+    return $stid;
+}
+----
+3. В главный метод, в верхний блок PHP файла  ``editWish.php`` , добавьте условие к последнему оператору `else`. Именно этот оператор  ``else``  вставляет пожелание в базу данных. Замените его на оператор  ``else if`` :
+
+[source,java]
+----
+
+else if ($_POST["wishID"]=="") {WishDB::getInstance()->insert_wish($wisherID, $_POST["wish"], $_POST["dueDate"]);header('Location:  ``editWishList.php`` ' );exit;}
+----
+4. Введите или вставьте другой оператор  ``else if``  после только что отредактированного:
+
+[source,java]
+----
+
+else if ($_POST["wishID"]!="") {WishDB::getInstance()->update_wish($_POST["wishID"], $_POST["wish"], $_POST["dueDate"]);header('Location:  ``editWishList.php`` ' );exit;
+} 
+----
+
+Код выполняет проверку того, что элемент  ``wishID``  в массиве  ``$_POST``  не является пустой строкой (что означает перенаправление со страницы  ``editWishList.php``  путем нажатия кнопки "Edit"), а также что пользователь указал описание пожелания. Если проверка выполнена успешно, код вызывает функцию  ``update_wish``  с входными параметрами  ``wishID`` ,  ``description``  и  ``dueDate`` .Эти параметры получены от формы ввода HTML с помощью метода POST. После вызова  ``update_wish``  осуществляется переход на страницу  ``editWishList.php`` , и обработка блока PHP прерывается.
+
+
+== Тестирование функциональной возможности редактирования пожелания
+
+1. Запустите приложение. На странице "index.php" заполните следующие поля: в поле "Username" введите "Tom", в поле "Password" введите "tomcat".
+image::images/user-logon-to-edit-wish-list.png[]
+2. Нажмите кнопку "Edit My Wish List". Откроется страница  ``editWishList.php`` .
+image::images/edit-wish-list-edit-wish.png[]
+3. Нажмите кнопку "Edit" рядом с пожеланием "Icecream". Откроется страница  ``editWish.php`` .
+image::images/edit-wish.png[]
+4. Отредактируйте поля и нажмите кнопку "Back to the List". Откроется страница  ``editWishList.php`` , однако изменения не сохранены.
+5. Нажмите кнопку "Edit" рядом с "Icecream". Очистите поле "Describe your wish" и нажмите кнопку "Save Changes". Появится сообщение об ошибке.
+image::images/editWishEmptyDescription.png[]
+6. Введите "Chocolate icecream" в поле "Describe your wish" и нажмите "Save Changes". Откроется страница  ``editWishList.php``  с обновленным списком пожеланий.
+image::images/editWishListWishAdded.png[]
+
+
+== Удаление пожелания
+
+Теперь, научившись создавать, читать и обновлять пожелания, добавьте метод для удаления пожелания.
+
+*Для предоставления пользователю возможности удаления пожелания необходимо выполнить следующее:*
+
+1. Добавьте функцию  `` delete_wish``  к  ``db.php`` .
+
+*Для базы данных MySQL*
+
+
+[source,java]
+----
+
+function delete_wish ($wishID){$this->query("DELETE FROM wishes WHERE id = " . $wishID);}
+
+----
+
+*Для базы данных Oracle*
+
+
+[source,java]
+----
+
+public function delete_wish($wishID) {
+    $query = "DELETE FROM wishes WHERE id = :wish_id_bv";
+    $stid = oci_parse($this->con, $query);
+    oci_bind_by_name($stid, ':wish_id_bv', $wishID);
+    oci_execute($stid); 
+}
+----
+2. Создайте новый файл PHP с именем  ``deleteWish.php``  и введите следующий код в блок <? php ? >:
+
+[source,java]
+----
+
+require_once("Includes/db.php");WishDB::getInstance()->delete_wish ($_POST["wishID"]);header('Location:  ``editWishList.php`` ' );
+----
+Код обращается к файлу  ``db.php`` . Затем выполняется вызов функции  ``delete_wish``  из экземпляра WishDB со значением  ``wishID``  в качестве входного параметра. Наконец, выполняется перенаправление на страницу  ``editWishList.php`` .
+3. Для реализации кнопки "Delete" (Удалить) добавьте еще одну ячейку таблицы HTML к циклу  ``while``  в файле  ``editWishList.php`` , непосредственно ниже блока кода для кнопки  ``editWish`` . Форма ввода HTML содержит скрытое поле для  ``wishID``  и кнопу отправки данных с надписью "Delete". (Показан код для базы данных MySQL, но добавлен тот же код и в то же место, что и для базы данных Oracle.)
+
+[source,php]
+----
+
+    while ($row = mysqli_fetch_array($result))*:*echo "<tr><td>" . htmlentities($row["description"]) . "</td>";echo "<td>" . htmlentities($row["due_date"]) . "</td>[.line-through]#</tr>\n#";?>
+    <td>
+        <form name="editWish" action="editWish.php" method="GET">
+           <input type="hidden" name="wishID" value="<?php echo  ``$wish`` ID; ?>">
+           <input type="submit" name="editWish" value="Edit">
+        </form>
+    </td>
+    *<td>
+        <form name="deleteWish" action="deleteWish.php" method="POST">
+            <input type="hidden" name="wishID" value="<?php echo $wishID; ?>"/>
+            <input type="submit" name="deleteWish" value="Delete"/>
+        </form>
+    </td>*
+    <?php
+    echo "</tr>\n";
+    endwhile;
+    mysqli_free_result($result);
+    ?>
+</table>
+----
+
+Код для таблицы, включая форму с кнопкой "Edit" (Изменить), в цикле  ``while ``  выглядит следующим образом.
+
+*Для базы данных MySQL*
+
+
+[source,php]
+----
+
+<table border="black">
+    <tr><th>Item</th><th>Due Date</th></tr>
+    <?php
+    require_once("Includes/db.php");
+    $wisherID = WishDB::getInstance()->get_wisher_id_by_name($_SESSION["user"]);
+    $result = WishDB::getInstance()->get_wishes_by_wisher_id($wisherID);
+    while($row = mysqli_fetch_array($result)):
+        echo "<tr><td>" . htmlentities($row['description") . "</td>";
+        echo "<td>" . htmlentities($row['due_date']) . "</td>";
+        $wishID = $row["id"];
+    ?>
+    <td>
+        <form name="editWish" action="editWish.php" method="GET">
+            <input type="hidden" name="wishID" value="<?php echo $wishID; ?>"/>
+            <input type="submit" name="editWish" value="Edit"/>
+        </form>
+    </td>
+    <td>
+        <form name="deleteWish" action="deleteWish.php" method="POST">
+            <input type="hidden" name="wishID" value="<?php echo $wishID; ?>"/>
+            <input type="submit" name="deleteWish" value="Delete"/>
+        </form>
+    </td>
+    <?php
+    echo "</tr>\n";
+    endwhile;
+    mysqli_free_result($result);
+    ?>
+</table>
+----
+
+*Для базы данных Oracle:*
+
+
+[source,php]
+----
+
+<table border="black">
+    <tr><th>Item</th><th>Due Date</th></tr>
+    <?php
+    require_once("Includes/db.php");
+    $wisherID = WishDB::getInstance()->get_wisher_id_by_name($_SESSION["user"]);
+    $stid = WishDB::getInstance()->get_wishes_by_wisher_id($wisherID);
+    while ($row = oci_fetch_array($stid)):
+        echo "<tr><td>" . htmlentities($row["DESCRIPTION"]) . "</td>";
+        echo "<td>" . htmlentities($row["DUE_DATE"]) . "</td>";
+        $wishID = $row["ID"];
+    ?>
+    <td>
+        <form name="editWish" action="editWish.php" method="GET">
+            <input type="hidden" name="wishID" value="<?php echo $wishID; ?>"/>
+            <input type="submit" name="editWish" value="Edit"/>
+        </form>
+    </td>
+    <td>
+        <form name="deleteWish" action="deleteWish.php" method="POST">
+            <input type="hidden" name="wishID" value="<?php echo $wishID; ?>"/>
+            <input type="submit" name="deleteWish" value="Delete"/>
+        </form>
+    </td>
+    <?php
+    echo "</tr>\n";
+    endwhile;
+    oci_free_statement($stid);
+   ?>
+</table>
+----
+
+
+== Тестирование функциональной возможности удаления пожелания
+
+Для проверки правильности реализации этой функциональной возможности нажмите "Delete" рядом с любым элементом на странице  ``editWishList.php`` . Элемент удаляется из списка.
+
+image::images/deleteWish.png[]
+
+
+== Исходный код приложения на момент завершения текущего урока
+
+Для пользователей MySQL: щелкните link:https://netbeans.org/files/documents/4/1933/lesson7.zip[+здесь+] для загрузки исходного кода, отражающего состояние проекта по завершении данного урока.
+
+Для пользователей Oracle Database: щелкните link:https://netbeans.org/projects/www/downloads/download/php%252Foracle-lesson7.zip[+здесь+] для загрузки исходного кода, отражающего состояние проекта по завершении данного урока.
+
+
+== Что дальше?
+
+link:wish-list-lesson6.html[+<<Предыдущий урок+] 
+
+link:wish-list-lesson8.html[+Следующий урок >>+] 
+
+link:wish-list-tutorial-main-page.html[+Назад на главную страницу руководства+]
+
+
+link:/about/contact_form.html?to=3&subject=Feedback:%20PHP%20Wish%20List%20CRUD%207:%20Updating%20and%20Deleting%20DB%20Entries[+Отправить отзыв по этому учебному курсу+]
+
+
+Для отправки комментариев и предложений, получения поддержки и новостей о последних разработках, связанных с PHP IDE NetBeans link:../../../community/lists/top.html[+присоединяйтесь к списку рассылки users@php.netbeans.org+].
+
+link:../../trails/php.html[+Возврат к учебной карте PHP+]
+

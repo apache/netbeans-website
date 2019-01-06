@@ -1,0 +1,610 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= 开发 JAX-WS Web 服务客户端
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: 开发 JAX-WS Web 服务客户端 - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, 开发 JAX-WS Web 服务客户端
+
+在本教程中，您将使用 NetBeans IDE 提供的 Web 服务工具来分析拼写检查器 Web 服务，然后构建一个与该服务交互的 Web 客户端。该客户端使用一个 Servlet 类和 Web 页。用户将信息从 Web 页传送到 Servlet。
+
+
+image::images/netbeans-stamp-80-74-73.png[title="此页上的内容适用于 NetBeans IDE 7.2、7.3、7.4 和 8.0"]
+
+
+*要学习本教程，您需要具备以下软件和资源。*
+
+|===
+|软件或资源 |要求的版本 
+
+|link:https://netbeans.org/downloads/index.html[+NetBeans IDE+] |Java EE 下载包 
+
+|link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+Java 开发工具包 (JDK)+] |版本 7 或版本 8 
+
+|符合 Java EE 规范的 Web 服务器或应用服务器 |Tomcat Web Server 7.0 
+GlassFish Server Open Source Edition
+Oracle WebLogic Server 
+|===
+
+*注：*如果使用的是 JDK 6，则需要 JDK 6 Update 7 或更高版本。
+
+Tomcat 和 GlassFish Server 都可以随同 NetBeans IDE 的 Web 和 Java EE 分发一起安装。此外，也可以访问 link:https://glassfish.java.net/download.html[+GlassFish Server 下载页+]或 link:http://tomcat.apache.org/download-60.cgi[+Apache Tomcat 下载页+]。
+
+*重要说明：*Java EE 项目需要使用 Tomcat 7.x、GlassFish Server 或 Oracle WebLogic Server 12c。
+
+下面显示了您将创建的客户端的外观，其中的所有数据都是从 Web 服务接收到的：
+
+image::images/jaxwsc-spellchecker-report.png[title="拼写检查器报告"]
+
+当学完本教程时，您会发现对于此应用程序，您只需提供要检查的文本，调用 Web 服务上的操作以及呈现结果。IDE 会生成联系 Web 服务以及发送文本所需的全部代码。其余的操作则由拼写检查器 Web 服务来完成。它将标识拼错的单词并提供建议的替代项列表。
+
+本教程中使用的拼写检查器 Web 服务是由 link:http://www.cdyne.com/account/home.aspx[+CDYNE 公司+]提供的。CDYNE 旨在开发、销售并支持一整套数据增强、数据质量和数据分析 Web 服务以及商业智能集成。拼写检查器 Web 服务是 CDYNE 提供的一个 Web 服务。请注意，基于一个或多个 Web 服务的应用程序的功能大小取决于这些 Web 服务的可用性和可靠性。但是，CDYNE 在link:http://www.cdyne.com/company/faqs.aspx[+常见问题解答+]中指出，它有一个 100% 可用性目标，并且在发生自然灾害、恐怖行为或其他灾难性事件时，Web 服务流量会传输到其辅助数据中心。CDYNE 在编写本教程以及开发 NetBeans 方面给予了大力支持，NetBeans 要在此特别向其表示感谢。
+
+
+== 使用拼写检查器 Web 服务 
+
+要通过网络使用名为 "consuming" 的 Web 服务，需要创建一个 Web 服务客户端。为了便于创建 Web 服务客户端，NetBeans IDE 提供了一个客户端创建工具，即“Web 服务客户端”向导，利用该向导可以生成用于查找 Web 服务的代码。此外，IDE 还提供了用于对所创建的 Web 服务客户端进行开发的工具，即 "Projects"（项目）窗口中包含节点的工作区域。这些工具包含在 NetBeans IDE 安装的 EE 包中。这些工具为即用型，无需任何插件。
+
+
+=== 创建客户端 
+
+在此部分，您将利用向导生成基于 Web 服务 WSDL 文件的 Java 对象。
+
+1. 选择 "File"（文件）> "New Project"（新建项目）（在 Windows 和 Linux 中为 Ctrl-Shift-N 组合键，在 MacOS 上为 ⌘-Shift-N 组合键）。在 "Categories"（类别）下，选择 "Java Web"。在 "Projects"（项目）下选择 "Web Application"（Web 应用程序）。单击 "Next"（下一步）。将项目命名为  ``SpellCheckService`` ，然后确保将相应的服务器指定为目标服务器。（有关详细信息，请参考“入门指南”一节。）将其他所有选项保留为默认设置，然后单击 "Finish"（完成）。
+2. 在 "Projects"（项目）窗口中，右键单击  ``SpellCheckService``  项目节点，选择 "New"（新建）> "Other"（其他），然后在 "New File"（新建文件）向导的 "Web Services"（Web 服务）类别中选择 "Web Service Client"（Web 服务客户端）。单击 "Next"（下一步）。
+3. 选择 "WSDL URL" 并为 Web 服务指定以下 URL：
+
+link:http://wsf.cdyne.com/SpellChecker/check.asmx?wsdl[+http://wsf.cdyne.com/SpellChecker/check.asmx?wsdl+]
+
+如果您处于防火墙的保护下，可能需要指定代理服务器，否则将无法下载 WSDL 文件。要指定代理服务器，请在向导中单击 "Set Proxy"（设置代理）。IDE 的 "Options"（选项）窗口将会打开，在此可为 IDE 设置普遍接受的代理。
+
+4. 将包名保留为空。默认情况下，将从 WSDL 中获取客户端类包名。在本例中为  ``com.cdyne.ws`` 。单击 "Finish"（完成）。
+5. 在 "Projects"（项目）窗口的 "Web Service References"（Web 服务引用）节点中，您将看到以下内容： 
+image::images/ws-refs.png[title="显示 Web 服务引用的 "Projects"（项目）窗口"]
+
+"Projects"（项目）窗口显示了一个名为 "check" 的 Web 服务，可以对应用程序执行多次 "CheckTextBody" 和 "CheckTextBodyV2" 操作。这些操作用于检查字符串是否存在拼写错误，并返回要由客户端处理的数据。该服务的 V2 版本不需要身份验证。在本教程中，将使用  ``checkSoap.CheckTextBodyV2``  操作。
+
+在  ``Generated Sources`` （生成的源文件）节点中，您将看到由 JAX-WS“Web 服务客户端”向导生成的客户端桩模块。
+
+image::images/gen-files.png[title="显示构建节点的包结构的文件视图"]
+
+展开 "WEB-INF" 节点及其 "wsdl" 子节点。您将看到 WSDL 文件的本地副本，其名称为  ``check.asmx.wsdl`` 。
+
+image::images/web-inf.png[]
+
+用于创建客户端的 WSDL 的 URL 已在  ``jax-ws-catalog.xml``  中映射到 WSDL 的本地副本。映射到本地副本有几个好处。首先，客户端无需 WSDL 的远程副本即可运行。其次，客户端运行速度将会加快，因为其不需要对远程 WSDL 文件进行解析。最后，更加易于移植。
+
+image::images/jax-ws-catalog.png[]
+
+
+=== 开发客户端
+
+您可以通过多种方法来实现 Web 服务客户端。Web 服务的 WSDL 文件限制了您可以向该 Web 服务发送的信息类型，以及您从该 Web 服务接收的信息类型。但是，WSDL 文件不限制您对其所需信息进行传递的_方式_，以及用户界面所包含的_内容_。您接下来要构建的客户端实现包含一个 Web 页和一个 Servlet，前者可使用户输入要检查的文本，后者可将这些文本传递至 Web 服务，然后构建一个包含结果的报告。
+
+
+==== 编码 Web 页 
+
+Web 页将包含一个文本区域和一个按钮，前者可供用户输入文本，后者用于将该文本发送至 Web 服务。根据您选择作为目标服务器的服务器版本不同，IDE 生成了  ``index.html``  或  ``index.jsp``  作为应用程序的索引页。
+
+1. 在 "Projects"（项目）窗口中，展开  ``SpellCheckService``  项目的 "Web Pages"（Web 页）节点，然后双击索引页（ ``index.html``  或  ``index.jsp`` ）以在源代码编辑器中打开文件。
+2. 将以下代码复制并粘贴到索引页的  ``<body>``  标记中：
+
+[source,html]
+----
+
+<body>
+  <form name="Test" method="post" action="SpellCheckServlet">
+     <p>Enter the text you want to check:</p>
+     <p>
+     <p><textarea rows="7" name="TextArea1" cols="40" ID="Textarea1"></textarea></p>
+     <p>
+     <input type="submit" value="Spell Check" name="spellcheckbutton">
+  </form>
+</body>
+----
+
+上面列出的代码指定当单击提交按钮时， ``textarea``  的内容将被发送至名为  ``SpellCheckServlet``  的 Servlet。
+
+
+==== 创建 Servlet 并对其进行编码 
+
+在此部分，您将创建一个与 Web 服务交互的 Servlet。但是，执行交互的代码将由 IDE 提供。因此，您只需处理业务逻辑，即，准备要发送的文本以及对结果进行处理。
+
+1. 在 "Projects"（项目）窗口中，右键单击  ``SpellCheckService``  项目节点，选择 "New"（新建）> "Other"（其他），然后选择 "Web" > "Servlet"。单击 "Next"（下一步）以打开 "New Servlet"（新建 Servlet）向导。
+2. 将 Servlet 命名为  ``SpellCheckServlet`` ，然后在 "Package"（包）下拉列表中键入  ``clientservlet`` 。单击 "Next"（下一步）。
+image::images/name-servlet.png[]
+3. 在 "Configure Servlet Deployment"（配置 Servlet 部署）面板中，注意此 Servlet 的 URL 映射是  ``/SpellCheckServlet`` 。接受默认值，然后单击 "Finish"（完成）。该 Servlet 将在源代码编辑器中打开。 
+image::images/jaxwsc-servlet.png[]
+4. 将光标置于源代码编辑器中的  ``SpellCheckServlet.java``  的  ``processRequest``  方法主体内，并在该方法的顶部添加一些新行。
+5. 右键单击上一步所创建的空白区域，然后选择 "Insert Code"（插入代码）> "Call Web Service Operation"（调用 Web 服务操作）。在 "Select Operation to Invoke"（选择要调用的操作）对话框中，单击  ``checkSoap.CheckTextBodyV2``  操作，如下所示： 
+image::images/insert-ws-ops.png[title="显示 Web 服务引用的 "Projects"（项目）窗口"]
+
+单击 "OK"（确定）。
+
+*注：*您也可以将此操作节点直接从 "Projects"（项目）窗口拖放至编辑器中，而不调用以上所示的对话框。
+
+在  ``SpellCheckServlet``  类的末尾，将会看到一个用于调用 SpellCheckerV2 服务并返回  ``com.cdyne.ws.DocumentSummary``  对象的私有方法。
+
+
+[source,java]
+----
+
+private DocumentSummary checkTextBodyV2(java.lang.String bodyText) {com.cdyne.ws.CheckSoap port = service.getCheckSoap();return port.checkTextBodyV2(bodyText);}
+----
+
+只需使用此方法即可调用 Web 服务上的操作。此外，还需在类的顶部声明以下代码行（粗体显示）：
+
+
+[source,java]
+----
+
+public class SpellCheckServlet extends HttpServlet {
+    *@WebServiceRef(wsdlLocation = "http://wsf.cdyne.com/SpellChecker/check.asmx?WSDL")
+    private Check service;*
+----
+6. 将  ``processRequest()``  方法的  ``try``  块替换为以下代码。以下代码行中的注释说明了每行代码的用途。
+
+[source,html]
+----
+
+try (PrintWriter out = response.getWriter()) {
+*    //Get the TextArea from the web page*String TextArea1 = request.getParameter("TextArea1");*//Initialize WS operation arguments*
+    java.lang.String bodyText = TextArea1;
+
+    *//Process result*
+    com.cdyne.ws.DocumentSummary doc = checkTextBodyV2(bodyText);
+    String allcontent = doc.getBody();
+
+    *//From the retrieved document summary,
+    //identify the number of wrongly spelled words:*
+    int no_of_mistakes = doc.getMisspelledWordCount();
+
+    *//From the retrieved document summary,
+    //identify the array of wrongly spelled words:*
+    List allwrongwords = doc.getMisspelledWord();
+
+    out.println("<html>");
+    out.println("<head>");
+
+    *//Display the report's name as a title in the browser's titlebar:*
+    out.println("<title>Spell Checker Report</title>");
+    out.println("</head>");
+    out.println("<body>");
+
+    *//Display the report's name as a header within the body of the report:*
+    out.println("<h2><font color='red'>Spell Checker Report</font></h2>");
+
+    *//Display all the content (correct as well as incorrectly spelled) between quotation marks:*
+    out.println("<hr><b>Your text:</b> \"" + allcontent + "\"" + "<p>");
+
+    *//For every array of wrong words (one array per wrong word),
+    //identify the wrong word, the number of suggestions, and
+    //the array of suggestions. Then display the wrong word and the number of suggestions and
+    //then, for the array of suggestions belonging to the current wrong word, display each
+    //suggestion:*
+    for (int i = 0; i < allwrongwords.size(); i++) {
+        String onewrongword = ((Words) allwrongwords.get(i)).getWord();
+        int onewordsuggestioncount = ((Words) allwrongwords.get(i)).getSuggestionCount();
+        List allsuggestions = ((Words) allwrongwords.get(i)).getSuggestions();
+        out.println("<hr><p><b>Wrong word:</b><font color='red'> " + onewrongword + "</font>");
+        out.println("<p><b>" + onewordsuggestioncount + " suggestions:</b><br>");
+        for (int k = 0; k < allsuggestions.size(); k++) {
+            String onesuggestion = (String) allsuggestions.get(k);
+            out.println(onesuggestion);
+        }
+    }
+
+    *//Display a line after each array of wrong words:*
+    out.println("<hr>");
+
+    *//Summarize by providing the number of errors and display them:*
+    out.println("<font color='red'><b>Summary:</b> " + no_of_mistakes + " mistakes (");
+    for (int i = 0; i < allwrongwords.size(); i++) {
+        String onewrongword = ((Words) allwrongwords.get(i)).getWord();
+        out.println(onewrongword);
+    }
+
+    out.println(").");
+    out.println("</font>");
+    out.println("</body>");
+    out.println("</html>");
+
+} 
+
+----
+7. 您会看到许多错误线和警告图标，指示未找到的类。要在粘贴代码之后修复导入，请按 Ctrl-Shift-I 组合键（在 Mac 上按 ⌘-Shift-I 组合键），或在任意位置单击鼠标右键，然后在打开的上下文菜单中选择 "Fix Imports"（修复导入）。（您可以选择要导入的 List 类。此处将接受默认的 java.util.List。）以下是已导入类的完整列表：
+
+[source,java]
+----
+
+import com.cdyne.ws.Check;
+import com.cdyne.ws.Words;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.List;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.xml.ws.WebServiceRef;
+----
+
+*注：*如果看到“找不到  ``com.cdyne.*``  类”的警告内容，请不要担心。当构建项目后，IDE 在解析 WSDL 文件并查找类时，此问题会得到解决。
+
+请注意，尚未处理上面列出的代码中存在的错误。有关详细信息，请参见<<applyingwhatyouhavelearned,应用所学知识>>。
+
+
+=== 部署客户端 
+
+IDE 使用 Ant 构建脚本来构建和运行应用程序。此构建脚本是由 IDE 基于您在创建项目时所输入的选项来构建的。您可以在项目的 "Project Properties"（项目属性）对话框（在 "Projects"（项目）窗口中右键单击项目节点，然后选择 "Properties"（属性））中调整这些选项。
+
+1. 右键单击项目节点，然后选择 "Run"（运行）。稍后，应用程序将部署并显示上一部分所编码的 Web 页。
+2. 输入一些文本，确保其中的某些文本存在拼写错误： 
+image::images/jaxwsc-spellchecker-form.png[title="带有要检查文本的 JSP 页"]
+3. 单击 "Spell Check"，然后查看结果： 
+image::images/jaxwsc-spellchecker-report.png[title="显示错误的拼写检查器报告"]
+
+
+[[asynch]]
+== 异步 Web 服务客户端
+
+默认情况下，NetBeans IDE 创建的 JAX-WS 客户端是同步的。同步客户端会调用对服务的请求，然后在等待响应时挂起其处理。但是，在某些情况下，您希望客户端继续一些其他处理而不是等待响应。例如，在某些情况下，服务可能需要大量时间来处理请求。继续处理而不等待服务响应的 Web 服务客户端称为“异步”。
+
+异步客户端会发出服务请求，然后继续其处理而不等待响应。服务会处理客户端请求，然后在一段时间后返回响应，而客户端则在这段时间内检索响应并继续其处理。
+
+异步客户端会通过“轮询”或“回调”方法使用 Web 服务。在“轮询”方法中，将调用一个 Web 服务方法并反复请求结果。“轮询”是一种阻止操作，因为它会阻止调用线程，所以这就是不在 GUI 应用程序中使用它的原因。在“回调”方法中，您在 Web 服务方法调用期间传递回调处理程序。当结果有效时，将调用该处理程序的  ``handleResponse()``  方法。这种方法适用于 GUI 应用程序，因为您不必等待响应。例如，从 GUI 事件处理程序发出调用并立即返回控制权，这样可以使用户界面随时保持响应。轮询方法的缺点是，即使在捕获响应后使用响应，也必须对其进行轮询来查明已将其捕获。
+
+在 NetBeans IDE 中，通过勾选 Web 服务引用的编辑 Web 服务属性 GUI 中的框，将异步客户端的支持添加到 Web 服务客户端应用程序中。除了具有轮询 Web 服务或传递回调处理程序并等待结果的方法外，开发该客户端的所有其他方面都与同步客户端相同。
+
+此部分的其余内容详述了如何创建 Swing 图形界面并将异步 JAX-WS 客户端嵌入其中。
+
+
+[[asynch-swing]]
+=== 创建 Swing 窗体
+
+在此部分，您将设计 Swing 应用程序。如果不愿意自己设计 Swing GUI，可以link:https://netbeans.org/projects/www/downloads/download/webservices%252FAsynchSpellCheckForm.zip[+下载预先设计的 JFrame+]，然后转至<<asynch-creatingtheclient,创建异步客户端>>中的此部分内容。
+
+Swing 客户端会获取您键入的文本，将其发送至服务，然后返回错误数和所有错误词语的列表。该客户端还会向您显示每个错误词语和替换该词语的建议，一次只显示一个错误词语。
+
+image::images/asynch-swing-client.png[]
+
+*创建 Swing 客户端：*
+
+1. 创建新的 Java 应用程序项目。将其命名为  ``AsynchSpellCheckClient`` 。不要为该项目创建  ``Main``  类。
+2. 在 "Projects"（项目）视图中，右键单击  ``AsynchSpellCheckClient``  项目节点并选择 "New"（新建）> "JFrame Form..."（JFrame 窗体...）。
+3. 将该窗体命名为  ``MainForm`` ，然后将其放置在包  ``org.me.forms``  中。
+4. 创建 JFrame 后，打开项目属性。在 "Run"（运行）类别中，将  ``MainForm``  设置为主类。 
+image::images/asynch-main-class.png[]
+5. 在编辑器中，打开  ``MainForm.java``  的 "Design"（设计）视图。在组件面板中，将三个滚动窗格拖放至  ``MainForm``  中。定位滚动窗格并调整其大小。这些窗格将包含要进行检查所键入的文本、所有错误词语以及对某个错误词语提出的建议的文本字段。
+6. 将五个文本字段拖放至  ``MainForm``  中。将其中的三个拖放至三个滚动窗格中。按如下方式对其进行修改：
+|===
+
+|文本字段 
+
+|变量名称 |在滚动窗格中？ |可编辑？ 
+
+|tfYourText |Y |Y 
+
+|tfNumberMistakes |N |N 
+
+|tfWrongWords |Y |N 
+
+|tfWrongWord1 |N |N 
+
+|tfSuggestions1 |Y |N 
+|===
+7. 将进度栏拖放至  ``MainForm``  中。将该变量命名为  ``pbProgress`` 。
+8. 将两个按钮拖放至  ``MainForm``  中。将第一个按钮命名为  ``btCheck`` ，并将其文本更改为 "Check Text" 或 "Check Spelling"。将第二个按钮命名为  ``btNextWrongWord`` ，将其文本更改为 "Next Wrong Word"，然后禁用该按钮。
+9. 将一些标签拖放至  ``MainForm``  中，为应用程序提供一个标题并描述文本字段。
+
+将 JFrame 的外观按您喜欢的方式进行排列，然后进行保存。接下来将添加 Web 服务客户端功能。
+
+
+[[asynch-creatingtheclient]]
+=== 启用异步客户端
+
+如<<creatingtheclient,创建客户端>>中所述，添加 Web 服务引用。然后编辑 Web 服务属性以启用异步客户端。
+
+1. 在 "Projects"（项目）窗口中，右键单击  ``AsynchSpellCheckClient``  项目节点，然后选择 "New"（新建）> "Other"（其他）。在新建文件向导中，选择 "Web Services"（Web 服务）> "Web Service Client"（Web 服务客户端）。在“Web 服务客户端”向导中，指定 Web 服务的 URL：
+
+link:http://wsf.cdyne.com/SpellChecker/check.asmx?wsdl[+http://wsf.cdyne.com/SpellChecker/check.asmx?wsdl+]。接受所有默认值，然后单击 "Finish"（完成）。这与<<creatingtheclient,创建客户端>>中所述步骤 2 以后的过程相同。
+
+2. 展开 "Web Service References"（Web 服务引用）节点，然后右键单击  ``check``  服务。上下文菜单打开。
+image::images/asynch-edit-ws-attrib.png[]
+3. 从上下文菜单中选择 "Edit Web Service Attributes"（编辑 Web 服务属性）。“Web 服务属性”对话框打开。
+4. 选择 "WSDL Customization"（WSDL 定制”）签。
+5. 展开 "Port Type Operations"（端口类型操作）节点。展开*第一个*  ``CheckTextBodyV2``  节点并选择 "Enable Asynchronous Client"（启用异步客户端）。 
+image::images/enable-async-client.png[]
+6. 单击 "OK"（确定）。该对话框关闭，并出现一条警告，指出更改 Web 服务属性将会刷新客户端节点。
+image::images/asynch-refresh-node-warning.png[]
+7. 单击 "OK"（确定）。该警告信息关闭，并刷新客户端节点。如果展开 "Web Service References"（Web 服务引用）中的  ``check``  节点，则会看到现在已具有  ``CheckTextBody``  操作的 "Polling"（轮询）和 "Callback"（回调）版本。
+image::images/asynch-ws-refs.png[]
+
+现已为您的应用程序启用了 SpellCheck 服务的异步 Web 服务客户端。
+
+
+[[asynch-addcode]]
+=== 添加异步客户端代码
+
+现在，您已经有了异步 Web 服务操作，可将其中一个异步操作添加到  ``MainForm.java``  中。
+
+*添加异步客户端代码：*
+
+1. 在  ``MainForm``  中，切换到 "Source"（源）视图，然后将以下方法添加到最后一个右花括号的前面。 
+
+[source,java]
+----
+
+public void callAsyncCallback(String text){
+                 
+}
+----
+2. 在 "Projects"（项目）窗口中，展开  ``AsynchSpellCheckClient``  的 "Web Service References"（Web 服务引用）节点，并找到  ``checkSoap.CheckTextBodyV2 [Asynch Callback]``  操作。
+3. 将  ``CheckTextBodyV2 [Asynch Callback]``  操作拖至空的  ``callAsyncCallback``  方法主体中。IDE 会生成以下  ``try``  块。将此生成的代码与为同步客户端生成的代码进行比较。
+
+[source,java]
+----
+
+try { // Call Web Service Operation(async. callback)
+      com.cdyne.ws.Check service = new com.cdyne.ws.Check();
+      com.cdyne.ws.CheckSoap port = service.getCheckSoap();
+      // TODO initialize WS operation arguments here
+      java.lang.String bodyText = "";
+      javax.xml.ws.AsyncHandler<com.cdyne.ws.CheckTextBodyV2Response> asyncHandler = 
+              new javax.xml.ws.AsyncHandler<com.cdyne.ws.CheckTextBodyV2Response>() {
+            public void handleResponse(javax.xml.ws.Response<com.cdyne.ws.CheckTextBodyV2Response> response) {
+                  try {
+                        // TODO process asynchronous response here
+                        System.out.println("Result = "+ response.get());
+                  } catch(Exception ex) {
+                        // TODO handle exception
+                  }
+            }
+      };
+      java.util.concurrent.Future<? extends java.lang.Object> result = port.checkTextBodyV2Async(bodyText, asyncHandler);
+      while(!result.isDone()) {
+            // do something
+            Thread.sleep(100);
+      }
+      } catch (Exception ex) {
+      // TODO handle custom exceptions here
+}
+----
+
+在此代码与 Web 服务调用中，您会看到来自 SpellCheck 服务的响应是通过  ``AsynchHandler``  对象进行处理的。同时， ``Future``  对象会查看是否已返回了结果，然后使线程休眠直至完全返回了结果。
+
+4. 切换回 "Design"（设计）视图。双击 "Check Spelling" 按钮。IDE 会自动将 "ActionListener" 添加到按钮中，然后切换到 "Source"（源）视图中，光标同时出现在空的  ``btCheckActionPerformed``  方法中。
+5. 将以下代码添加至  ``btCheckActionPerformed``  方法主体。此代码会获取您在  ``tfYourText``  字段中键入的文本，使进度栏显示 "waiting for server" 消息，并禁用  ``btCheck``  按钮，以及调用异步回调方法。
+
+[source,java]
+----
+
+private void btCheckActionPerformed(java.awt.event.ActionEvent evt) {                                        
+    *String text = tfYourText.getText();
+    pbProgress.setIndeterminate(true);
+    pbProgress.setString("waiting for server");
+    btCheck.setEnabled(false);
+    callAsyncCallback(text);*
+}
+----
+6. 在  ``MainForm``  类的开头，实例化名为  ``nextWord``  的私有  ``ActionListener``  字段。此  ``ActionListener``  字段是为 Next Wrong Word 按钮提供的，使用该按钮可以前进到错误词语列表中的下一个错误词语，并显示该词语以及更正它的建议。您可以在此处创建私有字段，这样就可以在定义了  ``ActionListener``  的情况下取消对其的注册。否则，每次检查新文本时，都将添加一个额外的监听程序并最终出现多个监听程序多次调用  ``actionPerformed()``  的情况。这样，该应用程序将无法正常运行。
+
+[source,java]
+----
+
+public class MainForm extends javax.swing.JFrame {
+    
+    private ActionListener nextWord;
+    ...
+----
+7. 将整个  ``callAsyncCallback``  方法替换为以下代码。请注意，最外层的  ``try``  块已删除。此代码块是多余的，因为已在方法内添加了更多特定的  ``try``  块。并且在代码注释中介绍了对代码所做的其他更改。 
+
+[source,java]
+----
+
+public void callAsyncCallback(String text) {
+
+        
+    com.cdyne.ws.Check service = new com.cdyne.ws.Check();
+    com.cdyne.ws.CheckSoap port = service.getCheckSoap();
+    // initialize WS operation arguments here
+    java.lang.String bodyText = text;
+
+    javax.xml.ws.AsyncHandler<com.cdyne.ws.CheckTextBodyV2Response> asyncHandler = new javax.xml.ws.AsyncHandler<com.cdyne.ws.CheckTextBodyV2Response>() {
+
+        public void handleResponse(final javax.xml.ws.Response<com.cdyne.ws.CheckTextBodyV2Response> response) {
+            SwingUtilities.invokeLater(new Runnable() {
+
+                public void run() {
+
+                    try {
+                        // Create a DocumentSummary object containing the response.
+                        // Note that getDocumentSummary() is called from the Response object
+                        // unlike the synchronous client, where it is called directly from
+                        // com.cdyne.ws.CheckTextBodycom.cdyne.ws.DocumentSummary doc = response.get().getDocumentSummary();
+//From the retrieved DocumentSummary,
+                        //identify and display the number of wrongly spelled words:
+final int no_of_mistakes = doc.getMisspelledWordCount();
+                        String number_of_mistakes = Integer.toString(no_of_mistakes);
+                        tfNumberMistakes.setText(number_of_mistakes);
+// Check to see if there are any mistakes
+                        if (no_of_mistakes > 0) {
+//From the retrieved document summary,
+                            //identify the array of wrongly spelled words, if any:
+final List<com.cdyne.ws.Words> allwrongwords = doc.getMisspelledWord();
+//Get the first wrong word
+                            String firstwrongword = allwrongwords.get(0).getWord();
+//Build a string of all wrong words separated by commas, then display this in tfWrongWords
+StringBuilder wrongwordsbuilder = new StringBuilder(firstwrongword);
+
+                            for (int i = 1; i < allwrongwords.size(); i++) {
+                                String onewrongword = allwrongwords.get(i).getWord();
+                                wrongwordsbuilder.append(", ");
+                                wrongwordsbuilder.append(onewrongword);
+                            }
+                            String wrongwords = wrongwordsbuilder.toString();
+                            tfWrongWords.setText(wrongwords);
+//Display the first wrong word
+                            tfWrongWord1.setText(firstwrongword);
+//See how many suggestions there are for the wrong word
+                            int onewordsuggestioncount = allwrongwords.get(0).getSuggestionCount();
+//Check to see if there are any suggestions.
+                            if (onewordsuggestioncount > 0) {
+//Make a list of all suggestions for correcting the first wrong word, and build them into a String.
+                                //Display the string of concactenated suggestions in the tfSuggestions1 text field
+List<String> allsuggestions = ((com.cdyne.ws.Words) allwrongwords.get(0)).getSuggestions();
+
+                                String firstsuggestion = allsuggestions.get(0);
+                                StringBuilder suggestionbuilder = new StringBuilder(firstsuggestion);
+                                for (int i = 1; i < onewordsuggestioncount; i++) {
+                                    String onesuggestion = allsuggestions.get(i);
+                                    suggestionbuilder.append(", ");
+                                    suggestionbuilder.append(onesuggestion);
+                                }
+                                String onewordsuggestions = suggestionbuilder.toString();
+                                tfSuggestions1.setText(onewordsuggestions);
+
+                            } else {
+                                // No suggestions for this mistake
+                                tfSuggestions1.setText("No suggestions");
+                            }
+                            btNextWrongWord.setEnabled(true);
+// See if the ActionListener for getting the next wrong word and suggestions
+                            // has already been defined. Unregister it if it has, so only one action listener
+                            // will be registered at one time.
+if (nextWord != null) {
+                                btNextWrongWord.removeActionListener(nextWord);
+                            }
+// Define the ActionListener (already instantiated as a private field)
+                            nextWord = new ActionListener() {
+//Initialize a variable to track the index of the allwrongwords list
+
+                                int wordnumber = 1;
+
+                                public void actionPerformed(ActionEvent e) {
+                                    if (wordnumber < no_of_mistakes) {
+// get wrong word in index position wordnumber in allwrongwords
+                                        String onewrongword = allwrongwords.get(wordnumber).getWord();
+//next part is same as code for first wrong word
+tfWrongWord1.setText(onewrongword);
+                                        int onewordsuggestioncount = allwrongwords.get(wordnumber).getSuggestionCount();
+                                        if (onewordsuggestioncount > 0) {
+                                            List<String> allsuggestions = allwrongwords.get(wordnumber).getSuggestions();
+                                            String firstsuggestion = allsuggestions.get(0);
+                                            StringBuilder suggestionbuilder = new StringBuilder(firstsuggestion);
+                                            for (int j = 1; j < onewordsuggestioncount; j++) {
+                                                String onesuggestion = allsuggestions.get(j);
+                                                suggestionbuilder.append(", ");
+                                                suggestionbuilder.append(onesuggestion);
+                                            }
+                                            String onewordsuggestions = suggestionbuilder.toString();
+                                            tfSuggestions1.setText(onewordsuggestions);
+                                        } else {
+                                            tfSuggestions1.setText("No suggestions");
+                                        }
+// increase i by 1
+                                        wordnumber++;
+} else {
+                                        // No more wrong words! Disable next word button
+                                        // Enable Check button
+                                        btNextWrongWord.setEnabled(false);
+                                        btCheck.setEnabled(true);
+                                    }
+                                }
+                            };
+// Register the ActionListener
+                            btNextWrongWord.addActionListener(nextWord);
+} else {
+                            // The text has no mistakes
+                            // Enable Check button
+                            tfWrongWords.setText("No wrong words");
+                            tfSuggestions1.setText("No suggestions");
+                            tfWrongWord1.setText("--");
+                            btCheck.setEnabled(true);
+
+                        }
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+// Clear the progress bar
+                    pbProgress.setIndeterminate(false);
+                    pbProgress.setString("");
+                }
+            });
+
+        }
+    };
+
+    java.util.concurrent.Future result = port.checkTextBodyV2Async(bodyText, asyncHandler);
+    while (!result.isDone()) {
+        try {
+//Display a message that the application is waiting for a response from the server
+            tfWrongWords.setText("Waiting...");
+            Thread.sleep(100);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(MainForm.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+}
+----
+8. 按 Ctrl-Shift-I 组合键（在 Mac 上按 ⌘-Shift-I 组合键）并修复导入。这样会添加以下 import 语句：
+
+[source,java]
+----
+
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.SwingUtilities;
+----
+
+现在，您可以构建并运行应用程序了！遗憾的是，您不可能在获取服务器响应的很长延迟时间里看到所发生的变化，因为服务的处理速度相当快。
+
+
+== 应用所学知识
+
+现在，您已在 IDE 中创建了第一个 Web 服务客户端，接下来该您大显身手，对应用程序进行全方位扩展了。下面建议了两项可着手执行的任务。
+
+* 在 Servlet 中添加错误处理代码。
+* 重写客户端，以使用户可与从 Web 服务返回的数据进行交互。
+
+
+link:/about/contact_form.html?to=3&subject=Feedback:%20JAX-WS%20Clients%20in%20NetBeans%20IDE[+发送有关此教程的反馈意见+]
+
+
+
+== 另请参见
+
+有关使用 NetBeans IDE 开发 Java EE 应用程序的更多信息，请参见以下资源：
+
+* link:jax-ws.html[+JAX-WS Web 服务入门指南+]
+* link:rest.html[+REST 风格的 Web 服务入门指南+]
+* link:wsit.html[+Advanced Web Service Interoperability+]（高级 Web 服务互操作性）
+* link:../../trails/web.html[+Web 服务学习资源+]
+
+要发送意见和建议、获得支持以及随时了解 NetBeans IDE Java EE 开发功能的最新开发情况，请link:../../../community/lists/top.html[+加入 nbj2ee@netbeans.org 邮件列表+]。
+

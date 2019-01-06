@@ -1,0 +1,500 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= 将 Java 管理扩展 (JMX) 分析添加到 Java 应用程序中
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: 将 Java 管理扩展 (JMX) 分析添加到 Java 应用程序中 - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, 将 Java 管理扩展 (JMX) 分析添加到 Java 应用程序中
+
+*预计时间：60 分钟*
+
+NetBeans JMX 向导模块将 JMX 技术集成到 NetBeans IDE 中的工作流。此模块允许您快速开发管理应用程序，向现有应用程序添加管理，开发管理器应用程序，以及监视虚拟机的状态。
+
+本教程将向您演示如何将管理添加到现有应用程序（NetBeans 样例 Anagrams Game 应用程序）。首先，您将创建一个不可管理的 Anagram Java 项目。然后，使用 JMX 向导生成 90% 的管理。接下来，实现特定于应用程序的管理行为。最后，结合使用“运行/调试”项目和 JConsole 以可视化 Anagram MBean。
+
+
+=== 教程练习
+
+image::images/netbeans-stamp-80-74-73.png[title="此页上的内容适用于 NetBeans IDE 7.2、7.3、7.4 和 8.0"]
+
+* <<Exercise_1,练习 1：创建 NetBeans 样例 Anagram Game 项目>>
+* <<Exercise_2,练习 2：创建 AnagramsStats JMX 标准 MBean 及其管理界面>>
+* <<Exercise_3,练习 3：将属性、操作和通知添加到 AnagramsStats JMX 标准 MBean 中>>
+* <<Exercise_4,练习 4：将实现代码添加到 AnagramsStats JMX 标准 MBean 中>>
+* <<Exercise_5,练习 5：将管理和应用程序连接在一起>>
+* <<Exercise_6,练习 6：使用 JConsole 运行 Anagram Game>>
+
+
+=== 先决条件
+
+本教程假定您具备以下技术的一些基本知识或编程经验。
+
+* JMX 技术：link:http://download.oracle.com/javase/6/docs/technotes/guides/jmx/index.html[+JMX 联机文档+]
+* Java 技术：link:http://www.oracle.com/technetwork/java/javase/tech/index.html[+Java SE 技术概览+]
+* NetBeans IDE
+
+您还将受益于在 link:http://download.oracle.com/javase/6/docs/technotes/guides/management/index.html[+Java 平台的监视和管理+]方面的一些知识
+
+
+=== 本教程所需要的软件
+
+在学习本教程之前，您需要在计算机上安装以下软件：
+
+|===
+|软件或资源 |要求的版本 
+
+|link:https://netbeans.org/downloads/index.html[+NetBeans IDE+] |7.2、7.3、7.4、8.0、Java 版本 
+
+|link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+Java 开发工具包 (JDK)+] |版本 7 或 8 
+
+|JMX 插件 |可从 NetBeans 更新中心获得 
+
+|JConsole 插件 |可从 NetBeans 更新中心获得 
+|===
+
+要安装 *JMX* 和 *JConsole* 插件，请选择“工具”>“插件”，然后从 NetBeans 更新中心下载模块。
+
+
+=== 资源
+
+
+
+== 练习 1：创建 NetBeans 样例 Anagram Game 项目
+
+本练习的目标是创建可运行的 Java 项目。Anagram Game 是一个 Swing 应用程序，向用户显示混乱词并等待用户解决 Anagram。
+
+1. 选择 "File"（文件）> "New Project"（新建项目）（Ctrl-Shift-N 组合键）。
+2. 选择“样例”> "Java" 类别。
+3. 选择 Anagram Game 项目。单击“下一步”。
+4. 在“项目名称和位置”面板中，设置项目位置，或者保留默认值（如果该值适合您）。选中“设置为主项目”复选框（如果未选中），因为它将使后续操作更加简便。单击“完成”。
+
+单击“完成”后，IDE 将创建 Anagram Game 项目，并在“项目”窗口中显示该项目。
+
+5. 右键单击 "AnagramGame" 项目，然后选择“属性”。
+6. 选择“源”类别并确认源代码/二进制格式设置为 "JDK 7" 或 "JDK 8"。单击“确定”。
+
+*注：*要选择 JDK 7 或 JDK 8，AnagramGame 项目的 Java 平台也必须分别至少为 JDK 7 或 JDK 8。可在“属性”窗口的“库”类别中更改 AnagramGame 的 Java 平台。
+
+7. 右键单击 "Anagram Game" 项目节点并选择“运行”。
+
+选择“运行”后，IDE 将构建并启动 Anagram Game 应用程序。
+
+
+== 练习 2：创建 AnagramsStats JMX 标准 MBean 及其管理界面
+
+本练习的目标是创建由实现类和管理界面组成的框架 JMX 标准 MBean。
+
+请执行以下步骤以创建 JMX 标准 MBean。
+
+1. 确认 "Anagram Game" 项目设置为主项目。
+2. 选择 "File"（文件）> "New File"（新建文件）（Ctrl-N 组合键）。
+3. 从 "JMX" 类别中选择 "Standard MBean"（标准 MBean）。单击 "Next"（下一步）。
+image::images/jmx-newfile.png[title="&quot;New File&quot;（新建文件）向导中的 &quot;Standard MBean&quot;（标准 MBean）文件类型"]
+4. 在 "Name and Location"（名称和位置）面板中输入以下信息：
+* 类名： ``AnagramsStats`` 
+* 位置：源包（默认值）
+* 包： ``com.toy.anagrams.mbeans`` 
+* 描述： ``Anagram Game 的监视和管理`` 
+
+image::images/jmx-newmbean.png[]
+5. 单击 "Finish"（完成）。
+
+单击 "Finish"（完成）后，将在 AnagramGame 项目的  ``com.toy.anagrams.mbeans``  包中生成  ``AnagramsStats``  MBean 类和  ``AnagramsStatsMBean``  MBean 接口。这些现在是几个空框架，在下一练习中将进行填充。
+
+
+== 练习 3：将属性、操作和通知添加到 AnagramsStats JMX 标准 MBean 中
+
+本练习的目标是填充生成的 MBean 框架，以使其监视用户解决新 Anagram 所用的时间，并在 Anagram 每次得到解决时发送 JMX 通知。
+
+MBean 将包含以下内容：
+
+* 两个名为  ``LastThinkingTime``  和  ``NumResolvedAnagrams``  的属性
+* 一个名为  ``resetAll``  的操作。
+* 一个  ``AttributeChangeNotification``  类型的通知。更新  ``LastThinkingTime``  时将发出此通知。
+
+请执行以下步骤以填充 MBean 框架。
+
+1. 在 NetBeans 编辑器中打开  ``AnagramsStats.java``  MBean 实现文件。
+2. 在源代码编辑器中右键单击，然后在弹出菜单中选择 *JMX > Add MBean Attributes*（JMX > 添加 MBean 属性）。
+3. 通过单击 "Add Attribute"（添加属性）按钮并提供以下信息来添加  ``LastThinkingTime``  属性。
+* 属性名： ``LastThinkingTime`` 
+* 类型：int
+* 访问权限：ReadOnly
+* 描述： ``解决最后一个 Anagram 的用时`` 
+
+*注：*还不要单击 "OK"（确定）！
+
+4. 再次单击 "Add Attribute"（添加属性）并添加以下  ``NumSolvedAnagrams``  属性。单击 "OK"（确定）。
+* 属性名： ``NumSolvedAnagrams`` 
+* 类型：int
+* 访问权限：ReadOnly
+* 描述： ``已解决的 Anagram 数量`` 
+
+image::images/jmx-addattribute.png[]
+
+在  ``AnagramsStats``  MBean 类及其接口中生成公开只读的  ``LastThinkingTime``  和  ``NumSolvedAnagrams``  属性所需的代码。
+
+您可以看到私有字段声明和公共 getter 方法。更准确地说，查看成员视图，在生成的节点处您会注意到  ``getLastThinkingTime``  和  ``getNumSolvedAnagrams``  方法在  ``AnagramsStats``  类及其  ``AnagramsStatsMBean``  接口中都已生成。同时也生成了  ``int``  类型的私有字段  ``lastThinkingTime``  和  ``numSolvedAnagrams`` ，并且这些字段将用于存储实际属性值。
+
+接下来，将另外添加三个属性以跟踪用户所用的最短和最长思考时间以及当前向用户提供的 Anagram。
+
+5. 在源代码编辑器中右键单击，然后在弹出菜单中选择 *JMX > Add MBean Attributes*（JMX > 添加 MBean 属性）。
+6. 单击 "Add Attribute"（添加属性）按钮并添加以下属性。
+|===
+
+|属性名 |类型 |访问权限 |描述 
+
+|MinThinkingTime |int |ReadOnly |解决 Anagram 的最短用时 
+
+|MaxThinkingTime |int |ReadOnly |解决 Anagram 的最长用时 
+
+|CurrentAnagram |String |ReadOnly |当前要解决的 Anagram 
+|===
+
+此对话框应与下图类似。
+
+image::images/jmx-addattribute2.png[title="另外添加 3 个属性后的 &quot;Add Attribute&quot;（添加属性）对话框"]
+
+*注：*请注意，此对话框中列出了您已创建的属性。
+
+7. 单击 "OK"（确定）保存您所做的更改。
+8. 在源代码编辑器中右键单击，然后在弹出菜单中选择 *JMX > Add MBeans Operations*（JMX > 添加 MBean 操作）。
+9. 单击 "Add Operation"（添加操作），然后添加  ``resetAll()``  操作并指定以下详细信息。单击 "OK"（确定）。
+* 操作名： ``resetAll`` 
+* 返回类型： ``void`` 
+* 参数：（留空）
+* 异常错误：（留空）
+* 描述： ``重置 MBean 状态`` 
+
+image::images/jmx-addoperation.png[title="在 &quot;Add Operation&quot;（添加操作）对话框中添加 resetAll 操作"]
+
+单击 "OK"（确定）后，您可以看到在  ``AnagramsStats``  MBean 类及其接口中生成了公开  ``resetAll``  操作所需的代码。
+
+10. 在源代码编辑器中右键单击，然后在弹出菜单中选择 *JMX > Implement NotificationEmitter interface*（JMX > 实现 NotificationEmitter 接口）。
+11. 在 "Implement NotificationEmitter interface"（实现 NotificationEmitter 接口）对话框中指定以下详细信息。
+* *选择 "Generate Delegation to Broadcaster"（生成到广播器的委托）。*将通过委托到通知广播器来实现  ``NotificationEmitter``  接口声明的所有方法。通知广播器将简化 MBean 发送通知的方式。
+* *选择 "Generate Private Seq Number and Accessor"（生成私有序列号和存取方法）。*将生成一些代码以处理必须添加到发送的每个通知的唯一序列号值。
+* *单击 "Add Notification"（添加通知）。*在 "Notifications"（通知）表中指定以下详细信息。
+* 通知类： ``javax.management.AttributeChangeNotification`` 
+* 通知类型：（自动设置为  ``ATTRIBUTE_CHANGE`` ）
+* 描述： ``已解决 Anagram`` 
+
+image::images/jmx-changenotification.png[title="在 &quot;Implement NotificationEmitter&quot;（实现 NotificationEmitter）对话框中添加更改通知"]
+
+单击 "OK"（确定）。
+
+您可以看到在  ``AnagramsStats``  MBean 类中生成了实现  ``NotificationEmitter``  接口所需的代码。您可以查看生成的实现如何将通知处理委托到  ``NotificationBroadcasterSupport``  类。
+
+12. 保存所做的更改。
+
+在本练习中，您了解了如何使用 JMX 向导模块将属性、操作和发出的通知添加到 MBean 中。现已完成使用所需基础结构填充 MBean 以公开需要的管理信息所需执行的步骤。现在，您需要将内部逻辑添加到  ``AnagramsStats``  MBean 类实现中，然后在 MBean 与 Anagram Game 应用程序之间构建桥。
+
+
+== 练习 4：将实现代码添加到 AnagramsStats JMX 标准 MBean 中
+
+在本练习中，将某种内部逻辑添加到  ``AnagramsStats``  MBean 类实现中。
+
+请执行以下步骤以添加实现代码。
+
+1. 已声明属性的私有字段，无需向属性的 getter 方法中添加任何内容。
+2. 需要实现  ``resetAll()``  方法。生成的主体为空。调用  ``resetAll()``  时，我们简单地将所有计数器都设置为 0。在  ``resetAll()``  方法主体中添加以下代码行（粗体）：
+
+[source,java]
+----
+
+public void resetAll() {
+    *minThinkingTime = 0;
+    maxThinkingTime = 0;
+    lastThinkingTime = 0;
+    numSolvedAnagrams = 0;*
+}
+----
+3. 您还需要添加将执行以下操作的某种实现代码：
+* 计算用户解决最后一个 Anagram 所用的思考时间，
+* 计算最短和最长的思考时间，
+* 增加已解决 Anagram 的计数器，
+* 知道哪个是当前 Anagram，
+* 当 Anagram 得到解决时创建并发送通知。
+
+出于该目的，将添加一个私有字段  ``startTime`` （用于存储将最后一个 Anagram 提供给用户的时间）、 ``startThinking()``  和  ``stopThinking()``  两个方法（用于执行以上列出的操作）和一个  ``setCurrentAnagram()``  方法。
+
+例如，将以下代码添加到  ``AnagramsStats.java``  中的类实现结尾。
+
+
+[source,java]
+----
+
+/*
+ * Methods exposed to Anagrams application to feed management with data.
+ */
+
+//Stores the time at which a new anagram is proposed to the user.
+private long startTime;
+
+/**
+ * A new Anagram is proposed to the user: store current time.
+ */
+public void startThinking() {
+    startTime = System.currentTimeMillis();
+}
+
+/**
+ * An Anagram has been resolved.
+ */
+public void stopThinking() {
+
+    //Update the number of resolved anagrams
+    numSolvedAnagrams++;
+
+    // Compute last, min and max thinking times
+    lastThinkingTime = (int) (System.currentTimeMillis() - startTime) / 1000 ;
+    minThinkingTime = (lastThinkingTime < minThinkingTime || minThinkingTime == 0) ?
+                      lastThinkingTime :
+                      minThinkingTime;
+    maxThinkingTime = (lastThinkingTime > maxThinkingTime) ?
+                      lastThinkingTime :
+                      maxThinkingTime;
+
+    //Create a JMX Notification
+    Notification notification = new Notification(AttributeChangeNotification.ATTRIBUTE_CHANGE,
+            this,
+            getNextSeqNumber(),
+            "Anagram solved: " + currentAnagram);
+
+    // Send a JMX notification.
+    broadcaster.sendNotification(notification);
+}
+
+/**
+ * Set latest anagram which has been computed by the Anagram application
+ */
+public void setCurrentAnagram(String currentAnagram) {
+    this.currentAnagram = currentAnagram;
+}
+----
+
+请注意， ``startThinking()`` 、 ``stopThinking()``  和  ``setCurrentAnagram()``  这三个方法不是 MBean 管理界面的一部分，因为未在  ``AnagramsStatsMBean``  接口中声明这三个方法，但它们是公共方法，因为每次将新 Anagram 提供给用户时、Anagram 得到解决时、且为当前 Anagram 时，Anagram Game 应用程序就会调用这些方法以告知 MBean。因此，它们是应用程序与 MBean 之间的桥的必要部分。
+
+另请注意，Anagram 每次得到解决时如何发送  ``ATTRIBUTE_CHANGE``  类型的 JMX 通知。
+
+您现已完成实现 MBean。在此部分中，您添加了代码和方法以允许以下操作：
+
+* 内部 MBean 状态更新
+* 从应用程序调用
+* 发送 JMX 通知
+
+
+== 练习 5：将管理和应用程序连接在一起
+
+在本练习中，我们将向 Anagram Game 应用程序中添加代码，以便该应用程序可以访问 MBean 以传递管理信息。
+
+请执行以下步骤
+
+1. 在编辑器中打开  ``Anagrams.java`` 。
+
+ ``com.toy.anagrams.ui``  包中的  ``Anagrams``  类是 Anagram Game 应用程序的 ``主`` 类。此文件将在编辑器的设计视图中打开，因为  ``Anagrams``  类也是用户界面类。
+
+2. 单击 "Editor"（编辑器）窗口顶部的 "Source"（源）按钮以便在 "Source"（源）视图中编辑该类。
+3. 将以下空的  ``initManagement()``  私有方法添加到  ``Anagrams``  类中： ``Anagrams``  构造函数后。
+
+[source,java]
+----
+
+/**
+ * JMX initialization:
+ * Create and register Anagrams MBean in Platform MBeanServer.
+ * Initialize thinking time and current anagram.
+ */
+private void initManagement() throws Exception {
+
+}
+----
+4. 将以下对  ``initManagement()``  方法的调用添加到  ``Anagrams``  类构造函数结尾，在标记该构造函数结尾的结束花括号之前。
+
+[source,java]
+----
+
+//JMX Management initialization
+initManagement();
+          
+----
+
+您还需要将  ``throws Exception``  子句添加到  ``Anagrams()``  构造函数中，并将语句  ``new Anagrams().setVisible(true);``  包含在要编译的  ``Main()``  方法中的 try-catch 中。您可以在编辑器的左旁注中看到建议图标。您可以将插入光标放在代码行中，并键入 Alt-Enter 以在源代码编辑器中调用代码提示。
+
+image::images/jmx-initmanagement-try.png[title="添加 try-catch 的代码提示"]
+
+下面是您在此阶段应该看到的内容 [单击查看大图]：
+
+image::images/jmx-initmanagement-sm.png[role="left", link="images/jmx-initmanagement.png"]
+5. 现在，我们使用 JMX 模块 MBean 注册向导将 MBean 注册代码添加到  ``initManagement()``  方法中：
+
+在  ``Anagrams.java``  源代码编辑器窗口中，在  ``initManagement()``  方法主体*内部*右键单击，选择 "JMX" 子菜单，然后选择 "Generate MBean Registration..."（生成 MBean 注册...）操作。在显示的 "Instantiate and Register MBean"（实例化并注册 MBean）面板中，保持 "Register Existing MBean"（注册现有 MBean）单选按钮为选中状态，单击 "Browse"（浏览）按钮，选择  ``AnagramsStats``  MBean 类，然后在 "Browse"（浏览）面板中单击 "OK"（确定）。此时您应该会看到：
+
+image::images/jmx-registermbeandialog.png[]
+
+无需更改自动指定的 MBean 对象名称和构造函数。单击 "OK"（确定）后，您将会在  ``initManagement()``  方法主体中看到生成的 MBean 注册代码。
+
+
+=== 命名 MBean 的最佳实践
+
+* 命名 MBean 时，在 "Object Name"（对象名）中使用 " ``type=`` " 关键字。此关键字的值应是 MBean 类（在我们的示例中为  ``AnagramsStats`` ）。
+* 对于单一 MBean（在应用程序内具有单个实例的 MBean），具有此唯一关键字足以完成命名。
+* 避免创建太多的域名。使用您的应用程序 Java 包名。您也可以使用默认域名：不在  ``ObjectName``  " ``:`` " 分隔符之前指定域将隐式引用默认域。
+
+应用最佳实践将使命名 MBean 的方式更加规范化。
+
+因此，在上面我们的示例中，默认情况下创建的  ``ObjectName``  是： ``com.toy.anagrams.mbeans:type=AnagramsStats`` 
+
+
+在本教程的上下文中，需要一个额外步骤。您希望应用程序能够访问实现管理界面的类 ( ``AnagramsStats`` )。这不是一般规则，但在应用程序需要将数据推入 MBean 中时会非常有用。在这种情况下， ``startThinking()`` 、 ``stopThinking()``  和  ``setCurrentAnagram()``  方法不是管理方法，但 Anagrams Game 应用程序会使用这些方法通知 MBean 发生了某些事件。然后，MBean 将更新其状态。要能够从  ``Anagrams``  UI 类访问  ``AnagramsStats`` ，我们需要  ``Anagrams``  类来直接引用  ``AnagramsStats``  MBean 的实例。
+
+因此，您需要对  ``Anagrams.java``  文件的代码进行以下更改。
+
+6. 将以下私有字段添加到  ``Anagrams``  类中。
+
+[source,java]
+----
+
+    // Reference to the AnagramsStats MBean
+    private AnagramsStats mbean;
+    
+----
+7. 通过修改生成的 MBean 注册代码，初始化对  ``initManagement()``  方法中  ``AnagramsStats``  MBean 的引用，使其如下所示：
+
+[source,java]
+----
+
+private void initManagement() throws Exception {
+    try { // Register MBean in Platform MBeanServer
+         *mbean = new AnagramsStats();*
+         ManagementFactory.getPlatformMBeanServer().
+                registerMBean(*mbean*,
+                new ObjectName("com.toy.anagrams.mbeans:type=AnagramsStats"));
+    } catch (JMException ex) {
+        *ex.printStackTrace();*
+}
+----
+8. 初始化  ``AnagramsStats``  MBean 状态：当 Anagrams Game 应用程序启动时，将立即显示一个 anagram，因此我们需要向 MBean 传递 anagram 字符串值并开始计算思考时间。在  ``initManagement()``  方法结尾处复制并粘贴以下行：
+
+[source,java]
+----
+
+       // When the Anagrams game is first displayed, a word is proposed to the user.
+       // We must start time computing and set the current anagram
+       mbean.startThinking();
+       mbean.setCurrentAnagram(wordLibrary.getScrambledWord(wordIdx));
+      
+----
+
+下面是您在此阶段应该看到的内容 [单击查看大图]：
+
+image::images/jmx-initmanagement2-sm.png[role="left", link="images/jmx-initmanagement2.png"]
+
+您现在需要添加代码以跟踪用户的 anagram 解决体验。
+
+9. 找到  ``nextTrialActionPerformed()``  方法，然后将以下代码粘贴到  ``nextTrialActionPerformed()``  方法的结尾处。
+
+[source,java]
+----
+
+    //Update management statistics and values
+    try {
+        mbean.setCurrentAnagram(wordLibrary.getScrambledWord(wordIdx));
+        mbean.startThinking();
+        } catch (Exception e) {e.printStackTrace();}
+----
+
+每次向用户提供新的 Anagram 时，该代码就会告知 MBean 是哪一个 Anagram 并开始对用户思考时间进行计数。
+
+10. 找到  ``guessedWordActionPerformed()``  方法并将以下行添加到代码中。保存所做的更改。
+
+[source,java]
+----
+
+    //Update management stats
+    try {
+        mbean.stopThinking();
+    } catch(Exception e) {e.printStackTrace();}
+----
+
+每次猜对 anagram 时都会调用 MBean 中的  ``stopThinking()``  方法。
+
+您现在应该会在编辑器中看到以下内容 [单击查看大图]：
+
+image::images/jmx-stopthinking-sm.png[role="left", link="images/jmx-stopthinking.png"]
+
+您现已完成将 JMX 管理层链接到应用程序层。在下一部分，您将构建并运行 Anagrams Game 应用程序，并通过 JConsole GUI 查看公开的管理信息。
+
+
+== 练习 6：使用 JConsole 运行应用程序
+
+在此练习中，您将了解如何构建并运行项目，并连接 JConsole 以可视化 JVM 状态以及应用程序 MBean。
+
+请执行以下步骤以运行应用程序并查看管理信息。
+
+1. 一个步骤即可执行这三项任务：只需单击工具栏中的 "Run Main Project with Monitoring and Management"（通过监视和管理运行主项目）按钮即可 (image::images/run-project24.png[title="&quot;Run Main Project with Monitoring and Management&quot;（通过监视和管理运行主项目）按钮"])
+
+您也可以从主菜单中的 "Run"（运行）菜单调用操作。
+
+*注：*首次构建并运行应用程序时，IDE 将会显示一个警告对话框，通知您将更新  ``build.xml``  文件。可以在该对话框中单击 "OK"（确定）。
+
+image::images/jmx-firsttime.png[title="首次监视应用程序时的警告对话框"]
+
+您可以在 "Output"（输出）窗口中查看执行情况。
+
+image::images/jmx-compiling.png[title="显示进程的 &quot;Output&quot;（输出）窗口"]
+
+IDE 将构建并启动 Anagram Game，并且将自动打开 JConsole 窗口。
+
+image::images/jmx-anagram.png[title="Anagram Game"]
+
+*注：*当 Java 监视和管理控制台尝试连接到 Anagram Game 进程时，您可能会在此控制台中看到 "Connection Failed"（连接失败）警告。对于本教程，当系统提示您授权连接时，您可以单击 "Insecure"（不安全）。
+
+2. 在 JConsole 窗口中选择 "MBean" 标签。
+3. 在左侧窗格的树布局中，展开  ``com.toy.anagrams.mbeans``  下的所有节点。
+image::images/jmx-jconsole-mbeans1.png[title="显示 &quot;AnagramsStats&quot; 节点的 &quot;MBean&quot; 标签"]
+4. 选择 "Notifications"（通知）节点，然后单击底部的 "Subscribe"（订阅）按钮，这样在 Anagram 每次得到解决时 JConsole 都将会收到新通知。
+5. 在 "Anagrams Game" 窗口中，解决前三个或前四个 Anagram。
+
+Anagram 的解决方案（abstraction、ambiguous、arithmetic、backslash...）包含在  ``WordLibrary``  类中。
+
+6. 在 "JConsole" 窗口中，注意它收到了关于每个解决方案的通知。
+image:::images/jmx-jconsole-mbeans2-sm.png[role="left", link="images/jmx-jconsole-mbeans2.png"]
+7. 单击 "Attributes"（属性）节点，可以看到更新了属性值：
+image::images/jmx-jconsole-mbeans3.png[title="显示 &quot;AnagramsStats&quot; 节点的 &quot;MBean&quot; 标签"]
+
+您可以试用 JConsole 界面和 Anagrams Game。例如，如果调用管理操作  ``resetAll()`` ，您将会看到 MBean 属性值重置为 0。
+
+*现在，您完成了！您做得很棒，恭喜！*
+
+link:/about/contact_form.html?to=3&subject=Feedback:%20Adding%20Java%20Management%20Extensions%20(JMX)%20Instrumentation[+发送有关此教程的反馈意见+]
+
+
+
+== 另请参见
+
+有关详细信息，请参阅以下主题：
+
+* link:jmx-getstart.html[+NetBeans IDE 中的 JMX 监视入门指南+]

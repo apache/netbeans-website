@@ -1,0 +1,177 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= 执行依赖关系检查
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: 执行依赖关系检查 - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, 执行依赖关系检查
+
+撰稿人：Alexey Vladykin
+2014 年 3 月 [修订版本号：V8.0-1]
+
+本教程将向您演示如何允许 NetBeans IDE 在构建时检查项目中的文件依赖关系。由  ``make``  实用程序通过  ``Makefile``  中的指令执行依赖关系检查。
+
+
+image::images/netbeans-stamp-80-74-73.png[title="此页上的内容适用于 NetBeans IDE 7.3、7.4 和 8.0"]
+
+
+
+== 要求
+
+*要学习本教程，您需要具备以下软件和资源。*
+
+|===
+|软件 |要求的版本 
+
+|NetBeans IDE（支持 C/C++） |link:https://netbeans.org/downloads/index.html[+带有 NetBeans C/C++ 插件的版本 7.3、7.4 或 8.0+] 
+
+|Java 开发工具包 (JDK) |link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+版本 7 或 8+] 
+|===
+
+
+有关下载并安装所需软件的信息，请参见 link:../../../community/releases/80/install.html[+NetBeans IDE 安装说明+]和link:../../../community/releases/80/cpp-setup-instructions.html[+配置 NetBeans IDE 以使用 C/C++/Fortran+]
+。
+
+
+== 简介
+
+大的 C/C++ 项目包含数千个文件。例如，Linux 内核大约有 20,000 个文件。如果您开发的是这样一个项目并且希望在进行小的更改（例如，一行修复）之后重新构建该项目，则可以选择以下两个选项。
+
+* 完全重新构建（“清除”和“构建”操作）。这样做比较慢，但会保证一致的构建结果。
+* 增量重新构建（“构建”操作）。这样做比较快，但能否正确重新构建所有应重新构建的内容？
+
+增量重新构建的主要问题在于存在  ``#include``  指令，这些指令将一个文件的内容包含到另一个文件。包含的文件称为“文件依赖关系”。修改包含的文件应视为修改包含该文件的所有文件。间接包含（A 包含 B，B 包含 C => A 包含 C）使问题更加复杂。
+
+NetBeans IDE 支持自动检查文件依赖关系并尽可能使增量重新构建正常工作。如果更改包含到某些源文件的头文件，然后单击“构建”，则 IDE 将仅重新构建那些真正依赖于所更改头文件的项目部分。此功能可节省时间并保证一致的构建结果。
+
+
+=== 为项目启用依赖关系检查
+
+可控制各个特定项目的依赖关系检查。您可能需要确保启用该功能。
+
+*为项目启用依赖关系检查：*
+
+1. 右键单击 "Projects"（项目）窗口中的项目，然后选择 "Properties"（属性）。
+2. 在 "Project Properties"（项目属性）对话框中，选择 "Categories"（类别）列表中的 "Build"（构建）节点。
+3. 在构建属性中，选中 "Enable Make Dependency Checking"（启用 Make 依赖关系检查）对应的复选框。
+
+
+image::images/project-checkbox.png[] 
+
+
+=== 默认情况下为新项目启用依赖关系检查
+
+可以设置依赖关系检查的默认状态，以便自动为您创建的新项目启用 Make 依赖关系检查。
+
+*为在 IDE 中创建的所有新项目启用依赖关系检查：*
+
+1. 在 IDE 主菜单中选择 "Tools"（工具）> "Options"（选项）。
+2. 单击顶部窗格中的 "C/C++" 按钮。
+3. 单击 "Project Options"（项目选项）标签。
+4. 选中 "Enable dependency checking in generated makefiles"（在生成的 makefile 中启用依赖关系检查）对应的复选框
+
+
+image::images/global-checkbox.png[]
+
+
+=== 注
+
+* 自动依赖关系检查适用于在 IDE 中创建的 C/C++ 项目（受管项目）。IDE 将依赖关系检查逻辑构建到生成的  ``Makefile`` 。对于使用现有源创建的项目，必须依赖于现有  ``Makefile``  中的依赖关系检查逻辑（如果有）。
+* 依赖关系检查需要来自工具集合（ ``make``  和编译器）的支持。依赖关系检查已经过 Oracle Solaris Studio 工具集合和 GNU 工具集合（包含 Cygwin 和 MinGW）的测试。
+* 当 Oracle Solaris Studio 编译器与 Oracle Solaris  ``make``  一起使用时以及当 GNU 编译器与 GNU  ``gmake``  一起使用时，将执行依赖关系检查。不支持混合 Oracle Solaris  ``make``  与 GNU 编译器，反之亦然。
+
+本文的其余内容是面向那些想要知道 IDE 背后执行的操作的高级用户。
+
+
+== 构建过程（make 和 makefile）
+
+在  ``Makefile`` （ ``make``  实用程序所理解的特殊格式的文件）中描述了 NetBeans 中每个 C/C++ 项目的构建过程。从 GUI 构建或清除项目时，IDE 将调用  ``make``  以执行 Makefile。通过这种方法，您可以在 IDE 外部使用  ``make``  轻松构建项目：只需转到您的项目目录并键入  ``make help``  即可获得指令。
+
+NetBeans IDE 用于 C/C++ 项目的 Makefile 如下所示。
+
+image::images/makefiles.png[]
+
+主  ``Makefile``  生成一次，您可以手动编辑它。不能手动编辑  ``nbproject``  目录中的 Makefile；IDE 自动更新这些 Makefile。插图中的文件  ``Makefile-_CONF_.mk``  表示所有项目配置的多个文件，例如  ``Makefile-Release.mk`` 、 ``Makefile-Debug.mk``  等。
+
+对于受管项目，IDE 将生成所有 Makefile 自身并插入正确的指令用于依赖关系检查。对于从现有源创建的项目，只有在现有  ``Makefile``  包含此类指令时才会执行依赖关系检查，因为 NetBeans IDE 不会更改现有的  ``Makefile`` 。
+
+
+== 依赖关系生成基础知识
+
+如果您希望  ``make``  在构建期间检查包含的文件依赖关系，则必须将依赖关系信息插入到  ``Makefile`` 。很遗憾，所有  ``make``  实用程序和编译器都没有可移植方法可这么做。首先，您应检测哪个  ``make``  正在运行，然后生成对应的依赖关系检查指令。
+
+Oracle Solaris  ``make``  具有一种非常简单的解决方案。 ``Makefile``  中的特殊  ``.KEEP_STATE:``  规则指示  ``make``  在编译器中查询包含的文件依赖关系并将其存储在临时文件中。下次重新构建项目时， ``make``  将加载该临时文件，分析该文件中存储的依赖关系，然后确定更改了哪些头文件以及应重新编译哪些对象文件。
+
+对于 GNU  ``make`` （称为  ``gmake`` ），解决方案更加复杂。您必须明确请求编译器生成依赖关系信息，然后明确将这些信息包括到  ``Makefile`` 。目的是向编译器传递特殊标志，以便编译器将为每个编译的源文件生成依赖关系信息。下次重新构建项目时，将收集依赖关系信息并包含到  ``Makefile``  中。
+
+
+== 实现
+
+将以下代码添加到  ``nbproject/Makefile-impl.mk``  中。它检测哪个  ``make``  正在运行并将相应的依赖关系检查代码放入  ``.dep.inc``  文件中。若存在  ``MAKE_VERSION``  变量，则会检测到 GNU  ``make`` 。如果未设置  ``MAKE_VERSION`` ，则会生成 Solaris  ``make``  特定的指令。
+
+
+[source,java]
+----
+
+# dependency checking support
+.depcheck-impl:
+	@echo "# This code depends on make tool being used" >.dep.inc
+	@if [ -n "${MAKE_VERSION}" ]; then \
+	    echo "DEPFILES=\$$(wildcard \$$(addsuffix .d, \$${OBJECTFILES}))" >>.dep.inc; \
+	    echo "ifneq (\$${DEPFILES},)" >>.dep.inc; \
+	    echo "include \$${DEPFILES}" >>.dep.inc; \
+	    echo "endif" >>.dep.inc; \
+	else \
+	    echo ".KEEP_STATE:" >>.dep.inc; \
+	    echo ".KEEP_STATE_FILE:.make.state.\$${CONF}" >>.dep.inc; \
+	fi
+----
+
+将以下代码添加到  ``nbproject/Makefile-${CONF}.mk``  中。它指示  ``make``  读取以前生成的  ``.dep.inc``  并执行其中的指令。
+
+
+[source,java]
+----
+
+# Enable dependency checking
+.dep.inc: .depcheck-impl
+
+include .dep.inc
+----
+
+当  ``.dep.inc``  不存在时，会添加规则  ``.dep.inc: .depcheck-impl``  以防止构建失败。只有在从 "Projects"（项目）窗口编译单个文件时才会发生这种情况。在这种情况下， ``make``  直接执行文件  ``nbproject/Makefile-${CONF}.mk`` 。
+
+
+== 参考
+
+1. link:http://en.wikipedia.org/wiki/Make_%28software%29[+关于  ``make``  的 Wikipedia 文章+]
+2. link:http://make.paulandlesley.org/autodep.html[+高级自动依赖关系生成+]
+
+
+== 另请参见
+
+有关在 NetBeans IDE 中使用 C/C++/Fortran 进行开发的更多文章，请参见 link:https://netbeans.org/kb/trails/cnd.html[+C/C++ 学习资源+]。
+
+link:mailto:users@cnd.netbeans.org?subject=Feedback:%20Make%20Dependency%20Checking%20-%20NetBeans%20IDE%208.0%20Tutorial[+发送有关此教程的反馈意见+]

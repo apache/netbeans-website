@@ -1,0 +1,608 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= Developing JAX-WS Web Service Clients
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: Developing JAX-WS Web Service Clients - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, Developing JAX-WS Web Service Clients
+
+In this tutorial, you use the web service facilities provided by NetBeans IDE to analyze a Spell Checker web service, after which you build a web client that interacts with the service. The client uses a servlet class and a web page. The user passes information to the servlet from the web page.
+
+
+image::images/netbeans-stamp-80-74-73.png[title="Content on this page applies to the NetBeans IDE 7.2, 7.3, 7.4 and 8.0"]
+
+
+*To follow this tutorial, you need the following software and resources.*
+
+|===
+|Software or Resource |Version Required 
+
+|link:https://netbeans.org/downloads/index.html[+NetBeans IDE+] |Java EE download bundle 
+
+|link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+Java Development Kit (JDK)+] |version 7 or version 8 
+
+|Java EE-compliant web or application server |Tomcat web server 7.x or 8.x 
+GlassFish Server Open Source Edition
+Oracle WebLogic Server 
+|===
+
+*Important:* You need to enable access to external schema to create the web service client. For more details, see the FAQ link:http://wiki.netbeans.org/FaqWSDLExternalSchema[+How to enable parsing of WSDL with an external schema?+]
+
+*Note.* Both Tomcat and the GlassFish server can be installed with the Web and Java EE distribution of NetBeans IDE. Alternatively, you can visit the link:https://glassfish.java.net/download.html[+the GlassFish server downloads page+] or the link:http://tomcat.apache.org/download-60.cgi[+Apache Tomcat downloads page+].
+
+This is what your client will look like, with all data received from the web service:
+
+image::images/jaxwsc-spellchecker-report.png[title="Spell Checker report"]
+
+By the end of this tutorial, you will discover that your only contribution to the application consists of providing the text to be checked, invoking an operation on the web service, and rendering the result. The IDE generates all the code needed for contacting the web service and sending the text. The spell checker web service takes care of the rest. It identifies the misspelled words and provides a list of suggested alternatives.
+
+The spell checker web service used in this tutorial is provided by the link:http://www.cdyne.com/account/home.aspx[+CDYNE Corporation.+] CDYNE develops, markets and supports a comprehensive suite of data enhancement, data quality and data analysis web services and business intelligence integration. The spell checker web service is one of the web services provided by CDYNE. Note that the strength of an application based on one or more web services depends on the availability and reliability of the web services. However, CDYNE's link:http://www.cdyne.com/company/faqs.aspx[+FAQ+] points out that it has a "100% availability objective" and that in the event of "natural disaster, act of terror, or other catastrophe, web service traffic is transferred to our secondary data center". NetBeans thanks CDYNE for enabling this tutorial to be written and for supporting its development.
+
+
+== Consuming the Spell Checker Web Service 
+
+To use a web service over a network, which is called "consuming" a web service, you need to create a web service client. For the creation of web service clients, NetBeans IDE provides a client creation facility, which is the Web Service Client wizard that generates code for looking up a web service. It also provides facilities for developing the created web service client, a work area consisting of nodes in the Projects window. These facilities are part of the EE bundle of the NetBeans IDE installation. They are available straight out of the box and no plug-ins are needed.
+
+
+=== Creating the Client 
+
+In this section, you use a wizard to generate Java objects from the web service's WSDL file.
+
+1. Choose File > New Project (Ctrl-Shift-N on Windows and Linux, ⌘-Shift-N on MacOS). Under Categories, choose Java Web. Under Projects, choose Web Application. Click Next. Name the project  ``SpellCheckService``  and make sure that you specify an appropriate server as your target server. (Refer to the "Getting Started" section for details.) Leave all other options at default and click Finish.
+2. In the Projects window, right-click the  ``SpellCheckService``  project node and choose New > Other and select Web Service Client in the Web Services category in the New File wizard. Click Next.
+3. Select WSDL URL and specify the following URL for the web service:
+
+link:http://wsf.cdyne.com/SpellChecker/check.asmx?wsdl[+http://wsf.cdyne.com/SpellChecker/check.asmx?wsdl+]
+
+If you are behind a firewall, you might need to specify a proxy server—otherwise the WSDL file cannot be downloaded. To specify the proxy server, click Set Proxy in the wizard. The IDE's Options window opens, where you can set the proxy universally for the IDE.
+
+4. Leave the package name blank. By default the client class package name is taken from the WSDL. In this case is  ``com.cdyne.ws`` . Click Finish.
+5. In the Projects window, within the Web Service References node, you see the following: 
+image::images/ws-refs.png[title="Projects window showing web service references"]
+
+The Projects window shows that a web service called 'check' has made a number of 'CheckTextBody' and 'CheckTextBodyV2' operations available to your application. These operations check a string for spelling errors and returns data to be processed by the client. The V2 version of the service does not require authentication. You will use the  ``checkSoap.CheckTextBodyV2``  operation throughout this tutorial.
+
+Within the  ``Generated Sources `` node, you see the client stubs that were generated by the JAX-WS Web Service Client wizard.
+
+image::images/gen-files.png[title="Files view showing package structure of Build node"]
+
+Expand the WEB-INF node and the wsdl subnode. You find a local copy of the WSDL file, named  ``check.asmx.wsdl`` .
+
+image::images/web-inf.png[]
+
+The URL of the WSDL that you used to create the client is mapped to the local copy of the WSDL in  ``jax-ws-catalog.xml`` . Mapping to a local copy has several advantages. The remote copy of the WSDL does not have to be available for the client to run. The client is faster, because it does not need to parse a remote WSDL file. Lastly, portability is easier.
+
+image::images/jax-ws-catalog.png[]
+
+
+=== Developing the Client 
+
+There are many ways to implement a web service client. The web service's WSDL file restricts the type of information that you can send to the web service, and it restricts the type of information you receive in return. However, the WSDL file lays no restrictions on _how _ you pass the information it needs, nor on _what_ the user interface consists of. The client implementation you build below consists of a web page which allows the user to enter text to be checked and a servlet which passes the text to the web service and then produces a report containing the result.
+
+
+==== Coding the Web Page 
+
+The web page will consist of a text area, where the user will enter text, and a button for sending the text to the web service. Depending on the version of the server that you chose as the target server, the IDE generated either  ``index.html``  or  ``index.jsp``  as the index page for the application.
+
+1. In the Projects window, expand the Web Pages node of the  ``SpellCheckService``  project and double-click the index page ( ``index.html``  or  ``index.jsp`` ) to open the file in the Source Editor.
+2. Copy the following code and paste it over the  ``<body>``  tags in the index page:
+
+[source,html]
+----
+
+<body>
+  <form name="Test" method="post" action="SpellCheckServlet">
+     <p>Enter the text you want to check:</p>
+     <p>
+     <p><textarea rows="7" name="TextArea1" cols="40" ID="Textarea1"></textarea></p>
+     <p>
+     <input type="submit" value="Spell Check" name="spellcheckbutton">
+  </form>
+</body>
+----
+
+The previously listed code specifies that when the submit button is clicked, the content of the  ``textarea``  is posted to a servlet called  ``SpellCheckServlet`` .
+
+
+==== Creating and Coding the Servlet 
+
+In this section you create a servlet that will interact with the web service. However, the code that performs the interaction will be provided by the IDE. As a result, you only need to deal with the business logic, that is, the preparation of the text to be sent and the processing of the result.
+
+1. Right-click the  ``SpellCheckService``  project node in the Projects window, choose New > Other and then choose Web > Servlet. Click Next to open the New Servlet wizard.
+2. Name the servlet  ``SpellCheckServlet``  and type  ``clientservlet``  in the Package drop-down. Click Next.
+image::images/name-servlet.png[]
+3. In the Configure Servlet Deployment panel, note that the URL mapping for this servlet is  ``/SpellCheckServlet`` . Accept the defaults and click Finish. The servlet opens in the Source Editor. 
+image::images/jaxwsc-servlet.png[]
+4. Put your cursor inside the Source Editor, inside the  ``processRequest``  method body of  ``SpellCheckServlet.java`` , and add some new lines right at the top of the method.
+5. Right-click in the space that you created in the previous step, and choose Insert Code > Call Web Service Operation. Click the  ``checkSoap.CheckTextBodyV2``  operation in the "Select Operation to Invoke" dialog box,as shown below: 
+image::images/insert-ws-ops.png[title="Projects window showing web service references"]
+
+Click OK.
+
+*Note:* You can also drag and drop the operation node directly from the Projects window into the editor, instead of calling up the dialog shown above.
+
+At the end of the  ``SpellCheckServlet``  class, you see a private method for calling the SpellCheckerV2 service and returning a  ``com.cdyne.ws.DocumentSummary``  object .
+
+
+[source,java]
+----
+
+private DocumentSummary checkTextBodyV2(java.lang.String bodyText) {com.cdyne.ws.CheckSoap port = service.getCheckSoap();return port.checkTextBodyV2(bodyText);}
+----
+
+This method is all you need to invoke the operation on the web service. In addition, the following lines of code (in bold) are declared at the top of the class:
+
+
+[source,java]
+----
+
+public class SpellCheckServlet extends HttpServlet {
+    *@WebServiceRef(wsdlLocation = "http://wsf.cdyne.com/SpellChecker/check.asmx?WSDL")
+    private Check service;*
+----
+6. Replace the  ``try``  block of the  ``processRequest()``  method with the code that follows. The in-line comments throughout the code below explain the purpose of each line.
+
+[source,html]
+----
+
+try (PrintWriter out = response.getWriter()) {
+*    //Get the TextArea from the web page*String TextArea1 = request.getParameter("TextArea1");*//Initialize WS operation arguments*
+    java.lang.String bodyText = TextArea1;
+
+    *//Process result*
+    com.cdyne.ws.DocumentSummary doc = checkTextBodyV2(bodyText);
+    String allcontent = doc.getBody();
+
+    *//From the retrieved document summary,
+    //identify the number of wrongly spelled words:*
+    int no_of_mistakes = doc.getMisspelledWordCount();
+
+    *//From the retrieved document summary,
+    //identify the array of wrongly spelled words:*
+    List allwrongwords = doc.getMisspelledWord();
+
+    out.println("<html>");
+    out.println("<head>");
+
+    *//Display the report's name as a title in the browser's titlebar:*
+    out.println("<title>Spell Checker Report</title>");
+    out.println("</head>");
+    out.println("<body>");
+
+    *//Display the report's name as a header within the body of the report:*
+    out.println("<h2><font color='red'>Spell Checker Report</font></h2>");
+
+    *//Display all the content (correct as well as incorrectly spelled) between quotation marks:*
+    out.println("<hr><b>Your text:</b> \"" + allcontent + "\"" + "<p>");
+
+    *//For every array of wrong words (one array per wrong word),
+    //identify the wrong word, the number of suggestions, and
+    //the array of suggestions. Then display the wrong word and the number of suggestions and
+    //then, for the array of suggestions belonging to the current wrong word, display each
+    //suggestion:*
+    for (int i = 0; i < allwrongwords.size(); i++) {
+        String onewrongword = ((Words) allwrongwords.get(i)).getWord();
+        int onewordsuggestioncount = ((Words) allwrongwords.get(i)).getSuggestionCount();
+        List allsuggestions = ((Words) allwrongwords.get(i)).getSuggestions();
+        out.println("<hr><p><b>Wrong word:</b><font color='red'> " + onewrongword + "</font>");
+        out.println("<p><b>" + onewordsuggestioncount + " suggestions:</b><br>");
+        for (int k = 0; k < allsuggestions.size(); k++) {
+            String onesuggestion = (String) allsuggestions.get(k);
+            out.println(onesuggestion);
+        }
+    }
+
+    *//Display a line after each array of wrong words:*
+    out.println("<hr>");
+
+    *//Summarize by providing the number of errors and display them:*
+    out.println("<font color='red'><b>Summary:</b> " + no_of_mistakes + " mistakes (");
+    for (int i = 0; i < allwrongwords.size(); i++) {
+        String onewrongword = ((Words) allwrongwords.get(i)).getWord();
+        out.println(onewrongword);
+    }
+
+    out.println(").");
+    out.println("</font>");
+    out.println("</body>");
+    out.println("</html>");
+
+} 
+
+----
+7. You see a number of error bars and warning icons, indicating classes that are not found. To fix imports after pasting the code, either press Ctrl-Shift-I (⌘-Shift-I on Mac), or right-click anywhere, which opens a context menu, and select Fix Imports. (You have a choice of List classes to import. Accept the default java.util.List.) The full list of imported classes follows:
+
+[source,java]
+----
+
+import com.cdyne.ws.Check;
+import com.cdyne.ws.Words;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.List;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.xml.ws.WebServiceRef;
+----
+
+*Note: *If you see warnings that the  ``com.cdyne.*``  classes cannot be found, do not be alarmed. This problem is resolved when you build the project, when the IDE parses the WSDL files and finds the classes.
+
+Note that error handling has not been dealt with in the previously listed code. See <<applyingwhatyouhavelearned,Applying What You Have Learned>> for details.
+
+
+=== Deploying the Client 
+
+The IDE uses an Ant build script to build and run your application. The IDE generates the build script based on the options you entered when creating the project. You can fine tune these options in the project's Project Properties dialog box (right-click the project node in the Projects window and choose Properties).
+
+1. Right-click the project node and choose Run. After a while, the application deploys and displays the web page that you coded in the previous section.
+2. Enter some text, making sure that some of it is incorrectly spelled: 
+image::images/jaxwsc-spellchecker-form.png[title="JSP page with text to check"]
+3. Click Spell Check and see the result: 
+image::images/jaxwsc-spellchecker-report.png[title="Spell Checker report showing errors"]
+
+
+[[asynch]]
+== Asynchronous Web Service Clients
+
+By default, JAX-WS clients created by the NetBeans IDE are synchronous. Synchronous clients invoke a request on a service and then suspend their processing while they wait for a response. However, in some cases you want the client to continue with some other processing rather than wait for the response. For example, in some cases it may take a significant amount of time for the service to process the request. Web service clients that continue processing without waiting for the service response are called "asynchronous".
+
+Asynchronous clients initiate a request to a service and then resume their processing without waiting for a response. The service handles the client request and returns a response at some later point, at which time the client retrieves the response and proceeds with its processing.
+
+Asynchronous clients consume web services either through the "polling" approach or the "callback" approach. In the "polling" approach, you invoke a web service method and repeatedly ask for the result. Polling is a blocking operation because it blocks the calling thread, which is why you do not want to use it in a GUI application. In the "callback" approach you pass a callback handler during the web service method invocation. The handler's  ``handleResponse()``  method is called when the result is available. This approach is suitable to GUI applications because you do not have to wait for the response. For example, you make a call from a GUI event handler and return control immediately, keeping the user interface responsive. The drawback of the polling approach is that, even though the response is consumed after it is caught, you have to poll for it to find out that it has been caught.
+
+In NetBeans IDE, you add support for asynchronous clients to a web service client application by ticking a box in the Edit Web Service Attributes GUI of the web service references. All other aspects of developing the client are the same as for synchronous clients, except for the presence of methods to poll the web service or pass a callback handler and await the result.
+
+The rest of this section details how to create a Swing graphical interface and embed an asynchronous JAX-WS client inside it.
+
+
+[[asynch-swing]]
+=== Creating the Swing Form
+
+In this section you design the Swing application. If you prefer not to design the Swing GUI yourself, you can link:https://netbeans.org/projects/www/downloads/download/webservices%252FAsynchSpellCheckForm.zip[+download a predesigned JFrame+] and go to the section on <<asynch-creatingtheclient,Creating the Asynchronous Client>>.
+
+The Swing client gets text you type in, sends it to the service, and returns the number of mistakes and a list of all the wrong words. The client also shows you each wrong word and the suggestions to replace it, one wrong word at a time.
+
+image::images/asynch-swing-client.png[]
+
+*To create the Swing client:*
+
+1. Create a new Java Application project. Name it  ``AsynchSpellCheckClient`` . Do NOT create a  ``Main``  class for the project.
+2. In the Projects view, right-click the  ``AsynchSpellCheckClient``  project node and select New > JFrame Form...
+3. Name the form  ``MainForm``  and place it in the package  ``org.me.forms`` .
+4. After you create the JFrame, open the project properties. In the Run category, set  ``MainForm``  as the Main class. 
+image::images/asynch-main-class.png[]
+5. In the Editor, open the Design view of  ``MainForm.java`` . From the Palette, drag and drop three Scroll Panes into  ``MainForm`` . Position and size the scroll panes. They will hold the text fields for the text you type in to check, all the wrong words, and the suggestions for one wrong word.
+6. Drag and drop five Text Fields into  ``MainForm`` . Drop three of them into the three scroll panes. Modify them as follows:
+|===
+
+|Text Fields 
+
+|Variable Name |In Scroll Pane? |Editable? 
+
+|tfYourText |Y |Y 
+
+|tfNumberMistakes |N |N 
+
+|tfWrongWords |Y |N 
+
+|tfWrongWord1 |N |N 
+
+|tfSuggestions1 |Y |N 
+|===
+7. Drag and drop a Progress Bar into  ``MainForm`` . Name the variable  ``pbProgress`` .
+8. Drag and drop two Buttons into  ``MainForm`` . Name the first button  ``btCheck``  and change its text to Check Text or Check Spelling. Name the second button  ``btNextWrongWord`` , change its text to Next Wrong Word, and disable it.
+9. Drag and drop some Labels into  ``MainForm`` , to give a title to your application and to describe the text fields.
+
+Arrange the appearance of the JFrame to your liking and save it. Next you add web service client functionality.
+
+
+[[asynch-creatingtheclient]]
+=== Enabling Asynchronous Clients
+
+Add the web service references, as described in <<creatingtheclient,Creating the Client>>. Then edit the web service attributes to enable asynchronous clients.
+
+1. In the Projects window, right-click the  ``AsynchSpellCheckClient``  project node and choose New > Other. In the New File wizard choose Web Services > Web Service Client. In the Web Service Client wizard, specify the URL to the web service:
+
+link:http://wsf.cdyne.com/SpellChecker/check.asmx?wsdl[+http://wsf.cdyne.com/SpellChecker/check.asmx?wsdl+]. Accept all the defaults and click Finish. This is the same procedure from Step 2 onwards described in <<creatingtheclient,Creating the Client>>.
+
+2. Expand the Web Service References node and right-click the  ``check``  service. The context menu opens.
+image::images/asynch-edit-ws-attrib.png[]
+3. From the context menu, select Edit Web Service Attributes. The Web Service Attributes dialog opens.
+4. Select the WSDL Customization tab.
+5. Expand the Port Type Operations node. Expand the *first*  ``CheckTextBodyV2``  node and select Enable Asynchronous Client. 
+image::images/enable-async-client.png[]
+6. Click OK. The dialog closes and a warning appears that changing the web service attributes will refresh the client node.
+image::images/asynch-refresh-node-warning.png[]
+7. Click OK. The warning closes and your client node refreshes. If you expand the  ``check``  node in Web Service References, you see that you now have Polling and Callback versions of the  ``CheckTextBody``  operation.
+image::images/asynch-ws-refs.png[]
+
+Asynchronous web service clients for the SpellCheck service are now enabled for your application.
+
+
+[[asynch-addcode]]
+=== Adding the Asynchronous Client Code
+
+Now that you have asynchronous web service operations, add an asynchronous operation to  ``MainForm.java`` .
+
+*To add asynchronous client code:*
+
+1. In  ``MainForm`` , change to the Source view and add the following method just before the final closing bracket. 
+
+[source,java]
+----
+
+public void callAsyncCallback(String text){
+                 
+}
+----
+2. In the Projects window, expand the  ``AsynchSpellCheckClient`` 's Web Service References node and locate the  ``checkSoap.CheckTextBodyV2 [Asynch Callback]`` operation.
+3. Drag the  ``CheckTextBodyV2 [Asynch Callback]``  operation into the empty  ``callAsyncCallback``  method body. The IDE generates the following  ``try``  block. Compare this generated code to the code generated for the synchronous client.
+
+[source,java]
+----
+
+try { // Call Web Service Operation(async. callback)
+      com.cdyne.ws.Check service = new com.cdyne.ws.Check();
+      com.cdyne.ws.CheckSoap port = service.getCheckSoap();
+      // TODO initialize WS operation arguments here
+      java.lang.String bodyText = "";
+      javax.xml.ws.AsyncHandler<com.cdyne.ws.CheckTextBodyV2Response> asyncHandler = 
+              new javax.xml.ws.AsyncHandler<com.cdyne.ws.CheckTextBodyV2Response>() {
+            public void handleResponse(javax.xml.ws.Response<com.cdyne.ws.CheckTextBodyV2Response> response) {
+                  try {
+                        // TODO process asynchronous response here
+                        System.out.println("Result = "+ response.get());
+                  } catch(Exception ex) {
+                        // TODO handle exception
+                  }
+            }
+      };
+      java.util.concurrent.Future<? extends java.lang.Object> result = port.checkTextBodyV2Async(bodyText, asyncHandler);
+      while(!result.isDone()) {
+            // do something
+            Thread.sleep(100);
+      }
+      } catch (Exception ex) {
+      // TODO handle custom exceptions here
+}
+----
+
+In this code, along with the web service invocation, you see that the response from the SpellCheck service is handled through an `` AsynchHandler `` object. Meanwhile, a  ``Future``  object checks to see if a result has been returned and sleeps the thread until the result is complete.
+
+4. Switch back to the Design view. Double-click the Check Spelling button. The IDE automatically adds an ActionListener to the button and switches you to the Source view, with the cursor in the empty  ``btCheckActionPerformed``  method.
+5. Add the following code to the  ``btCheckActionPerformed``  method body. This code gets the text that you type into the  ``tfYourText``  field, has the progress bar display a "waiting for server" message, disables the  ``btCheck``  button, and calls the asynchronous callback method.
+
+[source,java]
+----
+
+private void btCheckActionPerformed(java.awt.event.ActionEvent evt) {                                        
+    *String text = tfYourText.getText();
+    pbProgress.setIndeterminate(true);
+    pbProgress.setString("waiting for server");
+    btCheck.setEnabled(false);
+    callAsyncCallback(text);*
+}
+----
+6. At the beginning of the  ``MainForm``  class, instantiate a private  ``ActionListener``  field named  ``nextWord`` . This  ``ActionListener``  is for the Next Wrong Word button that advances one wrong word in the list of wrong words and displays the word and suggestions for correcting it. You create the private field here so you can unregister the  ``ActionListener``  if it already has been defined. Otherwise, every time you check new text, you would add an additional listener and end up with multiple listeners calling  ``actionPerformed()``  multiple times. The application would not behave correctly.
+
+[source,java]
+----
+
+public class MainForm extends javax.swing.JFrame {
+    
+    private ActionListener nextWord;
+    ...
+----
+7. Replace the entire  ``callAsyncCallback``  method with the following code. Note that the outermost  ``try``  block is removed. It is unnecessary because more specific  ``try``  blocks are added inside the method. Other changes to the code are explained in code comments. 
+
+[source,java]
+----
+
+public void callAsyncCallback(String text) {
+
+        
+    com.cdyne.ws.Check service = new com.cdyne.ws.Check();
+    com.cdyne.ws.CheckSoap port = service.getCheckSoap();
+    // initialize WS operation arguments here
+    java.lang.String bodyText = text;
+
+    javax.xml.ws.AsyncHandler<com.cdyne.ws.CheckTextBodyV2Response> asyncHandler = new javax.xml.ws.AsyncHandler<com.cdyne.ws.CheckTextBodyV2Response>() {
+
+        public void handleResponse(final javax.xml.ws.Response<com.cdyne.ws.CheckTextBodyV2Response> response) {
+            SwingUtilities.invokeLater(new Runnable() {
+
+                public void run() {
+
+                    try {
+                        // Create a DocumentSummary object containing the response.
+                        // Note that getDocumentSummary() is called from the Response object
+                        // unlike the synchronous client, where it is called directly from
+                        // com.cdyne.ws.CheckTextBodycom.cdyne.ws.DocumentSummary doc = response.get().getDocumentSummary();
+//From the retrieved DocumentSummary,
+                        //identify and display the number of wrongly spelled words:
+final int no_of_mistakes = doc.getMisspelledWordCount();
+                        String number_of_mistakes = Integer.toString(no_of_mistakes);
+                        tfNumberMistakes.setText(number_of_mistakes);
+// Check to see if there are any mistakes
+                        if (no_of_mistakes > 0) {
+//From the retrieved document summary,
+                            //identify the array of wrongly spelled words, if any:
+final List<com.cdyne.ws.Words> allwrongwords = doc.getMisspelledWord();
+//Get the first wrong word
+                            String firstwrongword = allwrongwords.get(0).getWord();
+//Build a string of all wrong words separated by commas, then display this in tfWrongWords
+StringBuilder wrongwordsbuilder = new StringBuilder(firstwrongword);
+
+                            for (int i = 1; i < allwrongwords.size(); i++) {
+                                String onewrongword = allwrongwords.get(i).getWord();
+                                wrongwordsbuilder.append(", ");
+                                wrongwordsbuilder.append(onewrongword);
+                            }
+                            String wrongwords = wrongwordsbuilder.toString();
+                            tfWrongWords.setText(wrongwords);
+//Display the first wrong word
+                            tfWrongWord1.setText(firstwrongword);
+//See how many suggestions there are for the wrong word
+                            int onewordsuggestioncount = allwrongwords.get(0).getSuggestionCount();
+//Check to see if there are any suggestions.
+                            if (onewordsuggestioncount > 0) {
+//Make a list of all suggestions for correcting the first wrong word, and build them into a String.
+                                //Display the string of concactenated suggestions in the tfSuggestions1 text field
+List<String> allsuggestions = ((com.cdyne.ws.Words) allwrongwords.get(0)).getSuggestions();
+
+                                String firstsuggestion = allsuggestions.get(0);
+                                StringBuilder suggestionbuilder = new StringBuilder(firstsuggestion);
+                                for (int i = 1; i < onewordsuggestioncount; i++) {
+                                    String onesuggestion = allsuggestions.get(i);
+                                    suggestionbuilder.append(", ");
+                                    suggestionbuilder.append(onesuggestion);
+                                }
+                                String onewordsuggestions = suggestionbuilder.toString();
+                                tfSuggestions1.setText(onewordsuggestions);
+
+                            } else {
+                                // No suggestions for this mistake
+                                tfSuggestions1.setText("No suggestions");
+                            }
+                            btNextWrongWord.setEnabled(true);
+// See if the ActionListener for getting the next wrong word and suggestions
+                            // has already been defined. Unregister it if it has, so only one action listener
+                            // will be registered at one time.
+if (nextWord != null) {
+                                btNextWrongWord.removeActionListener(nextWord);
+                            }
+// Define the ActionListener (already instantiated as a private field)
+                            nextWord = new ActionListener() {
+//Initialize a variable to track the index of the allwrongwords list
+
+                                int wordnumber = 1;
+
+                                public void actionPerformed(ActionEvent e) {
+                                    if (wordnumber < no_of_mistakes) {
+// get wrong word in index position wordnumber in allwrongwords
+                                        String onewrongword = allwrongwords.get(wordnumber).getWord();
+//next part is same as code for first wrong word
+tfWrongWord1.setText(onewrongword);
+                                        int onewordsuggestioncount = allwrongwords.get(wordnumber).getSuggestionCount();
+                                        if (onewordsuggestioncount > 0) {
+                                            List<String> allsuggestions = allwrongwords.get(wordnumber).getSuggestions();
+                                            String firstsuggestion = allsuggestions.get(0);
+                                            StringBuilder suggestionbuilder = new StringBuilder(firstsuggestion);
+                                            for (int j = 1; j < onewordsuggestioncount; j++) {
+                                                String onesuggestion = allsuggestions.get(j);
+                                                suggestionbuilder.append(", ");
+                                                suggestionbuilder.append(onesuggestion);
+                                            }
+                                            String onewordsuggestions = suggestionbuilder.toString();
+                                            tfSuggestions1.setText(onewordsuggestions);
+                                        } else {
+                                            tfSuggestions1.setText("No suggestions");
+                                        }
+// increase i by 1
+                                        wordnumber++;
+} else {
+                                        // No more wrong words! Disable next word button
+                                        // Enable Check button
+                                        btNextWrongWord.setEnabled(false);
+                                        btCheck.setEnabled(true);
+                                    }
+                                }
+                            };
+// Register the ActionListener
+                            btNextWrongWord.addActionListener(nextWord);
+} else {
+                            // The text has no mistakes
+                            // Enable Check button
+                            tfWrongWords.setText("No wrong words");
+                            tfSuggestions1.setText("No suggestions");
+                            tfWrongWord1.setText("--");
+                            btCheck.setEnabled(true);
+
+                        }
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+// Clear the progress bar
+                    pbProgress.setIndeterminate(false);
+                    pbProgress.setString("");
+                }
+            });
+
+        }
+    };
+
+    java.util.concurrent.Future result = port.checkTextBodyV2Async(bodyText, asyncHandler);
+    while (!result.isDone()) {
+        try {
+//Display a message that the application is waiting for a response from the server
+            tfWrongWords.setText("Waiting...");
+            Thread.sleep(100);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(MainForm.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+}
+----
+8. Press Ctrl-Shift-I (⌘-Shift-I on Mac) and fix imports. This adds the following import statements:
+
+[source,java]
+----
+
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.SwingUtilities;
+----
+
+You can now build and run the application! Unfortunately, you are unlikely to see what happens during a long delay in getting a response from the server, because the service is quite fast.
+
+
+== Applying What You Have Learned
+
+Now that you have completed your first web service client in the IDE, it is time to stretch your skills and extend the application to be all that it was destined to be. Below are two suggested tasks to get you started.
+
+* Add error handling code to the servlet.
+* Rewrite the client so that the user can interact with the data returned from the web service.
+
+
+link:/about/contact_form.html?to=3&subject=Feedback:%20JAX-WS%20Clients%20in%20NetBeans%20IDE[+Send Feedback on This Tutorial+]
+
+
+
+== See Also
+
+For more information about using NetBeans IDE to develop Java EE applications, see the following resources:
+
+* link:jax-ws.html[+Getting Started with JAX-WS Web Services+]
+* link:rest.html[+Getting Started with RESTful Web Services+]
+* link:wsit.html[+Advanced Web Service Interoperability+]
+* link:../../trails/web.html[+Web Services Learning Trail+]
+
+To send comments and suggestions, receive support, and stay informed about the latest developments on the NetBeans IDE Java EE development features, link:../../../community/lists/top.html[+join the nbj2ee@netbeans.org mailing list+].
+

@@ -1,0 +1,941 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= NetBeans Eコマースのチュートリアル - ページ・ビューおよびコントローラ・サーブレットの準備
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: NetBeans Eコマースのチュートリアル - ページ・ビューおよびコントローラ・サーブレットの準備 - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, NetBeans Eコマースのチュートリアル - ページ・ビューおよびコントローラ・サーブレットの準備
+
+
+
+1. link:intro.html[+概要+]
+2. link:design.html[+アプリケーションの設計+]
+3. link:setup-dev-environ.html[+開発環境の設定+]
+4. link:data-model.html[+データ・モデルの設計+]
+5. *ページ・ビューおよびコントローラ・サーブレットの準備*
+6. link:connect-db.html[+データベースへのアプリケーションの接続+]
+7. link:entity-session.html[+エンティティ・クラスおよびセッションBeanの追加+]
+8. link:manage-sessions.html[+セッションの管理+]
+9. link:transaction.html[+トランザクション・ビジネス・ロジックの統合+]
+10. link:language.html[+言語サポートの追加+]
+11. link:security.html[+アプリケーションの保護+]
+12. link:test-profile.html[+テストとプロファイリング+]
+13. link:conclusion.html[+まとめ+]
+
+image::../../../../images_www/articles/68/netbeans-stamp-68-69.png[title="このページの内容は、NetBeans IDEバージョン6.8および6.9に適用されます"]
+
+このチュートリアルでは、IDEでプロジェクト・ファイルを作成する方法を示し、HTMLおよびCSSの開発に使用できる機能の一部について紹介します。必要なプロジェクト・ファイルを作成した後、アプリケーションのフロント・エンドを編成していきます。つまり、JSPファイルをプロジェクト構造内の適切な場所に配置し、すべてのビューに適用されるヘッダーとフッターを作成し、受信するリクエストを処理するコントローラ・サーブレットを設定します。
+
+このユニットでは、アプリケーションのWebデプロイメント・ディスクリプタ(`web.xml`ファイル)も作成します。このデプロイメント・ディスクリプタを使用して構成情報を指定し、デプロイメント時にサーバーでその情報を読み取らせることができます。Java EE 6に含まれているlink:http://jcp.org/en/jsr/detail?id=315[+Servlet 3.0仕様+]では、XMLのかわりにクラス注釈を使用できますが、アプリケーションの特定の要素を構成するために引続きデプロイメント・ディスクリプタが必要になる場合があります。具体的には、このユニットではヘッダーおよびフッターのディレクティブを追加し、これらを適用するファイルを指定します。
+
+このチュートリアルの目標の1つは、アプリケーション設計で指定されたビューに対応するJSPページを作成することです。link:design.html#mockups[+ページ・モックアップ+]とlink:design.html#business[+プロセス・フロー図+]を再度参照しながら、ページ・レイアウトを実装していきます。最初に、モックアップに従って、すべての表示コンポーネントと機能コンポーネントの_プレースホルダ_を作成します。このユニットでは、開始ページのレイアウトを実装するガイドを示します。説明された手順を適用して自分で他のページを作成することも、すべてのページの完全なレイアウトが含まれるlink:https://netbeans.org/projects/samples/downloads/download/Samples%252FJavaEE%252Fecommerce%252FAffableBean_snapshot1.zip[+プロジェクト・スナップショット1をダウンロードする+]こともできます。
+
+このチュートリアルでビルドするアプリケーションのライブ・デモを、link:http://dot.netbeans.org:8080/AffableBean/[+NetBeans Eコマースのチュートリアルのデモ・アプリケーション+]で表示できます。
+
+
+
+|===
+|ソフトウェアまたはリソース |必須バージョン 
+
+|link:https://netbeans.org/downloads/index.html[+NetBeans IDE+] |Javaバンドル版、6.8または6.9 
+
+|link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+Java Development Kit (JDK)+] |バージョン6 
+
+|<<glassFish,GlassFishサーバー>> |v3またはOpen Source Edition 3.0.1 
+|===
+
+*注意: *
+
+* NetBeans IDEが正常に動作するには、JDK (Java Development Kit)が必要です。上記に一覧表示されているいずれのリソースもインストールされていない場合は、最初にJDKをダウンロードしてインストールするようにしてください。
+* NetBeans IDEのJavaバンドル版には、このチュートリアルでビルドするアプリケーションに必要なJava WebおよびEEテクノロジが含まれています。
+* NetBeans IDEのJavaバンドル版には、このチュートリアルに必要なGlassFishサーバーも含まれています。link:https://glassfish.dev.java.net/public/downloadsindex.html[+GlassFishサーバーを別個にダウンロードする+]こともできますが、NetBeansダウンロードに付属するバージョンを使用すると、IDEに自動的に登録されるので便利です。
+
+
+
+[[createProjectFiles]]
+== プロジェクト・ファイルの作成
+
+プロジェクトの新しいファイルを作成するには、IDEのファイル・ウィザードにアクセスします。「新規ファイル」(image::images/new-file-btn.png[])ボタンをクリックするか、[Ctrl]-[N] (Macの場合は[⌘]-[N])を押すか、「プロジェクト」ウィンドウで新しいファイルを格納するフォルダ・ノードを右クリックして「新規」>[ファイル・タイプ]を選択します。次の項では、プロジェクトのJSPページとスタイル・シートを作成します。
+
+* <<jsp,JSPページの作成>>
+* <<css,スタイル・シートの作成>>
+
+
+[[jsp]]
+=== JSPページの作成
+
+プロジェクトの最初の作業として、link:design.html#business[+プロセス・フロー図+]に表示されたビューに対応するJSPページを作成します。
+
+IDEで生成された`index.jsp`ページがこのプロジェクトの開始ページになります。残りの4つのビューに対応するJSPページを作成し、今のところはプロジェクトのwebrootに`index.jsp`とともに配置します。
+
+1. 「新規ファイル」(image::images/new-file-btn.png[])ボタンをクリックしてファイル・ウィザードを開きます。
+2. 「Web」カテゴリから「JSP」を選択し、「次」をクリックします。
+3. ファイルに「`category`」という名前を付けます。「場所」フィールドは「`Webページ`」に設定されています。これは、このファイルがプロジェクトのwebrootに作成されることを示しています。これはプロジェクトの`web`フォルダに対応します。これは後でIDEの「ファイル」ウィンドウで確認できます。
+4. 「終了」をクリックします。IDEによって新しいJSPページが生成され、エディタで開きます。
+5. 上記のステップ1から4を繰り返して、残りの`cart.jsp`、`checkout.jsp`、`confirmation.jsp`ページを作成します。
+
+終了すると、「プロジェクト」ウィンドウは次のようになります。
+image::images/projects-win-views.png[title="WEB-INF/view/フォルダにビューが格納される"]
+
+
+[[css]]
+=== スタイル・シートの作成
+
+アプリケーションに固有のすべてのスタイルを含むCSSファイルを作成します。
+
+1. 「プロジェクト」ウィンドウで「Webページ」ノードを右クリックし、「新規」>「フォルダ」を選択します。
+2. 新規フォルダ・ウィザードでフォルダに「`css`」という名前を付け、「終了」をクリックします。
+3. 新しい`css`フォルダを右クリックし、「新規」>「Cascading Style Sheet」を選択します。(「Cascading Style Sheet」が表示されない場合は、「その他」を選択します。ファイル・ウィザードで、「Web」カテゴリを選択してから「Cascading Style Sheet」を選択し、「次」をクリックします。)
+4. スタイル・シートに「`affablebean`」という名前を付け、「終了」をクリックします。
+
+終了すると、「プロジェクト」ウィンドウに`affablebean.css`ファイルが表示されます。
+image::images/projects-win-css.png[title="cssフォルダとスタイルシートが表示された「プロジェクト」ウィンドウ"]
+
+
+
+[[implementHTML]]
+== HTMLおよびCSSの内容の実装
+
+この項の目的は、指定されたlink:design.html#mockups[+ページ・モックアップ+]に従うようにページ・ビューをデザインすることです。プロジェクト開発の後の段階で、これらを足場として利用して動的コンテンツを挿入できます。そのためには、IDEのHTMLエディタとCSSエディタ、およびいくつかのCSSサポート・ウィンドウを使用します。
+
+*ブラウザの互換性に関する注意:* このチュートリアルではFirefox 3を使用します。ページ・ビューのマークアップについて、最新の他のブラウザとの互換性は保証されません。当然ながら、フロント・エンドのWebテクノロジ(HTML、CSS、JavaScript)を扱うときには、Webサイトへのビジターが使用していると想定されるブラウザの種類とバージョンで(主にInternet Explorer、Firefox、Safari、Chrome、Opera)、Webページが正しくレンダリングされるように手段を講じる必要があります。IDEで作業する際、アプリケーションをどのブラウザで開くかを設定できます。「ツール」>「オプション」(Macの場合は「NetBeans」>「プリファレンス」)を選択し、「オプション」ウィンドウの「一般」タブの「Webブラウザ」ドロップダウン・リストから、使用するブラウザを選択します。IDEは、デフォルトの場所にインストールされているブラウザを検出します。コンピュータにインストールされているブラウザが表示されない場合は、「編集」ボタンをクリックし、ブラウザを手動で登録してください。
+
+通常、Webページの表示の準備は対話型の作業であり、顧客からの定期的なフィード・バックによって調整していくことになります。次の手順では、IDEで提供されている機能について紹介し、link:design.html#index[+開始ページのモックアップ+]を例にとって使用方法を示します。
+
+1. 「プロジェクト」ウィンドウで「`index.jsp`」をダブルクリックして、エディタで開きます。
+2. 最初に、ページのメイン領域の`<div>`タグを作成します。5つのタグを一度に作成できます。そのうちの4つはメイン領域(ヘッダー、フッター、左の列および右の列)のタグ、5つ目は他の領域を格納するためのタグです。`<body>`タグ内の内容をすべて除去し、次の内容で置き換えます。新しいコードは*太字*で表示しています。
+
+[source,html]
+----
+
+<body>
+    *<div id="main">
+        <div id="header">
+            header
+        </div>
+
+        <div id="indexLeftColumn">
+            left column
+        </div>
+
+        <div id="indexRightColumn">
+            right column
+        </div>
+
+        <div id="footer">
+            footer
+        </div>
+    </div>*
+</body>
+----
+3. ページのheadにスタイル・シートへの参照を追加し、タイトル・テキストを変更します。
+
+[source,xml]
+----
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    *<link rel="stylesheet" type="text/css" href="css/affablebean.css">*
+    <title>*The Affable Bean*</title>
+</head>
+----
+4. `affablebean.css`スタイル・シートをエディタで開きます。作成した`<div>` IDのスタイル・ルールを作成していきます。
+* `width`および`height`プロパティを使用して、各領域のスペースを作成します。
+* `background`プロパティを使用して、ページを表示したときに各領域を見分けられるようにします。
+* ページの4つの領域を水平方向に中央にそろえるために、`margin: 20px auto`を`body`ルールを追加できます。(`20px`は上下のマージンに適用され、`auto`は左右均等に余白を作成します。)次に、左の列と右の列に`float: left`を追加します。
+* フッターには`clear: left`が必要です。これは、フッター上部の境界線が、フッターより上にあるすべての左浮動領域(つまり、左の列と右の列)の下の境界線より後に表示されるようにするためです。
+
+[source,java]
+----
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    width: 850px;
+    text-align: center;
+    margin: 20px auto;
+}
+
+#main { background: #eee }
+
+#header {
+    height: 250px;
+    background: #aaa;
+}
+
+#footer {
+    height: 60px;
+    clear: left;
+    background: #aaa;
+}
+
+#indexLeftColumn {
+    height: 400px;
+    width: 350px;
+    float: left;
+    background: #ccc;
+}
+
+#indexRightColumn {
+    height: 400px;
+    width: 500px;
+    float: left;
+    background: #eee;
+}
+----
+5. IDEのメイン・ツールバーにある「プロジェクトの実行」(image::images/run-project-btn.png[])ボタンをクリックします。変更されたプロジェクト・ファイルが自動的に保存され、プロジェクト内のJavaコードがすべてコンパイルされます。プロジェクトがパッケージ化されてGlassFishにデプロイされ、ブラウザが開いて開始ページの現在の状態が表示されます。
+image::images/index-page.png[title="プロジェクトの実行による、ページの現在の状態の表示"]
+6. 次に、4つの各可視領域内にページ・コンポーネントのプレースホルダを作成していきます。ヘッダーから始めます。link:design.html#index[+開始ページのモックアップ+]を確認すると、ヘッダーには次のコンポーネントが含まれている必要があります。
+* ロゴ
+* ロゴ・テキスト
+* ショッピング・カート・ウィジェット
+* 言語の切替え
+`index.jsp`ファイルに次の変更を加えます。新しいコードは*太字*で表示しています。
+
+[source,html]
+----
+
+<div id="header">
+    *<div id="widgetBar">
+
+        <div class="headerWidget">
+            [ language toggle ]
+        </div>
+
+        <div class="headerWidget">
+            [ shopping cart widget ]
+        </div>
+
+    </div>
+
+    <a href="#">
+        <img src="#" id="logo" alt="Affable Bean logo">
+    </a>
+
+    <img src="#" id="logoText" alt="the affable bean">*
+</div>
+----
+上記のコードでは、`<div id="widgetBar">`要素を使用して言語の切替えとショッピング・カート・ウィジェットを追加しています。
+
+
+=== NetBeans HTMLエディタ・サポート
+
+エディタでの作業では、IDEのHTMLサポートを利用できます。タグ、属性、属性値およびテキストを区別できるようにする一般的な構文の強調表示のみでなく、他にも多くの機能があります。
+
+タグと属性を入力するときに、[Ctrl]-[Space]を押すと、コード補完とドキュメント・サポートを呼び出せます。IDEでは、選択可能な候補のリストに加え、選択した項目の定義とコード例を示すドキュメント・ウィンドウも表示されます。
+
+image::images/documentation-popup.png[title="[Ctrl]-[Space]の押下によるコード補完ウィンドウとドキュメント・ウィンドウの表示"]
+
+IDEはコード内のエラーを検出し、警告、エラー・メッセージ、場合によっては候補を表示します。警告メッセージは黄色、エラーは赤で表示されます。指定された領域の上にポインタを置くと、ツールチップにメッセージが表示されます。
+
+image::images/html-hint.png[title="ポインタを置いてツールチップ警告を表示する"]
+
+様々なキーボード・ショートカットも利用できます。メイン・メニューから「ヘルプ」>「キーボード・ショートカット・カード」を選択します。
+
+
+7. スタイル・シートで、新しいIDおよびクラスのルールを作成します。次のルールを`header`ルールの下に追加します。新しいコードは*太字*で表示しています。
+
+[source,java]
+----
+
+#header {
+    height: 250px;
+    background: #aaa;
+}
+
+*#logo {
+    height: 155px;
+    width: 155px;
+    float: left;
+    margin-left: 30px;
+    margin-top: -20px;
+}
+
+#logoText {
+    float: left;
+    margin: 20px 0 0 70px;
+    /* font styles apply to text within alt tags */
+    font-family: 'American Typewriter', Courier, monospace;
+    font-size: 50px;
+    color: #333;
+}
+
+#widgetBar {
+    height: 50px;
+    width: 850px;
+    float: right;
+    background: #ccc;
+}
+
+.headerWidget {
+    width: 194px;
+    margin: 20px 2px;
+    font-size: small;
+    float: right;
+    line-height: 25px;
+    background: #aaa;
+}*
+----
+`logo`ルールでは`margin-left`および`margin-top`プロパティを適用して、このコンポーネントをページに配置します。
+
+よくわからないプロパティが上記のコードに含まれている場合は、そのプロパティの上にカーソルを置き、[Ctrl]-[Space]を押してドキュメント・サポートのポップアップ・ウィンドウを呼び出せます。
+image::images/css-doc-support.png[title="CSSプロパティ上での[Ctrl]-[Space]の押下によるドキュメント・サポートの呼出し"]
+
+プロパティがページにどのような影響を与えているかを確認するには、そのプロパティをコメントアウトしてから、ブラウザでページをリフレッシュします。コードをコメントアウトするには、行の上にカーソルを置くかコード・ブロックを強調表示してから、[Ctrl]-[/] (Macの場合は[⌘]-[/])を押します。
+
+8. `index.jsp`および`affablebean.css`ファイルを保存([Ctrl]-[S]、Macの場合は[⌘]-[S])してから、ブラウザに切り替えてページをリフレッシュし、現在の状態を表示します。
+
+*注意:* Java Webプロジェクトに対しては、IDEの「保存時にデプロイ」機能が自動的にアクティブ化されます。つまり、ファイルを保存するたびに、ファイルが自動的にコンパイルされ(JavaクラスまたはJSPページの場合)、プロジェクトが新たにパッケージ化されてサーバーにデプロイされます。したがって、HTMLまたはCSSを変更した場合は、プロジェクトを明示的に再実行しなくても、更新されたバージョンをブラウザで表示できます。ファイルを保存してから、ブラウザに切り替えてページをリフレッシュするのみです。
+
+image::images/index-page2.png[title="プロジェクトの実行時にヘッダーのプレースホルダが表示される"]
+前述の手順に従うと、あるパターンが見えてくるでしょう。ページの領域ごとに、3つの手順を実行します。
+1. HTMLで構造を作成します。
+2. 一連のスタイルを作成して外観を定義します。
+3. ページを表示して変更の結果を確認します。
+これら3つの手順に従って、残りの領域のコンポーネントを実装しましょう。
+9. 右の列にコンポーネントのプレースホルダを作成します。link:design.html#index[+開始ページのモックアップ+]に従うと、右の列には等間隔で配置された4つのボックスが含まれています。
+
+4つのボックスの構造を作成します。次のコードを`<div id="indexRightColumn">`タグの間に挿入します。新しいコードは*太字*で表示しています。
+
+[source,html]
+----
+
+<div id="indexRightColumn">
+    *<div class="categoryBox">
+        <a href="#">
+            <span class="categoryLabelText">dairy</span>
+        </a>
+    </div>
+    <div class="categoryBox">
+        <a href="#">
+            <span class="categoryLabelText">meats</span>
+        </a>
+    </div>
+    <div class="categoryBox">
+        <a href="#">
+            <span class="categoryLabelText">bakery</span>
+        </a>
+    </div>
+    <div class="categoryBox">
+        <a href="#">
+            <span class="categoryLabelText">fruit &amp; veg</span>
+        </a>
+    </div>*
+</div>
+----
+10. 新しい`categoryBox`クラスおよび`categoryLabelText`クラスのスタイル・ルールを`affablebean.css`に追加します。新しいコードは*太字*で表示しています。
+
+[source,java]
+----
+
+#indexRightColumn {
+    height: 400px;
+    width: 500px;
+    float: left;
+    background: #eee;
+}
+
+*.categoryBox {
+    height: 176px;
+    width: 212px;
+    margin: 21px 14px 6px;
+    float: inherit;
+    background: #ccc;
+}
+
+.categoryLabelText {
+    line-height: 150%;
+    font-size: x-large;
+}*
+----
+
+
+=== NetBeansのCSSサポート
+
+スタイル・シートを操作する際、特に役立つウィンドウが2つあります。「CSSプレビュー」を使用すると、スタイル・ルールがブラウザでどのようにレンダリングされるかを確認できます。「CSSプレビュー」を開くには、メイン・メニューから「ウィンドウ」>「その他」>「CSSプレビュー」を選択します。エディタでスタイル・ルールの中にカーソルを置くと、「CSSプレビュー」が自動的にリフレッシュされて、ルールで定義されているプロパティに従ってサンプル・テキストが表示されます。
+
+image::images/css-preview.png[title="「CSSプレビュー」を使用した、レンダリングされたスタイル・ルールの表示"]
+
+「CSSスタイル・ビルダー」は、スタイル・ルールを手動で入力したくない場合に役立ちます。「CSSスタイル・ビルダー」を開くには、メイン・メニューから「ウィンドウ」>「その他」>「CSSスタイル・ビルダー」を選択します。このインタフェースを使用すると、プロパティと値をグラフィカル・インタフェースから選択してルールを構築できます。
+
+image::images/style-builder.png[title="「CSSスタイル・ビルダー」を使用した、スタイル・ルールの構築"]
+
+「CSSプレビュー」と同様に、「CSSスタイル・ビルダー」もエディタと同期しています。「スタイル・ビルダー」で選択すると、スタイル・ルールがエディタで自動的に更新されます。同様に、エディタで変更を入力すると、スタイル・ビルダーでの選択内容がすぐに更新されます。
+
+
+11. `index.jsp`および`affablebean.css`ファイルを保存([Ctrl]-[S]、Macの場合は[⌘]-[S])してから、ブラウザに切り替えてページをリフレッシュし、現在の状態を表示します。
+image::images/index-page3.png[title="プロジェクト実行時にヘッダーおよび右の列のプレースホルダが表示される"]
+12. 左の列とフッターには静的テキストのプレースホルダのみが必要なので、両方を同時に実装しましょう。
+
+次のコードを`<div id="indexLeftColumn">`タグおよび`<div id="footer">`タグの間に挿入します。新しいコードは*太字*で表示しています。
+
+[source,html]
+----
+
+<div id="indexLeftColumn">
+    *<div id="welcomeText">
+        <p>[ welcome text ]</p>
+    </div>*
+</div>
+
+...
+
+<div id="footer">
+    *<hr>
+    <p id="footerText">[ footer text ]</p>*
+</div>
+----
+13. `affablebean.css`スタイル・シートに変更を加えます。新しいIDとクラスをすべて考慮する必要はありません。後で顧客からテキストとイメージを受け取った時点で外観を調整できます。
+
+横罫線(`<hr>`)タグは、それを含んでいる要素(`<div id="footer">`)の長さ全体にわたって表示されます。したがって、モックアップ・イメージに従って短くするには、`<div id="footer">`の幅を調整します。新しいコードは*太字*で表示しています。
+
+[source,java]
+----
+
+#footer {
+    height: 60px;
+    *width: 350px;*
+    clear: left;
+    background: #aaa;
+}
+
+*hr {
+    border: 0;
+    background-color: #333;
+    height: 1px;
+    margin: 0 25px;
+    width: 300px;
+}*
+----
+14. `index.jsp`および`affablebean.css`ファイルを保存([Ctrl]-[S]、Macの場合は[⌘]-[S])してから、ブラウザに切り替えてページをリフレッシュし、現在の状態を表示します。
+image::images/index-page4.png[title="左の列およびフッターのプレースホルダの表示"]
+開始ページが完成しました。ページに含まれるコンポーネントに必要なプレースホルダをすべて作成しました。
+
+これで、アプリケーションの開始ページの初期デザインが完成しました。ページ・コンポーネントのすべてのプレースホルダが存在しています。このチュートリアルの後半で、ページ・ビューに動的ロジックを適用していくときは、これらのプレースホルダにJSTLおよびEL式を埋め込むのみです。
+
+残る作業は、link:design.html#mockups[+モックアップ+]に基づいて他のページの初期デザインを実装することです。そのためには、前述のパターンに従って、次の作業を実行します。
+
+1. メイン・ページ領域の`<div>`タグを作成します。
+2. 各領域について、次の3つの手順を繰り返します。
+1. HTMLで構造を作成します。
+2. 一連のスタイルを作成して外観を定義します。
+3. ページを表示して変更の結果を確認します。
+
+IDEで提供されているHTMLおよびCSSのサポートを必ず利用してください。後述の<<tipsTricks,ヒントとコツ>>も参照してください。残りのページのコードは取り込むのみとし、チュートリアルの先に進む場合は、link:https://netbeans.org/projects/samples/downloads/download/Samples%252FJavaEE%252Fecommerce%252FAffableBean_snapshot1.zip[+`AffableBean`プロジェクトのスナップショット1をダウンロード+]できます。ここには、残りのページの初期モックアップ実装のイメージが含まれています。
+
+
+[[categoryPage]]
+==== カテゴリ・ページ
+
+image::images/category-page.png[title="カテゴリ・ページに実装されたプレースホルダ"] 
+
+
+[[cartPage]]
+==== カート・ページ
+
+image::images/cart-page.png[title="カート・ページに実装されたプレースホルダ"] 
+
+
+[[checkoutPage]]
+==== チェックアウト・ページ
+
+image::images/checkout-page.png[title="チェックアウト・ページに実装されたプレースホルダ"] 
+
+
+==== 確認ページ
+
+image::images/confirmation-page.png[title="チェックアウト・ページに実装されたプレースホルダ"] 
+
+*注意:* ページの各領域の背景色は、アプリケーションの開発中に要素を配置しやすくするためにのみ使用されています。最終的には、これらをスタイル・シートから除去し、アプリケーションに、より適切な背景色を適用します。これを行うには、`main`クラスのbackgroundルールを調整します。
+
+
+[source,java]
+----
+
+#main { background: #f7f7e9 }
+----
+
+
+[[tipsTricks]]
+=== ヒントとコツ
+
+IDEのエディタには、作業の効率向上に役立つ様々な機能があります。エディタ・ツールバーのボタンとキーボード・ショートカットに慣れると、生産性を高めることができます。次に示すヒントは、HTMLおよびCSSファイルのエディタに適用されます。さらに多くのキーボード・ショートカットを表示するには、メイン・メニューから「ヘルプ」>「キーボード・ショートカット・カード」を選択して、IDEのキーボード・ショートカット・カードを開きます。
+
+* *コード補完:* タグと属性を入力する際、ポップアップ・ボックスにコード補完の候補が自動的に表示されます。[Enter]を押すと、候補のタグが入力されます。
+* *コードのフォーマット:* エディタ内を右クリックし、「フォーマット」を選択します。
+* *行番号表示の切替え:* 左マージンを右クリックし、「行番号を表示」を選択します。
+* *出現箇所の検索:* テキスト・ブロックを強調表示し、[Ctrl]-[F](Macの場合は[⌘]-[F])を押します。すべての一致箇所がエディタで強調表示されます。エディタのツールバーにある「強調表示検索の切替え」(image::images/toggle-highlight.png[])ボタン([Ctrl]-[Shift]-[H])を押します。
+* *ブックマークの作成:* エディタの左マージンにブックマークを作成するには、「ブックマークを切替え」(image::images/toggle-bookmark.png[])ボタン([Ctrl]-[Shift]-[M])を押します。その後、ファイル内のどこからでも、エディタのツールバーにある「前のブックマーク」ボタンまたは「次のブックマーク」ボタンを押して、そのブックマークに移動できます。
+* *コード・スニペットを上または下にコピー:* コード・スニペットを強調表示し、[Ctrl]-[Shift]-[↑]または[Ctrl]-[Shift]-[↓]を押します。
+* *開始タグと終了タグの強調表示:* 開始タグまたは終了タグのどちらかにカーソルを置くと、開始タグと終了タグの両方が黄色で強調表示されます。
+
+
+
+[[view]]
+== WEB-INFへのJSPページの配置
+
+作成されたlink:design.html#mockups[+ページ・モックアップ+]を再度参照すると、link:design.html#index[+開始ページ+]はいつ、どのユーザーからリクエストされた場合でも同じように表示されることがわかります。つまり、開始ページに表示される内容は、ユーザーの_セッション_に依存しません。(セッションについては、ユニット8のlink:manage-sessions.html[+セッションの管理+]を参照。)ただし、他のすべてのページでは、正しく表示するためになんらかのユーザー固有の情報が必要です。たとえば、link:design.html#category[+カテゴリ・ページ+]では、カテゴリを表示するためにユーザーがカテゴリを選択する必要があり、link:design.html#cart[+カート・ページ+]では、現在ショッピング・カートに入っている項目がすべてわかっていることが必要です。サーバーがユーザー固有の情報と受信するリクエストを関連付けることができない場合、これらのページは正しくレンダリングされません。したがって、これらのページがブラウザのアドレス・バーから直接アクセスされることを防ぐ必要があります。プロジェクトの`WEB-INF`フォルダはこの目的に使用できます。これは、`WEB-INF`フォルダに格納されているリソースにはブラウザから直接アクセスできないためです。
+
+「`view`」という名前の新しいフォルダを作成し、`WEB-INF`フォルダ内に配置します。その後、開始ページ以外のすべてのJSPページをこの新しいフォルダに移動します。
+
+1. 「プロジェクト」ウィンドウで「WEB-INF」ノードを右クリックし、「新規」>「フォルダ」を選択します。
+2. 新規フォルダ・ウィザードでフォルダに「`view`」という名前を付け、「終了」をクリックします。「プロジェクト」ウィンドウに新しいフォルダ・ノードが表示されます。
+3. `category.jsp`、`cart.jsp`、`checkout.jsp`および`confirmation.jsp`ページを`view`フォルダに移動します。
+
+これを行うには、`cart.jsp`をクリックして選択した後、[Shift]を押しながら`confirmation.jsp`をクリックします。これによって4つのファイルが選択されます。次に、選択された4つのファイルをクリックし、`WEB-INF/view`フォルダにドラッグします。
+image::images/view-folder.png[title="JSPページをクリックしてWEB-INF/view/フォルダにドラッグする"]
+
+ブラウザからこれらのページにアクセスできなくなったことを示すために、「プロジェクトの実行」(image::images/run-project-btn.png[])ボタンをクリックしてプロジェクトを実行します。アプリケーションがブラウザに表示されたら、これらのいずれかのファイルのフル・パスをアドレス・バーに入力します。たとえば、次のように入力します。
+
+
+[source,java]
+----
+
+http://localhost:8080/AffableBean/WEB-INF/view/category.jsp
+----
+
+リソースが使用不可であることを示すHTTPステータス404メッセージが表示されます。
+
+
+
+[[jspf]]
+== ヘッダーとフッターの作成
+
+link:design.html#mockups[+ページ・モックアップ+]を参照すると、5つのビューすべてで同じ内容が共有されていることがわかります。上部には、会社のロゴ、言語の切替えおよびショッピング・カート機能に関連するその他のウィジェットがあります。下部には、プライバシ・ポリシーと連絡先のリンクを含むテキストがあります。このコードを各ページのソース・ファイルに含めるかわりに、2つの別個のJSPフラグメント、つまりヘッダーとフッターにまとめることができます。その後、これらをレンダリングする必要があるときはいつでも、フラグメント・ファイルをページ・ビューに含めるようにします。
+
+これらのフラグメント用に「`jspf`」という名前の新しいフォルダを作成し、`WEB-INF`フォルダ内に配置しましょう。
+
+1. 「プロジェクト」ウィンドウで「WEB-INF」ノードを右クリックし、「新規」>「フォルダ」を選択します。
+2. 新規フォルダ・ウィザードでフォルダに「`jspf`」という名前を付け、「終了」をクリックします。
+
+IDEでは、状況に応じてメニュー項目が表示されます。たとえば、WEB-INFノードを右クリックして新規フォルダ・ウィザードを表示したときに、「親フォルダ」フィールドに`web/WEB-INF`が自動的に入力されました。同様に、「プロジェクト」ウィンドウでノードを右クリックしてから「新規」を選択すると、以前の選択内容に応じてファイル・タイプの一覧が部分的に変化します。
+
+3. 2つのJSPフラグメント`header.jspf`および`footer.jspf`を作成します。これを行うには、新しく作成した`jspf`フォルダを右クリックし、「新規」>「JSP」を選択します。新規JSPウィザードで、ファイル名を入力し、「オプション」から「JSPセグメントとして作成」オプションを選択し、「終了」をクリックします。
+
+終了すると、「プロジェクト」ウィンドウに`header.jspf`と`footer.jspf`が表示されます。
+image::images/projects-win-jspf.png[title="ヘッダーおよびフッターのJSPフラグメントがプロジェクトに表示される"]
+
+次に、いずれかのJSPページからヘッダーのコードをコピーし、`header.jspf`ファイルに貼り付けます。同様に、いずれかのJSPページからフッターのコードをコピーし、`footer.jspf`ファイルに貼り付けます。この作業が終了したら、すべてのJSPページからヘッダーおよびフッターのコードを除去できます。
+4. いずれかのJSPページからヘッダーのコードをコピーし、`header.jspf`ファイルに貼り付けます。ヘッダーには、ページのdoctypeに加え、`<html>`、`<head>`および`<body>`の開始タグから`<div id="header">`要素の終了タグまでを含めるようにします。ページ・ビューの上部に使用されているショッピング・カート・ウィジェット、言語切替え、および「proceed to checkout」ボタンのプレースホルダを必ず含めてください。コードを貼り付けた後の`header.jspf`ファイルは次のようになります。
+
+[source,html]
+----
+
+<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+    "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <link rel="stylesheet" type="text/css" href="css/affablebean.css">
+        <title>The Affable Bean</title>
+    </head>
+    <body>
+        <div id="main">
+            <div id="header">
+                <div id="widgetBar">
+
+                    <div class="headerWidget">
+                        [ language toggle ]
+                    </div>
+
+                    <div class="headerWidget">
+                        [ checkout button ]
+                    </div>
+
+                    <div class="headerWidget">
+                        [ shopping cart widget ]
+                    </div>
+
+                </div>
+
+                <a href="#">
+                    <img src="#" id="logo" alt="Affable Bean logo">
+                </a>
+
+                <img src="#" id="logoText" alt="the affable bean">
+            </div>
+----
+5. いずれかのJSPページからフッターのコードをコピーし、`footer.jspf`ファイルに貼り付けます。フッターのコードには、`<div id="footer">`要素から`<html>`終了タグまでを含めるようにします。コードを貼り付けた後の`footer.jspf`ファイルは次のようになります。
+
+[source,html]
+----
+
+            <div id="footer">
+                <hr>
+                <p id="footerText">[ footer text ]</p>
+            </div>
+        </div>
+    </body>
+</html>
+----
+6. 5つのJSPページ(`index.jsp`、`category.jsp`、`cart.jsp`、`checkout.jsp`および`confirmation.jsp`)すべてからヘッダーおよびフッターのコードを除去します。
+
+
+
+[[dd]]
+== デプロイメント・ディスクリプタへのディレクティブの追加
+
+ここまでで、ビューをそれぞれ適切な場所に配置し、共通のヘッダーおよびフッターのコードを別個の`header.jspf`ファイルと`footer.jspf`ファイルにまとめました。次に、ヘッダー・ファイルとフッター・ファイルがどのページに適用されるのかをアプリケーションに認識させる必要があります。各ページ・ビューに`<jsp:include>`タグを追加することもできます。ただし、その場合は再びコードを繰返し記述することになり、繰返しをなくそうとしたこれまでの努力が無駄になります。代替の方法として、`web.xml`デプロイメント・ディスクリプタを作成し、JSPプロパティ・グループ・ディレクティブを追加して、ヘッダーおよびフッターのフラグメントをどのページ・ビューに適用する必要があるかを指定できます。
+
+1. [Ctrl]-[N] (Macの場合は[⌘]-[N])を押して、新規ファイル・ウィザードを開きます。「Web」カテゴリを選択し、「ファイル・タイプ」から「標準のデプロイメント・ディスクリプタ(web.xml)」を選択します。
+2. 「次」をクリックします。ウィザードの完了時に、ファイルは「`web.xml`」という名前でプロジェクトの`WEB-INF`ディレクトリに配置されます。
+3. 「終了」をクリックします。`web.xml`ファイルが作成され、プロジェクトに追加されます。エディタにデプロイメント・ディスクリプタ用のIDEグラフィカル・インタフェースが開きます。
+
+このインタフェースは、Webアプリケーションで構成可能な領域ごとに分類されています。これらの領域はタブとしてエディタのツールバーに表示され、「サーブレット」、「フィルタ」、「参照」、「セキュリティ」などの項目があります。「XML」タブには、ファイルのソース・コード全体が表示されます。このグラフィカル・インタフェースで変更を行うと、デプロイメント・ディスクリプタのソース・コードがすぐに更新され、「XML」タブに切り替えて確認できます。これを次の手順で示します。
+4. 「ページ」タブをクリックし、「JSPプロパティ・グループの追加」ボタンをクリックします。「JSPプロパティ・グループの追加」ダイアログが開きます。
+5. 「説明」フィールドに「`header and footer settings`」と入力します。「表示名」は空白にしておきます。「表示名」フィールドと「説明」フィールドはどちらもオプションです。
+6. 「URLパターン」には、5つのビューのパスを指定します。「`/index.jsp`」と「`/WEB-INF/view/*`」を入力します。2つのパスはカンマで区切ります。(「`*`」は、指定したフォルダにあるすべてのファイルを表すワイルド・カードです。)
+image::images/add-jsp-prop-group-dialog.png[title="「JSPプロパティ・グループの追加」ダイアログを使用してデプロイメント・ディスクリプタに<jsp-config>タグを指定する"]
+7. 「OK」をクリックします。「ページ」タブの「JSPプロパティ・グループ」カテゴリにエントリが追加されます。
+8. 「XML」タブに戻ります。デプロイメント・ディスクリプタに次のコードが追加されています。
+
+[source,xml]
+----
+
+<jsp-config>
+    <jsp-property-group>
+        <description>header and footer settings</description>
+        <url-pattern>/index.jsp</url-pattern>
+        <url-pattern>/WEB-INF/view/*</url-pattern>
+    </jsp-property-group>
+</jsp-config>
+----
+
+*注意:* コードを複数の行に表示するには、キャリッジ・リターンを追加する必要があります。コードのインデントを適切に設定するには、エディタ内を右クリックし、「フォーマット」([Alt]-[Shift]-[F]、Macの場合は[Ctrl]-[Shift]-[F])を選択します。
+
+9. 「ページ」タブに戻り、「プレリュード(ヘッダー)を含める」フィールドと「コーダ(フッター)を含める」フィールドにそれぞれ`header.jspf`ファイルと`footer.jspf`ファイルのパスを入力します。「参照」ボタンをクリックし、表示されるダイアログでファイルを選択できます。
+image::images/jsp-prop-groups-small.png[role="left", link="images/jsp-prop-groups.png"]
+10. 「XML」タブに戻ります。次のコードが追加されています。変更場所は*太字*で示されています。
+
+[source,xml]
+----
+
+<jsp-config>
+    <jsp-property-group>
+        <description>header and footer settings</description>
+        <url-pattern>/index.jsp</url-pattern>
+        <url-pattern>/WEB-INF/view/*</url-pattern>
+        *<include-prelude>/WEB-INF/jspf/header.jspf</include-prelude>
+        <include-coda>/WEB-INF/jspf/footer.jspf</include-coda>*
+    </jsp-property-group>
+</jsp-config>
+----
+上記のディレクティブは、指定された`url-pattern`内に見つかったすべてのファイルに対して先頭に`header.jspf`を付加し、末尾に`footer.jspf`ファイルを付加するように指定しています。
+
+上記のタグおよびWebデプロイメント・ディスクリプタで使用できるすべてのタグの定義を表示するには、link:http://jcp.org/en/jsr/detail?id=315[+Servlet仕様+]を参照してください。
+
+11. アプリケーションを再度実行します([F6]、Macの場合は[fn]-[F6])。`index.jsp`ファイルからはヘッダーおよびフッターのコードをすでに除去したため、このファイルがリクエストされたときにコードが自動的に追加されるかどうかを確認できます。
+
+<<welcome-page,開始ページが以前と同じように表示され>>、ヘッダーとフッターの内容が含まれていることがわかります。
+
+
+
+[[controller]]
+== コントローラ・サーブレットの作成
+
+コントローラ・サーブレットは、受信したリクエストを処理するために、そのリクエストに対応するモデルを生成するための必要なアクションを開始してから、リクエストを適切なビューに転送します。視覚的な表現については、link:design.html#mvcDiagram[+AffableBeanプロジェクトのMVC図+]を再度参照してください。
+
+IDEには、Webアプリケーションのサーブレット・コンポーネントを定義できるサーブレット・ウィザードがあります。このウィザードでは、生成されるクラスに`@WebServlet`注釈を含めるか、必要なディレクティブをデプロイメント・ディスクリプタに追加します。次の手順では、`ControllerServlet`を作成し、アプリケーション・コンテキストでlink:http://java.sun.com/javaee/6/docs/api/javax/servlet/annotation/WebServlet.html[+`@WebServlet`+]注釈を使用して定義します。
+
+1. 「プロジェクト」ウィンドウで`AffableBean`プロジェクト・ノードを右クリックし、「新規」>「サーブレット」を選択します。
+2. ウィザードで、「クラス名」フィールドに「`ControllerServlet`」と入力します。
+3. 「パッケージ」フィールドに「`controller`」と入力します。(ウィザードの完了時に新しいパッケージが自動的に作成されます。)
+image::images/servlet-wizard.png[title="サーブレット・ウィザードを使用した、プロジェクトのサーブレットの作成"]
+4. 「次」をクリックします。ウィザードのステップ3では、サーブレットを構成できます。最も重要なのは、URLパターンの指定です。これらのパターンは、サーブレットを起動するURLを識別します。たとえば、「`/category`」と入力すると、次のようなリクエストを処理するようにサーブレットに指示していることになります。
+
+[source,java]
+----
+
+http://localhost/AffableBean*/category*
+----
+URLパターンは、ユーザーが開始できるビューおよびアクションに対応するようにしてください。link:design.html#index[+開始ページのモックアップ+]を参照すると、ユーザーはカテゴリを選択できる必要があります。したがって、カテゴリ・イメージをクリックするアクションに`/category` URLを関連付けることができます。同様に、link:design.html#category[+カテゴリ・ページ+]で、ユーザーはショッピング・カートに項目を追加できる必要があります。したがって、`/addToCart`を指定できます。
+5. 「URLパターン」フィールドに「`/category,/addToCart,/viewCart`」と入力します。パターンはカンマで区切ります。サーブレット・クラスが作成されたら、他のパターンは直接追加できます。
+image::images/servlet-wizard2.png[title="ウィザードによるサーブレット・デプロイメントの直接構成"]
+6. 「終了」をクリックします。IDEによって`ControllerServlet`が生成され、エディタで開きます。サーブレット名とURLパターンは、クラス署名の上にある`@WebServlet`注釈に含まれています。
+
+[source,java]
+----
+
+*@WebServlet(name="ControllerServlet", urlPatterns={"/category", "/addToCart", "/viewCart"})*
+public class ControllerServlet extends HttpServlet {
+----
+前のステップで、ウィザードの「`デプロイメント・ディスクリプタ(web.xml)に情報を追加`」オプションを選択した場合は、かわりに次のマークアップがアプリケーションの`web.xml`ファイルに生成されます。
+
+[source,xml]
+----
+
+<servlet>
+    <servlet-name>ControllerServlet</servlet-name>
+    <servlet-class>controller.ControllerServlet</servlet-class>
+</servlet>
+<servlet-mapping>
+    <servlet-name>ControllerServlet</servlet-name>
+    <url-pattern>/category</url-pattern>
+</servlet-mapping>
+<servlet-mapping>
+    <servlet-name>ControllerServlet</servlet-name>
+    <url-pattern>/addToCart</url-pattern>
+</servlet-mapping>
+<servlet-mapping>
+    <servlet-name>ControllerServlet</servlet-name>
+    <url-pattern>/viewCart</url-pattern>
+</servlet-mapping>
+----
+7. 他のURLパターンは`@WebServlet`注釈の`urlPatterns`要素に直接追加します。アプリケーションには、他のアクションとビューに対応する追加のURLパターンが必要です。次のパターンを入力できます。
+* `/updateCart`
+* `/checkout`
+* `/purchase`
+* `/chooseLanguage`
+各パターンは必ずカンマで区切ってください。注釈を次のように書式設定しなおすこともできます。
+
+[source,java]
+----
+
+@WebServlet(name="ControllerServlet",
+            urlPatterns = {"/category",
+                           "/addToCart",
+                           "/viewCart"*,
+                           "/updateCart",
+                           "/checkout",
+                           "/purchase",
+                           "/chooseLanguage"*})
+----
+8. 最後に、`loadOnStartup`要素を追加して、アプリケーションのデプロイ時にサーブレットのインスタンス化と初期化が行われるようにします。`0`以上の値を指定すると、この処理が行われます(デフォルトは`-1`)。
+
+[source,java]
+----
+
+@WebServlet(name="ControllerServlet",
+            *loadOnStartup = 1,*
+            urlPatterns = {"/category",
+                           "/addToCart",
+                           "/viewCart",
+                           "/updateCart",
+                           "/checkout",
+                           "/purchase",
+                           "/chooseLanguage"})
+----
+
+
+
+[[implement]]
+== コントローラ・サーブレットの実装
+
+前述のとおり、コントローラ・サーブレットは、受信したリクエストを処理するために、そのリクエストに対応するモデルを生成するための必要なアクションを開始してから、リクエストを適切なビューに転送します。視覚的な表現については、link:design.html#mvcDiagram[+AffableBeanプロジェクトのMVC図+]を再度参照してください。
+
+新しい`ControllerServlet`に生成されたコードを参照すると、IDEのサーブレット・テンプレートで`processRequest`メソッドが使用され、これが`doGet`メソッドと`doPost`メソッドの両方からコールされることがわかります。(これらのメソッドを表示するには、エディタの左マージンにあるプラス記号アイコン(image::images/code-fold-icon.png[])をクリックしてコードの折りたたみを展開する必要があります。)このアプリケーションでは`doGet`と`doPost`を区別するため、これらのメソッドにコードを直接追加し、`processRequest`メソッドはすべて除去します。
+
+
+=== IDEのテンプレート・マネージャでファイル・テンプレートを変更する
+
+IDEでは、新しいファイルを作成する場合に基本的なテンプレートが提供されます。テンプレートが作業パターンに最適でない場合は、IDEのテンプレート・マネージャを使用して変更できます。IDEでは、実質的にすべてのファイル・タイプにテンプレートが用意されています。
+
+たとえば、サーブレット・テンプレートを変更するには:
+
+1. メイン・メニューから「ツール」>「テンプレート」を選択して、テンプレート・マネージャを開きます。
+2. 「Web」カテゴリを展開し、「サーブレット」テンプレートを選択します。
+image::images/template-manager.png[title="テンプレート・マネージャ経由でのファイル・テンプレートに対するアクセスおよび変更"]
+3. 「エディタで開く」ボタンをクリックします。
+4. エディタでテンプレートを変更します。次回(サーブレット・ウィザードなどで)新しいサーブレットを作成するときに、この新しいバージョンが適用されます。
+
+
+
+これで`@WebServlet`注釈を使用してサーブレットにURLパターンをマップできたので、次はこれらのパターンを処理する`ControllerServlet`を設定します。また、リクエストされたパターンを適切なビューに転送する`RequestDispatcher`のインスタンス化も行います。
+
+1. `ControllerServlet`クラスのテンプレート・コードを次のコードで置き換えます。
+
+[source,xml]
+----
+
+public class ControllerServlet extends HttpServlet {
+
+    /**
+     * Handles the HTTP <code>GET</code> method.
+     * @param request servlet request
+     * @param response servlet response
+     * @throws ServletException if a servlet-specific error occurs
+     * @throws IOException if an I/O error occurs
+     */
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException {
+
+        String userPath = request.getServletPath();
+
+        // if category page is requested
+        if (userPath.equals("/category")) {
+            // TODO: Implement category request
+
+        // if cart page is requested
+        } else if (userPath.equals("/viewCart")) {
+            // TODO: Implement cart page request
+
+            userPath = "/cart";
+
+        // if checkout page is requested
+        } else if (userPath.equals("/checkout")) {
+            // TODO: Implement checkout page request
+
+        // if user switches language
+        } else if (userPath.equals("/chooseLanguage")) {
+            // TODO: Implement language request
+
+        }
+
+        // use RequestDispatcher to forward request internally
+        String url = "/WEB-INF/view" + userPath + ".jsp";
+
+        try {
+            request.getRequestDispatcher(url).forward(request, response);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    /**
+     * Handles the HTTP <code>POST</code> method.
+     * @param request servlet request
+     * @param response servlet response
+     * @throws ServletException if a servlet-specific error occurs
+     * @throws IOException if an I/O error occurs
+     */
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException {
+
+        String userPath = request.getServletPath();
+
+        // if addToCart action is called
+        if (userPath.equals("/addToCart")) {
+            // TODO: Implement add product to cart action
+
+        // if updateCart action is called
+        } else if (userPath.equals("/updateCart")) {
+            // TODO: Implement update cart action
+
+        // if purchase action is called
+        } else if (userPath.equals("/purchase")) {
+            // TODO: Implement purchase action
+
+            userPath = "/confirmation";
+        }
+
+        // use RequestDispatcher to forward request internally
+        String url = "/WEB-INF/view" + userPath + ".jsp";
+
+        try {
+            request.getRequestDispatcher(url).forward(request, response);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+}
+----
+チュートリアルに沿って進む場合は、`ControllerServlet`に戻り、マップされたURLパターンをそれぞれ個別に実装します。
+2. 上記のコードを確認してください。注意する点がいくつかあります。
+* サーブレットは`userPath`インスタンス変数を使用して、クライアントからリクエストされたURLパターンを取得します。
+
+[source,java]
+----
+
+String userPath = request.getServletPath();
+----
+`userPath`は`doGet`メソッドと`doPost`メソッドの両方で使用されます。
+* 主にページリクエストに関するURLパターンは、`doGet`メソッドによって管理されます。たとえば、`/category`、`/viewCart`および`/checkout`では、カテゴリ・ページ、カート・ページおよびチェックアウト・ページが表示されます。
+* フォームの送信および機密性の高いユーザー・データのトランスポートに関するURLパターン(`/addToCart`、`/updateCart`、`/purchase`など)は、`doPost`メソッドによって管理されます。
+* `doGet`メソッドと`doPost`メソッドのどちらでも、適切なビューのパスは`url`文字列を使用して構築されます。
+
+[source,java]
+----
+
+String url = "/WEB-INF/view" + userPath + ".jsp";
+----
+* `RequestDispatcher`は`HttpServletRequest`から取得され、`url`を適用してリクエストを転送します。
+
+[source,java]
+----
+
+request.getRequestDispatcher(url).forward(request, response);
+----
+* `TODO`メモは、さらに行う必要のある作業を示すために使用されています。例:
+
+[source,java]
+----
+
+// if category page is requested
+if (userPath.equals("/category")) {
+    // TODO: Implement category request
+----
+コードに`TODO`メモを使用すると、完了する必要のある作業をトラックするために役立ちます。IDEの「タスク」ウィンドウ([Ctrl]-[6]、Macの場合は[⌘]-[6])を使用すると、すべてのTODOメモに加えて、プロジェクトに含まれている構文エラーやコンパイル・エラーを表示できます。
+image::images/tasks-window.png[title="IDEの「タスク」ウィンドウでの実装タスクのトラック"]
+
+「タスク」ウィンドウに表示するキーワードを制御できます。「オプション」ウィンドウを開き(「ツール」>「オプション」、Macの場合は「NetBeans」>「プリファレンス」)、「その他」>「タスク」を選択します。
+
+3. プロジェクトを実行し([F6]、Macの場合は[fn]-[F6])、`ControllerServlet`が適切なビューにリクエストを転送しているかどうかをテストします。
+* ブラウザのアドレス・バーに「`http://localhost:8080/AffableBean/category`」と入力します。アプリケーションの<<categoryPage,カテゴリ・ページ>>が表示されます。
+* ブラウザのアドレス・バーに「`http://localhost:8080/AffableBean/viewCart`」と入力します。アプリケーションの<<cartPage,カート・ページ>>が表示されます。
+* ブラウザのアドレス・バーに「`http://localhost:8080/AffableBean/checkout`」と入力します。アプリケーションの<<checkoutPage,チェックアウト・ページ>>が表示されます。
+
+*注意: *ブラウザのアドレス・バーに「`http://localhost:8080/AffableBean/purchase`」と入力しても<<confirmationPage,確認ページ>>は表示できません。もちろん、これはURLパターン`/purchase`がサーブレットの`doPost`メソッドによって処理され、ブラウザのアドレス・バーから送信されるリクエストが通常はHTTP GETメソッドを使用して送信されるためです。
+
+この段階で、機能コンポーネントのプレースホルダを含んだJSPページの作成が完了しました。また、アプリケーションのフロント・エンド構造の設定も完了しました。現在、JSPページは`WEB-INF`フォルダ内にあり、ヘッダーおよびフッターのコードは別個のファイルにまとめられています。デプロイメント・ディスクリプタは正しく構成され、`ControllerServlet`は受信するリクエストを処理するように設定されています。次のチュートリアル・ユニットでは、アプリケーションとデータベースを接続できるようにします。
+
+作成したプロジェクトをこのユニットのサンプル・ソリューションと比較するには、link:https://netbeans.org/projects/samples/downloads/download/Samples%252FJavaEE%252Fecommerce%252FAffableBean_snapshot2.zip[+AffableBeanプロジェクトのスナップショット2をダウンロード+]してください。
+
+link:/about/contact_form.html?to=3&subject=Feedback: NetBeans E-commerce Tutorial - Preparing the Page Views and Controller Servlet[+ご意見をお寄せください+]
+
+
+
+[[seeAlso]]
+== 関連項目
+
+
+=== NetBeansチュートリアル
+
+* link:../javaee-intro.html[+Java EEテクノロジ入門+]
+* link:../javaee-gettingstarted.html[+Java EE 6アプリケーションの開始+]
+* link:../../web/quickstart-webapps.html[+Webアプリケーション開発入門+]
+* link:../../web/mysql-webapp.html[+MySQLデータベースを使用した単純なWebアプリケーションの作成+]
+* link:../../screencasts.html[+NetBeans IDE 6.xのビデオ・チュートリアルとデモ+]
+* link:https://netbeans.org/projects/www/downloads/download/shortcuts.pdf[+キーボード・ショートカットおよびコード・テンプレートのカード+]
+* link:../../../trails/java-ee.html[+Java EEおよびJava Webの学習+]
+
+
+=== NetBeansの書籍
+
+* link:https://netbeans.org/kb/articles/netbeans-tips-and-tricks-book.html[+100 NetBeans IDE Tips and Tricks+]
+* link:http://www.apress.com/book/view/1590598954[+Pro NetBeans IDE 6 Rich Client Platform Edition+]
+* link:http://apress.com/book/view/1430219548[+Beginning Java EE 6 Platform with GlassFish 3: From Novice to Professional+]
+* link:https://netbeans.org/kb/articles/books.html[+NetBeans IDEに関するその他の書籍+]
+
+
+=== 外部リソース
+
+* link:http://jcp.org/en/jsr/detail?id=315[+Servlet 3.0仕様+]
+* link:https://developer.mozilla.org/en/Common_CSS_Questions[+CSSに関する一般的な質問+]
+* link:http://quirksmode.org/compatibility.html[+ブラウザ互換性の基本表+]
+* link:http://refcardz.dzone.com/refcardz/netbeans-ide-67-update[+NetBeans JavaエディタのDZoneリファレンス・カード+]

@@ -1,0 +1,661 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= Struts Web 框架简介
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: Struts Web 框架简介 - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, Struts Web 框架简介
+
+本文档介绍了使用 Struts Web 框架在 NetBeans IDE 中开发 Web 应用程序的基础知识。Struts 是一个开源框架，用于扩展 Java Servlet API 并使用模型、视图、控制器(MVC) 体系结构。通过此框架，您可以基于各种标准技术（如 JSP 页、JavaBeans、资源包和 XML）创建可维护、可扩展并且灵活的 Web 应用程序。
+
+本教程介绍如何构建一个简单的 MVC 应用程序，该程序可以显示登录页并在提交的数据通过验证时返回成功页。您将了解 Struts 提供的一些基本功能，以及这些功能是如何使用 IDE 实现的。具体说来，您将在 JSP 页中使用 Struts 标记，使用 Struts `ActionForm` Bean 维护用户数据，以及使用 Struts `Action` 对象实现转发逻辑。您还将学到如何对应用程序执行简单验证，包括为失败的登录尝试设置警告消息。
+
+有关 Struts 更加详细的介绍，请参见官方 link:http://struts.apache.org/[+Struts+] Web 站点上的 link:http://struts.apache.org/struts-action/faqs/works.html[+How does Struts work?+]（Struts 的工作原理）。还可以使用 IDE 的 Javadoc 索引搜索（"Help"（帮助）> "Javadoc Index Search"（Javadoc 索引搜索））查看 link:http://struts.apache.org/release/1.3.x/apidocs/index.html[+Struts 框架 API+]（与 Struts 库打包在一起）。
+
+
+image::images/netbeans-stamp-80-74-73.png[title="此页上的内容适用于 NetBeans IDE 7.2、7.3、7.4 和 8.0"]
+
+
+*要学完本教程，您需要具备以下软件和资源。*
+
+|===
+|软件或资源 |要求的版本 
+
+|link:https://netbeans.org/downloads/index.html[+NetBeans IDE+] |7.2、7.3、7.4、8.0、Java EE 
+
+|link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+Java 开发工具包 (JDK)+] |7 或 8 
+
+|GlassFish Server 
+_或_ 
+Tomcat Servlet 容器 |Open Source Edition 3.x 或 4.0 
+_ _ 
+版本 7.x 或 8.x 
+|===
+
+*注：*
+
+* Java 安装使您能够选择性地安装 GlassFish Server 和 Apache Tomcat Servlet 容器。必须安装其中一个（或在 IDE 中注册其他服务器）才能学完本教程。
+* 如果需要将项目与工作解决方案进行比较，可以link:https://netbeans.org/projects/samples/downloads/download/Samples%252FJava%2520Web%252FMyStrutsApp.zip[+下载样例应用程序+]。
+
+
+== 应用程序概述
+
+使用 Struts 时，此框架将为您提供一个控制器 Servlet (`ActionServlet`)，它在 IDE 中包含的 Struts 库中定义，并自动在 `web.xml` 部署描述符中注册，<<controllerServlet,如下所示>>。该控制器 Servlet 使用 `struts-config.xml` 文件将传入请求映射到 Struts `Action` 对象，并实例化与暂时存储窗体数据的操作相关联的任何 `ActionForm` 对象。`Action` 对象在使用窗体 Bean 中存储的任何数据的同时，使用其 `execute` 方法处理请求。一旦 `Action` 对象处理了请求，它就将存储任何新数据（即，存储在窗体 Bean 或单独的结果 Bean 中），并将结果转发到相应的视图中。
+
+image::images/workflow.png[title="Struts 工作流"]
+
+在 NetBeans IDE 中开发 Struts 应用程序与开发任何其他类型的 Web 应用程序类似。但是，您要使用 IDE 提供的 Struts 支持来补充 Web 开发工具包。例如，在 IDE 中使用模板创建 Struts `Action` 对象和 `ActionForm` Bean。创建后，IDE 会自动在 `struts-config.xml` 文件中注册这些类，并让您使用源代码编辑器右键单击菜单中的菜单项非常轻松地扩展此文件。由于许多 Web 应用程序将 JSP 页用于视图，因此 Struts 还提供了定制标记库，以便于与 HTML 窗体进行交互。在 IDE 的源代码编辑器中，您可以调用代码完成功能和 Javadoc 支持，以帮助有效地使用这些库。
+
+以下步骤说明了如何创建收集用户数据的简单窗体、执行简单验证以及在成功页上输出数据。
+
+
+== 设置 Struts 应用程序
+
+在 IDE 中，Struts 只是一个附带 Struts 库和配置文件的普通 Web 应用程序。在 IDE 中，您可以像创建其他任何 Web 应用程序那样，使用新建 Web 应用程序向导创建 Struts 应用程序，此外，还需要一个表明希望将 Struts 库和配置文件包含在应用程序中的步骤。
+
+1. 从主菜单中，选择 "File"（文件）> "New Project"（新建项目）（Ctrl-Shift-N 组合键；在 Mac 上为 ⌘-Shift-N 组合键）。在 "Categories"（类别）列表中选择 "Java Web"，然后在 "Projects"（项目）列表中选择 "Web Application"（Web 应用程序）。单击 "Next"（下一步）。
+2. 在 "Name and Location"（名称和位置）面板中，输入 `MyStrutsApp` 作为项目名称，然后单击 "Next"（下一步）。
+3. 在 "Server and Settings"（服务器和设置）面板中，选择您要将应用程序部署到的服务器。这里仅列出了已在 IDE 中注册的服务器。（要注册服务器，请单击 "Server"（服务器）下拉列表旁边的 "Add"（添加）。）另请注意，所部署应用程序的上下文路径是 `/MyStrutsApp`。单击 "Next"（下一步）。
+4. 在 "Frameworks"（框架）面板中选择 "Struts"。
+image::images/new-project-wizard.png[title="Struts 选项显示在新建 Web 应用程序向导的 "Frameworks"（框架）面板中"]
+
+出于本教程的目的，请勿更改此面板下部区域中的任何配置值。向导会显示以下配置选项。
+
+* *Action Servlet Name（操作 Servlet 名称）*：应用程序中使用的 Struts 操作 Servlet 的名称。`web.xml` 部署描述符包含操作 Servlet 条目，并指定相应的特定于 Struts 的参数（如 Struts 库中 Servlet 类的路径，以及应用程序中 `struts-config.xml` 配置文件的路径）。
+* *Action URL Pattern（操作 URL 模式）*：指定映射到 Struts 操作控制器的传入请求模式。这会在部署描述符中生成一个映射条目。默认情况下，只映射 `*.do` 模式。
+* *Application Resource（应用程序资源）*：用于指定将在 `struts-config.xml` 文件中用来本地化消息的资源包。默认情况下，它是 `com.myapp.struts.ApplicationResource`。
+* *Add Struts TLDs（添加 Struts TLD）*：用于生成 Struts 标记库的标记库描述符。标记库描述符是一个 XML 文档，其中包括有关整个标记库以及每个单独标记的附加信息。通常，此操作是不必要的，因为您可以参阅联机 URI，而不是本地 TLD 文件。
+5. 单击 "Finish"（完成）。IDE 将在您的文件系统中创建项目文件夹。与 IDE 中的任何 Web 应用程序一样，此项目文件夹中包含所有的源代码和 IDE 的项目元数据（如 Ant 构建脚本）。但是除此之外，您的 Web 应用程序在其类路径上还具有所有的 Struts 库。这些 Struts 库不仅位于应用程序的类路径上，而且还包含在项目中，并且在稍后构建项目时将与项目打包在一起。
+
+此项目在 IDE 中打开。"Projects"（项目）窗口是项目源的主入口点。它显示重要项目内容的逻辑视图。例如，如果展开新项目中的若干节点，则项目可能显示如下：
+
+image::images/proj-window-init.png[title=""Projects"（项目）窗口将显示 MyStrutsApp 项目"]
+
+*注：*使用 "Files"（文件）窗口（"Window"（窗口）> Files"（文件））可以通过基于目录的视图来查看所有项目内容。
+
+特定于 Struts 的配置文件以及应用程序的部署描述符就放置在 "Configuration Files"（配置文件）文件夹中。打开部署描述符（双击 `web.xml` 文件节点使其显示在源代码编辑器中）。为了进行 Struts 处理，为 Struts 控制器 Servlet 提供了一个映射。
+
+
+[source,xml]
+----
+
+<servlet>
+    <servlet-name>action</servlet-name>
+    <servlet-class>org.apache.struts.action.ActionServlet</servlet-class>
+    <init-param>
+        <param-name>config</param-name>
+        <param-value>/WEB-INF/struts-config.xml</param-value>
+    </init-param>
+    <init-param>
+        <param-name>debug</param-name>
+        <param-value>2</param-value>
+    </init-param>
+    <init-param>
+       <param-name>detail</param-name>
+       <param-value>2</param-value>
+    </init-param>
+    <load-on-startup>2</load-on-startup>
+</servlet>
+<servlet-mapping>
+    <servlet-name>action</servlet-name>
+    <url-pattern>*.do</url-pattern>
+</servlet-mapping>
+----
+
+在以上代码中，Struts 控制器 Servlet 名为 `action`，并在 Struts 库 (`org.apache.struts.action.ActionServlet`) 中定义。将其设置为处理所有满足 `*.do` 映射的请求。此外，Servlet 的初始化参数通过 `struts-config.xml` 文件指定，同时包含在 `WEB-INF` 文件夹中。
+
+
+== 创建 JSP 页
+
+首先为应用程序创建两个 JSP 页。第一个页面中显示一个窗体。第二个页面是登录成功时返回的视图。
+
+* <<login,创建登录页>>
+* <<success,创建成功页>>
+
+
+=== 创建登录页
+
+1. 右键单击 `MyStrutsApp` 项目节点，选择 "New"（新建）> "JSP"，然后将新文件命名为 `login`。单击 "Finish"（完成）。此时将在源代码编辑器中打开 `login.jsp` 文件。
+2. 在源代码编辑器中，将 `<title>` 和 `<h1>` 标记（或 `<h2>` 标记，取决于您使用的 IDE 版本）的内容更改为 `Login Form`。
+3. 将以下两个 taglib 指令添加到文件顶部：
+
+[source,java]
+----
+
+<%@ taglib uri="http://struts.apache.org/tags-bean" prefix="bean" %>
+<%@ taglib uri="http://struts.apache.org/tags-html" prefix="html" %>
+----
+
+许多 Web 应用程序将 JSP 页用于 MVC 范例中的视图，因此 Struts 提供定制标记库，以便于与 HTML 窗体进行交互。通过使用 IDE 的代码完成支持，这些库可以轻松地应用到 JSP 文件。在源代码编辑器中键入代码时，IDE 会提供 Struts 标记的代码完成以及 Struts Javadoc。您还可以通过按 Ctrl-空格键，手动调用代码完成功能：
+
+image::images/code-completion.png[title="为 Struts 标记提供代码完成和 Javadoc"]
+
+link:http://struts.apache.org/release/1.3.x/struts-taglib/dev_bean.html[+Bean 标记库+]为您提供了大量标记，在将窗体 Bean（即 `ActionForm` Bean）与从窗体中收集的数据关联时，这些标记非常有用。link:http://struts.apache.org/release/1.3.x/struts-taglib/dev_html.html[+html 标记库+]在视图和 Web 应用程序所必需的其他组件之间提供了一个接口。例如，下面您将使用 Struts 的 `<html:form>` 标记替换常用的 html `form` 标记。这样做的一个好处是使服务器查找或创建一个 Bean 对象，该对象对应于为 `html:form` 的 `action` 元素提供的值。
+
+4. 在 `<h1>`（或 `<h2>`）标记下，添加以下代码：
+
+[source,xml]
+----
+
+<html:form action="/login">
+
+   <html:submit value="Login" />
+
+</html:form>
+----
+
+无论何时在源代码编辑器中完成键入，都可以通过右键单击并选择 "Format"（格式化）（Alt-Shift-F 组合键）来整理代码。
+
+5. 在 IDE 右侧区域的组件面板（"Window"（窗口）> "Palette"（组件面板））中，将 "Table"（表）项从 "HTML" 类别拖动至 `<html:submit value="Login" />` 行上方的某个位置。将显示 "Insert Table"（插入表格）对话框。将行设置为 `3`，列设置为 `2`，其他所有设置都保留为 `0`。在本教程中，稍后您将<<style,附加样式表>>来影响表的显示。
+image::images/insert-table.png[title=""Palette"（组件面板）为易于使用的代码模板提供对话框"] 
+单击 "OK"（确定），然后可以选择重新设置代码格式（Alt-Shift-F 组合键）。现在，`login.jsp` 中的窗体显示如下：
+
+[source,xml]
+----
+
+<html:form action="/login">
+    <table border="0">
+        <thead>
+            <tr>
+                <th></th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <html:submit value="Login" />
+
+</html:form>
+----
+
+*注：*可以安全地删除 `<thead>` 表行，因为它不会在本教程中使用。
+
+6. 在第一个表行中，输入以下内容（更改的内容以*粗体*显示）：
+
+[source,xml]
+----
+
+<tr>
+    <td>*Enter your name:*</td>
+    <td>*<html:text property="name" />*</td>
+</tr>
+----
+7. 在第二个表行中，输入以下内容（更改的内容以*粗体*显示）：
+
+[source,xml]
+----
+
+<tr>
+    <td>*Enter your email:*</td>
+    <td>*<html:text property="email" />*</td>
+</tr>
+----
+通过 `html:text` 元素，您可以将此窗体中的输入字段与下一步中将创建的窗体 Bean 中的属性相匹配。例如，`property` 的值必须与此窗体关联的窗体 Bean 中声明的字段相匹配。
+8. 将 <html:submit value="Login" /> 元素移动到第三个表行的第二列，以便第三个表行如下所示（更改的内容以*粗体*显示）：
+
+[source,xml]
+----
+
+<tr>
+    <td></td>
+    <td>*<html:submit value="Login" />*</td>
+</tr>
+----
+
+在此阶段，您的登录窗体会显示如下：
+
+
+[source,xml]
+----
+
+<html:form action="/login">
+    <table border="0">
+        <tbody>
+            <tr>
+                <td>Enter your name:</td>
+                <td><html:text property="name" /></td>
+            </tr>
+            <tr>
+                <td>Enter your email:</td>
+                <td><html:text property="email" /></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><html:submit value="Login" /></td>
+            </tr>
+        </tbody>
+    </table>
+</html:form>
+----
+
+
+=== 创建成功页
+
+1. 右键单击 `MyStrutsApp` 项目节点，选择 "New"（新建）> "JSP"，然后将新文件命名为 `success`。在 "Folder"（文件夹）字段中，单击邻近的 "Browse"（浏览）按钮，然后从显示的对话框中选择 `WEB-INF`。单击 "Select Folder"（选择文件夹）以在 "Folder"（文件夹）字段中输入 WEB-INF。客户端请求不能直接访问 WEB-INF 文件夹中包含的任何文件。为了能够正常显示 `success.jsp`，它必须包含处理过的数据。单击 "Finish"（完成）。
+2. 在源代码编辑器中，将新创建页面中的内容更改为以下内容：
+
+[source,html]
+----
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Login Success</title>
+</head>
+<body>
+    <h1>Congratulations!</h1>
+
+    <p>You have successfully logged in.</p>
+
+    <p>Your name is: .</p>
+
+    <p>Your email address is: .</p>
+</body>
+----
+3. 将 link:http://struts.apache.org/release/1.3.x/struts-taglib/dev_bean.html[+Bean 标记库+]指令添加到文件顶部：
+
+[source,java]
+----
+
+<%@ taglib uri="http://struts.apache.org/tags-bean" prefix="bean" %>
+
+----
+4. 添加以下 `<bean:write>` 标记（更改的内容以*粗体*显示）：
+
+[source,html]
+----
+
+<p>Your name is: *<bean:write name="LoginForm" property="name" />*.</p>
+
+<p>Your email address is: *<bean:write name="LoginForm" property="email" />*.</p>
+
+----
+通过使用 `<bean:write>` 标记，您可以利用 Bean 标记库来定位要创建的 `ActionForm` Bean，并显示为 `name` 和 `email` 保存的用户数据。
+
+
+== 创建 `ActionForm` Bean
+
+Struts `ActionForm` Bean 用于保留请求之间的数据。例如，如果用户提交一个窗体，则数据会暂时存储在窗体 Bean 中，以便它可以重新显示在窗体页面中（如果数据的格式无效或登录失败），或者显示在登录成功页中（如果数据通过验证）。
+
+1. 右键单击 `MyStrutsApp` 项目节点，然后选择 "New"（新建）> "Other"（其他）。在 "Categories"（类别）下选择 "Struts"，然后在 "File Types"（文件类型）下选择 "Struts ActionForm Bean"。单击 "Next"（下一步）。
+2. 为 "Class Name"（类名）键入 `LoginForm`。然后在 "Package"（包）下拉列表中选择 `com.myapp.struts` 并单击 "Finish"（完成）。
+
+IDE 将创建 `LoginForm` Bean，并在源代码编辑器中将其打开。默认情况下，IDE 为它提供了一个名为 `name` 的 `String`，以及名为 `number` 的 `int`。这两个字段都具有为其定义的存取方法。而且，IDE 会将一个 Bean 声明添加到 `struts-config.xml` 文件中。如果您在源代码编辑器中打开 `struts-config.xml` 文件，将看到以下声明（由向导添加）：
+
+
+[source,xml]
+----
+
+<form-beans>
+    *<form-bean name="LoginForm" type="com.myapp.struts.LoginForm" />*
+</form-beans>
+
+----
+
+IDE 在 `struts-config.xml` 文件中提供导航支持。按住 Ctrl 键并将鼠标悬停在 `LoginForm` Bean 的全限定类名上。此名称将变为一个链接，使您能够直接导航至源代码编辑器中的该类：
+
+image::images/navigation-support.png[title="在 struts-config.xml 中提供导航支持"]
+3. 在源代码编辑器中的 `LoginForm` Bean 中，创建字段以及随附的存取方法，这些方法与 `login.jsp` 中创建的 `name` 和 `email` 文本输入字段相对应。由于已在 `LoginForm` 框架中创建 `name`，因此只需要实现 `email`。
+
+将以下声明添加到 `name` 下（更改的内容以*粗体*显示）：
+
+
+[source,java]
+----
+
+private String name;
+*private String email;*
+----
+
+要创建存取方法，请将光标放在 `email` 上，然后按 Alt-Insert 组合键。
+
+image::images/create-accessors.png[title="在源代码编辑器中按 Ctrl-I 时显示 "Insert Code"（插入代码）菜单"]
+
+选择 "Getter and Setter"（getter 和 setter），然后在显示的对话框中选择 `email : String` 并单击 "Generate"（生成）。将生成 `email` 字段的存取方法。
+
+*注：*可以删除 `number` 的声明和存取方法，因为它不会在本教程中使用。
+
+
+== 创建 `Action` 类
+
+`Action` 类包含应用程序中的业务逻辑。收到窗体数据后，将由 `Action` 对象的 `execute` 方法处理数据，并确定处理过的数据要转发到的视图。由于 `Action` 类是组成 Struts 框架的必要部分，因此 NetBeans IDE 为您提供了一个向导。
+
+1. 在 "Projects"（项目）窗口中，右键单击 `MyStrutsApp` 项目节点，然后选择 "New"（新建）> "Other"（其他）。从 "Struts" 类别中，选择 "Struts Action"（Struts 操作），然后单击 "Next"（下一步）。
+2. 在 "Name and Location"（名称和位置）面板中，将名称更改为 `LoginAction`。
+3. 在 "Package"（包）下拉列表中选择 `com.myapp.struts`。
+4. 在 "Action Path"（操作路径）中键入 `/login`。该值必须与为 `login.jsp` 中 `<html:form>` 标记的 `action` 属性所设置的值相匹配。请确保设置与以下屏幕快照中显示的一样，然后单击 "Next"（下一步）。 
+image::images/new-struts-action.png[title="新建 Struts 操作向导"]
+5. 在此向导的第三步中，可以选择将 `Action` 类与窗体 Bean 相关联。请注意，以前创建的 `LoginForm` Bean 作为“ActionForm Bean 名称”的一个选项列出。对面板进行以下调整：
+* 删除 "Input Resource"（输入资源）字段的正斜杠
+* 将 "Scope"（范围）设置为 "Request"（请求）（在 Struts 中，"Session"（会话）是默认范围设置。）
+* 取消选择 "Validate ActionForm Bean"（验证 ActionForm Bean）选项
+单击 "Finish"（完成）。将生成 `LoginAction` 类并在源代码编辑器中打开文件。另请注意，以下 `action` 条目将添加到 `struts-config.xml` 文件：
+
+[source,xml]
+----
+
+<action-mappings>
+    *<action name="LoginForm" path="/login" scope="request" type="com.myapp.struts.LoginAction" validate="false"/>*
+    <action path="/Welcome" forward="/welcomeStruts.jsp"/>
+</action-mappings>
+----
+`name` 和 `scope` 属性适用于与此操作关联的窗体 Bean。具体说来，当传入请求与 `/login` 相匹配时，Struts 框架就会自动实例化 `LoginForm` 对象，并使用请求中发送的窗体数据填充此对象。`validate` 的默认值设置为 `true`。此设置通知框架调用窗体 Bean 的 `validate` 方法。但是您在向导中取消选择了此选项，因为您将在下一步中手动编码简单验证，这不需要 `validate` 方法。
+
+
+== 实现验证
+
+在源代码编辑器中，浏览 `LoginAction` 类并查看 `execute` 方法：
+
+
+[source,java]
+----
+
+public ActionForward execute(ActionMapping mapping, ActionForm form,
+    HttpServletRequest request, HttpServletResponse response)
+    throws Exception {
+
+    return mapping.findForward(SUCCESS);
+}
+----
+
+注意 `SUCCESS` 的定义（列在 `LoginAction` 类声明的下方）：
+
+
+[source,java]
+----
+
+private final static String SUCCESS = "success";
+----
+
+目前，`mapping.findForward` 方法设置为无条件地向名为 `success` 的输出视图转发任何请求。此设置并不是很令人满意；您希望首先对传入数据执行某种验证以确定是发送 `success` 视图，还是发送其他任何视图。
+
+* <<beanData,访问 Bean 数据并准备转发条件>>
+* <<errorMsg,设置错误消息>>
+
+
+=== 访问 Bean 数据并准备转发条件
+
+1. 在 `execute` 方法的主体中键入以下代码：
+
+[source,java]
+----
+
+// extract user data
+LoginForm formBean = (LoginForm)form;
+String name = formBean.getName();
+String email = formBean.getEmail();
+----
+为了使用传入的窗体数据，需要使用 `execute` 的 `ActionForm` 参数，并将其强制转换为 `LoginForm`，然后应用先前创建的 getter 方法。
+2. 键入以下条件子句以对传入数据执行验证：
+
+[source,java]
+----
+
+// perform validation
+if ((name == null) ||             // name parameter does not exist
+    email == null  ||             // email parameter does not exist
+    name.equals("") ||            // name parameter is empty
+    email.indexOf("@") == -1) {   // email lacks '@'
+
+    return mapping.findForward(FAILURE);
+}
+----
+在此阶段，`execute` 方法会显示如下：
+
+[source,java]
+----
+
+public ActionForward execute(ActionMapping mapping, ActionForm form,
+        HttpServletRequest request, HttpServletResponse response)
+        throws Exception {
+
+    // extract user data
+    LoginForm formBean = (LoginForm) form;
+    String name = formBean.getName();
+    String email = formBean.getEmail();
+
+    // perform validation
+    if ((name == null) || // name parameter does not exist
+            email == null || // email parameter does not exist
+            name.equals("") || // name parameter is empty
+            email.indexOf("@") == -1) {   // email lacks '@'
+
+        return mapping.findForward(FAILURE);
+    }
+
+    return mapping.findForward(SUCCESS);
+}
+----
+3. 将 `FAILURE` 的声明添加到 `LoginAction` 类中（更改以*粗体*显示）：
+
+[source,java]
+----
+
+private final static String SUCCESS = "success";
+*private final static String FAILURE = "failure";*
+
+----
+
+如果用户同时提供了 `name` 和 `email` 字段的条目，并且输入的电子邮件地址中包含“@”符号，则 `execute` 方法将使用以上逻辑将请求转发到 `success` 视图。否则，将转发 `failure` 视图。您可以将 `failure` 视图设置为指回窗体页面，允许用户再次输入格式正确的数据，详细信息请参见下面的<<forward,将 `forward` 条目添加到 `struts-config.xml`>>。
+
+
+=== 设置错误消息
+
+如果返回登录窗体，则最好通知用户登录已失败。您可以实现此功能，方法是在窗体 bean 中添加 `error` 字段，并将相应的 `<bean:write>` 标记添加到 `login.jsp` 中的窗体。最后，在 `Action` 对象中，将错误消息设置为显示在选择了 `failure` 视图的事件中。
+
+1. 打开 `LoginForm` 并将 `error` 字段添加到类中：
+
+[source,java]
+----
+
+// error message
+private String error;
+----
+2. 为 `error` 添加 getter 方法和 setter 方法，<<accessors,如上所述>>。
+3. 修改 setter 方法使它如下所示：
+
+[source,xml]
+----
+
+public void setError() {
+    this.error =
+        "<span style='color:red'>Please provide valid entries for both fields</span>";
+}
+
+----
+4. 打开 `login.jsp` 并进行以下更改：
+
+[source,xml]
+----
+
+<html:form action="/login">
+    <table border="0">
+        <tbody>
+            *<tr>
+                <td colspan="2">
+                    <bean:write name="LoginForm" property="error" filter="false"/>
+                    &amp;nbsp;</td>
+            </tr>*
+            <tr>
+                <td>Enter your name:</td>
+                <td><html:text property="name" /></td>
+            </tr>
+
+----
+5. 在 `LoginAction` 中，在 `if` 条件子句中添加一条语句，以便在转发 `failure` 条件之前设置错误消息（更改的内容以*粗体*显示）：
+
+[source,java]
+----
+
+if ((name == null) ||             // name parameter does not exist
+    email == null  ||             // email parameter does not exist
+    name.equals("") ||            // name parameter is empty
+    email.indexOf("@") == -1) {   // email lacks '@'
+
+    *formBean.setError();*
+    return mapping.findForward(FAILURE);
+}
+
+----
+
+完成的 `LoginAction` 类现在应该如下所示：
+
+
+[source,java]
+----
+
+public class LoginAction extends org.apache.struts.action.Action {
+
+    private final static String SUCCESS = "success";
+    private final static String FAILURE = "failure";
+
+    public ActionForward execute(ActionMapping mapping, ActionForm form,
+            HttpServletRequest request, HttpServletResponse response)
+            throws Exception {
+
+        // extract user data
+        LoginForm formBean = (LoginForm)form;
+        String name = formBean.getName();
+        String email = formBean.getEmail();
+
+        // perform validation
+        if ((name == null) ||             // name parameter does not exist
+            email == null  ||             // email parameter does not exist
+            name.equals("") ||            // name parameter is empty
+            email.indexOf("@") == -1) {   // email lacks '@'
+
+            formBean.setError();
+            return mapping.findForward(FAILURE);
+        }
+
+        return mapping.findForward(SUCCESS);
+
+    }
+}
+
+----
+
+
+== 将 `forward` 条目添加到 `struts-config.xml` 中
+
+为了让应用程序能够使 JSP 页与 `LoginAction` 的 `execute` 方法所返回的转发条件相匹配，您需要将 `forward` 条目添加到 `struts-config.xml` 文件中。
+
+1. 在源代码编辑器中打开 `struts-config.xml`，右键单击 `LoginForm` 的 `action` 条目中的任何位置，然后选择 "Struts" > "Add Forward"（添加转发）。 
+image::images/add-forward.png[title="右键单击并选择 "Struts" > "Add Forward"（添加转发）"]
+2. 在 "Add Forward"（添加转发）对话框的 "Forward Name"（转发名称）中，键入 `success`。在 "Resource File"（资源文件）字段中输入 `success.jsp` 的路径（即 `/WEB-INF/success.jsp`）。此对话框现在应如下所示： 
+image::images/add-forward-dialog.png[title=""Add Forward"（添加转发）对话框在 struts-config.xml 中创建一个转发条目"] 
+单击 "ADD"（添加）。请注意，以下 `forward` 条目已添加到 `struts-config.xml` 中（更改的内容以*粗体*显示）：
+
+[source,xml]
+----
+
+<action name="LoginForm" path="/login" scope="request" type="com.myapp.struts.LoginAction" validate="false">
+    *<forward name="success" path="/WEB-INF/success.jsp"/>*
+</action>
+
+----
+3. 执行相同的操作以添加 `failure` 的转发条目。将 "Resource File"（资源文件）路径设置为 `/login.jsp`。以下 `forward` 条目将添加到 `struts-config.xml`（更改的内容以*粗体*显示）：
+
+[source,java]
+----
+
+<forward name="success" path="/WEB-INF/success.jsp"/>
+*<forward name="failure" path="/login.jsp"/>*
+
+----
+
+
+== 配置和运行应用程序
+
+IDE 使用 Ant 构建脚本来构建和运行 Web 应用程序。当您基于在新建项目向导中输入的选项创建项目时，IDE 会生成构建脚本。在构建并运行应用程序之前，需要将应用程序的默认入口点设置为 `login.jsp`。（可选）您还可以向项目中添加简单的样式表。
+
+* <<welcome,设置欢迎页>>
+* <<style,附加样式表>>
+* <<run,运行应用程序>>
+
+
+=== 设置欢迎页
+
+1. 在 "Projects"（项目）窗口中，双击 `web.xml` 部署描述符。源代码编辑器顶部列出的标签为您提供了 `web.xml` 文件的界面。单击 "PAges"（页面）标签。在 "Welcome File"（欢迎文件）字段中，输入 `login.jsp`。
+image::images/welcome-files.png[title="应用程序的部署描述符的图形编辑器"] 
+现在单击 "Source"（源）标签可查看此文件。注意 `login.jsp` 现在已列在 `welcome-file` 条目中：
+
+[source,xml]
+----
+
+<welcome-file>login.jsp</welcome-file>
+
+----
+
+
+=== 附加样式表
+
+1. 向项目中添加简单的样式表。执行此操作的一个简单方法是将link:https://netbeans.org/files/documents/4/2228/stylesheet.css[+此样例样式表+]保存到您的计算机上。复制此文件（Ctrl-C 组合键），然后在 IDE 中，选择 "Projects"（项目）窗口中的 "Web Pages"（Web 页）节点，然后按 Ctrl-V 组合键。此文件即添加到项目中。
+2. 将样式表链接到您的 JSP 页，方法是在 `login.jsp` 和 `success.jsp` 的 `<head>` 标记之间添加一个引用：
+
+[source,java]
+----
+
+<link rel="stylesheet" type="text/css" href="stylesheet.css">
+
+----
+
+
+=== 运行应用程序
+
+1. 在 "Projects"（项目）窗口中，右键单击该项目节点并选择 "Run"（运行）。IDE 将构建 Web 应用程序并使用您在创建此项目时所指定的服务器对其进行部署。浏览器将打开并显示 `login.jsp` 页。键入一些会验证失败的数据，即将任一字段保留为空或输入缺少 "@" 符号的电子邮件地址： 
+image::images/login-form.png[title="窗体包含将验证失败的数据"] 
+
+单击 "Login" 之后，登录窗体页会重新显示，其中包含一条错误消息： 
+image::images/login-form-error.png[title="窗体重新显示，但具有错误消息"] 
+
+尝试输入应该通过验证的数据。单击 "Login" 之后，您将会看到成功页： 
+image::images/success-page.png[title="成功页显示，并显示输入数据"]
+link:/about/contact_form.html?to=3&subject=Feedback:%20Introduction%20to%20Struts[+请将您的反馈意见发送给我们+]
+
+
+
+== 另请参见
+
+对 NetBeans IDE 中 Struts 框架的简介到此结束。本文档演示了如何使用 Struts 框架在 NetBeans IDE 中构造一个简单的 Web MVC 应用程序，并且向您介绍了用于开发 Web 应用程序的 IDE 的界面。您已了解了如何在 JSP 页中使用 Struts 标记、如何在 Struts `ActionForm` Bean 中暂时存储用户数据，以及如何使用 Struts `Action` 对象实现转发逻辑。您还将学到如何对应用程序执行简单验证，包括为失败的登录尝试设置警告消息。
+
+有关相关教程，请参见以下资源：
+
+* link:framework-adding-support.html[+添加对 Web 框架的支持+]。此教程为一般性指南，介绍了如何使用插件管理器将 Web 框架支持添加到 NetBeans IDE 中。
+* link:quickstart-webapps-spring.html[+Spring Web 框架简介+]。此教程介绍了使用 Spring Framework 在 NetBeans IDE 中开发 Web 应用程序的基础知识。
+* link:jsf20-intro.html[+JavaServer Faces 2.0 简介+]。此文档介绍如何将托管 Bean 写入 Web 页，以及如何利用 Facelets 模板。

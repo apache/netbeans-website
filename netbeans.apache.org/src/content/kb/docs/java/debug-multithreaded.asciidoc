@@ -1,0 +1,262 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= Debugging Multi-threaded Applications in NetBeans IDE
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: Debugging Multi-threaded Applications in NetBeans IDE - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, Debugging Multi-threaded Applications in NetBeans IDE
+
+This document describes how to use the Debugging window in NetBeans IDE to debug multi-threaded applications. The tutorial also demonstrate how to use the IDE to detect deadlocks in an application.
+
+The Debugging window simplifies the debugging process by integrating into one window the information about debugging sessions, application threads and thread call stacks. The Debugging window enables you to easily see the status of application threads and suspend and resume any of the threads in the session.
+
+This tutorial uses two sample projects to demonstrate how to work with the Debugging window. To complete this tutorial you first download and open the projects Gallery and Deadlock.
+
+Watch the link:debug-multithreaded-screencast.html[+Video of Debugging a Multi-threaded Application in NetBeans IDE+].
+
+
+image::images/netbeans-stamp-80-74-73.png[title="Content on this page applies to the NetBeans IDE 7.2, 7.3, 7.4 and 8.0"]
+
+
+*To follow this tutorial, you need the following software and resources.*
+
+|===
+|Software or Resource |Version Required 
+
+|link:https://netbeans.org/downloads/index.html[+NetBeans IDE+] |7.2, 7.3, 7.4, 8.0 
+
+|link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+Java Development Kit (JDK)+] |version 7 or 8 
+
+|link:https://netbeans.org/projects/samples/downloads/download/Samples/Java/debugging-samples.zip[+Gallery Project and Deadlock Project+] |  
+|===
+
+
+== Downloading the Sample Projects
+
+You can download the sample projects used in this tutorial in the following ways.
+
+* Download link:https://netbeans.org/projects/samples/downloads/download/Samples/Java/debugging-samples.zip[+a zip archive of the finished project+].
+* Checkout the project sources from the NetBeans Samples by performing the following steps:
+1. Choose Team > Subversion > Checkout from the main menu.
+2. In the Checkout dialog box, enter the following Repository URL:
+ ``https://svn.netbeans.org/svn/samples~samples-source-code`` 
+Click Next.
+3. Click Browse to open the Browse Repository Folders dialog box.
+4. Expand the root node and select *samples/java/debugging-samples*. Click OK.
+5. Specify the Local Folder for the sources (the local folder must be empty).
+6. Click Finish.
+
+When you click Finish, the IDE initializes the local folder as a Subversion repository and checks out the project sources.
+
+7. Click Open Project in the dialog that appears when checkout is complete.
+
+*Note.* For more about checking out sources with Subversion, see the section on link:../ide/subversion.html#settingUp[+Setting up Subversion+] in the link:../ide/subversion.html[+Guide to Subversion in NetBeans IDE+].
+
+
+== Opening the Projects
+
+In this tutorial you will use two applications to demonstrate the IDE's support for debugging multi-threaded applications. In this exercise you will open and then run the two projects in the IDE. After you run the projects you will then proceed to debug each of the projects.
+
+
+=== Running the Gallery Project
+
+The Gallery application is a simple Java Swing application that plays animated images. The application has two buttons that enable you to add and remove animated images. In this exercise you run the Gallery application.
+
+1. Download and expand the link:https://netbeans.org/projects/samples/downloads/download/Samples/Java/debugging-samples.zip[+ ``debugging-samples.zip`` +] archive to your local system.
+2. Choose File > Open from the main menu.
+3. Locate and select the Gallery project in the debugging-samples directory. Click Open.
+
+When you click Open the IDE opens and displays the project in the Projects window. If you expand the project node in the Projects window you can see that the project is a simple Java Swing application.
+
+4. Right-click the project node and choosing Run to launch the Gallery application.
+5. In the Gallery application, click 'More' to add images and click 'Less' to remove images.
+image::images/debugging-gallery-app.png[title="Gallery application"]
+6. Close the Gallery application window.
+
+The Gallery project is a simple multi-threaded application that you will debug in this tutorial.
+
+
+=== Running the Deadlock Project
+
+The Deadlock application contains a  ``main``  method that starts a thread that runs for 500000 milliseconds. The  ``main``  method starts two threads that print to the Output window when they finish.
+
+1. Choose File > Open from the main menu.
+2. Locate and select the Deadlock project in the debugging-samples directory. Click Open.
+
+When you click Open the IDE opens and displays the project in the Projects window. If you expand the project node in the Projects window you can see that the project is a simple Java application.
+
+3. Right-click the project node and choosing Run to launch the Deadlock application.
+
+When you click Run, the Output window opens and displays the following output.
+
+
+[source,java]
+----
+
+run:
+Application started
+MyThread2 successfully finished.
+MyThread1 successfully finished
+----
+4. Allow the application to end normally (five minutes).
+
+When the Deadlock application ends you will see the following in the Output window.
+
+
+[source,java]
+----
+
+Main thread finished
+----
+
+The Deadlock project is a simple Java application with two threads. When you debug the application you will create a deadlock to illustrate how the IDE can help you detect deadlocks.
+
+
+== Debugging the Sample Projects
+
+The Gallery project is a simple Java Swing application that displays animated images. You add and remove the images by clicking buttons in the application. Clicking the 'More' button starts a new thread that displays and animates an image. Clicking the 'Less' button stops the most recent thread, stopping the animation and removing the image.
+
+
+=== Suspending Threads
+
+In this exercise you start debugging the Gallery application and add some images to start some application threads. When you start a debugging session the IDE opens the Debugging window in the left pane of the IDE. The Debugging window displays a list of the threads in the session.
+
+1. Right-click the Gallery project in the Projects window and choose Debug.
+
+When you click Debug, the IDE starts the Gallery application and opens the default debugging windows. The IDE automatically opens the Debugging window in the left side of the main window and opens the Debugger Console in the Output window.
+
+2. Click 'More' three times in the Gallery application to start three threads displaying animated images.
+
+If you look in the Debugging window you can see that a new thread was started for each animation.
+
+image::images/debugging-start.png[title="Debugging window"]
+3. Suspend two of the threads by clicking the 'Suspend thread' button to the right of the thread in the Debugging window.
+
+When a thread is suspended, the icon for the thread changes to indicate the new state. You can expand the thread node to view the thread's call stack. You can right-click items in the Debugging window to open a pop-up menu with debug commands.
+
+image::images/debugging-start-suspend.png[title="Debugging window with two suspended threads"]
+
+If you look at the Gallery application you can see that when you suspended the threads the animation for those threads stopped.
+
+The Debugging window enables you to quickly view and change the status of threads in the session. By default the Debugging window displays the Resume and Suspend buttons in the right side of the window. You can hide the buttons and further customize the display of the Debugging window by using the toolbar at the bottom of the Debugging window. If you are running multiple debugging sessions you can use the drop down list at the top of the Debugging window to choose which session is displayed in the window.
+
+image::images/debugging-window-toolbar.png[title="Debugging window toolbar"] 
+
+
+=== Switching Threads
+
+This exercise demonstrates what happens when you are stepping through an application and a different application thread hits a breakpoint. In this exercise you will set a method breakpoint and start stepping through the application. While you are stepping through the application you will start a new thread that will also hit the breakpoint. The IDE informs you when this occurs by displaying a notification in the Debugging window. You will then switch between threads.
+
+1. In the Gallery application window, click 'Less' or 'More' until only two or three of the animations are displayed in the window.
+2. In the Projects window of the IDE, expand the  ``gallery``  package and double-click  ``Gallery.java``  to open the file in the editor.
+3. Insert a method breakpoint in  ``Gallery.java``  at the beginning of the  ``run``  method by clicking in the left margin at line 175.
+4. Click 'More' in the Gallery application to start a new thread that will hit the method breakpoint.
+5. Click Step Over (F8) and start stepping through the method until the Program Counter reaches line 191.
+
+You can see that the Program Counter in the margin of the editor indicates your position as you step through the method.
+
+6. Click 'More' in the Gallery application to start a new thread that will hit the method breakpoint.
+
+When the new thread hits the method breakpoint a New Breakpoint Hit notification appears in the Debugging window that informs you that another thread hit a breakpoint while you were stepping through the method.
+
+image::images/debugging-newbreakpointhit.png[title="New Breakpoint Hit notification"]
+
+When you are stepping through a thread and a breakpoint is hit in another thread, the IDE gives you the option to switch to the other thread or continue stepping through the current thread. You can click the arrow button in the New Breakpoint Hit notification to switch to the thread that encountered the breakpoint. You can switch to the new thread at any time by selecting the thread in the notice window. Stepping through the current breakpoint thread resumes the current thread but the status of other application threads remains unchanged.
+
+*Note.* If you look in the Debugging window you can see that the current thread (Thread_Jirka) is indicated by a green bar in the margin. The thread that invoked the notification by hitting the breakpoint (Thread_Roman) is indicated by a yellow bar and the thread icon indicates that the thread is suspended by a breakpoint.
+
+image::images/debugging-current-suspended.png[title="New Breakpoint Hit notification"]
+7. Click the arrow in the New Breakpoint Hit notification to switch the current thread to the new thread (Thread_Roman).
+
+When you switch to the new thread you can see the following:
+
+* The program counter moves to the position at line 175 in the new current thread (Thread_Roman).
+* A 'suspended thread' annotation is now visible in the margin at line 191 indicating that a thread (Thread_Jirka) is suspended at that line.
+image::images/debugging-editor-suspendedannot.png[title="Editor showing debugging annotations"]
+8. Click Step Over a few times to step through the new current thread (Thread_Roman).
+9. Right-click the 'suspended thread' annotation in the editor margin and choose Set as Current Thread > Thread_Jirka to switch back to the suspended thread.
+image::images/debugging-editor-setcurrent.png[title="Editor showing Set as Current Thread pop-up"]
+
+Alternatively, you can invoke the Current Thread Chooser (Alt+Shift+T; Ctrl+Shift+T on Mac) and switch to any of the application threads.
+
+image::images/debugging-thread-chooser.png[title="Gallery application"]
+
+When you switch back to Thread_Jirka, the suspended thread annotation appears next to the line where Thread_Roman was suspended. You can resume Thread_Roman by clicking Resume in the Debugging window.
+
+image::images/debugging-editor-suspendedannot2.png[title="Editor showing debugging annotations"]
+
+The Debugging window enables you to very precisely view and control thread states. The debugger manages application threads to simplify the debugging workflow and to prevent the debugging process from creating deadlocks. In this exercise you saw the following behavior when debugging an application in the IDE.
+
+* When a thread hits a breakpoint only the breakpoint thread is suspended.
+* When stepping through the application, the current thread is not affected when other application threads hit breakpoints.
+* Stepping only resumes the current thread. When the step is completed only the current thread is suspended.
+
+You can quit the Gallery application. In the next exercise you will debug the Deadlock application and use the IDE to help you detect a deadlock.
+
+
+=== Detecting Deadlocks
+
+The IDE can help you identify potential deadlock situations by automatically searching for deadlocks among all suspended threads. When a deadlock is detected, the IDE displays a notification in the Debugging window and identifies the involved threads.
+
+To demonstrate the IDE's deadlock detection, you will run the sample Deadlock project in the debugger and create a deadlock situation.
+
+1. Expand the  ``myapplication``  package and open  ``Thread1.java``  and  ``Thread2.java``  in the source editor.
+2. Set a breakpoint in  ``Thread1.java``  at line 20 and in  ``Thread2.java``  at line 20
+
+To set the breakpoint, click in the margin of the source editor next to the line where you want to set the breakpoint. The breakpoint annotation appears in the left margin next to the line. If you open the Breakpoints window (Alt-Shift-5; Ctrl+Shift+5 on Mac) you can see that the two breakpoints are set and enabled.
+
+image::images/debug-deadlock-setbkpt.png[title="Editor showing breakpoint set at line 20"]
+3. Right-click the Deadlock project in the Projects window and choose Debug.
+
+The  ``main``  method will run the two threads, and both threads will be suspended at one of the breakpoints. You can see the threads suspended by the breakpoints in the Debugging window.
+
+4. In the Debugging Window, resume the suspended threads ( ``MyThread1``  and  ``MyThread2`` ) by clicking the Resume buttons to the right of the suspended threads in the Debugging window.
+image::images/debug-deadlock-resume.png[title="Resuming suspended threads in the Debugging window"]
+
+Resuming the threads  ``MyThread1``  and  ``MyThread2``  will create the deadlock state.
+
+5. Choose Debug\Check for Deadlock from the main menu to check the suspended threads for deadlocks.
+image::images/debug-deadlock-detected.png[title="Resuming suspended threads in the Debugging window"]
+
+If you check the application for deadlocks and a deadlock is detected, a message appears in the Debugging Window informing you about the deadlock. You can see that the threads in deadlock are indicated with a red bar in the left margin of the Debugging window.
+
+This tutorial was a basic introduction to some of the debugging features in the IDE. The Debugging window enables you to easily suspend and resume threads when debugging an application. This can be extremely helpful when you are debugging multi-threaded applications.
+
+
+link:https://netbeans.org/about/contact_form.html?to=3&subject=Feedback:%20Debugging%20Multithreaded%20Applications[+Send Feedback on This Tutorial+]
+
+
+
+== See Also
+
+For more information about developing and testing Java applications in NetBeans IDE, see the following resources:
+
+* Demo: link:debug-multithreaded-screencast.html[+Debugging a Multi-threaded Application in NetBeans IDE+]
+* Demo: link:debug-stepinto-screencast.html[+Visual Step Into Action in NetBeans Debugger+]
+* Demo: link:debug-deadlock-screencast.html[+Deadlock Detection Using the NetBeans Debugger+]
+* Demo: link:debug-evaluator-screencast.html[+Using the Code Snippet Evaluator in the NetBeans Debugger+]
+* link:../../trails/java-se.html[+Basic IDE and Java Programming Learning Trail+]
+* link:junit-intro.html[+Writing JUnit Tests+]
+* link:profiler-intro.html[+Introduction to Profiling Java Applications+]

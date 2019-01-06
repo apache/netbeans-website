@@ -1,0 +1,453 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= PHPを使用するデータベース駆動型アプリケーションの作成
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: PHPを使用するデータベース駆動型アプリケーションの作成 - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, PHPを使用するデータベース駆動型アプリケーションの作成
+
+= レッスン6: データベースへの新しいウィッシュの追加
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: レッスン6: データベースへの新しいウィッシュの追加 - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, レッスン6: データベースへの新しいウィッシュの追加
+
+
+
+1. link:wish-list-tutorial-main-page.html[+PHPを使用するデータベース駆動型アプリケーションの作成 - メイン・ページ+]
+2. 
+データベースの作成
+
+1. link:wish-list-lesson1.html[+MySQLデータベースの作成+]
+2. link:wish-list-oracle-lesson1.html[+Oracleデータベース表の作成+]
+3. 
+link:wish-list-lesson2.html[+アプリケーションの設計。データベースからの読取り+]
+
+4. link:wish-list-lesson3.html[+新規アプリケーション・ユーザーの作成+]
+5. link:wish-list-lesson4.html[+コードの最適化+]
+6. link:wish-list-lesson5.html[+セキュリティの追加。アプリケーション・ユーザー・ログオンの実装+]
+7. 
+*=> データベースへの新しいウィッシュの追加*
+
+8. link:wish-list-lesson7.html[+データベース内のエントリの更新および削除+]
+9. link:wish-list-lesson8.html[+CSSテクノロジを使用したアプリケーションの外観の改良+]
+10. link:wish-list-lesson9.html[+リモートWebサーバーへのアプリケーションのデプロイ+]
+
+image::images/netbeans-stamp-80-74-73.png[title="このページの内容は、NetBeans IDE 7.2、7.3、7.4および8.0に適用されます"]
+
+このレッスンでは、次の2つの機能を使用してアプリケーションの機能を拡張します。
+
+
+この機能を実装するには、 ``editWishList.php`` ファイルを編集し、新しいファイル ``editWish.php`` を作成します。
+
+image::images/page-flow-diagram-l6.png[]
+
+現在のドキュメントは、link:wish-list-tutorial-main-page.html[+PHP向けのNetBeans IDEでのCRUDアプリケーションの作成+]というチュートリアルの一部です。
+
+
+
+== 前のレッスンからのアプリケーション・ソース・コード
+
+MySQLユーザー: 前のレッスンが完了した後のプロジェクトの状態を反映したソース・コードをダウンロードするには、link:https://netbeans.org/files/documents/4/1931/lesson5.zip[+ここ+]をクリックします。
+
+Oracleデータベース・ユーザー: 前のレッスンが完了した後のプロジェクトの状態を反映したソース・コードをダウンロードするには、link:https://netbeans.org/projects/www/downloads/download/php%252Foracle-lesson5.zip[+ここ+]をクリックします。
+
+
+== 新規ウィッシュの送信
+
+ユーザーは、次の手順で新しいウィッシュを送信します。
+
+1. ユーザーは、ログインして ``editWishList.php`` ページに切り替え、「Add Wish」ボタンを押します。 ``editWish.php`` ページが開き、HTMLフォームが表示されます。
+2. HTMLフォームで、ユーザーはウィッシュの説明と、必要に応じてウィッシュが必要な期日を入力し、「Save Changes」ボタンをクリックします。
+3. ウィッシュの説明を入力せずにフォームを送信すると、ユーザーはもう一度実行するようにフォームに戻されます。ユーザーが説明なしで期日を送信した場合、その日付はフォームが再ロードされるときに再表示されます。
+
+ユーザーがこの手順を実行できるようにするには、アプリケーションに次の機能を追加します。
+
+* ウィッシュを追加するためのHTMLフォームと、ユーザーをフォームにリダイレクトする ``editWishList.php`` のボタンで構成された<<add-wish-ui-elements,ユーザー・インタフェース・コンポーネント>>。
+* 不完全なフォームが送信された場合に、<<inputFormAfterunsuccessfulSave,期日を再表示>>するためのコード。
+
+
+[[add-wish-ui-elements]]
+=== ユーザー・インタフェース・コンポーネントの追加
+
+*新規ウィッシュを追加するための機能を追加するには:*
+
+1. 「Add Wish」ボタンを実装します。 ``editWishList.php`` ファイルで、次のHTMLコードをPHPブロックの下に追加します。
+
+[source,xml]
+----
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+    <head>
+
+       <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+    <body>
+        <form name="addNewWish" action="editWish.php">            
+            <input type="submit" value="Add Wish">
+        </form>
+    </body>
+</html>
+----
+
+*注意: *HTMLバリデータからの警告は無視できます。
+
+フォームには、 ``submit`` 型の「Add Wish」入力フィールドが含まれています。このフィールドは「Add Wish」ボタンを実装します。ユーザーが「Add Wish」をクリックすると、 ``editWish.php`` ページにリダイレクトされます。データはこのフォームを介して転送されないため、サーバー・リクエスト・メソッドは使用されません。
+
+2. ウィッシャの既存のウィッシュを表示する表をaddNewWishフォームの上に追加します。コードは ``wishlist.php`` と似ています。
+
+*MySQLデータベースの場合*:
+
+
+[source,php]
+----
+
+<table border="black"><tr><th>Item</th><th>Due Date</th></tr><?phprequire_once("Includes/db.php");$wisherID = WishDB::getInstance()->get_wisher_id_by_name($_SESSION["user"]);$result = WishDB::getInstance()->get_wishes_by_wisher_id($wisherID);while($row = mysqli_fetch_array($result)) {echo "<tr><td>" . htmlentities($row['description']) . "</td>";echo "<td>" . htmlentities($row['due_date']) . "</td></tr>\n";}?></table>
+----
+
+*Oracleデータベースの場合:*
+
+
+[source,php]
+----
+
+<table border="black">
+    <tr><th>Item</th><th>Due Date</th></tr>
+    <?php
+    require_once("Includes/db.php");
+    $wisherID = WishDB::getInstance()->get_wisher_id_by_name($_SESSION["user"]);
+    $stid = WishDB::getInstance()->get_wishes_by_wisher_id($wisherID);
+    while ($row = oci_fetch_array($stid)) {echo "<tr><td>" . htmlentities($row['DESCRIPTION']) . "</td>";echo "<td>" . htmlentities($row['DUE_DATE']) . "</td></tr>\n";
+    }
+    ?>
+</table>
+----
+3. 「ソース・ファイル」フォルダで ``editWish.php``  PHPファイルを作成します。
+4.  ``editWish.php`` でAdd Wishフォームを実装します。次のコードを<?php?>ブロックの下に入力するか、または貼り付けます。
+
+[source,xml]
+----
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+    <head>
+
+       <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+    <body>
+        <form name="editWish" action="editWish.php" method="POST">Describe your wish: <input type="text" name="wish"  value="" /><br/>When do you want to get it? <input type="text" name="dueDate" value=""/><br/><input type="submit" name="saveWish" value="Save Changes"/><input type="submit" name="back" value="Back to the List"/>
+        </form>
+    </body>
+</html> 
+----
+
+Add Wishフォームには、次が含まれています。
+
+* ウィッシュの説明と期日を入力するための、2つの空のテキスト・フィールド。
+* 入力フィールドの横に出力されるテキスト。
+* 「Save Changes」ボタンを表す ``submit`` フィールド。
+*  ``editWishList.php`` ページに戻るための「Back to the List」ボタンを表す ``submit`` フィールド。
+
+「Add Wish」ボタンを押すと、フォームはリクエスト・メソッドPOSTを介して、入力したデータを同じ ``editWish.php`` ページに送信します。
+
+
+=== 送信に失敗した後の期日の再表示
+
+ユーザーがAdd Wishフォームに説明を入力しなかった場合、エラー・メッセージが表示され、ユーザーは ``editWish.php`` ページに戻ります。ユーザーが ``editWish.php`` に戻ると、 ``dueDate`` を入力していた場合はAdd Wishフォームにその値が表示されます。現在のフォームの実装では、両方のフィールドは常に空です。入力した値を保持するには、新しいウィッシュのデータを配列に保存する必要があります。配列は ``description`` と ``due_date`` という名前の2つの要素で構成されます。配列から ``dueDate`` フィールドの値を取得するように、Add Wishフォームを変更する必要があります。
+
+*注意:* 説明が入力されていない場合に入力フォームを再ロードするコードは、<<validateAndEnterWishToDatabase,データを検証してデータベースに入力するコード>>に含まれています。このコードについては、この項では説明しません。この項のコードは、フォームが再ロードされた場合に ``dueDate`` の値が表示されるように、その値を保持するのみです。
+
+*ユーザーが入力フォームの送信に失敗した場合に入力フォームを再表示するには:*
+
+1. 次のコード・ブロックを、 ``editWish.php`` のHTML <body>要素内で、入力フォームの直前に入力するか、または貼り付けます。
+
+[source,php]
+----
+
+<?php 
+if ($_SERVER["REQUEST_METHOD"] == "POST")$wish = array("description" => $_POST["wish"], "due_date" => $_POST["dueDate"]);else$wish = array("description" => "", "due_date" => "");
+?>  
+----
+
+このコードは、データの転送にどのサーバー・リクエスト・メソッドが使用されたかを確認し、$wishという名前の配列を作成します。メソッドがPOSTの場合、つまり説明が空の状態でウィッシュを保存しようとして失敗した後に入力フォームが表示される場合、 ``description`` と ``due_date`` の要素はPOSTを介して転送された値を受け取ります。
+
+メソッドがPOSTでない場合、つまり ``editWishList.php`` ページからのリダイレクト後に初めて入力フォームが表示される場合、 ``description`` と ``due_date`` の要素は空です。
+
+*注意:* どちらの場合も説明は空です。 ``dueDate`` が異なるのみです。
+
+2. Add Wishフォームの入力フィールドの値が ``$wish`` 配列から取得されるように、Add Wishフォームを更新します。Add Wishフォームの次の行が対象です。
+
+[source,java]
+----
+
+Describe your wish: <input type="text" name="wish"  value="" /><br/>
+When do you want to get it? <input type="text" name="dueDate" value=""/><br/>
+----
+次と置き換えます。
+
+[source,php]
+----
+
+Describe your wish: <input type="text" name="wish"  value="<?php echo $wish['description'];?>" /><br/>
+When do you want to get it? <input type="text" name="dueDate" value="<?php echo $wish['due_date']; ?>"/><br/>
+----
+
+
+== ウィッシャのログオンの確認
+
+ ``editWish.php`` ファイルで、ファイルの先頭の<? >ブロック内に次のセッション処理コードを入力します。
+
+
+[source,java]
+----
+
+session_start();
+if (!array_key_exists("user", $_SESSION)) {
+    header('Location: index.php');
+    exit;
+}
+----
+
+このコードは次を実行します。
+
+* データを取得するために$_SESSION配列を開く。
+* 配列$_SESSIONに、識別子が「user」の要素が含まれていることを確認する。
+* 確認に失敗した場合、つまりユーザーがログオンしていない場合、最初のindex.phpページにアプリケーションがリダイレクトされ、PHPの処理が取り消される。
+
+セッション処理が正しく動作していることを確認するには、IDEからeditWish.phpファイルを実行します。セッションを介してeditWish.pageページにユーザーが転送されていないため、index.phpページが開きます。
+
+
+[[insert-new-wish]]
+== データベースへの新しいウィッシュの挿入
+
+ユーザーが新しいウィッシュを送信した後、アプリケーションはそのウィッシュを「wishes」データベースに追加する必要があります。この機能を有効にするには、次のコードをアプリケーションに追加します。
+
+*  ``db.php`` の ``WishDB`` クラスに、補助関数をさらに2つ追加する。
+* 1つの関数は、wishes表に新しいレコードを追加します。
+* もう1つの関数は、日付をMySQLデータベース・サーバーがサポートする形式に変換します。
+*  ``WishDB`` の新しい補助関数を使用してデータベースに新しいウィッシュを入力するコードを、 ``editWish.php`` に追加する。
+
+
+[[add-insert-wish]]
+=== WishDBへのinsert_wish関数の追加
+
+この関数は、入力パラメータとして、ウィッシャのID、新しいウィッシュの説明、およびそのウィッシュの期日を必要とし、このデータをデータベースの新規レコードに入力します。この関数は値を返しません。
+
+ ``db.php`` を開き、関数 ``insert_wish`` を ``WishDB`` クラスに追加します。
+
+*MySQLデータベースの場合*
+
+
+[source,java]
+----
+
+function insert_wish($wisherID, $description, $duedate){
+    $description = $this->real_escape_string($description);if ($this->format_date_for_sql($duedate)==null){$this->query("INSERT INTO wishes (wisher_id, description)" ." VALUES (" . $wisherID . ", '" . $description . "')");} else$this->query("INSERT INTO wishes (wisher_id, description, due_date)" . " VALUES (" . $wisherID . ", '" . $description . "', " . $this->format_date_for_sql($duedate) . ")");
+}
+----
+
+*Oracleデータベースの場合:*
+
+
+[source,java]
+----
+
+function insert_wish($wisherID, $description, $duedate) {
+  $query = "INSERT INTO wishes (wisher_id, description, due_date) VALUES (:wisher_id_bv, :desc_bv, to_date(:due_date_bv, 'YYYY-MM-DD'))"; 
+  $stid = oci_parse($this->con, $query);
+  oci_bind_by_name($stid, ':wisher_id_bv', $wisherID);
+  oci_bind_by_name($stid, ':desc_bv', $description);
+  oci_bind_by_name($stid, ':due_date_bv', $this->format_date_for_sql($duedate));
+  oci_execute($stid);
+  oci_free_statement($stid);
+}
+----
+
+このコードは関数format_date_for_sqlをコールし、入力した期日をデータベース・サーバーが処理できる形式に変換します。次に、問合せINSERT INTO wishes (wisher_id, description, due_date)を実行し、新しいウィッシュをデータベースに入力します。
+
+
+[[add-format-date-for-sql]]
+=== WishDBへのformat_date_for_sql関数の追加
+
+関数 ``format_date_for_sql`` を ``db.php`` 内の ``WishDB`` クラスに追加します。この関数は、入力パラメータとして日付の入った文字列を必要とします。この関数は、データベース・サーバーが処理できる形式で日付を返すか、または入力文字列が空の場合は ``null`` を返します。
+
+*注意:* この例の関数は、PHP  ``date_parse`` 関数を使用します。この関数は、「December 25, 2010」などの英語の日付でのみ機能し、アラビア数字専用です。高度なWebサイトでは日付ピッカーを使用します。
+
+*MySQLデータベースの場合:*
+
+
+[source,java]
+----
+
+function format_date_for_sql($date){if ($date == "")return null;else {$dateParts = date_parse($date);return $dateParts["year"]*10000 + $dateParts["month"]*100 + $dateParts["day"];}}
+----
+
+*Oracleデータベースの場合:*
+
+
+[source,java]
+----
+
+function format_date_for_sql($date){
+    if ($date == "")
+        return null;
+    else {
+        $dateParts = date_parse($date);
+        return $dateParts['year']*10000 + '-' + $dateParts['month']*100 + '-' + $dateParts['day'];
+   }
+}
+----
+
+入力文字列が空の場合、このコードはNULLを返します。それ以外の場合は、入力パラメータとして ``$date`` を使用する内部の ``date_parse`` 関数がコールされます。 ``date_parse`` 関数は、 ``$dateParts["year"]`` 、 ``$dateParts["month"]`` 、および ``$dateParts["day"]`` の3つの要素から構成される配列を返します。最終的な出力文字列は、 ``$dateParts`` 配列の要素で構成されます。
+
+*重要:*  ``date_parse`` 関数は英語の日付のみ認識します。たとえば、「February 2, 2016」は解析しますが、「2 Unora, 2016」は解析しません。
+
+*Oracleデータベース・ユーザーへの注意:* 形式の要件は、 ``return$dateParts...`` 文の日付の形式が、 ``insert_wish`` 問合せの ``to_date``  SQL関数の日付形式と一致することのみです。
+
+
+[[validateAndEnterWishToDatabase]]
+=== データベースへの新規ウィッシュ・レコードの入力
+
+補助関数の開発が完了したので、新規ウィッシュ・データを検証するコードを追加し、データが有効である場合は、そのデータをデータベースに入力します。データが有効でない場合、コードはAdd Wishフォームを再ロードする必要があります。期日が入力されているが説明が入力されていないためにデータが無効な場合、フォームが再ロードされるときに、<<inputFormAfterunsuccessfulSave,以前に開発したコード>>によって期日が保存され、再表示されます。
+
+次のコードを、先頭の<?php?>ブロック( ``editWish.php`` 内)のセッション処理コードの下に入力します。
+
+
+[source,java]
+----
+
+require_once("Includes/db.php");
+    $wisherID = WishDB::getInstance()->get_wisher_id_by_name($_SESSION['user']);
+
+    $wishDescriptionIsEmpty = false;
+    if ($_SERVER['REQUEST_METHOD'] == "POST"){
+        if (array_key_exists("back", $_POST)) {
+           header('Location: editWishList.php' ); 
+           exit;
+        } else
+        if ($_POST['wish'] == "") {
+            $wishDescriptionIsEmpty =  true;
+        } 
+		 else {
+           WishDB::getInstance()->insert_wish($wisherID, $_POST['wish'], $_POST['dueDate']);
+           header('Location: editWishList.php' );
+           exit;
+        }
+    }
+	
+----
+
+このコードは次の関数を実行します。
+
+*  ``db.php`` ファイルの使用を有効にする。
+* クラス ``WishDB`` のインスタンスを取得または作成する。
+* 関数 ``get_wisher_id_by_name`` をコールして、ウィッシュを追加しようとしているウィッシャのIDを取得する。
+*  ``$wishDescriptionIsEmpty`` フラグを初期化する(これは、後でエラー・メッセージの表示に使用されます)。
+* リクエスト・メソッドがPOSTであることを確認する(これは、このデータが ``editWish.php`` ページ自身のウィッシュ・データを入力するためのフォームから送信されたことを意味します)。
+*  ``$_POST`` 配列が「back」キーを持つ要素を含んでいるかどうかを確認する。
+
+ ``$_POST`` 配列が「back」キーを持つ要素を含んでいる場合、フォームを送信する前に「Back to the List」ボタンが押されます。この場合、コードは、フィールドに入力されたデータを保存せずにユーザーを ``editWishList.php`` にリダイレクトし、PHP処理を停止します。
+
+$_POST配列が「back」キーを持つ要素を含んで_いない_場合、データは「Save Changes」ボタンを押すことによって送信されます。この場合、コードは、ウィッシュの説明が入力されているかどうかを検証します。コードは、$_POST配列内の「wish」キー持つ要素が空であるかどうかを確認し、キーが空の場合は$wishDescriptionIsEmptyフラグをtrueに変更します。PHPブロックのコードがさらに実行されることはなく、Add Wishフォームが再ロードされます。
+
+「Back to the List」ボタンが押されず、ウィッシュの説明が入力されている場合、コードは入力パラメータとしてウィッシャのID、ウィッシュの説明、およびウィッシュの期日を持つ関数 ``insert_wish`` をコールします。コードはユーザーを ``editWishList.php`` ページにリダイレクトし、PHP処理を停止します。
+
+
+=== エラー・メッセージの表示
+
+ユーザーがウィッシュの説明を入力せずにウィッシュを保存しようとした場合、エラー・メッセージが表示されます。
+次の<?php?>ブロックを、HTML入力フォーム内の「Describe your wish」入力フィールドの下に入力します。
+
+
+[source,php]
+----
+
+<?phpif ($wishDescriptionIsEmpty) echo "Please enter description<br/>";?>
+----
+
+ ``$wishDescriptionIsEmpty`` フラグがtrueの場合は、エラー・メッセージが表示されます。フラグは、入力フォームの検証時に処理されます。
+
+
+== 最初のindex.phpページへの復帰
+
+ボタンを押すことによって、ユーザーがいつでもアプリケーションの最初のページに戻ることができるようにします。
+この機能を実装するには、次のHTML入力フォームを ``editWishList.php`` ファイルの終了</body>タグの前に入力します。
+
+
+[source,xml]
+----
+
+<form name="backToMainPage" action="index.php"><input type="submit" value="Back To Main Page"/></form>
+----
+
+「Back to Main Page」ボタンを押すと、フォームは、ユーザーを最初のindex.phpページにリダイレクトします。
+
+
+== ウィッシュの追加機能のテスト
+
+1. アプリケーションを実行します。 ``index.php`` ページで、「Username」フィールドに「Tom」、「Password」フィールドに「tomcat」と入力します。
+image::images/user-logon-to-edit-wish-list.png[]
+2. 「Edit My Wish List」ボタンを押します。 ``editWishList.php`` ページが開きます。
+image::images/edit-wish-list-add-wish.png[]
+3. 「Back to Main Page」ボタンを押します。 ``index.php`` ページが開きます。
+4. 「Tom」としてログオンし、もう一度「Edit My Wish List」ボタンを押します。 ``editWishList.php`` ページが開きます。
+5. 「Add Wish」ボタンを押します。 ``editWish.php`` ページが開きます。フォームに入力します。
+image::images/new-wish.png[]
+「Back to the List」ボタンを押します。 ``editWishList.php`` ページが開きますが、入力したウィッシュは追加されていません。
+6. 再度「Add Wish」ボタンを押します。 ``editWish.php`` ページが開きます。期日を入力し、説明を空のままにします。「Save Changes」ボタンを押します。 ``editWish.php`` ページには、エラー・メッセージが表示され、期日が入力されている状態の入力フォームが表示されます。
+7. 再度「Add Wish」ボタンを押します。 ``editWish.php`` ページが開きます。フォームに入力し、「Save Changes」ボタンを押します。 ``editWishList.php`` ページに更新されたウィッシュのリストが表示されます。
+image::images/edit-wish-list-updated.png[]
+
+
+== 現在のレッスン完了後のアプリケーション・ソース・コード
+
+MySQLユーザー: このレッスンが完了した後のプロジェクトの状態を反映したソース・コードをダウンロードするには、link:https://netbeans.org/files/documents/4/1932/lesson6.zip[+ここ+]をクリックします。
+
+Oracleデータベース・ユーザー: このレッスンが完了した後のプロジェクトの状態を反映したソース・コードをダウンロードするには、link:https://netbeans.org/projects/www/downloads/download/php%252Foracle-lesson6.zip[+ここ+]をクリックします。
+
+
+== 次の手順
+
+link:wish-list-lesson5.html[+<< 前のレッスン+]
+
+link:wish-list-lesson7.html[+次のレッスン>>+]
+
+link:wish-list-tutorial-main-page.html[+チュートリアルのメイン・ページに戻る+]
+
+
+link:/about/contact_form.html?to=3&subject=Feedback:%20PHP%20Wish%20List%20CRUD%206:%20Writing%20New%20DB%20Entry[+このチュートリアルに関するご意見をお寄せください+]
+
+
+link:../../../community/lists/top.html[+users@php.netbeans.orgメーリング・リストに登録する+]ことによって、NetBeans IDE PHP開発機能に関するご意見やご提案を送信したり、サポートを受けたり、最新の開発情報を入手したりできます。
+
+link:../../trails/php.html[+PHPの学習に戻る+]
+

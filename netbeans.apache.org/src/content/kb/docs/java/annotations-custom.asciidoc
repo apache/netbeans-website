@@ -1,0 +1,412 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= Annotation Processors Support in the NetBeans IDE, Part II: Using Own Custom Annotation Processors in the IDE
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: Annotation Processors Support in the NetBeans IDE, Part II: Using Own Custom Annotation Processors in the IDE - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, Annotation Processors Support in the NetBeans IDE, Part II: Using Own Custom Annotation Processors in the IDE
+
+_Contributed by Jesse Glick, written and maintained by Irina Filippova _
+
+
+* *Using Own Custom Annotation Processors in the IDE*
+
+image::../../../images_www/articles/71/netbeans-stamp-71-72-73.png[title="Content on this page applies to the NetBeans IDE 7.0, 7.1, 7.2 and 7.3"]
+
+In this section of the tutorial, you will learn how to add a self-written custom annotation processor to a project in the IDE. This tutorial does not teach you how to write an annotation processor. It explains how to add it to a NetBeans IDE project.
+
+The sample application used in this section was created by Jesse Glick and published as an link:http://wiki.netbeans.org/FaqApt[+FAQ entry+] for the previous IDE releases.
+
+The annotation processor used as the example generates a parent class for the annotated class. The generated parent class also contains a method that is called from the annotated class. Follow the instructions below on how to create and add a custom annotation processor to an IDE's project.
+
+*To complete this tutorial, you need the following software and resources.*
+
+|===
+|Software or Resource |Version Required 
+
+|link:https://netbeans.org/downloads/index.html[+NetBeans IDE+] |7.0, 7.1, 7.2, 7.3 
+
+|link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+Java Development Kit (JDK)+] |version 6 or 7 
+
+|link:http://code.google.com/p/projectlombok/downloads/list[+lombok.jar+] |v1.12.4 or newer 
+|===
+
+
+== Defining an Annotation and Creating an Annotation Processor
+
+In this exercise you will create a class library project.
+
+1. Choose File > New Project and select the Java Class Library project type in the Java category. Click Next.
+2. Type * ``AnnProcessor`` * as the Project Name and specify a location for the project. Click Finish.
+
+When you click Finish, the IDE creates the class library project and lists the project in the Projects window.
+
+3. Right-click the AnnProcessor project node in the Projects window and choose Properties.
+4. In the Sources category, confirm that either JDK 6 or JDK 7 are specified as the source/binary format.
+5. Select the Libraries tab and confirm that the Java platform is set to either JDK 1.6 or JDK 1.7. Click OK to close the Project Properties window.
+
+In this exercise you will create two Java packages and one Java class in each of the packages.
+
+1. Right-click the Source Packages node under the AnnProcessor project node and choose New > Java Package.
+2. Type * ``ann`` * for the Package Name and click Finish to create the new Java package.
+3. Repeat the two previous steps to create a Java package named * ``proc`` *.
+
+After you create the two Java packages, the structure of the project should be similar to the following image.
+
+image::images/packages.png[title="The structure of the project for the annotation processor."]
+4. Right-click the  ``ann``  Java package and choose New > Java class.
+5. Type * ``Handleable`` * for the Class Name. Click Finish.
+6. Modify the new  ``Handleable.java``  file to make the following changes. Save the file.
+
+[source,java]
+----
+
+package ann;
+
+public *@interface* Handleable {
+
+}
+----
+
+This is how annotations are declared, and it is quite similar to an interface declaration. The difference is that the  ``interface``  keyword must be preceded with an  ``at``  sign (@). This annotation is called  ``Handleable`` .
+
+*Additional Information.* In annotation declarations, you can also specify additional parameters, for example, what types of elements can be annotated, e.g. classes or methods. You do this by adding  ``@Target(value = {ElementType.TYPE})``  for classes and  ``@Target(value = {ElementType.METHOD}).``  So, the annotation declaration becomes annotated itself with _meta-annotations_.
+
+You now need to add code for the annotation processor to process the  ``Handleable``  annotation.
+
+7. Right-click the * ``proc`` * Java package and choose New > Java class.
+8. Type * ``HandleableProcessor`` * for the Class Name. Click Finish.
+9. Modify the  ``HandleableProcessor.java``  class to add the following code. Save your changes.
+
+*Note.* The value of  ``@SupportedSourceVersion``  (in *bold*) will depend upon the version of the JDK that you are using and will be either  ``(SourceVersion.RELEASE_7)``  or  ``(SourceVersion.RELEASE_6)`` .
+
+
+[source,java]
+----
+
+package proc;
+
+import ann.Handleable;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.Writer;
+import java.util.Set;
+import javax.annotation.processing.AbstractProcessor;
+import javax.annotation.processing.RoundEnvironment;
+import javax.annotation.processing.SupportedAnnotationTypes;
+import javax.annotation.processing.SupportedSourceVersion;
+import javax.lang.model.SourceVersion;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeMirror;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
+
+@SupportedAnnotationTypes("ann.Handleable")
+@SupportedSourceVersion(*SourceVersion.RELEASE_7*)
+public class HandleableProcessor extends AbstractProcessor {
+
+    /** public for ServiceLoader */
+    public HandleableProcessor() {
+    }
+
+    public boolean process(Set<? extends TypeElement> annotations,
+            RoundEnvironment roundEnv) {
+        for (Element e : roundEnv.getElementsAnnotatedWith(Handleable.class)) {
+            if (e.getKind() != ElementKind.FIELD) {
+                processingEnv.getMessager().printMessage(
+                        Diagnostic.Kind.WARNING,
+                        "Not a field", e);
+                continue;
+            }
+            String name = capitalize(e.getSimpleName().toString());
+            TypeElement clazz = (TypeElement) e.getEnclosingElement();
+            try {
+                JavaFileObject f = processingEnv.getFiler().
+                        createSourceFile(clazz.getQualifiedName() + "Extras");
+                processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
+                        "Creating " + f.toUri());
+                Writer w = f.openWriter();
+                try {
+                    PrintWriter pw = new PrintWriter(w);
+                    pw.println("package "
+                            + clazz.getEnclosingElement().getSimpleName() + ";");
+                    pw.println("public abstract class "
+                            + clazz.getSimpleName() + "Extras {");
+                    pw.println("    protected " + clazz.getSimpleName()
+                            + "Extras() {}");
+                    TypeMirror type = e.asType();
+                    pw.println("    /** Handle something. */");
+                    pw.println("    protected final void handle" + name
+                            + "(" + type + " value) {");
+                    pw.println("        System.out.println(value);");
+                    pw.println("    }");
+                    pw.println("}");
+                    pw.flush();
+                } finally {
+                    w.close();
+                }
+            } catch (IOException x) {
+                processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR,
+                        x.toString());
+            }
+        }
+        return true;
+    }
+
+    private static String capitalize(String name) {
+        char[] c = name.toCharArray();
+        c[0] = Character.toUpperCase(c[0]);
+        return new String(c);
+    }
+}
+----
+
+Let's take a closer look at the main parts that constitute the code for the annotation processor (note that for convenience, only parts of the code are provided).
+
+At first, you specify the annotation types that the annotation processor supports (by using  ``@SupportedAnnotationTypes`` ) and the version of the source files that are supported (by using  ``@SupportedSourceVersion`` ), in this case the version is JDK 6: 
+
+
+[source,java]
+----
+
+@SupportedAnnotationTypes("ann.Handleable")
+@SupportedSourceVersion(SourceVersion.RELEASE_6)
+----
+
+Then, you declare a public class for the processor that extends the  ``AbstractProcessor``  class from the  ``javax.annotation.processing``  package.  ``AbstractProcessor``  is a standard superclass for concrete annotation processors that contains necessary methods for processing annotations.
+
+
+[source,java]
+----
+
+public class HandleableProcessor extends AbstractProcessor {
+...
+}
+----
+
+You now need to provide a public constructor for the class.
+
+
+[source,java]
+----
+
+public class HandleableProcessor extends AbstractProcessor {
+*    public HandleableProcessor() {
+    }*
+...
+
+}
+----
+
+Then, you call the  ``process`` () method of the parent  ``AbstractProcessor``  class. Through this method the annotations available for processing are provided. In addition, this method contains information about the round of processing.
+
+
+[source,java]
+----
+
+public class HandleableProcessor extends AbstractProcessor {*
+   *...
+*     public boolean process(Set<? extends TypeElement> annotations,
+            RoundEnvironment roundEnv) {
+     ...
+     }
+*
+}
+----
+
+The annotation processor's logic is contained within the  ``process()``  method of the  ``AbstractProcessor``  class. Note that through  ``AbstractProcessor`` , you also access the  ``ProcessingEnvironment``  interface, which allows annotation processors to use several useful facilities, such as Filer (a filer handler that enables annotation processors to create new files) and Messager (a way for annotation processors to report errors).
+
+
+[source,java]
+----
+
+public class HandleableProcessor extends AbstractProcessor {*
+   *...
+     public boolean process(Set<? extends TypeElement> annotations,
+            RoundEnvironment roundEnv) {//For each element annotated with the Handleable annotation
+            *for (Element e : roundEnv.getElementsAnnotatedWith(Handleable.class)) {
+
+*//Check if the type of the annotated element is not a field. If yes, return a warning*.
+if (e.getKind() != ElementKind.FIELD) {
+processingEnv.getMessager().printMessage(
+Diagnostic.Kind.WARNING,
+"Not a field", e);
+continue;
+}
+            *//Define the following variables: name and clazz*.**
+String name = capitalize(e.getSimpleName().toString());
+TypeElement clazz = (TypeElement) e.getEnclosingElement();
+*//Generate a source file with a specified class name. *
+            try {
+JavaFileObject f = processingEnv.getFiler().
+createSourceFile(clazz.getQualifiedName() + "Extras");
+processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
+"Creating " + f.toUri());
+Writer w = f.openWriter();
+*//Add the content to the newly generated file*.
+                    try {
+PrintWriter pw = new PrintWriter(w);
+pw.println("package "
++ clazz.getEnclosingElement().getSimpleName() + ";");
+pw.println("public abstract class "
++ clazz.getSimpleName() + "Extras {");
+pw.println("    protected " + clazz.getSimpleName()
++ "Extras() {}");
+TypeMirror type = e.asType();
+pw.println("    /** Handle something. */");
+pw.println("    protected final void handle" + name
++ "(" + type + " value) {");
+pw.println("        System.out.println(value);");
+pw.println("    }");
+pw.println("}");
+pw.flush();
+} finally {
+w.close();
+}
+} catch (IOException x) {
+processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR,
+x.toString());
+}
+}*return true;
+    * }*
+...
+}
+----
+
+The last block in this code declares the  ``capitalize``  method that is used to capitalize the name of the annotated element.
+
+
+[source,java]
+----
+
+public class HandleableProcessor extends AbstractProcessor {*
+   *...*
+
+  private static String capitalize(String name) {
+char[] c = name.toCharArray();
+c[0] = Character.toUpperCase(c[0]);
+return new String(c);
+}
+*}
+----
+10. Build the project by right-clicking the  ``AnnProcessor``  project and choosing Build.
+
+
+== Using the Annotation Processor in the IDE
+
+In this section you will create a Java Application project in which the annotation processor will be used.
+
+1. Choose File > New Project and select the Java Application project type in the Java category. Click Next.
+2. In the Name and Location page, type * ``Demo`` * as the Project Name and specify the project location.
+3. Type * ``demo.Main`` * in the Create Main Class field. Click Finish.
+image::images/demo-project-wizard.png[title="Creating the Demo project in the New Project wizard."]
+4. Open the Project Properties window and confirm that either JDK 6 or JDK 7 are selected as the source/binary format in the Sources panel and that the Java platform is set to JDK 1.6 or JDK 1.7 in the Libraries panel.
+5. Modify the  ``Main.java``  class to add the following code. Save your changes.
+
+[source,java]
+----
+
+package demo;
+
+*import ann.Handleable;*
+
+public class Main *extends MainExtras* {
+
+    *@Handleable
+    private String stuff;*
+
+    *public static void main(String[] args) {
+        new Main().handleStuff("hello");
+    }*
+}
+----
+
+This code contains the following elements:
+
+* import statement for the custom annotation processor  ``ann.Handleable`` 
+* the public class  ``Main``  that extends the  ``MainExtras``  class ( ``MainExtras``  should be generated by the annotation processor during compilation)
+* a private field named  ``stuff``  that is annotated with the  ``@Handleable``  annotation
+* the  ``main``  method that calls the  ``handleStuff``  method, which is declared in the automatically generated  ``MainExtras``  class
+
+In this simple example, the  ``handleStuff``  method only prints out the current value. You can modify this method to perform other tasks.
+
+After you save the  ``Main.java``  code you will see that the IDE reports multiple compilation errors. This is because the annotation processor has not been added yet to the project.
+
+6. Right-click the  ``Demo``  project node in the Projects window, choose Properties, then select the Libraries category in the Project Properties window.
+7. In the Compile tab, click Add Project and locate the  ``AnnProcessor``  project.
+image::images/demo-properties-compile.png[title="Compile tab in Libraries category of the project's Properties window"]
+
+The Compile tab corresponds to the  ``-classpath``  option of the link:http://download.oracle.com/javase/6/docs/technotes/tools/windows/javac.html#options[+Java compiler+]. Because the annotation processor is a single JAR file that contains both the annotation definition and the annotation processor, you should add it to the project's classpath, which is the Compile tab.
+
+8. Select the Compiling category in the Project Properties window and select the Enable Annotation Processing and Enable Annotation Processing in Editor checkboxes.
+9. Specify the annotation processor to run by click the Add button next to the Annotation Processors text area and typing * ``proc.HandleableProcessor`` * in the Annotation Processor FQN field. 
+image::images/demo-processor-fqn.png[title="Annotation Processor FQN dialog box"]
+
+The Compiling category in the Project Properties window should look like the following image.
+
+image::images/demo-properties-compiling.png[title="Compiling category in the project's Properties window"]
+10. Click OK in the Properties window.
+
+*Note.* In the  ``Main.java``  file you might still see compilation errors. This is because the IDE cannot yet find the  ``MainExtras.java``  file that declares the  ``handleStuff``  method. The  ``MainExtras.java``  file will be generated after you build the Demo project for the first time. If Compile On Save is enabled for you project, the IDE compiled the project when you saved  ``Main.java`` .
+
+11. Right-click the Demo project and choose Build.
+
+After you build the project, if you look at the project in the Projects window you can see a new  ``Generated Sources``  node with the  ``demo/MainExtras.java``  file.
+
+image::images/demo-generated-sources.png[title="Projects window with Generated Sources"]
+
+If you review the contents of the generated  ``MainExtras.java``  file, you can see that the annotation processor generated the  ``MainExtras``  class with the  ``handleStuff``  method. The  ``handleStuff``  method is the one invoked from the annotated  ``Main.java``  file.
+
+
+[source,java]
+----
+
+package demo;
+public abstract class MainExtras {
+    protected MainExtras() {}
+    /** Handle something. */
+    protected final void handleStuff(java.lang.String value) {
+        System.out.println(value);
+    }
+}
+----
+12. Right-click the Demo project and choose Run.
+
+When you click Run you should see the following in the Output window. The Demo project compiles and prints the message.
+
+image::images/demo-run.png[title="Projects window with Generated Sources"]
+link:/about/contact_form.html?to=3&subject=Feedback:%20Using%20the%20Annotation%20Processors%20Support%20in%20NetBeans%20IDE[+Send Feedback on This Tutorial+]
+
+
+== See Also
+
+See the following resources for more information about annotations in Java applications:
+
+* Java SE Documentation - link:http://download.oracle.com/javase/6/docs/technotes/guides/language/annotations.html[+Annotations+]
+* Java SE Tutorial - link:http://download.oracle.com/javase/tutorial/java/javaOO/annotations.html[+Annotations+]
+* link:http://download.oracle.com/javase/6/docs/technotes/tools/windows/javac.html#processing[+Java Compiler: Annotation Processing Options+]
+* link:http://blogs.oracle.com/darcy/[+Joseph D. Darcy's Weblog+] - useful tips from the JSR-269 specification lead

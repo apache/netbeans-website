@@ -1,0 +1,196 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= Java Card開発のクイック・スタート・ガイド
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: Java Card開発のクイック・スタート・ガイド - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, Java Card開発のクイック・スタート・ガイド
+
+image::images/java-smart-card-sm.jpg[]
+
+_執筆: Tim Boudreau、管理: Ruth Kusterer_
+
+Java Cardは、link:http://en.wikipedia.org/wiki/Smart_card[+スマート・カード+]などの、手のひらに載るくらい小さなデバイス上で動くJVMを操作できる魅力的なプラットフォームです。Java Card 3.0では、次の2つのエディションが用意されています。
+
+*クラシック*::: これは、以前のバージョンのJava Cardと同じです。このプラットフォームは、機能が大きく制限されています。たとえば、 ``java.lang.String`` 、 ``java.lang.Object.hashCode()`` メソッド、および浮動小数点数がサポートされていません。
+*拡張*::: 強力な新しいスマート・カード用で、Java Card 3.0での新しいエディションです。これは、Javaプラットフォームのより完璧な実装をサポートしています。サーブレットがネイティブでサポートされる最大の利点は、使い慣れたAPIを使用してWebアプリケーションを作成して、そのアプリケーションをスマート・カード上で実行できることです。
+
+
+=== 内容
+
+* <<reqs,必要なソフトウェアとハードウェア>>
+* <<setup,プロジェクト環境設定の開始>>
+* <<types,Java Cardのプロジェクト・タイプの理解>>
+* <<projects,プロジェクトでの作業>>
+* <<special,特殊なプラグイン機能の使用>>
+* <<sdk,サードパーティSDKの統合>>
+* <<related,関連リンク>>
+
+
+== 要件
+
+*このチュートリアルを完了するには、次のソフトウェアとリソースが必要です。*
+
+image::../../../images_www/articles/69/netbeans-stamp.gif[title="このページの内容は、NetBeans IDE 6.8および6.9に適用されます"]
+
+|===
+|ソフトウェアまたはリソース |必須バージョン 
+
+|link:https://netbeans.org/downloads/index.html[+NetBeans IDE+] |6.9 
+
+|link:http://java.sun.com/javacard/downloads/index.jsp[+Java Card SDK+] |3.02 
+
+|NetBeans用Java Cardプラグイン |1.3 
+
+|link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+Java Development Kit+] (JDK) |バージョン6 
+|===
+
+
+== プロジェクト環境設定の開始
+
+スマート・カードにはユーザー・インタフェースがないため、カードのデータを読書きできるスマート・カード・リーダーか、Java Cardリファレンス実装(RI)に用意されているエミュレータを使用する必要があります。このチュートリアルでは、エミュレータを使用します。
+
+*注意:* Java Cardプラグインは任意のオペレーティング・システム上で動作しますが、Java Card RIのエミュレータはWindowsでのみ使用できます。他のオペレーティング・システム上でも、RIをJavaプラットフォームとして設定することはできます。そのためには、MacまたはLinuxシステム上で、Windowsパーティション上にあるRIのインストールをNetBeansに設定します。ただし、この設定を使用してもプロジェクトは実行できません。
+
+
+=== NetBeans IDEへのプラグインのインストール
+
+1. NetBeans IDE 6.9をダウンロードおよびインストールします。
+2. インストールが完了したら、「ツール」>「プラグイン」メニューを選択します。
+3. 「使用可能なプラグイン」に、「Java Card」および「Java Card Runtime Bundle」という2つのJava Card関連プラグインがあります。
+* Java Cardは、Java CardプロジェクトのサポートをNetBeans IDEに追加するプラグインです。
+* Java Card 3.0.2 Runtime Bundleは、Java Cardリファレンス実装のコピーがまだインストールされていない場合にのみ必要です。
+
+image::images/install-javacard-plugins.png[]
+
+4. チュートリアルの手順を続けるには、プラグインのインストール後にIDEを再起動する必要があります。
+
+
+=== Java Cardプラットフォームの登録
+
+プラグイン・マネージャからJava Card 3.0.2 Runtime Bundleをダウンロードすると、Java Card SDKがプラットフォームとしてすでに設定された状態になります。ただし、link:http://java.sun.com/javacard/devkit/[+java.sun.com+]からこのプラットフォームをダウンロードおよびインストールした場合は、「ツール」>「Javaプラットフォーム」メニューを使用して、他のJavaプラットフォームを登録するのと同じようにJava CardプラットフォームをIDEに追加できます。
+
+image::images/installPlatform.png[]
+
+Java Cardプラットフォームの設定を完了すると、IDEの「サービス」タブに一覧表示されます。「サービス」タブが表示されない場合は、メニューから「ウィンドウ」>「サービス」を選択します。
+
+image::images/services-tab.png[]
+
+1つの「プラットフォーム」に複数の「デバイス」を含めることができます。プロジェクトは、特定のプラットフォーム上にある特定のデバイスにデプロイします。
+
+
+== Java Cardのプロジェクト・タイプの理解
+
+メニューから「ファイル」>「新規プロジェクト」を選択し、「Java Card」カテゴリをクリックします。作成可能な複数のタイプのJava Cardプロジェクトが表示されます。これらのプロジェクトはすべて、NetBeans Java SEプロジェクトと同じく、link:http://ant.apache.org/[+Apache Ant+]でビルドされます。
+
+image::images/choose-project-type.png[]
+
+「クラシック・アプレット・プロジェクト」では、Java Card 2.0以前で使用されていたアプレットと同じく、従来の小型デバイス用のJava Cardアプレットを作成します。「クラシック・ライブラリ・プロジェクト」は「クラシック・アプレット・プロジェクト」と似ていますが、アプレットはありません。アプレット間で共有される、デバイス上に格納するコードを作成します。
+
+拡張アプレット・プロジェクトと拡張ライブラリ・プロジェクトでは、Java Card 3.0の拡張APIが提供されるため、java.lang.Stringなどを使用できます。ブート・クラスパスは、クラシック・プロジェクトと拡張プロジェクトの間で異なります。そのため、たとえば、コード補完を行った場合、クラシック・プロジェクトではjava.lang.Stringが表示されませんが、拡張プロジェクトでは表示されます。
+
+image::images/create-applet-app.png[]
+
+Webアプリケーション・プロジェクトは、おそらくJava Card 3.0の最も魅力的な機能です。サーブレットが実装されたスケルトン・プロジェクトを取得し、すべてのサーブレットAPIにアクセスできます。これを使用すれば、アプレット型のアプリケーション・タイプを使用するよりも、作業がはるかに簡単になります。デバイスで実行中のアプリケーションを操作するために特殊なコードをクライアントに記述する必要がなくなり、Webブラウザのみで操作できます。リファレンス実装およびデスクトップWebブラウザを使用して、ローカルでアプリケーションをテストできます。
+
+image::images/create-web-app.png[]
+
+
+== プロジェクトでの作業
+
+このチュートリアル用に、新しい「Web Project」を作成します。
+
+この新しいWebプロジェクトで、プロジェクト名を「Card Web Application」とし、プロジェクトの場所をNetBeansProjectsディレクトリに設定します。「終了」をクリックすると、プロジェクトが「プロジェクト」タブに表示されます。
+
+「プロジェクト」タブでプロジェクトのノードを右クリックし、コンテキスト・メニューから「プロパティ」を選択します。「プロジェクト・プロパティ」ウィンドウの「Run」セクションで、プロジェクトがデプロイするプラットフォームとデバイスを変更できます。「閉じる」をクリックして変更を保存します。
+
+Java CardのWebアプリケーションに対する作業は、サーブレット・コンテナにデプロイする他のWebアプリケーションの場合と同じです。ツールバーの「実行」ボタンを押して、Hello Worldサンプルを実行します。Java CardのWebアプリケーションを実行すると、Webブラウザのウィンドウが開き、「 ``Hello from webapplication1.MyServlet`` 」というサーブレットの出力が表示されます。
+
+image::images/editor.png[]
+
+アプレット型のプロジェクトを実行すると、NetBeans IDEは、コマンド行出力およびJava Cardコンソールという2つの便利なインタフェースを提供します。アプレットを操作するにはコンソールを使用します。コンソールでは、データを16進数で送信したり、その応答を読み取ることができます。
+
+ヒント: RIには、NetBeans IDEで開いて実行できるサンプル・プロジェクトがさらに用意されています。
+
+image::images/run-customizer.png[]
+
+
+== 特殊なプラグイン機能の使用
+
+Java Cardには、他のJavaプラットフォームにはない2つの特別な機能があります。
+
+*アプリケーション識別子(AID)*:: これは一意の識別子で、「//aid//720A75E082/0058AEFC20」のように表されます。この16進数の最初の部分はベンダーID (link:http://iso.org/[+国際標準化機構(ISO)+]から取得します)、2番目の部分はユーザーが作成する一意の値です。AIDは、アプレット・クラス、Javaパッケージ(「クラシック・アプレット・プロジェクト」と「クラシック・ライブラリ・プロジェクト」のみ)、およびアプレットの一意のインスタンスを識別するために使用されます(1つのデバイス上に同じアプレットを複数回デプロイできます。インスタンスのAIDは情報の送信先アプレットを選択するために使用されます)。
+*APDUスクリプト*:: データをアプレットに送信するためのスクリプトです。特定のアプレット・インスタンスを選択して、データをそのインスタンスに送信する必要があるため、このスクリプトでは、16進数を手動で入力するという手間のかかる作業が必要になります。事前に記述されたスクリプトを送信するかわりに、Java Cardコンソールを使用することもできます。
+
+この2つの作業は多少複雑ですが、NetBeansプラグインを使用すれば、これらの作業の複雑さを軽減できます。
+
+* プロジェクトを作成すると、アプレットのAID、クラシック・パッケージのAID、および1つのインスタンスのAIDの適正値が自動的に生成されます。
+
+* 「プロジェクト・プロパティ」ダイアログで「Applets」タブを選択すると、プロジェクトがクラスパスをスキャンし、検索可能なすべてのJava Cardアプレット・サブクラスを探します。
+
+image::images/customize-applets-pre.png[]
+
+* 検索に成功するとダイアログが表示されます。そのダイアログで、実際にデプロイするアプレットを選択し、使用するAID値やデプロイメント・パラメータなどをカスタマイズできます。入力したすべてのデータをIDEが検証するため、無効なデータは入力できません。
+
+image::images/customize-applets.png[]
+
+* 同じアプレットのインスタンスを2つデプロイするように設定することもできます。ただし、1つのアプレット・インスタンスのみをデプロイするという単純な場合では、そのような設定を検討する必要はありません。
+
+image::images/customize-instances.png[]
+
+* アプレットの実行テストでは、APDUスクリプト全体を手動で入力する必要はありません。組込みのコンソールを使用して、デプロイ済アプレットを直接操作できます。
+
+image::images/open-console.png[]
+
+image::images/shell.png[]
+
+* クラシック・プロジェクトの「パッケージAID」(格納できるのは1つのJavaパッケージのみ)もIDEによって処理されますが、カスタマイズが可能です。
+
+image::images/create-project-package-aid.png[]
+
+* プロジェクトのAID値の一部は必ずISOが割り当てたベンダーID (RID)になります。すばやく作業を開始できるように、IDEはRID用のランダムな値を生成します。開発やテストではこの値を使用できます。公式のRIDがある場合は、「ツール」>「オプション」から入力できます。これはすべての新規プロジェクトに使用されます。既存のプロジェクトの値を更新するには、「プロジェクト・プロパティ」で「Generate」ボタンをクリックします。
+
+image::images/global-rid.png[]
+
+
+== サードパーティSDKの統合
+
+現在、このツールではJava Card 3.0.2リファレンス実装のみがサポートされていますが、ベンダーのカードを統合するための拡張可能なAPIが用意されています。プラットフォームとデバイスの定義は、ビルド・スクリプトによってインポートされる単純なプロパティ・ファイルに収録されています。
+
+デプロイメントは、カード・ベンダーから用意されるAntタスクのセットを使用して行います。そのため、作成されたプロジェクトはIDEの外部で実行できるようになり、制約はありません。Java Card RIの一部であるAntタスクのソースは、NetBeans用のサンプル・プロジェクトとともに、link:http://kenai.com/projects/javacard[+Java Cardプロジェクト・ポータル+]からダウンロードできます。
+
+Java Cardデプロイメント・ツールを作成したカード・ベンダーの方へ:プラグインの作者であるlink:mailto:tboudreau@sun.com[+Tim Boudreau+]にlink:http://wiki.netbeans.org/JavaCardPlatformIntegration[+カードの統合方法+]を問い合せてください。IDEによるカードのサポートをどの程度希望されるかに応じて、様々なレベルの統合方法が用意されています。
+
+link:/about/contact_form.html?to=6&subject=NetBeans%20Java%20Card%20Development%20Quick%20Start%20Guide[+このチュートリアルに関するご意見をお寄せください+]
+
+
+
+== 関連リンク
+
+* これらのモジュールの開発には、link:https://blogs.oracle.com/javacard/[+Anki Nelaturu+]およびJava Cardチームの他のメンバーが大きく貢献しています。
+* link:http://java.sun.com/javacard[+Sunの公式Java Cardポータル+] - ニュース、開発キット、参考資料、仕様、FAQが掲載されています。
+* link:http://kenai.com/projects/javacard/pages/Home[+Java Cardプロジェクト・ポータル+] - ソース、サンプル・プロジェクト、フォーラム、ドキュメントが用意されています。
+* link:http://wiki.netbeans.org/JavaCardPlatformIntegration[+カード・ベンダーのためのプラットフォーム統合+]
+* link:http://java.sun.com/developer/technicalArticles/javacard/javacard-servlets/[+スマート・カード上でのサーブレットのデプロイ: ポータブルWebサーバーとJava Card 3.0+]

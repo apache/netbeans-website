@@ -1,0 +1,562 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= PHPを使用するデータベース駆動型アプリケーションの作成
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: PHPを使用するデータベース駆動型アプリケーションの作成 - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, PHPを使用するデータベース駆動型アプリケーションの作成
+
+= レッスン7: データベース内のエントリの更新および削除
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: レッスン7: データベース内のエントリの更新および削除 - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, レッスン7: データベース内のエントリの更新および削除
+
+
+
+1. link:wish-list-tutorial-main-page.html[+PHPを使用するデータベース駆動型アプリケーションの作成 - メイン・ページ+]
+2. 
+データベースの作成
+
+1. link:wish-list-lesson1.html[+MySQLデータベースの作成+]
+2. link:wish-list-oracle-lesson1.html[+Oracleデータベース表の作成+]
+3. 
+link:wish-list-lesson2.html[+アプリケーションの設計。データベースからの読取り+]
+
+4. link:wish-list-lesson3.html[+新規アプリケーション・ユーザーの作成+]
+5. link:wish-list-lesson4.html[+コードの最適化+]
+6. link:wish-list-lesson5.html[+セキュリティの追加。アプリケーション・ユーザー・ログオンの実装+]
+7. link:wish-list-lesson6.html[+データベースへの新しいウィッシュの追加+]
+8. 
+*=> データベース内のエントリの更新および削除*
+
+9. link:wish-list-lesson8.html[+CSSテクノロジを使用したアプリケーションの外観の改良+]
+10. link:wish-list-lesson9.html[+リモートWebサーバーへのアプリケーションのデプロイ+]
+
+image::images/netbeans-stamp-80-74-73.png[title="このページの内容は、NetBeans IDE 7.2、7.3、7.4および8.0に適用されます"]
+
+このレッスンでは、次の2つの機能を使用してアプリケーションの機能を拡張します。
+
+
+これらの機能を実装するには、 ``editWishList.php`` ファイルと ``editWish.php`` ファイルを編集します。また、 ``deleteWish.php`` という名前の新しいファイルも作成します。
+
+image::images/page-flow-diagram-l7.png[]
+
+現在のドキュメントは、PHP向けのNetBeans IDEでのCRUDアプリケーションの作成というPHPチュートリアルの一部です。
+
+
+
+== 前のレッスンからのアプリケーション・ソース・コード
+
+MySQLユーザー: 前のレッスンが完了した後のプロジェクトの状態を反映したソース・コードをダウンロードするには、link:https://netbeans.org/files/documents/4/1932/lesson6.zip[+ここ+]をクリックします。
+
+Oracleデータベース・ユーザー: 前のレッスンが完了した後のプロジェクトの状態を反映したソース・コードをダウンロードするには、link:https://netbeans.org/projects/www/downloads/download/php%252Foracle-lesson6.zip[+ここ+]をクリックします。
+
+
+== ウィッシュの編集
+
+この機能は、次のユース・ケースをサポートしています。
+
+*  ``editWishList.php`` ページで、ユーザーがウィッシュの右にある「Edit」ボタンを押す。選択したウィッシュのデータがある ``editWish.php`` ページが開く。
+* ユーザーがウィッシュの説明または期日(あるいはその両方)を変更し、「Save Changes」ボタンを押す。
+* 説明が入力されて_いない_場合、エラー・メッセージが表示され、ユーザーが ``editWish.php`` ページに戻される。
+* 説明が入力されている場合、アプリケーションはウィッシュが更新される ``editWishList.php`` ページに戻る。
+
+この実装は、次の手順から構成されます。
+
+* <<addEditButton,editWishListページに「Edit」ボタンを追加する>>
+* <<wishArrayUpdate,editWish.phpページで、ウィッシュのデータを格納する配列$wishを更新する>>
+* <<updateInputForm,editWish.phpページの入力フォームを更新する>>
+* <<updateWishRecord,送信されたデータを検証し、データベース内のウィッシュを更新する>>
+
+
+=== 「Edit」ボタンの実装
+
+ ``editWishList.php`` では、ウィッシャのウィッシュを含む表は、ウィッシュがデータベースから選択されるときに、ウィッシュを含む行を表示するループ( ``while`` 文)によって実装されています。行の一番右のセルとして「Edit」ボタンを追加します。
+
+1. HTML入力フォームを使用してウィッシュのIDを転送するには、そのIDを変数に格納します。次のコード行を ``while`` ループの末尾に入力します。
+
+[source,java]
+----
+
+while ($row = ...) {echo ...echo ...*$wishID = $row["id"];*}
+?>
+----
+2. 編集ボタンを実装します。editWishフォームを使用して、終了の</table>タグの前に別の表のセルを追加します。このフォームには、ボタン・コンポーネントと、ボタンがクリックされたときに ``$wishID`` の値を送信する非表示コンポーネントが含まれています。(MySQLデータベース用のコードが示されていますが、追加されるコードはOracleデータベースの場合も同じで、同じ場所になります。)
+
+[source,php]
+----
+
+   Hello <?php echo $_SESSION["user"]; ?><br/><table border="black"><tr><th>Item</th><th>Due Date</th></tr><?phprequire_once("Includes/db.php");$wisherID = WishDB::getInstance()->get_wisher_id_by_name($_SESSION["user"]);$result = WishDB::getInstance()->get_wishes_by_wisher_id($wisherID);while ($row = mysqli_fetch_array($result)) {echo "<tr><td>" . htmlentities($row["description"]) . "</td>";echo "<td>" . htmlentities($row["due_date"]) . "</td></tr>\n";}mysqli_free_result($result);?>
+            *<td>
+                <form name="editWish" action="editWish.php" method="GET">
+                    <input type="hidden" name="wishID" value="<?php echo  ``$wish`` ID; ?>">
+                    <input type="submit" name="editWish" value="Edit">
+                    </form>
+            </td>*</table>
+----
+3.  ``while`` ループを変更してlink:http://www.php.net/manual/en/control-structures.alternative-syntax.php[+代替構文+]を使用します。これにより、 ``while`` ループ内のHTMLブロックを実行しやすくなります。代替の ``while`` ループ構文では、開始の中括弧{がコロン(:)に置き換えられ、終了の中括弧}が ``endwhile;`` 文に置き換えられます。開始の中括弧をコロンに置き換え、終了の中括弧を削除し、 ``endwhile;`` 文を使用して終了の</table>タグの前に新しいPHPブロックを追加します。これにより、新しい表のセルが ``while`` ループに組み込まれます。結果または文を解放するコードを ``endwhile;`` 文の後に移動します。(ここでも、MySQL用のコードが示されていますが、コード変更および場所はOracleデータベースの場合も同じです。)
+
+[source,php]
+----
+
+    while ($row = mysqli_fetch_array($result))[.line-through]#{#*:*echo "<tr><td>" . htmlentities($row["description"]) . "</td>";echo "<td>" . htmlentities($row["due_date"]) . "</td></tr>\n";[.line-through]#    }mysqli_free_result($result);#?>
+    <td>
+        <form name="editWish" action="editWish.php" method="GET">
+           <input type="hidden" name="wishID" value="<?php echo  ``$wish`` ID; ?>">
+           <input type="submit" name="editWish" value="Edit">
+        </form>
+    </td>
+*    <?php
+    endwhile;
+    mysqli_free_result($result);
+    ?>*
+</table>
+----
+4. 
+表の行の構文を修正します。行を終了する</tr>\n文字を、期日のecho文から ``endwhile;`` のすぐ上の新しいecho文に移動します。
+
+
+[source,php]
+----
+
+    while ($row = mysqli_fetch_array($result))*:*echo "<tr><td>" . htmlentities($row["description"]) . "</td>";echo "<td>" . htmlentities($row["due_date"]) . "</td>[.line-through]#</tr>\n#";?>
+    <td>
+        <form name="editWish" action="editWish.php" method="GET">
+           <input type="hidden" name="wishID" value="<?php echo  ``$wish`` ID; ?>">
+           <input type="submit" name="editWish" value="Edit">
+        </form>
+    </td>
+    <?php
+    *echo "</tr>\n";*
+    endwhile;
+    mysqli_free_result($result);
+    ?>
+</table>
+----
+5. 
+ ``while`` ループ内に「Edit」ボタンを持つフォームを含む表の全体は、次のようになります。
+
+*MySQLデータベースの場合:*
+
+
+[source,php]
+----
+
+<table border="black">
+    <tr><th>Item</th><th>Due Date</th></tr>
+    <?php
+    require_once("Includes/db.php");
+    $wisherID = WishDB::getInstance()->get_wisher_id_by_name($_SESSION["user"]);
+    $result = WishDB::getInstance()->get_wishes_by_wisher_id($wisherID);
+    while($row = mysqli_fetch_array($result)):
+        echo "<tr><td>" . htmlentities($row['description']) . "</td>";
+        echo "<td>" . htmlentities($row['due_date']) . "</td>";
+        $wishID = $row["id"];
+    ?>
+    <td>
+        <form name="editWish" action="editWish.php" method="GET">
+            <input type="hidden" name="wishID" value="<?php echo $wishID; ?>"/>
+            <input type="submit" name="editWish" value="Edit"/>
+        </form>
+    </td>
+    <?php
+    echo "</tr>\n";
+    endwhile;
+    mysqli_free_result($result);
+    ?>
+</table>
+----
+
+*Oracleデータベースの場合:*
+
+
+[source,php]
+----
+
+<table border="black">
+    <tr><th>Item</th><th>Due Date</th></tr>
+    <?php
+    require_once("Includes/db.php");
+    $wisherID = WishDB::getInstance()->get_wisher_id_by_name($_SESSION["user"]);
+    $stid = WishDB::getInstance()->get_wishes_by_wisher_id($wisherID);
+    while ($row = oci_fetch_array($stid)):
+        echo "<tr><td>" . htmlentities($row["DESCRIPTION"]) . "</td>";
+        echo "<td>" . htmlentities($row["DUE_DATE"]) . "</td>";
+        $wishID = $row["ID"];
+    ?>
+    <td>
+        <form name="editWish" action="editWish.php" method="GET">
+            <input type="hidden" name="wishID" value="<?php echo $wishID; ?>"/>
+            <input type="submit" name="editWish" value="Edit"/>
+        </form>
+    </td>
+    <td>
+        <form name="deleteWish" action="deleteWish.php" method="POST">
+            <input type="hidden" name="wishID" value="<?php echo $wishID; ?>"/>
+            <input type="submit" name="deleteWish" value="Delete"/>
+        </form>
+    </td>
+    <?php
+    echo "</tr>\n";
+    endwhile;
+    oci_free_statement($stid);
+   ?>
+</table>
+----
+
+
+===  ``$wish`` 配列の拡張
+
+ ``editWishList.php`` ページで「Edit」ボタンを押すと、選択したウィッシュのIDがサーバー・リクエスト・メソッドGETを介して ``editWish.php`` ページに転送されます。ウィッシュのIDを格納するには、 ``$wish`` 配列に新しい要素を追加する必要があります。
+
+新しいウィッシュを追加するときに、それを保存しようとして失敗した後で、 ``editWishList.php`` ページと ``editWish.php`` ページの両方から入力フォームにアクセスできます。データを転送するサーバー・リクエスト・メソッドによって、ケースが識別されます。GETは、ユーザーが「Edit Wish」を押して最初にページに達するときに、フォームが表示されることを示します。POSTは、説明なしでウィッシュを保存しようとした後、ユーザーがフォームにリダイレクトされることを示します。
+
+ ``editWish.php`` 内で、HTML <body>内の ``EditWish`` 入力フォームの上にあるPHPブロックを、 ``$wish`` 配列の拡張されたコードで置き換えます。
+
+*MySQLデータベースの場合:*
+
+
+[source,php]
+----
+
+<?phpif ($_SERVER["REQUEST_METHOD"] == "POST")$wish = array("id" => $_POST["wishID"], "description" => 
+        $_POST["wish"], "due_date" => $_POST["dueDate"]);else if (array_key_exists("wishID", $_GET))$wish = mysqli_fetch_array(WishDB::getInstance()->get_wish_by_wish_id($_GET["wishID"]));else$wish = array("id" => "", "description" => "", "due_date" => "");?>
+----
+
+*Oracleデータベースの場合:*
+
+
+[source,php]
+----
+
+<?php
+if ($_SERVER["REQUEST_METHOD"] == "POST")
+    $wish = array("id" => $_POST["wishID"], "description" =>
+            $_POST["wish"], "due_date" => $_POST["dueDate"]);
+else if (array_key_exists("wishID", $_GET)) {
+    $stid = WishDB::getInstance()->get_wish_by_wish_id($_GET["wishID"]);
+    $row = oci_fetch_array($stid, OCI_ASSOC);
+    $wish = array("id" => $row["ID"], "description" =>
+                $row["DESCRIPTION"], "due_date" => $row["DUE_DATE"]);
+    oci_free_statement($stid);
+} else
+$wish = array("id" => "", "description" => "", "due_date" => "");
+?>
+----
+
+このコードは、 ``id`` 、 ``description`` 、および ``due_date`` の3つの要素を持つ ``$wish`` 配列を初期化します。これらの要素の値はサーバー・リクエスト・メソッドに依存します。サーバー・リクエスト・メソッドがPOSTの場合、値は入力フォームから受け取ります。また、サーバー・リクエスト・メソッドがGETで、$_GET配列にキー「wishID」を持つ要素が含まれている場合、値は関数get_wish_by_wish_idによってデータベースから取得されます。最後に、サーバー・リクエスト・メソッドがPOSTおよびGET以外の場合、つまり新しいウィッシュの追加のユース・ケースが行われた場合、要素は空になります。
+
+前述のコードは、ウィッシュを作成および編集するケースをカバーしています。また、入力フォームを両方のケースに使用できるように、入力フォームを更新する必要があります。
+
+
+=== HTML入力フォームの更新
+
+現時点では、新しいウィッシュを作成するとき、ウィッシュIDがなくても入力フォームは機能します。既存のウィッシュを編集する場合にフォームが機能するようにするには、ウィッシュのIDを転送するための非表示フィールドを追加する必要があります。非表示フィールドの値は、$wish配列から取得されます。新しいウィッシュの作成中、この値は空の文字列です。ウィッシュが編集される場合、非表示フィールドの値がウィッシュのIDに変わります。この非表示フィールドを作成するには、 ``editWish.php`` の ``EditWish`` 入力フォームの先頭に次の行を追加します。
+
+[source,php]
+----
+
+<input type="hidden" name="wishID" value="<?php echo  ``$wish`` ["id"];?>" />
+----
+
+
+=== データベース内のウィッシュの更新
+
+入力データを確認してウィッシュをデータベースに挿入するコードを更新する必要があります。現在のコードは、新しいウィッシュを作成するケースと既存のウィッシュを更新するケースを区別しません。現在の実装では、コードが入力フォームから転送されたウィッシュIDの値を確認しないため、新しいレコードは常にデータベースに追加されます。
+
+次の機能を追加する必要があります。
+
+* 転送された要素「wishID」が空の文字列の場合、新しいウィッシュを作成する。
+* また、要素「wishID」が空の文字列でない場合、ウィッシュを更新する。
+
+*ウィッシュが新規であるかどうかを確認し、新規でない場合はウィッシュを更新するようにeditWish.phpを更新するには:*
+
+1.  ``update_wish`` 関数を ``db.php`` に追加します。
+
+*MySQLデータベースの場合:*
+
+
+[source,java]
+----
+
+public function update_wish($wishID, $description, $duedate){
+    $description = $this->real_escape_string($description);if ($duedate==''){$this->query("UPDATE wishes SET description = '" . $description . "',due_date = NULL WHERE id = " . $wishID);} else$this->query("UPDATE wishes SET description = '" . $description ."', due_date = " . $this->format_date_for_sql($duedate). " WHERE id = " . $wishID);}  
+----
+
+*Oracleデータベースの場合:*
+
+
+[source,java]
+----
+
+public function update_wish($wishID, $description, $duedate) {
+    $query = "UPDATE wishes SET description = :desc_bv, due_date = to_date(:due_date_bv, 
+              'YYYY-MM-DD')  WHERE id = :wish_id_bv";
+    $stid = oci_parse($this->con, $query);
+    oci_bind_by_name($stid, ':wish_id_bv', $wishID);
+    oci_bind_by_name($stid, ':desc_bv', $description);
+    oci_bind_by_name($stid, ':due_date_bv', $this->format_date_for_sql($duedate));
+    oci_execute($stid);
+
+}
+----
+2. 
+ ``get_wish_by_wish_id`` 関数を ``db.php`` に追加します。
+
+*MySQLデータベースの場合:*
+
+
+[source,java]
+----
+
+public function get_wish_by_wish_id ($wishID) {return $this->query("SELECT id, description, due_date FROM wishes WHERE id = " . $wishID);}
+----
+
+*Oracleデータベースの場合:*
+
+
+[source,java]
+----
+
+public function get_wish_by_wish_id($wishID) {
+    $query = "SELECT id, description, due_date FROM wishes WHERE id = :wish_id_bv";
+    $stid = oci_parse($this->con, $query);
+    oci_bind_by_name($stid, ':wish_id_bv', $wishID);
+    oci_execute($stid);
+    return $stid;
+}
+----
+3.  ``editWish.php`` のメインとなる先頭のPHPブロックで、最後の`else`文に条件を追加します。これはデータベースにウィッシュを挿入する ``else`` 文です。これを ``else if`` 文に変更します。
+
+[source,java]
+----
+
+else if ($_POST["wishID"]=="") {WishDB::getInstance()->insert_wish($wisherID, $_POST["wish"], $_POST["dueDate"]);header('Location:  ``editWishList.php`` ' );exit;}
+----
+4. 別の ``else if`` 文を、前に編集した文の下に入力するか、または貼り付けます。
+
+[source,java]
+----
+
+else if ($_POST["wishID"]!="") {WishDB::getInstance()->update_wish($_POST["wishID"], $_POST["wish"], $_POST["dueDate"]);header('Location:  ``editWishList.php`` ' );exit;
+} 
+----
+
+このコードは、 ``$_POST`` 配列内の ``wishID`` 要素が空の文字列ではないことを確認します(これは、ユーザーが「Edit」ボタンを押すことによって ``editWishList.php`` ページからリダイレクトされたこと、および、ユーザーがウィッシュの説明を入力していたことを意味します)。確認が成功すると、コードは入力パラメータ ``wishID`` 、 ``description`` 、および ``dueDate`` を使用して関数 ``update_wish`` をコールします。これらのパラメータは、HTML入力フォームからPOSTメソッドを介して受け取ります。 ``update_wish`` がコールされた後、アプリケーションは ``editWishList.php`` ページにリダイレクトされ、PHP処理は取り消されます。
+
+
+== ウィッシュの編集機能のテスト
+
+1. アプリケーションを実行します。index.phpページで、「Username」フィールドに「Tom」、「Password」フィールドに「tomcat」と入力します。
+image::images/user-logon-to-edit-wish-list.png[]
+2. 「Edit My Wish List」ボタンを押します。 ``editWishList.php`` ページが開きます。
+image::images/edit-wish-list-edit-wish.png[]
+3. 「Icecream」の横の「Edit」をクリックします。 ``editWish.php`` ページが開きます。
+image::images/edit-wish.png[]
+4. フィールドを編集して「Back to the List」を押します。 ``editWishList.php`` ページが開きますが、変更は保存されていません。
+5. 「Icecream」の横の「Edit」を押します。「Describe your wish」フィールドをクリアして「Save Changes」を押します。エラー・メッセージが表示されます。
+image::images/editWishEmptyDescription.png[]
+6. 「Describe your wish」フィールドに「Chocolate icecream」と入力し、「Save Changes」を押します。 ``editWishList.php`` ページが開き、更新されたリストが表示されます。
+image::images/editWishListWishAdded.png[]
+
+
+== ウィッシュの削除
+
+ウィッシュの作成、読取り、更新ができるようになったので、ウィッシュを削除するメソッドを追加します。
+
+*ユーザーがウィッシュを削除できるようにするには:*
+
+1.  ``delete_wish`` 関数を ``db.php`` に追加します。
+
+*MySQLデータベースの場合:*
+
+
+[source,java]
+----
+
+function delete_wish ($wishID){$this->query("DELETE FROM wishes WHERE id = " . $wishID);}
+
+----
+
+*Oracleデータベースの場合:*
+
+
+[source,java]
+----
+
+public function delete_wish($wishID) {
+    $query = "DELETE FROM wishes WHERE id = :wish_id_bv";
+    $stid = oci_parse($this->con, $query);
+    oci_bind_by_name($stid, ':wish_id_bv', $wishID);
+    oci_execute($stid); 
+}
+----
+2.  ``deleteWish.php`` という名前の新しいPHPファイルを作成し、次のコードを<?php?>ブロック内に入力します。
+
+[source,java]
+----
+
+require_once("Includes/db.php");WishDB::getInstance()->delete_wish ($_POST["wishID"]);header('Location:  ``editWishList.php`` ' );
+----
+このコードにより、 ``db.php`` ファイルが使用できるようになります。入力パラメータとして ``wishID`` を使用し、WishDBのインスタンスから ``delete_wish`` 関数をコールします。最後に、アプリケーションが ``editWishList.php`` ページにリダイレクトされます。
+3. 「Delete」ボタンを実装するには、別のHTML表のセルを、 ``editWishList.php`` の ``while`` ループの内部で、 ``editWish`` ボタンのコード・ブロックのすぐ下に追加します。HTML入力フォームには、 ``wishID`` 用の非表示フィールドと、「Delete」というラベルが付いた送信ボタンが含まれています。(MySQLデータベース用のコードが示されていますが、追加されるコードはOracleデータベースの場合も同じで、同じ場所になります。)
+
+[source,php]
+----
+
+    while ($row = mysqli_fetch_array($result))*:*echo "<tr><td>" . htmlentities($row["description"]) . "</td>";echo "<td>" . htmlentities($row["due_date"]) . "</td>[.line-through]#</tr>\n#";?>
+    <td>
+        <form name="editWish" action="editWish.php" method="GET">
+           <input type="hidden" name="wishID" value="<?php echo  ``$wish`` ID; ?>">
+           <input type="submit" name="editWish" value="Edit">
+        </form>
+    </td>
+    *<td>
+        <form name="deleteWish" action="deleteWish.php" method="POST">
+            <input type="hidden" name="wishID" value="<?php echo $wishID; ?>"/>
+            <input type="submit" name="deleteWish" value="Delete"/>
+        </form>
+    </td>*
+    <?php
+    echo "</tr>\n";
+    endwhile;
+    mysqli_free_result($result);
+    ?>
+</table>
+----
+
+ ``while`` ループ内に「Edit」ボタンを持つフォームを含む表の全体は、次のようになります。
+
+*MySQLデータベースの場合:*
+
+
+[source,php]
+----
+
+<table border="black">
+    <tr><th>Item</th><th>Due Date</th></tr>
+    <?php
+    require_once("Includes/db.php");
+    $wisherID = WishDB::getInstance()->get_wisher_id_by_name($_SESSION["user"]);
+    $result = WishDB::getInstance()->get_wishes_by_wisher_id($wisherID);
+    while($row = mysqli_fetch_array($result)):
+        echo "<tr><td>" . htmlentities($row['description") . "</td>";
+        echo "<td>" . htmlentities($row['due_date']) . "</td>";
+        $wishID = $row["id"];
+    ?>
+    <td>
+        <form name="editWish" action="editWish.php" method="GET">
+            <input type="hidden" name="wishID" value="<?php echo $wishID; ?>"/>
+            <input type="submit" name="editWish" value="Edit"/>
+        </form>
+    </td>
+    <td>
+        <form name="deleteWish" action="deleteWish.php" method="POST">
+            <input type="hidden" name="wishID" value="<?php echo $wishID; ?>"/>
+            <input type="submit" name="deleteWish" value="Delete"/>
+        </form>
+    </td>
+    <?php
+    echo "</tr>\n";
+    endwhile;
+    mysqli_free_result($result);
+    ?>
+</table>
+----
+
+*Oracleデータベースの場合:*
+
+
+[source,php]
+----
+
+<table border="black">
+    <tr><th>Item</th><th>Due Date</th></tr>
+    <?php
+    require_once("Includes/db.php");
+    $wisherID = WishDB::getInstance()->get_wisher_id_by_name($_SESSION["user"]);
+    $stid = WishDB::getInstance()->get_wishes_by_wisher_id($wisherID);
+    while ($row = oci_fetch_array($stid)):
+        echo "<tr><td>" . htmlentities($row["DESCRIPTION"]) . "</td>";
+        echo "<td>" . htmlentities($row["DUE_DATE"]) . "</td>";
+        $wishID = $row["ID"];
+    ?>
+    <td>
+        <form name="editWish" action="editWish.php" method="GET">
+            <input type="hidden" name="wishID" value="<?php echo $wishID; ?>"/>
+            <input type="submit" name="editWish" value="Edit"/>
+        </form>
+    </td>
+    <td>
+        <form name="deleteWish" action="deleteWish.php" method="POST">
+            <input type="hidden" name="wishID" value="<?php echo $wishID; ?>"/>
+            <input type="submit" name="deleteWish" value="Delete"/>
+        </form>
+    </td>
+    <?php
+    echo "</tr>\n";
+    endwhile;
+    oci_free_statement($stid);
+   ?>
+</table>
+----
+
+
+== ウィッシュの削除機能のテスト
+
+機能が正しく実装されたことを確認するには、 ``editWishList.php`` ページで任意の項目の横にある「Delete」を押します。その項目がリストに表示されなくなります。
+
+image::images/deleteWish.png[]
+
+
+== 現在のレッスン完了後のアプリケーション・ソース・コード
+
+MySQLユーザー: このレッスンが完了した後のプロジェクトの状態を反映したソース・コードをダウンロードするには、link:https://netbeans.org/files/documents/4/1933/lesson7.zip[+ここ+]をクリックします。
+
+Oracleデータベース・ユーザー: このレッスンが完了した後のプロジェクトの状態を反映したソース・コードをダウンロードするには、link:https://netbeans.org/projects/www/downloads/download/php%252Foracle-lesson7.zip[+ここ+]をクリックします。
+
+
+== 次の手順
+
+link:wish-list-lesson6.html[+<< 前のレッスン+]
+
+link:wish-list-lesson8.html[+次のレッスン>>+]
+
+link:wish-list-tutorial-main-page.html[+チュートリアルのメイン・ページに戻る+]
+
+
+link:/about/contact_form.html?to=3&subject=Feedback:%20PHP%20Wish%20List%20CRUD%207:%20Updating%20and%20Deleting%20DB%20Entries[+このチュートリアルに関するご意見をお寄せください+]
+
+
+link:../../../community/lists/top.html[+users@php.netbeans.orgメーリング・リストに登録する+]ことによって、NetBeans IDE PHP開発機能に関するご意見やご提案を送信したり、サポートを受けたり、最新の開発情報を入手したりできます。
+
+link:../../trails/php.html[+PHPの学習に戻る+]
+

@@ -1,0 +1,127 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= 关于代码帮助的 C/C++ 应用程序指导
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: 关于代码帮助的 C/C++ 应用程序指导 - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, 关于代码帮助的 C/C++ 应用程序指导
+
+_撰稿人：link:mailto:vladimir.kvashin@oracle.com[+_Vladimir Kvashin_+] 和 link:mailto:vladimir.voskresensky@oracle.com[+_Vladimir Voskresensky_+]
+2013 年 3 月_ [修订版本号：V8.0]
+
+代码帮助是一组可帮助您导航和编辑源代码的 IDE 功能。对于现有源代码中的 C/C++ 项目或现有二进制文件中的 C/C++ 项目，可以指定如何解析代码以启用 IDE 的代码帮助功能。
+
+请注意，本文中的提示主要应用于现有源代码或现有二进制文件中的项目。对于由 IDE 创建和管理的项目，代码帮助配置不是必需的。
+
+
+
+image::images/netbeans-stamp-80-74-73.png[title="此页上的内容适用于 NetBeans IDE 8.0/7.4/7.3"]
+
+|===
+|- |<<questionmark,如果“项目”窗口中显示带有问号的项目或 #include 指令带有红色下划线该怎么办>> 
+
+|- |<<analyzer, 为代码帮助配置构建分析器>> 
+
+|- |<<multiplatform,为多平台项目配置代码帮助>> 
+
+|- |<<cannotbuild,无法构建项目时配置代码帮助>> 
+
+|- |<<definitiondeclaration,超链接何时转至函数定义以及声明>> 
+
+|- |<<namespace,查找名称空间的所有定义>> 
+
+|- |<<declaration,查看在宏中所作声明的声明名称>> 
+|===
+
+
+== 如果“项目”窗口中显示带有问号的项目该怎么办
+
+如果“项目”窗口中显示带有问号的项目，或者  ``#include``  指令标有红色下划线，则表明项目中包含未解析的 include 指令。IDE 将使用代码帮助功能（“代码完成”、“类”窗口和“导航器”窗口等）所用的内部解析器。存在标记意味着，该解析器无法解析某些  ``#include``  指令，因为 IDE 项目具有不正确的配置。这可能会在以下情况下发生：项目是从现有源创建的，而未借助于调试信息，或者源文件包含了自 IDE 项目创建以来的新库。
+
+下面是一些可能的原因（按可能性从大到小的顺序排列）：
+
+* 在项目、逻辑文件夹或文件属性中指定的用户包含路径错误或不足
+* 在项目、逻辑文件夹或文件属性中指定的用户定义宏错误或不足
+* 误将源文件包含在项目中
+* 头文件未包含在任何源文件中，因而误将该文件包含在项目中
+
+如果您将鼠标光标放在项目文件夹之上，则工具提示会显示一些有关问题的信息。有关详细信息，您可以右键单击项目并选择“代码帮助”->“失败的 #include/#error 指令”。
+
+尝试启动配置代码帮助向导（右键单击项目，然后选择“代码帮助”>“配置代码帮助”）以解决问题。如果您知道与执行失败的 include 指令相对应的文件所在位置，则可以手动设置项目、逻辑文件夹和文件属性。
+
+
+== 为代码帮助配置构建分析器
+
+假定您的应用程序源代码使用版本控制系统 (VCS)（例如 Mercurial）进行管理，并且从源代码创建 IDE 项目。如果在 IDE 中打开 IDE 项目并从 VCS 拉入更改，则您应构建 IDE 项目，以便通过修改使其保持最新。
+
+在 IDE 中构建项目之后，IDE 将自动通过以下方式更新项目：
+
+* 将新编译单元添加到 IDE 项目中。
+* 使用新的或已更改的用户定义的 include 和宏修改现有编译单元。
+* 从构建中排除的编译单元并不从代码帮助中排除。
+
+IDE 使用构建分析器从构建中收集信息，并使用中介技术来捕获 Oracle Solaris 和 Linux 平台上的系统库 exec 调用。默认情况下，当您使用现有源创建项目时和手动运行配置代码帮助时，使用构建分析器。如果未使用构建分析器，则使用构建的输出日志来捕获信息。
+
+如果您不希望 IDE 执行项目更新，则可以如下所示禁用构建分析器：
+
+1. 右键单击“项目”窗口中的项目节点，然后选择“属性”。
+2. 在“项目属性”对话框中，单击“代码帮助”类别。
+3. 取消选择“使用构建分析器”选项。
+
+对于构建时设置其自己的环境的源代码项目，构建分析器可能不会始终正常工作。如果在选定“使用构建分析器”选项时构建失败，则您应检查构建脚本以了解是否已取消设置  ``LD_LIBRARY_PATH``  环境变量。如果取消设置了  ``LD_LIBRARY_PATH`` ，则您还应取消设置  ``LD_PRELOAD`` 。取消设置这两个变量之后，将自动禁用构建分析器。如果您无法修改构建脚本，则可以如上所述禁用构建分析器，而 IDE 可以使用输出日志来获取构建信息。
+
+
+== 为多平台项目配置代码帮助
+
+如果开发的是基于现有代码的多平台项目，则可在不同平台上使用相同的 IDE 项目。按平台创建配置并相应地更改编译器集合、编译器选项和其他项目属性。
+
+配置代码帮助向导也可以基于配置运行：只修改当前处于活动状态的配置。因此，您可以针对每个配置单独运行该向导，并针对不同平台获取不同的代码帮助设置。
+
+
+== 无法构建项目时配置代码帮助
+
+如果使用调试信息（对于 GNU 编译器，最佳选项是  ``-g3 -gdwarf-2`` ；对于 Oracle Solaris Studio 编译器，最佳选项是  ``-g`` ）构建代码，则配置代码帮助向导最有效。
+
+如果无法构建项目或项目中不包含调试信息，则配置代码帮助向导会提供一种称为“在文件系统中搜索 C/C++ 头文件”的特殊模式。在这种模式下，NetBeans IDE 会尝试在文件系统中搜索头文件，以解析执行失败的 include 指令。该向导会让您输入头文件的搜索路径。默认情况下，搜索路径是项目的源根目录。
+
+要使用该向导，请右键单击项目并选择“代码帮助”>“配置代码帮助”。按照该向导的步骤启用 IDE 以更新代码帮助。单击“帮助”按钮可获取有关每个步骤的信息。
+
+
+== 使用超链接在调用和声明之间导航
+
+通过使用超链接导航，可以从调用函数、类、方法、变量或常量跳转至声明。要使用超链接，请执行以下操作之一：
+
+* 按住 Ctrl 的同时将鼠标移到类、方法、变量或常量之上。超链接将与一个工具提示一起显示，该工具提示显示元素的相关信息。单击超链接，编辑器将跳转至声明。按 Alt+左箭头将跳转回调用。
+* 将鼠标移到标识符之上并按 Ctrl+B。编辑器将跳转至声明。
+* 按 Alt+左箭头将跳转回调用。按 Alt+左箭头和 Alt+右箭头可以在光标位置的历史记录中前后移动。
+
+您还可以右键单击相应项并选择“导航”>“转至声明/定义”，或选择其他选项在代码中导航。
+
+
+== 查找名称空间的所有定义
+
+名称空间可以在项目的不同文件中定义。要在不同的名称空间定义之间导航，请使用“类”窗口（Ctrl-9 组合键）。右键单击所需的名称空间，然后选择“所有声明”。此时将显示按文件名排序的所有定义的列表。
+
+link:mailto:users@cnd.netbeans.org?subject=subject=Feedback:%20C/C++%20Application%20How-Tos%20-%20NetBeans%20IDE%208.0[+发送有关此教程的反馈意见+]

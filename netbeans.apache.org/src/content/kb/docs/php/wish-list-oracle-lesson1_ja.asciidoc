@@ -1,0 +1,241 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= PHPを使用するデータベース駆動型アプリケーションの作成
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: PHPを使用するデータベース駆動型アプリケーションの作成 - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, PHPを使用するデータベース駆動型アプリケーションの作成
+
+= レッスン1b: Oracleデータベース表の作成
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: レッスン1b: Oracleデータベース表の作成 - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, レッスン1b: Oracleデータベース表の作成
+
+
+
+1. link:wish-list-tutorial-main-page.html[+PHPを使用するCRUDアプリケーションの作成 - メイン・ページ+]
+2. 
+データベースの作成
+
+1. link:wish-list-lesson1.html[+MySQLデータベースの作成+]
+2. 
+*=> Oracleデータベース表の作成*
+
+3. link:wish-list-lesson2.html[+アプリケーションの設計。データベースからの読取り+]
+4. link:wish-list-lesson3.html[+新規アプリケーション・ユーザーの作成+]
+5. link:wish-list-lesson4.html[+コードの最適化+]
+6. link:wish-list-lesson5.html[+セキュリティの追加。アプリケーション・ユーザー・ログオンの実装+]
+7. link:wish-list-lesson6.html[+データベースへの新しいウィッシュの追加+]
+8. link:wish-list-lesson7.html[+データベース内のエントリの更新および削除+]
+9. link:wish-list-lesson8.html[+CSSテクノロジを使用したアプリケーションの外観の改良+]
+10. link:wish-list-lesson9.html[+リモートWebサーバーへのアプリケーションのデプロイ+]
+
+image::images/netbeans-stamp-80-74-73.png[title="このページの内容は、NetBeans IDE 7.2、7.3、7.4および8.0に適用されます"]
+
+このレッスンでは、ウィッシュ・リスト・アプリケーションの開発での最後の準備手順である、テスト・データを持つサンプルのデータベースの作成を示します。このチュートリアルの手順を完了するには、ウィッシャのデータを格納するデータベースが必要です。NetBeans IDEでは、IDEのインタフェースを使用して、これらのアクティビティをすべて実行できます。
+始める前に、link:wish-list-tutorial-main-page.html[+PHPを使用するCRUDアプリケーションの作成 - メイン・ページ+]にあるチュートリアルの要件を確認してください。
+
+現在のドキュメントは、PHP向けのNetBeans IDEでのCRUDアプリケーションの作成というPHPチュートリアルの一部です。
+
+
+
+== データベースのユーザーの作成
+
+この手順では、最初にユーザーを作成し、次にそのユーザーとして表を作成します。
+
+ユーザーを作成するには、Oracleのツールを使用するか、またはNetBeans IDEからデータベースに接続してIDEのSQLエディタを使用します。NetBeans 7.0は、現在ベータ版または開発ビルドとしてのみ利用できますが、Oracleデータベースへの接続が改善されています。NetBeans IDEからOracleデータベースに接続し、そのデータベース内でユーザーを作成する方法を学習するには、link:../ide/oracle-db.html[+Oracleデータベースへの接続+]のチュートリアルを参照してください。
+
+選択したツールを使用して、次のユーザーを作成します。
+
+|===
+|ユーザー名 |phpuser 
+
+|パスワード |phpuserpw 
+
+|システム権限 |CREATE TABLE 
+
+|CREATE VIEW 
+
+|CREATE SEQUENCE 
+
+|CREATE TRIGGER 
+
+|ロール(Oracle Database 10.x) |CONNECT 
+
+|RESOURCE 
+|===
+
+このユーザーを作成するためのSQLコマンド・セットの例を次に示します。これらのコマンドでは、データベースに表領域USERSおよびTEMPが存在することが前提になります。
+
+
+[source,java]
+----
+
+drop user phpuser cascade;create user phpuser identified by phpuserpw;grant connect, resource to phpuser;alter user phpuser default tablespace users temporary tablespace temp account unlock; 
+----
+
+
+== サンプル・データベースの構造の設計
+
+必要なデータをすべて準備して格納するには、次の2つの表が必要です。
+
+* 登録済ユーザーの名前とパスワードを格納するwishers表
+* ウィッシュの説明を格納するwishes表
+
+image::images/wishlist-db.png[]
+
+wishers表には次の3つのフィールドがあります。
+
+1. ID (id) - ウィッシャの一意のID。このフィールドは主キーとして使用されます。
+2. name
+3. password
+
+wishes表には次の4つのフィールドがあります。
+
+1. ID (id) - ウィッシュの一意のID。このフィールドは主キーとして使用されます。
+2. ウィッシャのID (wisher_id) - ウィッシュが属するウィッシャのID。このフィールドは外部キーとして使用されます。
+3. description
+4. 期日(due_date) - ウィッシュがリクエストされる日付
+
+表はウィッシャのIDを介して関連付けられます。wishesのdue_date以外のフィールドは、すべて必須です。
+
+
+== Oracleデータベース・スキーマの作成
+
+1. 作成したユーザーとしてデータベースにログインします。
+
+NetBeans IDE経由で接続する場合、新しいユーザーの名前とパスワードを使用して接続を作成します。ユーザーと同じ名前を持つスキーマを選択するようにします。(Oracleデータベースへの接続チュートリアルのlink:../ide/oracle-db.html#connect[+Oracleデータベースへの接続の確立+]の項を参照。)
+
+2. wishers表を作成するには、次のSQL問合せを実行します。
+
+[source,java]
+----
+
+create table wishers (id number not null,name varchar2(50) unique not null,password varchar2(50) not null,constraint wishers_pk primary key(id));
+----
+3. wishes表を作成するには、次のSQL問合せを実行します。wishesとwisherを関連付けるために、外部キーを作成します。
+
+[source,java]
+----
+
+create table wishes (id number not null,wisher_id number not null,description varchar2(255) not null,due_date date,constraint wishes_pk primary key(id),constraint wishes_fk1 foreign key(wisher_id) references wishers(id));
+----
+4. 新しい表がデータベースに追加されたことを確認します。NetBeans IDEを使用してデータベースに接続している場合、「サービス」ウィンドウのjdbc:oracle:thin:@localhost:1521:XE [PHPUSERのphpuser]接続ノードに移動します。新しい表が「表」ノードに一覧表示されます。(それらが表示されない場合、接続を右クリックして「リフレッシュ」を選択します。)
+image::images/tables-in-services-window.png[]
+
+注意: Oracleデータベース表を作成するための一連のSQLコマンドは、link:https://netbeans.org/projects/www/downloads/download/php%252FSQL-files-for-Oracle.zip[+ここ+]からダウンロードできます。
+
+
+== ID値を増分するための順序およびトリガーの追加
+
+Oracleデータベースでは、値を増分するために順序を指定する必要があります。表に新しいメンバーが追加されたときに値を増分するには、トリガーを追加します。
+
+1. wishers表の順序を追加するには、次のSQLコマンドを実行します。
+
+[source,java]
+----
+
+create sequence wishers_id_seq start with 1 increment by 1;
+----
+2. 新しいウィッシャを追加したときにwishers表のID列で順序をトリガーするには、次のSQLコマンドを実行します。
+
+[source,java]
+----
+
+create or replace trigger wishers_insertbefore insert on wishersfor each rowbeginselect wishers_id_seq.nextval into :new.id from dual;end;/
+----
+3. wishes表の順序を追加します。
+
+[source,java]
+----
+
+create sequence wishes_id_seq start with 1 increment by 1;
+----
+4. 新しいウィッシュを追加したときにwishes表のID列で順序を実行するためのトリガーを追加します。
+
+[source,java]
+----
+
+create or replace trigger wishes_insertbefore insert on wishesfor each rowbeginselect wishes_id_seq.nextval into :new.id from dual;end;/
+----
+
+注意: 順序およびトリガーを含む、Oracleデータベース表を作成するための一連のSQLコマンドは、link:https://netbeans.org/projects/www/downloads/download/php%252FSQL-files-for-Oracle.zip[+ここ+]からダウンロードできます。
+
+
+== テスト・データの入力
+
+アプリケーションをテストするには、データベース内にいくつかのデータが必要です。以降の例では、2つのウィッシャと4つのウィッシュを追加する方法を示します。
+
+1. Tomという名前でパスワードが「tomcat」のウィッシャを追加します。
+
+[source,java]
+----
+
+insert into wishers (name, password) values ('Tom','tomcat');
+----
+2. Jerryという名前でパスワードが「jerrymouse」のウィッシャを追加します。
+
+[source,java]
+----
+
+insert into wishers (name, password) values ('Jerry', 'jerrymouse');commit;
+----
+3. ウィッシュを追加します。
+
+[source,java]
+----
+
+insert into wishes (wisher_id, description, due_date) values (1, 'Sausage', to_date('2008-04-01', 'YYYY-MM-DD'));insert into wishes (wisher_id, description) values (1, 'Icecream');insert into wishes (wisher_id, description, due_date) values (2, 'Cheese', to_date('2008-05-01', 'YYYY-MM-DD'));insert into wishes (wisher_id, description)values (2, 'Candle');commit;
+----
+4. テスト・データを追加したことを確認します。NetBeans IDEを使用してテスト・データを表示する場合、関連する表でマウスの右ボタンをクリックし、コンテキスト・メニューから「データを表示」を選択します。
+image::images/view-test-data.png[]
+
+データベースの原則とデザイン・パターンの一般的な知識については、チュートリアルlink:http://www.tekstenuitleg.net/en/articles/database_design_tutorial/1[+http://www.tekstenuitleg.net/en/articles/database_design_tutorial/1+]を確認してください。
+
+Oracleの ``CREATE TABLE`` 文の構文の詳細は、link:http://download.oracle.com/docs/cd/B19306_01/server.102/b14200/statements_7002.htm[+http://download.oracle.com/docs/cd/B19306_01/server.102/b14200/statements_7002.htm+]を参照してください。
+
+注意: Oracleデータベース表を作成するための一連のSQLコマンドは、link:https://netbeans.org/projects/www/downloads/download/php%252FSQL-files-for-Oracle.zip[+ここ+]からダウンロードできます。
+
+
+== 次の手順
+
+link:wish-list-lesson2.html[+次のレッスン>>+]
+
+link:wish-list-tutorial-main-page.html[+チュートリアルのメイン・ページに戻る+]
+
+
+link:/about/contact_form.html?to=3&subject=Feedback:%20PHP%20Wish%20List%20CRUD%201:%20Create%20Oracle%20Database%20Tables[+ご意見をお寄せください+]
+
+
+link:../../../community/lists/top.html[+users@php.netbeans.orgメーリング・リストに登録する+]ことによって、NetBeans IDE PHP開発機能に関するご意見やご提案を送信したり、サポートを受けたり、最新の開発情報を入手したりできます。
+
+link:../../trails/php.html[+PHPの学習に戻る+]
+

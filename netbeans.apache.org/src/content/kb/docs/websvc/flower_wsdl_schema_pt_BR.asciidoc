@@ -1,0 +1,123 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= Web Service Especificando Dados Binários, parte 4: Modificando os Arquivos WSDL e de Esquema
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: Web Service Especificando Dados Binários, parte 4: Modificando os Arquivos WSDL e de Esquema - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, Web Service Especificando Dados Binários, parte 4: Modificando os Arquivos WSDL e de Esquema
+
+Nesta lição você adicionará o arquivo WSDL e o arquivo de esquema à aplicação web. Em seguida, você modificará o arquivo de esquema para interpretar arrays de bytes como Imagens. Você também editará o código-fonte do Web service para localizar corretamente o esquema e o arquivo WSDL. No processo, você é apresentado a várias ferramentas no IDE que o ajudam com os arquivos WSDL e de Esquema.
+
+Você pode aplicar o procedimento desta seção a qualquer Web service JAX-WS para passar qualquer tipo MIME como dados binários. Iniciando um Web service que passe dados binários, como foi criado nas Lições 2 e 3, você personaliza o WSDL e o esquema XML do serviço. No arquivo de esquema XML personalizado, você adiciona um atributo  ``expectedContentTypes="_mime_type_"``  ao elemento de retorno dos dados binários. Esse atributo informa ao cliente que os dados binários deverão ser mapeados para um tipo Java (de acordo com o mapeamento de tipo MIME > Java), em vez de para um array de bytes. Neste tutorial, você mapeará os dados binários para  ``java.awt.Image`` , mas poderá mapear os dados binários para qualquer um dos tipos Java fornecidos na especificação do JAXB 2.0, conforme descrito no link:http://jax-ws.dev.java.net/nonav/2.1.4/docs/mtom-swaref.html[+Guia do Usuário JAX-WS+].
+
+É possível fazer download de uma amostra completa do Web service do link:https://netbeans.org/projects/samples/downloads/download/Samples%252FWeb%2520Services%252FWeb%2520Service%2520Passing%2520Binary%2520Data%2520--%2520EE6%252FFlowerAlbumService.zip[+Catálogo de Amostras do NetBeans+].
+
+*Lições Deste Tutorial*
+
+image::images/netbeans-stamp-80-74-73.png[title="O conteúdo desta página se aplica ao NetBeans IDE 7.2, 7.3, 7.4 e 8.0"]
+
+1. link:./flower_overview.html[+Visão Geral+]
+2. link:./flower_ws.html[+Criando o Web Service+]
+3. link:./flower-code-ws.html[+Codificando e Testando o Web Service+]
+4. => Modificando os Arquivos de Esquema e WSDL para Passar Dados Binários
+5. link:./flower_swing.html[+ Criando o Cliente Swing+]
+
+
+== Modificando o Arquivo de Esquema e WSDL para Passar Dados Binários
+
+No procedimento a seguir, você cria arquivos WSDL e de Esquema XML modificados para o Web service criado em um tutorial anterior. Os arquivos WSDL e de Esquema modificados permitem que o Web service e os clientes que o consomem façam parsing dos dados da imagem JPEG que são passados como dados binários.
+
+*Para modificar os arquivos WSDL e de Esquema:*
+
+1. Na janela Projetos, expanda o nó da aplicação Web FlowerService até chegar ao nó  ``WEB-INF`` . Clique com o botão direito do mouse na pasta  ``WEB-INF``  e selecione Nova > Pasta. (Talvez você precise selecionar Novo > Outro e, em seguida, a categoria Outro). 
+image::images/new-file-wiz-folder.png[]
+2. Clique em Próximo. A página Nome e Localização será aberta. Nomeie a pasta  ``wsdl`` .
+image::images/wsdl-folder-name-location.png[]
+3. Clique em Finalizar. A pasta  ``wsdl``  é exibida na Janela Projetos.
+image::images/wsdl-folder.png[]
+4. Expanda o nó Web Services e clique com o botão direito do mouse no nó FlowerService. Selecione Gerar e Copiar WSDL... 
+5. A caixa de diálogo Gerar e Copiar WSDL será aberta com uma árvore de navegação. Navegue para a pasta  ``wsdl``  que foi criada (FlowerAlbumService > Web > WEB-INF > wsdl) e clique em OK.
+
+Agora, você vê  ``FlowerService.wsdl``  e  ``FlowerService_schema1.xsd``  no nó  ``wsdl`` . Você também vê um novo nó para Códigos-Fonte Gerados (jax-ws).
+
+image::images/generated-wsdl-and-schema.png[]
+6. Explicitamente, faça com que o servidor de aplicações utilize sua própria versão do arquivo WSDL. Caso contrário, o servidor de aplicações gerará seu próprio arquivo WSDL. Abra  ``FlowerService.java``  e localize a anotação  ``@WebService`` . Adicione o parâmetro  ``wsdlLocation="WEB-INF/wsdl/FlowerServiceService.wsdl"``  a esta anotação, como mostrado abaixo:
+
+[source,java]
+----
+
+@WebService(serviceName = "FlowerService"*, wsdlLocation = "WEB-INF/wsdl/FlowerService.wsdl")*
+----
+7. Modifique o arquivo de esquema  ``FlowerService_schema1.xsd``  para que especifique o tipo de conteúdo do elemento esperado. Para identificar o elemento de retorno no arquivo de esquema, abra o arquivo de esquema e encontre os tipos complexos  ``getThumbnailResponse``  e  ``getFlowerResponse`` :
+
+[source,xml]
+----
+
+<xs:complexType name="getThumbnailsResponse"><xs:sequence><xs:element name="return" type="xs:base64Binary" minOccurs="0" maxOccurs="unbounded"/></xs:sequence></xs:complexType>
+----
+
+[source,xml]
+----
+
+<xs:complexType name="getFlowerResponse"><xs:sequence><xs:element name="return" type="xs:base64Binary" minOccurs="0"/> </xs:sequence></xs:complexType>
+----
+8. Adicione os atributos a seguir aos dois elementos de retorno ( ``<xs:element name="return".../>):`` .
+
+[source,java]
+----
+
+xmime:expectedContentTypes="image/jpeg" xmlns:xmime="http://www.w3.org/2005/05/xmlmime"
+----
+
+Agora você deve ver o seguinte nas mesmas linhas.
+
+
+[source,xml]
+----
+
+<xs:complexType name="getThumbnailsResponse"><xs:sequence><xs:element name="return" type="xs:base64Binary" minOccurs="0" maxOccurs="unbounded"
+                xmime:expectedContentTypes="image/jpeg" xmlns:xmime="http://www.w3.org/2005/05/xmlmime"/></xs:sequence></xs:complexType>
+----
+
+[source,xml]
+----
+
+<xs:complexType name="getFlowerResponse"><xs:sequence><xs:element name="return" type="xs:base64Binary" minOccurs="0"
+            xmime:expectedContentTypes="image/jpeg" xmlns:xmime="http://www.w3.org/2005/05/xmlmime"/> </xs:sequence></xs:complexType>
+----
+9. Agora, quando reimplantar o Web service na aplicação de Teste e chamar uma das operações, você verá que uma imagem é retornada corretamente: 
+image::images/ws-tester-goodschema.png[]
+
+Agora que a aplicação de Teste confirmou que as imagens estão sendo retornadas corretamente, você pode criar um cliente Swing para recuperá-las e exibi-las.
+
+
+== Próxima Etapa:
+
+link:./flower_swing.html[+Criando o Cliente Swing+]
+
+link:/about/contact_form.html?to=3&subject=Feedback:%20Flower%20WSDL%20EE6[+Enviar Feedback neste Tutorial+]
+
+Para enviar comentários e sugestões, obter suporte e se manter informado sobre os mais recentes desenvolvimentos das funcionalidades de desenvolvimento Java EE do NetBeans IDE, link:../../../community/lists/top.html[+inscreva-se na lista de notícias nbj2ee@netbeans.org+].
+

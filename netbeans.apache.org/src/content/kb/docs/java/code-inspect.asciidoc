@@ -1,0 +1,338 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= Static Code Analysis in the NetBeans IDE Java Editor
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: Static Code Analysis in the NetBeans IDE Java Editor - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, Static Code Analysis in the NetBeans IDE Java Editor
+
+Jan Lahoda, Alyona Stashkova
+
+The NetBeans IDE Java Editor has a static code analysis feature, which is a tool for finding potential problems and detecting inconsistencies in your source code.
+
+In this tutorial, you will learn how to perform static analysis of your Java code using FindBugs and NetBeans Java Hints without actually running your applications.
+
+
+=== Contents
+
+image::images/netbeans-stamp.png[title="Content on this page applies to the NetBeans IDE 8.0"]
+
+* <<setup,Setting Up the Tutorial Environment>>
+* <<config,Using Configurations>>
+* <<all,Running All Analyzers>>
+* <<hints,Verifying Java Code against NetBeans Java Hints>>
+* <<fb,Finding Potential Problems in Java Code with Findbugs>>
+* <<default,Customizing a Default Configuration>>
+* <<create,Creating and Deleting Configurations>>
+* <<inspect,Running Single Inspections>>
+* <<summary,Summary>>
+* <<seealso,See Also>>
+
+
+== Requirements
+
+*To complete this tutorial, you need the following software and resources.*
+
+|===
+|Software or Resource |Version Required 
+
+|link:http://netbeans.org/downloads/index.html[+NetBeans IDE+] |Version 8.0 
+
+|link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+Java Development Kit+] (JDK) |Version 7 and higher 
+
+|link:https://netbeans.org/projects/samples/downloads/download/Samples/Java/library.zip[+library.zip+] |NetBeans project 
+
+|link:http://repo1.maven.org/maven2/com/google/code/findbugs/jsr305/2.0.0/jsr305-2.0.0.jar[+jsr305-2.0.0.jar+] |Java Specification Request intended to improve the effectiveness of static analysis tools 
+|===
+
+*Note:*  ``jsr305-2.0.0.jar``  is included into  ``library.zip``  for the purposes of this tutorial.
+
+If using another NetBeans project, link:http://repo1.maven.org/maven2/com/google/code/findbugs/jsr305/2.0.0/jsr305-2.0.0.jar[+jsr305-2.0.0.jar+] should be downloaded and added to the Libraries folder of the your project in the IDE as follows:
+
+1. Right-click the Libraries folder and choose the Add JAR/Folder from the popup menu.
+2. In the Add JAR/Folder dialog box, specify the path to the downloaded  ``jsr305-2.0.0.jar``  file and click Open.
+
+image::images/jar.png[]
+
+
+== Setting Up the Tutorial Environment
+
+In addition to the required software listed above you should have the following installed on your computer:
+
+* The link:https://netbeans.org/projects/samples/downloads/download/Samples/Java/library.zip[+library.zip+] file should be unzipped into your NetBeans project folder and opened in the NetBeans IDE.
+* The FindBugs plugin should be downloaded and installed into the NetBeans IDE as follows:
+1. Choose Source > Inspect from the main IDE's menu.
+2. In the Inspect dialog box, click Install.
+
+image:::images/inspect-small.png[role="left", link="images/inspect.png"]
+
+3. In the Installer dialog box, click Next to proceed with the installation.
+
+image:::images/plugin-small.png[role="left", link="images/plugin.png"]
+
+4. Review the license agreement, select the license agreement option, and click Install.
+5. When the installation is complete, click Finish.
+
+
+== Using Predefined Configurations
+
+You can use the following predefined configurations when inspecting your code in the NetBeans IDE:
+
+* <<all,All Analyzers>>
+* <<hints,NetBeans Java Hints>>
+* <<fb,FindBugs>>
+* <<default,Default>>
+
+
+=== Running All Analyzers
+
+The  ``All Analyzers``  configuration deploys all static code analysis tools available in the IDE.
+
+*To run the  ``All Analyzers``  configuration, complete the following steps:*
+
+1. Choose Source > Inspect from the main IDE's toolbar.
+2. In the Scope drop-down list of the Inspect dialog box, select  ``Current Project (library)`` .
+3. In the Configuration drop-down list, select the  ``All Analyzers``  configuration.
+
+image:::images/allconfig-small.png[role="left", link="images/allconfig.png"]
+
+*Note:* You need to install the <<plugin,FindBugs>> plugin to run this configuration for the first time.
+
+4. Click Inspect.
+The results of the analysis are displayed in the Inspector Window as a tree view on the left.
+
+image:::images/all-small.png[role="left", link="images/all.png"]
+
+The description of the currently selected in the tree view finding is displayed on the right.
+
+image:::images/alldescription-small.png[role="left", link="images/alldescription.png"]
+
+*Note:* If you want to leave some part of your code that is reported as problematic as is, the IDE allows you to suppress the warning for this code to leave it without any changes. You can double-click a warning in the tree view of the Inspector Window to go to the Source Editor. Press Alt-Enter, click the black arrow pointing to the right at the end of the displayed hint, and choose  ``SuppressWarning - _(warning name)_`` .
+
+image:::images/suppress-small.png[role="left", link="images/suppress.png"]
+
+
+=== Verifying Java Code against NetBeans Java Hints
+
+The  ``NetBeans Java Hints``  configuration available in the IDE enables you to verify if the predefined coding standard rules are satisfied by the source code under consideration. In other words, it applies a set of NetBeans Java Hints (also known as code inspections) to your Java source files.
+
+*To run the  ``NetBeans Java Hints``  configuration, complete the following steps:*
+
+1. Choose Source > Inspect from the main IDE's toolbar.
+2. In the Scope drop-down list of the Inspect dialog box, select  ``Open Projects``  (if you have only one  ``library``  project open in the IDE) or  ``Current Project (library)`` .
+
+*Note:* You can define a scope (a file, package, or project(s)) for the  ``NetBeans Java Hints``  configuration.
+
+3. Select the Configuration radio button and choose  ``NetBeans Java Hints``  in the drop-down list.
+
+image:::images/hints-small.png[role="left", link="images/hints.png"]
+
+4. Click Inspect.
+The IDE displays the tree view with the results of the analysis with the  ``NetBeans Java Hints``  configuration in the Inspector Window.
+
+image::images/hintsconfig.png[]
+
+5. In the Inspector Window, click the <<categorize,Categorize>> button in the toolbar on the left to view the problems grouped into categories.
+
+image::images/catview.png[]
+
+The following table displays the commands available in the Inspector Window.
+|===
+
+|Icon |Name |Function 
+
+|image::images/refreshbutton.png[] |*Refresh* |Displays a refreshed list of the static analysis results. 
+
+|image::images/upbutton.png[] |*Previous Problem* |Displays the previous problem in the list of the static analysis results. 
+
+|image::images/downbutton.png[] |*Next Problem* |Displays the following problem in the list of the static analysis results. 
+
+|image::images/categorizebutton.png[] |
+*Categorize* |Toggles the collapsed view of the problems detected in a file, project, or package or the categorized view of all the detected problems. 
+|===
+
+
+=== Finding Potential Problems in Java Code with FindBugs
+
+The  ``FindBugs``  configuration available in the IDE enables you to find a wide range of potential problems in your code. It invokes the popular open source FindBugs tool for code analysis in Java. The bug report gets generated and is displayed in the Inspector Window of the NetBeans IDE, which categorizes all the found problems and allows direct navigation from the bugs in the report to the suspicious code. You can also read a bug description in the adjacent window or review it at the link:http://findbugs.sourceforge.net/bugDescriptions.html[+FindBugs Bug Descriptions+] page by the pointer provided at the top of the left frame.
+
+*Note:* You need to install the <<plugin,FindBugs>> plugin to run this configuration for the first time.
+
+*To identify potential errors in your Java code with the  ``FindBugs``  configuration, complete the following steps:*
+
+1. Open the  ``library``  project in the NetBeans IDE and choose Source > Inspect from the main toolbar.
+2. In the Scope drop-down list of the Inspect dialog box, select  ``Current Project (library)`` .
+
+*Note:* You can inspect a file, package, or project(s) with the  ``FindBugs``  configuration.
+
+3. In the Inspect dialog box, select the  ``FindBugs``  configuration.
+
+image:::images/fb-small.png[role="left", link="images/fb.png"]
+
+4. Click the Inspect button to initiate the static code analysis.
+The result of the static code analysis is displayed in the Inspector Window below the Source Editor.
+The description of the selected bug is displayed in the frame on the right.
+
+image:::images/inspector-small.png[role="left", link="images/inspector.png"]
+
+5. Alternatively, click the <<categorize,Categorize>> button in the toolbar on the left to view the bugs grouped into categories.
+
+image::images/fbcat.png[]
+
+*Notes:*
+
+* If you double-click an issue in the expanded list, the IDE displays the reported issue in the Source Editor. 
+Press Alt-Enter to view the bug description in the source code.
+
+image:::images/source-editor-small.png[role="left", link="images/source-editor.png"]
+
+* Potential errors are highlighted in the code with exclamation mark icons (image::images/exclamation.png[]) in the left margin of the Source Editor.
+
+*To enable FindBugs in the Java Editor, complete the following steps:*
+
+1. Choose Tools > Options in the main IDE's toolbar.
+2. Select the Editor tab and choose Hints.
+3. Choose  ``FindBugs``  in the Language drop-down list.
+
+image:::images/fb-editor-small.png[role="left", link="images/fb-editor.png"]
+
+4. Select the Run FindBugs in Editor option.
+5. Click OK.
+If you now press Alt-Enter in the source code where a bug is reported and click the black arrow pointing to the right at the end of the displayed tip, the IDE shows some fixing options for a potential bug.
+
+image:::images/fbenabled-small.png[role="left", link="images/fbenabled.png"]
+
+
+=== Customizing a Default Configuration
+
+While working on your code you may need to customize a predefined configuration that includes your own NetBeans Java hints or FindBugs bugs.
+
+*To tailor a predefined  ``Default``  configuration to your own needs, complete the following steps:*
+
+1. Choose Source > Inspect from the main IDE's toolbar.
+2. In the Inspect dialog box, select the Configuration radio button and select the  ``Default``  configuration.
+3. Click Manage.
+The IDE displays the Configurations dialog box.
+
+image::images/configurations-db.png[]
+
+4. Ensure  ``Default``  is selected in the Configurations drop-down list.
+5. In the Analyzer drop-down list, select the  ``JRE 8 Profiles Conformance`` ,  ``Netbeans Java Hints`` , or  ``FindBugs``  analyzer.
+6. Depending on the choice of the analyzer in the previous step, select the profile to validate, the inspections, or bugs you need to include into your  ``Default``  configuration.
+
+image:::images/select-inspections-small.png[role="left", link="images/select-inspections.png"]
+
+7. Click OK to save your  ``Default``  configuration.
+
+
+== Creating and Deleting Configurations
+
+You can create and delete your own configurations to be used in the static analysis of your Java code.
+
+*To create a configuration, complete the following steps:*
+
+1. Choose Source > Inspect from the main IDE's toolbar.
+2. In the Inspect dialog box, select the Configuration radio button and select the  ``Default``  configuration.
+3. Click Manage.
+4. In the Configurations dialog box, click the black arrow at the end of the Configurations drop-down list and choose New.
+
+image::images/newconfig.png[]
+
+A  ``newConfig``  configuration is created and added to the Configurations drop-down list.
+
+image::images/newconfig-created.png[]
+
+5. In the Analyzer drop-down list, choose  ``JRE 8 Profiles Conformance`` ,  ``Netbeans Java Hints`` , or  ``FindBugs`` .
+6. Specify the profile, inspections, or bugs to be included into your own configuration.
+7. Click OK to save your edits and close the Configurations dialog box.
+The created  ``newConfig``  configuration is available in the Configuration drop-down list of the Inspect dialog box.
+
+image:::images/newconfig-inspect-small.png[role="left", link="images/newconfig-inspect.png"]
+
+*Note:* To rename a configuration, select the  ``newConfig``  configuration in the Configurations drop-down list, click the black arrow at the end of the Configurations drop-down list and choose Rename. Type a new name (for example,  ``renamedConfig`` ) and press Enter to save your edits.
+
+image::images/renamedconfig.png[]
+
+*To delete a configuration, complete the following steps:*
+
+1. Choose Source > Inspect from the main IDE's toolbar.
+2. In the Inspect dialog box, select the Configuration radio button and select the configuration to be deleted ( ``renamedConfig``  in this example).
+3. Click Manage.
+4. In the Configurations dialog box, click the black arrow at the end of the Configurations drop-down list and choose Delete.
+
+image::images/delete.png[]
+
+5. In the Delete Configuration dialog box, click Yes to confirm the deletion of the configuration.
+
+image::images/delete-confirm.png[]
+
+The  ``renamedConfig``  configuration is deleted from the Configurations list.
+
+*Note:* Refer to the link:http://platform.netbeans.org/tutorials/nbm-java-hint.html[+NetBeans Java Hint Module Tutorial+] for information on how to create a NetBeans module that provides one or more NetBeans Java hints.
+
+
+== Running Single Inspections
+
+You can inspect your code for a particular deficiency in your source code using the static code analysis feature in the NetBeans IDE.
+
+*To detect a specific inconsistency or problem in your Java source code with a single inspection, complete the following steps:*
+
+1. Choose Source > Inspect from the main IDE's menu.
+2. In the Scope drop-down list of the Inspect dialog box, select a file, package, or project(s) to be inspected.
+3. Select Single Inspection and do either of the following:
+* In the Single Inspection drop-down list, scroll and select a _single_ NetBeans Java hint or FindBugs bug to be used in the source code analysis.
+
+image:::images/single-inspection-small.png[role="left", link="images/single-inspection.png"]
+
+* Click Browse to open the Configurations dialog box and, in the Analyzer drop-down list, specify the analyzer and then choose a profile (for the JRE 8 Profile Compliance analyzer), a _single_ inspection (for the NetBeans Java Hints analyzer), or a _single_ bug (for the FindBugs analyzer) to be used in the source code analysis. Click OK to close the Configurations dialog box.
+
+image:::images/hint-inspection-small.png[role="left", link="images/hint-inspection.png"]
+
+4. In the Inspect dialog box, click Inspect to perform the source code analysis. 
+After the Inspect operation is completed, the hints that can be applied to your code or bugs that have been found are displayed in the Inspector Window below the Source Editor.
+
+
+== Summary
+
+This tutorial covers most frequent usages of the static code analysis feature in the NetBeans IDE. Please note that with the static code analysis functionality you can also perform custom refactorings at a project scope, or apply particular refactoring configurations to several projects open in the IDE, etc.
+
+<<top,top>>
+
+link:/about/contact_form.html?to=3&subject=Feedback:%20Static%20Code%20Analysis%20in%20NetBeans%20IDE[+Send Feedback on This Tutorial+]
+
+
+
+== See Also
+
+For related material see the following documents:
+
+* link:code-inspect-screencast.html[+Video of the Static Code Analysis Feature in the NetBeans IDE+]
+* link:http://wiki.netbeans.org/Java_Hints[+Complete List of NetBeans Java Hints+]
+* link:http://wiki.netbeans.org/JavaDeclarativeHintsDescriptionSketch[+Description of NetBeans Java Declarative Hints+]
+* link:http://platform.netbeans.org/tutorials/nbm-java-hint.html[+NetBeans Java Hint Module Tutorial+]
+* link:http://www.oracle.com/pls/topic/lookup?ctx=nb8000&id=NBDAG613[+Using Hints in Source Code Analysis and Refactoring+] in _Developing Applications with NetBeans IDE_
+
+<<top,top>>
+

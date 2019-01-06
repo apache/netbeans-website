@@ -1,0 +1,568 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= Java SwingアプリケーションでのHibernateの使用
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: Java SwingアプリケーションでのHibernateの使用 - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, Java SwingアプリケーションでのHibernateの使用
+
+このチュートリアルでは、NetBeans IDEを使用して、データベースからのデータを表示するJava Swingアプリケーションを作成し、デプロイします。このアプリケーションではHibernateフレームワークを持続性レイヤーとして使用し、リレーショナル・データベースからPOJO (plain old Java objects)を取得します。
+
+Hibernateは、ORM (object relational mapping)のためのツールを提供するフレームワークです。このチュートリアルでは、IDEに含まれるHibernateフレームワークのサポートと、必要なHibernateファイルを作成するためのウィザードの使用方法を示します。Javaオブジェクトを作成し、Hibernateを使用するようにアプリケーションを構成した後、データを検索および表示するGUIインタフェースを作成します。
+
+このチュートリアルでビルドするアプリケーションは、link:../web/hibernate-webapp.html[+DVDストアWebアプリケーション+]の関係管理アプリケーションです。このチュートリアルでは、俳優のプロ・フィールを姓または名の一致に基づいて問い合せるアプリケーションの作成方法を取り上げます。必要に応じて、映画の詳細の問合せ、項目の追加、更新、削除ができるように、アプリケーションを拡張することもできます。このチュートリアルでは、MySQLデータベースとSakilaデータベースを使用しますが、Hibernateアプリケーションでサポートされるデータベース・サーバーであれば、どれでも使用できます。Sakilaデータベースは、MySQLのサイトからダウンロードできるサンプル・データベースです。Sakila DBの設定に関する情報は、後続の各項で説明します。
+
+このチュートリアルを開始する前に、必要に応じて次のドキュメントをお読みください。
+
+* link:http://www.hibernate.org/[+hibernate.org+]のHibernateドキュメント
+* link:gui-functionality.html[+GUIビルドの概要+]
+* link:../ide/mysql.html[+MySQLデータベースへの接続+]のチュートリアル
+
+Mavenを使用してこのアプリケーションをビルドするには、link:maven-hib-java-se.html[+Hibernateを使用したMaven Swingアプリケーションの作成+]を参照してください。
+
+
+image::images/netbeans-stamp-80-74-73.png[title="このページの内容は、NetBeans IDE 7.2、7.3、7.4および8.0に適用されます"]
+
+
+*このチュートリアルに従うには、次のソフトウェアとリソースが必要です。*
+
+|===
+|ソフトウェアまたはリソース |必須バージョン 
+
+|link:https://netbeans.org/downloads/index.html[+NetBeans IDE+] |7.2、7.3、7.4、8.0、Java 
+
+|link:http://java.sun.com/javase/downloads/index.jsp[+Java Development Kit (JDK)+] |バージョン7または8 
+
+|link:http://www.mysql.com/[+MySQLデータベース・サーバー+] |バージョン5.x 
+
+|Sakilaデータベース |更新センターから入手できるプラグイン 
+|===
+
+link:https://netbeans.org/projects/samples/downloads/download/Samples/Java/DVDStoreAdmin-Ant.zip[+終了したプロジェクトのZIPアーカイブ+]はダウンロードできます。
+
+
+== データベースの作成
+
+このチュートリアルでは、 ``sakila`` という名前のMySQLデータベースを使用します。IDEのインストールにはサンプル・データベースが含まれていないため、このチュートリアルを開始する前に、まずデータベースを作成する必要があります。
+
+Sakilaデータベースは、MySQLのサイトから入手できる、無料のMySQLサンプル・データベースです。sakilaデータベースを作成するには、プラグイン・マネージャを使用してSakilaサンプル・データベース・プラグインをダウンロードしてインストールできます。プラグインのインストール後、「サービス」ウィンドウからSakilaデータベースを作成できます。Sakilaデータベースは、「MySQLデータベースの作成」ダイアログ・ボックスのデータベース一覧に追加されます。
+
+MySQLを操作するためのIDEの構成については、link:../ide/mysql.html[+MySQLデータベースへの接続+]のチュートリアルを参照してください。
+
+1. プラグイン・マネージャを開き、Sakilaサンプル・データベース・プラグインをインストールします。
+2. プラグインをインストールした後、「サービス」ウィンドウで「データベース」ノードを展開し、「MySQLサーバー」ノードを右クリックして「起動」を選択して、MySQLデータベース・サーバーを起動します。
+3. 「MySQLサーバー」ノードを右クリックし、「データベースを作成」を選択します。
+4. 「MySQLデータベースの作成」ダイアログ・ボックスで「新規データベース名」ドロップダウン・リストから「Sakilaデータベース」を選択します。「OK」をクリックします。
+image::images/create-sakila-mysql.png[title="「MySQLデータベースの作成」ダイアログのスクリーンショット"]
+
+「OK」をクリックすると、「MySQLサーバー」ノードの下に「Sakila」ノードが表示されます。
+
+5. 「Sakila」ノードを右クリックし、「接続」を選択します。
+
+「接続」をクリックすると、「Sakila」データベースのデータベース接続のノード( ``jdbc:mysql://localhost:3306/sakila [デフォルトの_ユーザー名_]`` )が「データベース」ノードに一覧表示されます。接続が開いたら、接続ノードを展開してデータベースのデータを表示できます。
+
+
+== Java Swingアプリケーション・プロジェクトの作成
+
+この課題では、DVDStoreAdminという名前の単純なJava Swingアプリケーション・プロジェクトを作成します。
+
+1. 「ファイル」>「新規プロジェクト」([Ctrl]-[Shift]-[N])を選択します。「Java」カテゴリから「Javaアプリケーション」を選択し、「次」をクリックします。
+2. プロジェクト名に「*DVDStoreAdmin*」と入力し、プロジェクトの場所を設定します。
+3. 専用フォルダを使用するオプションが選択されている場合は選択を解除します。
+このチュートリアルでは、ライブラリを他のユーザーと共有する必要がないので、プロジェクト・ライブラリを専用のフォルダにコピーする理由はほとんどありません。
+4. 「メイン・クラスの作成」の選択を解除します。「終了」をクリックします。
+
+「終了」をクリックすると、IDEでJavaアプリケーション・プロジェクトが作成されます。このプロジェクトにはメイン・クラスが設定されていません。フォームを作成し、このフォームをメイン・クラスとして設定します。
+
+
+== プロジェクトへのHibernateサポートの追加
+
+HibernateサポートをJ2SEプロジェクトに追加するには、Hibernateライブラリをプロジェクトに追加する必要があります。HibernateライブラリはIDEに含まれており、「プロジェクト」ウィンドウで「ライブラリ」ノードを右クリックして「ライブラリの追加」を選択し、「ライブラリの追加」ダイアログ・ボックスで「Hibernate」ライブラリを選択することで、任意のプロジェクトに追加できます。
+
+IDEには、プロジェクトに必要なHibernateファイルの作成に役立つウィザードが複数用意されています。IDEのウィザードを使用し、Hibernate構成ファイルとユーティリティ・ヘルパー・クラスを作成できます。ウィザードを使用してHibernate構成ファイルを作成すると、IDEでHibernateライブラリがプロジェクトに自動的に追加されます。
+
+
+=== Hibernate構成ファイルの作成
+
+Hibernate構成ファイル( ``hibernate.cfg.xml`` )には、データベース接続、リソース・マッピング、およびその他の接続プロパティに関する情報が格納されます。ウィザードを使用してHibernate構成ファイルを作成する場合、IDEに登録されているデータベース接続のリストからデータベース接続を指定します。構成ファイルを生成すると、IDEでは接続の詳細および選択したデータベース接続に基づくダイアレクト情報が自動的に追加されます。また、IDEは、プロジェクトのクラスパスにHibernateライブラリを自動的に追加します。構成ファイルの作成後、ファイルはマルチビュー・エディタを使用して編集するか、またはXMLエディタで直接XMLを編集できます。
+
+1. 「プロジェクト」ウィンドウで「ソース・パッケージ」ノードを右クリックし、「新規」>「その他」を選択して新規ファイル・ウィザードを開きます。
+2. 「Hibernate」カテゴリから「Hibernate構成ウィザード」を選択します。「次」をクリックします。
+3.  ``src`` ディレクトリにファイルを作成する場合は、「名前と場所」ペインをデフォルト設定のままにします。「次」をクリックします。
+4. Sakila接続を「データベース接続」ドロップダウン・リストから選択します。「終了」をクリックします。
+image::images/hib-config.png[title="データベース接続を選択するダイアログ"]
+
+「終了」をクリックすると、IDEではソース・エディタで ``hibernate.cfg.xml`` が開きます。IDEでは、アプリケーションのコンテキスト・クラスパスのルートに構成ファイルが作成されます(「ファイル」ウィンドウのWEB-INF/クラス)。「プロジェクト」ウィンドウで、ファイルは ``<デフォルト・パッケージ>`` ソース・パッケージに保存されます。構成ファイルには、単一のデータベースに関する情報が含まれます。複数のデータベースに接続する場合、複数の構成ファイルをプロジェクト内に作成できます。構成ファイルはデータベース・サーバーごとに1つですが、デフォルトで、ヘルパー・ユーティリティ・クラスはルートの場所にある ``hibernate.cfg.xml`` ファイルを使用します。
+
+「プロジェクト」ウィンドウの「ライブラリ」ノードを展開すると、必須のHibernate JARファイルとMySQLコネクタJARがIDEによって追加されたことがわかります。
+
+image::images/hib-libraries-config.png[title="Hibernateライブラリが表示された「プロジェクト」ウィンドウのスクリーンショット"]
+
+*注意:*NetBeans IDE 8.0にはHibernate 4ライブラリがバンドルされます。旧バージョンのIDEには、Hibernate 3がバンドルされていました。
+
+
+=== Hibernate構成ファイルの変更
+
+この課題では、 ``hibernate.cfg.xml`` で指定されたデフォルト・プロパティを、SQL文のデバッグ・ロギングが有効になるように編集します。
+
+1. 「デザイン」タブで ``hibernate.cfg.xml`` を開きます。このファイルを開くには、「プロジェクト」ウィンドウでプロジェクトの「構成ファイル」ノードを展開し、 ``hibernate.cfg.xml`` をダブルクリックします。
+2. 「オプションのプロパティ」の下の「構成プロパティ」ノードを展開します。
+3. 「追加」をクリックして「Hibernateのプロパティの追加」ダイアログ・ボックスを開きます。
+4. このダイアログ・ボックスで、「 ``hibernate.show_sql`` 」プロパティを選択し、値を「 ``true`` 」に設定します。「OK」をクリックします。これにより、SQL文のデバッグ・ロギングが有効になります。
+image::images/add-property-showsql.png[title="hibernate.show_sqlプロパティの設定値が表示された「Hibernateのプロパティの追加」ダイアログ・ボックス"]
+5. 「その他のプロパティ」ノードの下にある「追加」をクリックし、「プロパティ名」ドロップダウン・リストで「 ``hibernate.query.factory_class`` 」を選択します。
+6. プロパティ値として*org.hibernate.hql.internal.classic.ClassicQueryTranslatorFactory*を入力します。
+
+これは、IDEにバンドルされているHibernate 4で使用されるトランスレータ・ファクトリ・クラスです。
+
+「OK」をクリックします。
+
+image::images/add-property-factoryclass-4.png[title="hibernate.query.factory_classプロパティの設定値が表示された「Hibernateのプロパティの追加」ダイアログ・ボックス"]
+
+NetBeans IDE 7.4以前を使用している場合は、ダイアログ・ボックスでプロパティ値として*org.hibernate.hql.classic.ClassicQueryTranslatorFactory*を選択する必要があります。NetBeans IDE 7.4以前では、Hibernate 3がバンドルされていました。
+
+image::images/add-property-factoryclass.png[title="hibernate.query.factory_classプロパティの設定値が表示された「Hibernateのプロパティの追加」ダイアログ・ボックス"]
+
+エディタの「XML」タブをクリックすると、ファイルがXMLビューに表示されます。ファイルの内容は次のようになります。
+
+
+[source,xml]
+----
+
+<hibernate-configuration>
+    <session-factory name="session1">
+        <property name="hibernate.dialect">org.hibernate.dialect.MySQLDialect</property>
+        <property name="hibernate.connection.driver_class">com.mysql.jdbc.Driver</property>
+        <property name="hibernate.connection.url">jdbc:mysql://localhost:3306/sakila</property>
+        <property name="hibernate.connection.username">root</property>
+        <property name="hibernate.connection.password">######</property>
+        <property name="hibernate.show_sql">true</property>
+        <property name="hibernate.query.factory_class">org.hibernate.hql.internal.classic.ClassicQueryTranslatorFactory</property>
+    </session-factory>
+</hibernate-configuration>
+----
+7. 変更内容をファイルに保存します。
+
+フォームを作成してメイン・クラスとして設定した後に、プロジェクトを実行すると、IDEの出力ウィンドウにSQL問合せが表示されます。
+
+
+===  ``HibernateUtil.java`` ヘルパー・ファイルの作成
+
+Hibernateを使用するには、起動を処理し、Hibernateの ``SessionFactory`` にアクセスしてセッション・オブジェクトを取得するヘルパー・クラスを作成する必要があります。このクラスは、Hibernateの ``configure()`` メソッドをコールし、 ``hibernate.cfg.xml`` 構成ファイルをロードし、次に ``SessionFactory`` をビルドしてセッション・オブジェクトを取得します。
+
+この項では、新規ファイル・ウィザードを使用してヘルパー・クラスである ``HibernateUtil.java`` を作成します。
+
+1. 「ソース・パッケージ」ノードを右クリックし、「新規」>「その他」を選択して新規ファイル・ウィザードを開きます。
+2. 「カテゴリ」の一覧から「Hibernate」を選択し、「ファイル・タイプ」の一覧から「HibernateUtil.java」を選択します。「次」をクリックします。
+image::images/hib-util.png[title="HibernateUtilの作成方法を示す新規ファイル・ウィザード"]
+3. クラス名として「*HibernateUtil*」を入力し、パッケージ名として「*sakila.util*」を入力します。「終了」をクリックします。
+
+「終了」をクリックすると、 ``HibernateUtil.java`` がエディタに表示されます。このファイルは、編集する必要がないため閉じてかまいません。
+
+
+== Hibernateのマッピング・ファイルおよびJavaクラスの生成
+
+このチュートリアルでは、POJO (Plain Old Java Object)である ``Actor.java`` を使用してデータベース内のACTOR表のデータを表示します。このクラスは、表内の列のフィールドを指定し、データを取得および書込みするための単純な取得メソッドおよび設定メソッドを使用します。 ``Actor.java`` をACTOR表にマップするには、Hibernateのマッピング・ファイルを使用するか、クラスの注釈を使用します。
+
+リバース・エンジニアリング・ウィザード、およびデータベースからのHibernateのマッピング・ファイルとPOJOウィザードを使用して、選択するデータベース表に基づいて複数のPOJOとマッピング・ファイルを作成できます。かわりに、IDEのウィザードを使用して個別のPOJOとマッピング・ファイルを最初から作成することもできます。
+
+*注意:*
+
+* 複数の表に対するファイルを作成する場合は、このウィザードを使用すると便利です。このチュートリアルでは、POJOを1つとマッピング・ファイルを1つのみ作成する必要があるため、ファイルを個々に作成する方法が簡単です。<<10,POJOとマッピング・ファイルを個別に作成する>>手順については、このチュートリアルの最後に紹介します。
+
+
+=== リバース・エンジニアリング・ファイルの作成
+
+リバース・エンジニアリング・ファイル( ``hibernate.reveng.xml`` )はXMLファイルであり、 ``hibernate.cfg.xml`` で指定したデータベースのメタデータからHibernateファイルを生成するときに使用されるデフォルト設定を変更するために使用できます。このウィザードは、基本的なデフォルト設定でファイルを生成します。このファイルを変更して、使用されるデータベース・スキーマを明示的に指定したり、使用を禁止する表を除外したり、JDBCタイプとHibernateタイプのマッピング関係を指定したりできます。
+
+1. 「ソース・パッケージ」ノードを右クリックし、「新規」>「その他」を選択して新規ファイル・ウィザードを開きます。
+2. 「カテゴリ」の一覧から「Hibernate」を選択し、「ファイル・タイプ」の一覧から「Hibernateリバース・エンジニアリング・ウィザード」を選択します。「次」をクリックします。
+3. ファイル名に「*hibernate.reveng*」と入力します。
+4. 場所としてデフォルトの* ``src`` *をそのまま使用します。「次」をクリックします。
+5. 「使用可能な表」ペインで*actor*を選択し、「追加」をクリックします。「終了」をクリックします。
+
+このウィザードにより ``hibernate.reveng.xml`` リバース・エンジニアリング・ファイルが生成されます。リバース・エンジニアリング・ファイルは、編集する必要がないため閉じてかまいません。
+
+
+=== データベースからのHibernateのマッピング・ファイルとPOJOの作成
+
+データベースからのHibernateのマッピング・ファイルとPOJOウィザードでデータベース内の表に基づいてファイルを生成します。ウィザードを使用すると、IDEにより、 ``hibernate.reveng.xml`` で指定されたデータベース表に基づいてPOJOとマッピング・ファイルが生成され、マッピング・エントリが ``hibernate.cfg.xml`` に追加されます。ウィザードを使用する場合、たとえばPOJOのみにするなど、IDEで生成するファイルを選択でき、また、たとえばEJB 3注釈を使用するコードの生成するなど、コード生成オプションを選択できます。
+
+1. 「プロジェクト」ウィンドウで「ソース・パッケージ」ノードを右クリックし、「新規」>「その他」を選択して新規ファイル・ウィザードを開きます。
+2. 「データベースからのHibernateのマッピング・ファイルとPOJO」を「Hibernate」カテゴリから選択します。「次」をクリックします。
+3. 選択されていない場合、 ``hibernate.cfg.xml`` を「Hibernate構成ファイル」ドロップダウン・リストから選択します。
+4. 選択されていない場合、 ``hibernate.reveng.xml`` を「Hibernateリバース・エンジニアリング・ファイル」ドロップダウン・リストから選択します。
+5. 「*ドメイン・コード*」および「*Hibernate XMLのマッピング*」オプションが選択されていることを確認します。
+6. パッケージ名に「*sakila.entity*」と入力します。「終了」をクリックします。
+image::images/mapping-pojos-wizard-ant.png[title="「Hibernateのマッピング・ファイルとPOJOの生成」ウィザード"]
+
+「終了」をクリックすると、IDEでPOJOの ``Actor.java`` がすべての必須フィールドとともに生成され、Hibernateマッピング・ファイルが生成され、マッピング・エントリが ``hibernate.cfg.xml`` に追加されます。
+
+これで、POJOと必要なHibernate関連ファイルが準備できたので、アプリケーションの単純なJava GUIフロント・エンドを作成できます。また、データベースを問い合せてデータを取得するHQL問合せを作成し、追加できます。また、このプロセスで、HQLエディタを使用して問合せをビルドおよびテストします。
+
+
+== アプリケーションGUIの作成
+
+この課題では、データを入力および表示するためのフィールドを含む、単純なJFrameフォームを作成します。また、データを取得するためのデータベース問合せをトリガーするボタンを追加します。
+
+GUIビルダーを使用したフォームの作成に慣れていない場合は、link:gui-functionality.html[+GUIビルドの概要+]のチュートリアルを見直すことをお薦めします。
+
+
+=== JFrameフォームの作成
+
+1. 「プロジェクト」ウィンドウでプロジェクト・ノードを右クリックし、「新規」>「その他」を選択して新規ファイル・ウィザードを開きます。
+2. JFrameフォームを「Swing GUIフォーム」カテゴリから選択します。「次」をクリックします。
+3. クラス名に「*DVDStoreAdmin*」と入力し、パッケージ名に「*sakila.ui*」と入力します。「終了」をクリックします。
+
+「終了」をクリックすると、IDEでクラスが作成され、JFrameフォームがエディタの「デザイン」ビューに開きます。
+
+
+=== 要素のフォームへの追加
+
+次に、UI要素をフォームに追加する必要があります。エディタの「デザイン」ビューにフォームが表示されると、IDEの左側に「パレット」が表示されます。要素をフォームに追加するには、要素をパレットからフォーム領域にドラッグします。要素をフォームに追加した後、その要素の「変数名」プロパティのデフォルト値を変更する必要があります。
+
+1. 「ラベル」要素をパレットからドラッグし、テキストを「*俳優のプロ・フィール*」に変更します。
+2. 「ラベル」要素をパレットからドラッグし、「*名*」のテキストを変更します。
+3. 「テキスト・フィールド」要素を「名」ラベルの隣にドラッグし、デフォルトのテキストを削除します。
+4. 「ラベル」要素をパレットからドラッグし、「*姓*」のテキストを変更します。
+5. 「テキスト・フィールド」要素を「姓」ラベルの隣にドラッグし、デフォルトのテキストを削除します。
+6. 「ボタン」要素をパレットからドラッグし、テキストを「*問合せ*」に変更します。
+7. 「表」要素をパレットからフォームにドラッグします。
+8. 次のUI要素の「変数名」の値を、次の表の値に従って変更します。
+
+要素の「変数名」の値は、その要素を「デザイン」ビューの中で右クリックし、「変数名を変更」を選択することで変更できます。または、「変数名」を「インスペクタ」ウィンドウで直接変更することもできます。
+
+「変数名」値を「ラベル」要素に割り当てる必要はありません。
+
+|===
+|要素 |変数名 
+
+|「名」テキスト・フィールド | ``firstNameTextField``  
+
+|「姓」テキスト・フィールド | ``lastNameTextField``  
+
+|「問合せ」ボタン | ``queryButton``  
+
+|表 | ``resultTable``  
+|===
+9. 変更を保存します。
+
+デザイン・ビューのフォームは、次のイメージのような外観になります。
+
+image::images/hib-jframe-form.png[title="エディタの「デザイン」ビューのGUIフォーム"]
+
+これで、フォーム要素にイベントを割り当てるためのコードを作成するフォームが準備できました。次の課題では、Hibernate問合せ言語に基づいて、データを取得する問合せを構築します。問合せの構築後、「問合せ」ボタンを押したときに適切な問合せを呼び出すメソッドをフォームに追加します。
+
+
+== HQL問合せエディタでの問合せの作成
+
+IDEで、HQL問合せエディタを使用してHibernate問合せ言語(HQL)に基づく問合せを構築およびテストできます。問合せを入力すると、それに相当する(変換された) SQL問合せがエディタに表示されます。ツールバーの「HQL問合せの実行」ボタンをクリックすると、IDEが問合せを実行し、エディタ下部に結果が表示されます。
+
+この課題では、HQLエディタを使用して、姓または名の一致に基づいて俳優の詳細リストを取得する、単純なHQL問合せを構築します。問合せをクラスに追加する前に、HQL問合せエディタを使用して、接続が正しく動作し、問合せで目的の結果が生成されることをテストします。この問合せを実行するには、まずアプリケーションをコンパイルする必要があります。
+
+1. プロジェクト・ノードを右クリックし、「ビルド」を選択します。
+2. 「プロジェクト」ウィンドウで、<デフォルト・パッケージ> ソース・パッケージ・ノードを展開します。
+3. 「 ``hibernate.cfg.xml`` 」を右クリックし、「HQL問合せの実行」を選択してHQL問合せエディタを開きます。
+4. HQL問合せエディタに「 ``from Actor`` 」と入力して、接続をテストします。ツールバーの「HQL問合せの実行」ボタン(image::images/run_hql_query_16.png[title="「HQL問合せの実行」ボタン"])をクリックします。
+
+「HQL問合せの実行」をクリックすると、問合せ結果がHQL問合せエディタの下のペインに表示されるはずです。
+
+image::images/hib-query-hqlresults.png[title="HQL問合せ結果が表示されたHQL問合せエディタ"]
+5. 検索文字列が「PE」の場合、次の問合せをHQL問合せエディタに入力して「HQL問合せの実行」をクリックし、問合せ結果を確認します。
+
+[source,java]
+----
+
+from Actor a where a.firstName like 'PE%'
+----
+
+問合せによって名前が「PE」で始まる俳優の詳細リストが返されます。
+
+結果の上にある「SQL」ボタンをクリックすると、次のようなSQL問合せが表示されるはずです。
+
+
+[source,java]
+----
+
+select actor0_.actor_id as col_0_0_ from sakila.actor actor0_ where (actor0_.first_name like 'PE%' )
+----
+6. 新しいHQL問合せエディタのタブを開き、次の問合せをエディタ・ペインに入力します。「HQL問合せの実行」をクリックします。
+
+[source,java]
+----
+
+from Actor a where a.lastName like 'MO%'
+----
+
+問合せによって姓が「MO」で始まる俳優の詳細リストが返されます。
+
+問合せをテストすると、その問合せが目的の結果を返すことがわかります。次の手順では、フォームで「問合せ」ボタンをクリックすると適切な問合せが呼び出されるように、問合せをアプリケーションに実装します。
+
+
+== 問合せのフォームへの追加
+
+ ``DVDStoreAdmin.java`` を変更して、問合せ文字列を追加し、入力変数を組み込む問合せを構築して呼び出すメソッドを作成する必要があります。また、ボタン・イベント・ハンドラを変更して、正しい問合せを呼び出し、問合せ結果を表に表示するメソッドを追加する必要があります。
+
+1.  ``DVDStoreAdmin.java`` を開き、「ソース」タブをクリックします。
+2. このクラスに、次の問合せ文字列(太字部分)を追加します。
+
+[source,java]
+----
+
+public DVDStoreAdmin() {
+    initComponents();
+}
+
+*private static String QUERY_BASED_ON_FIRST_NAME="from Actor a where a.firstName like '";
+private static String QUERY_BASED_ON_LAST_NAME="from Actor a where a.lastName like '";*
+----
+
+問合せをHQL問合せエディタのタブからファイルにコピーし、コードを変更できます。
+
+3. 次のメソッドを追加し、ユーザー入力文字列に基づく問合せを作成します。
+
+[source,java]
+----
+
+private void runQueryBasedOnFirstName() {
+    executeHQLQuery(QUERY_BASED_ON_FIRST_NAME + firstNameTextField.getText() + "%'");
+}
+    
+private void runQueryBasedOnLastName() {
+    executeHQLQuery(QUERY_BASED_ON_LAST_NAME + lastNameTextField.getText() + "%'");
+}
+----
+
+このメソッドは、 ``executeHQLQuery()`` というメソッドをコールし、問合せ文字列をユーザーが入力した検索文字列と組み合せて問合せを作成します。
+
+4.  ``executeHQLQuery()`` メソッドを追加します。
+
+[source,java]
+----
+
+private void executeHQLQuery(String hql) {
+    try {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        session.beginTransaction();
+        Query q = session.createQuery(hql);
+        List resultList = q.list();
+        displayResult(resultList);
+        session.getTransaction().commit();
+    } catch (HibernateException he) {
+        he.printStackTrace();
+    }
+}
+----
+
+ ``executeHQLQuery()`` メソッドは、Hibernateをコールして、選択した問合せを実行します。このメソッドは、 ``HibernateUtil.java`` ユーティリティ・クラスを使用してHibernateセッションを取得します。
+
+5. エディタを右クリックして「インポートを修正」([Ctrl]-[Shift]-[I]、Macの場合は[⌘]-[Shift]-[I])を選択し、Hibernateライブラリ( ``org.hibernate.Query`` 、 ``org.hibernate.Session`` )および ``java.util.List`` に対するインポート文を生成します。変更を保存します。
+6. デザイン・ビューに切り替えて「問合せ」ボタンをダブルクリックすることで、「問合せ」ボタン・イベント・ハンドラを作成します。
+
+IDEで ``queryButtonActionPerformed`` メソッドが作成され、このメソッドがソース・ビューに表示されます。
+
+7. ユーザーがボタンをクリックすると問合せが実行されるように、ソース・ビューの ``queryButtonActionPerformed`` メソッドに次のコードを追加して変更します。
+
+[source,java]
+----
+
+private void queryButtonActionPerformed(java.awt.event.ActionEvent evt) {
+    *if(!firstNameTextField.getText().trim().equals("")) {
+        runQueryBasedOnFirstName();
+    } else if(!lastNameTextField.getText().trim().equals("")) {
+        runQueryBasedOnLastName();
+    }*
+}
+----
+8. 次のメソッドを追加し、結果がJTableに表示されるようにします。
+
+[source,java]
+----
+
+private void displayResult(List resultList) {
+    Vector<String> tableHeaders = new Vector<String>();
+    Vector tableData = new Vector();
+    tableHeaders.add("ActorId"); 
+    tableHeaders.add("FirstName");
+    tableHeaders.add("LastName");
+    tableHeaders.add("LastUpdated");
+
+    for(Object o : resultList) {
+        Actor actor = (Actor)o;
+        Vector<Object> oneRow = new Vector<Object>();
+        oneRow.add(actor.getActorId());
+        oneRow.add(actor.getFirstName());
+        oneRow.add(actor.getLastName());
+        oneRow.add(actor.getLastUpdate());
+        tableData.add(oneRow);
+    }
+    resultTable.setModel(new DefaultTableModel(tableData, tableHeaders));
+}
+----
+9. エディタを右クリックして「インポートを修正」([Ctrl]-[Shift]-[I]、Macの場合は[⌘]-[Shift]-[I])を選択し、 ``java.util.Vector`` と ``java.util.List`` に対するインポート文を生成します。変更を保存します。
+
+フォームの保存後、プロジェクトを実行できます。
+
+
+== プロジェクトの実行
+
+これでコーディングが終了したので、アプリケーションを起動できます。プロジェクトを実行する前に、プロジェクトのプロパティのダイアログ・ボックスでアプリケーションのメイン・クラスを指定する必要があります。メイン・クラスが指定されていない場合は、アプリケーションの初回起動時にメイン・クラスを設定するよう求められます。
+
+1. 「プロジェクト」ウィンドウでプロジェクトのノードを右クリックし、「プロパティ」を選択します。
+2. 「プロジェクト・プロパティ」ダイアログ・ボックスで「実行」カテゴリを選択します。
+3. 「メイン・クラス」に「*sakila.ui.DVDStoreAdmin*」と入力します。「OK」をクリックします。
+
+または、「参照」ボタンをクリックし、ダイアログ・ボックスでメイン・クラスを選択できます。
+
+image::images/browse-main-class.png[title="「メイン・クラスの参照」ダイアログでのメイン・クラスの設定"]
+4. メイン・ツールバーの「プロジェクトの実行」をクリックし、アプリケーションを起動します。
+
+検索文字列を「名」または「姓」テキスト・フィールドに入力し、「問合せ」をクリックして俳優を検索し、詳細を確認します。
+
+image::images/application-run.png[title="結果が表示されたDVDStoreAdminアプリケーション"]
+
+IDEの「出力」ウィンドウを見ると、表示された結果を取得したSQL問合せを確認できます。
+
+
+=== ソリューション・プロジェクトのダウンロード
+
+次の方法で、このチュートリアルにソリューションをプロジェクトとしてダウンロードできます。
+
+* link:https://netbeans.org/projects/samples/downloads/download/Samples/Java/DVDStoreAdmin-Ant.zip[+終了したプロジェクトのZIPアーカイブ+]をダウンロードします。
+* 次の手順を実行して、プロジェクト・ソースをNetBeansのサンプルからチェックアウトします。
+1. メイン・メニューから「チーム」>「Subversion」>「チェックアウト」を選択します。
+2. 「チェックアウト」ダイアログ・ボックスで次のリポジトリURLを入力します。
+ ``https://svn.netbeans.org/svn/samples~samples-source-code`` 
+「次」をクリックします。
+3. 「参照」をクリックして「リポジトリ・フォルダを参照」ダイアログ・ボックスを開きます。
+4. ルート・ノードを展開し、*samples/java/DVDStoreAdmin-Ant*を選択します。「OK」をクリックします。
+5. ソースのローカル・フォルダを指定します(ローカル・フォルダは空である必要があります)。
+6. 「終了」をクリックします。
+
+「終了」をクリックすると、IDEではローカル・フォルダがSubversionリポジトリとして初期化され、プロジェクト・ソースがチェックアウトされます。
+
+7. チェックアウトが完了するときに表示されるダイアログで、「プロジェクトを開く」をクリックします。
+
+*注意:*ソースをチェックアウトするには、Subversionクライアントが必要です。Subversionのインストールの詳細は、link:../ide/subversion.html[+NetBeans IDEでのSubversionガイド+]のlink:../ide/subversion.html#settingUp[+Subversionの設定+]の項を参照してください。
+
+
+== 個別のPOJOおよびマッピング・ファイルの作成
+
+POJOは単純なJavaクラスのため、新規Javaクラス・ウィザードを使用してクラスを作成し、そのクラスをソース・エディタで編集して、必要なフィールド、取得メソッドおよび設定メソッドを追加できます。POJOの作成後、ウィザードを使用してHibernateマッピング・ファイルを作成し、そのクラスを表にマップしてマッピング情報を ``hibernate.cfg.xml`` に追加します。マッピング・ファイルを最初から作成する場合、XMLエディタでフィールドを列にマップする必要があります。
+
+*注意:*この課題はオプションで、「データベースからのHibernateのマッピング・ファイルとPOJO」ウィザードを使用して作成したPOJOおよびマッピング・ファイルの作成方法を説明します。
+
+1. 「プロジェクト」ウィンドウの「ソース・パッケージ」ノードを右クリックし、「新規」>「Javaクラス」を選択して新規Javaクラス・ウィザードを開きます。
+2. このウィザードで、クラス名に「*Actor*」と入力し、パッケージに「*sakila.entity*」と入力します。「終了」をクリックします。
+3. 次の太字で表示されている変更をクラスに加え、シリアライズ可能なインタフェースを実装して、表の列のフィールドを追加します。
+
+[source,java]
+----
+
+public class Actor *implements Serializable* {
+    *private Short actorId;
+    private String firstName;
+    private String lastName;
+    private Date lastUpdate;*
+}
+----
+4. エディタを右クリックして「コードを挿入」([Alt]-[Insert]、Macの場合は[Ctrl]-[I])を選択し、ポップアップ・メニューから「取得メソッドおよび設定メソッド」を選択して、フィールドに対する取得メソッドと設定メソッドを生成します。
+5. 「取得メソッドおよび設定メソッドの生成」ダイアログ・ボックスですべてのフィールドを選択し、「生成」をクリックします。
+image::images/getters-setters.png[title="「取得メソッドおよび設定メソッドの生成」ダイアログ・ボックス"]
+
+「取得メソッドおよび設定メソッドの生成」ダイアログ・ボックスでは、キーボードの[↑]を使用して、選択した項目を「Actor」ノードまで移動してから、[Space]バーを押してActor内のすべてのフィールドを選択できます。
+
+6. インポートを修正して変更内容を保存します。
+
+表のためのPOJOの作成後、 ``Actor.java`` のHibernateマッピング・ファイルを作成します。
+
+1. 「プロジェクト」ウィンドウで「 ``sakila.entity`` 」ノードを右クリックし、「新規」>「その他」を選択して新規ファイル・ウィザードを開きます。
+2. 「Hibernate」カテゴリの「Hibernateのマッピング・ファイル」を選択します。「次」をクリックします。
+3. 「ファイル名」に「*Actor.hbm*」と入力し、フォルダが「*src/sakila/entity*」であることを確認します。「次」をクリックします。
+4. 「マップするクラス」に「*sakila.entity.Actor*」と入力し、「データベース表」ドロップダウン・リストから「*actor*」を選択します。「終了」をクリックします。
+image::images/mapping-wizard.png[title="「Hibernateのマッピング・ファイルの生成」ウィザード"]
+
+「終了」をクリックすると、 ``Actor.hbm.xml``  Hibernateのマッピング・ファイルがソース・エディタで開きます。また、IDEでマッピング・リソースに対するエントリが ``hibernate.cfg.xml`` に自動的に追加されます。このエントリの詳細は、 ``hibernate.cfg.xml`` のデザイン・ビューで「マッピング」ノードを展開するか、またはXMLビューで表示できます。XMLビューの ``mapping`` エントリは、次のようになります。
+
+
+[source,xml]
+----
+
+        <mapping resource="sakila/entity/Actor.hbm.xml"/>
+    </session-factory>
+</hibernate-configuration>
+----
+5. 次の太字部分の変更を ``Actor.hbm.xml`` に加えて、 ``Actor.java`` のフィールドをACTOR表の列にマップします。
+
+[source,xml]
+----
+
+<hibernate-mapping>
+  <class name="sakila.entity.Actor" *table="actor">
+    <id name="actorId" type="java.lang.Short">
+      <column name="actor_id"/>
+      <generator class="identity"/>
+    </id>
+    <property name="firstName" type="string">
+      <column length="45" name="first_name" not-null="true"/>
+    </property>
+    <property name="lastName" type="string">
+      <column length="45" name="last_name" not-null="true"/>
+    </property>
+    <property name="lastUpdate" type="timestamp">
+      <column length="19" name="last_update" not-null="true"/>
+    </property>
+  </class>*
+</hibernate-mapping>
+----
+
+エディタでコード補完を使用すると、マッピング・ファイルの変更時に値を補完できます。
+
+*注意:* デフォルトでは、生成される ``class`` 要素には終了タグがあります。開始と終了の ``class`` 要素タグの間にプロパティ要素を追加する必要があるため、次の変更(太字で表示)を加えます。変更後、 ``class`` タグの間でコード補完を使用できます。
+
+
+[source,xml]
+----
+
+<hibernate-mapping>
+  <class name="sakila.entity.Actor" *table="actor">
+  </class>*
+</hibernate-mapping>
+----
+6. ツールバーの「XMLの検証」ボタンをクリックし、変更内容を保存します。
+
+POJOとHibernateのマッピング・ファイルを個別に作成すると、アプリケーションをさらにカスタマイズするときに役立つ場合があります。
+
+link:/about/contact_form.html?to=3&subject=Feedback:%20Using%20Hibernate%20in%20a%20Java%20Swing%20Application[+このチュートリアルに関するご意見をお寄せください+]
+
+
+
+== 関連項目
+
+Swing GUIアプリケーションの作成に関する追加情報は、次のチュートリアルを参照してください。
+
+* link:quickstart-gui.html[+NetBeans IDEでのSwing GUIのデザイン+]
+* link:gui-functionality.html[+GUIビルドの概要+]
+* link:../../trails/matisse.html[+Java GUIアプリケーションの学習+]

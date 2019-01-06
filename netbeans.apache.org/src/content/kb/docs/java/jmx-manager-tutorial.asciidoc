@@ -1,0 +1,257 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= Developing a Java Management Extensions (JMX) Manager and Connecting to a Remote JMX Agent
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: Developing a Java Management Extensions (JMX) Manager and Connecting to a Remote JMX Agent - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, Developing a Java Management Extensions (JMX) Manager and Connecting to a Remote JMX Agent
+
+*Expected duration: 30 minutes*
+
+The NetBeans JMX Wizard Module integrates JMX technology right into your workflow in the NetBeans IDE. This module allows you to quickly develop management applications, add management to existing applications, develop manager applications, and monitor the state of the Virtual Machine.
+
+This tutorial shows you how to perform the following actions:
+
+1. Start a JMX agent in order to make it accessible from a remote JMX manager.
+2. Create a JMX manager.
+3. Run the manager.
+4. Update the manager to add your own management logic.
+
+
+=== Tutorial Exercises
+
+image::images/netbeans-stamp-80-74-73.png[title="Content on this page applies to the NetBeans IDE 7.2, 7.3, 7.4 and 8.0"]
+
+* <<Exercise_1,Creating the Management Sample Anagram Project>>
+* <<Exercise_2,Running the Agent>>
+* <<Exercise_3,Creating the Manager Project>>
+* <<Exercise_3,Creating the Project>>
+* <<Exercise_4,Creating a Runnable Manager Class>>
+* <<Exercise_5,Running the Manager>>
+
+
+=== Prerequisites
+
+This tutorial assumes you have some basic knowledge of, or programming experience with, the following technologies.
+
+* JMX technology: link:http://download.oracle.com/javase/6/docs/technotes/guides/jmx/index.html[+ JMX online documentation+]
+* Java technology: link:http://www.oracle.com/technetwork/java/javase/tech/index.html[+ Java SE Technologies at a Glance+]
+* NetBeans IDE
+
+You will also benefit from having some knowledge on link:http://download.oracle.com/javase/6/docs/technotes/guides/management/index.html[+ Monitoring and Management for the Java Platform+]
+
+
+=== Software Needed for the Tutorial
+
+For this tutorial you need to have the following software installed on your computer:
+
+|===
+|Software or Resource |Version Required 
+
+|link:https://netbeans.org/downloads/index.html[+NetBeans IDE+] |7.2, 7.3, 7.4, 8.0, Java version 
+
+|link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[+Java Development Kit (JDK)+] |version 7 or 8 
+
+|JMX plugin |Available from NetBeans Update Center 
+
+|JConsole plugin |Available from NetBeans Update Center 
+|===
+
+To install the *JMX* and *JConsole* plugins, choose Tools > Plugins and download the module from the NetBeans Update Center.
+
+
+=== Resources
+
+* Netbeans help contents (Help > Help Contents > JMX). This help is also available from the Wizards.
+
+
+== Creating the Management Sample Anagram Project
+
+The goal of this exercise is to create a JMX agent to which the manager application can connect. The JMX plugin includes a JMX agent sample Java project. In this exercise you will create this sample project rather than writing a JMX agent from scratch.
+
+1. Choose File > New Project.
+2. In Samples, select the JMX category.
+3. Select the Anagram Game Managed with JMX project. 
+image::images/jmx-newproject.png[title="Anagram Game Managed with JMX in New Project wizard"]
+4. Click Next. There is no need to change the already the default project name and location values. Confirm that Set as Main Project is selected and click Finish.
+
+
+== Running the Agent
+
+The goal of this exercise is to start a Java application with the JMX remote management enabled. Remote management allows client applications (JMX managers) to connect to the application (JMX agent) and visualize the management and monitoring information.
+
+*Note.* Any running application based on JDK 1.5, JDK 1.6 or JDK 1.7 is a JMX agent for which you can enable remote management.
+
+1. Confirm that the JMXAnagramGame project is selected and is set as the main project.
+2. Right-click the JMXAnagramGame project and select Properties.
+3. Select the *Monitoring and Management* category in the project's Properties dialog box.
+4. Deselect *Attach JConsole to Project*.
+5. Select *Enable RMI Remote Access*. Click OK.
+image::images/jmx-properties1.png[title="Monitoring and Management category in project Properties dialog"]
+
+You can provide a port on which the agent waits for incoming JMX requests. In this tutorial, we just keep the default port (1099). If you provided another port number, you would have to make the appropriate changes in every part of this tutorial. Also, in this tutorial, we do not specify a properties file. (For your own applications, we provide a wizard to help you create a management properties file.)
+
+6. Choose Debug > Run Main Project with Monitoring and Management from the main menu to launch the Anagram Game application.
+
+Alternatively, click the Run Main Project with Monitoring and Management button in the toolbar (  image::images/run-project24.png[title="Run Main Project with Monitoring and Management button"]).
+
+When you run the application the Anagram Game window will open. The JVM is listening for RMI access on local host port 1099. The JMX agent is running and waiting for the manger to send management requests.
+
+image::images/jmx-anagram.png[title="Anagram Game"]
+
+You can minimize the Anagrams window, but do not quit the application.
+
+
+== Creating the Manager Project
+
+In this exercise you will create a Java application project named  ``JMXAnagramManager``  and then use a wizard to create a runnable manager class.
+
+
+=== Creating the Project
+
+1. Choose File > New Project (Ctrl-Shift-N).
+2. Choose Java Application in the Java category. Click Next.
+image::images/jmx-newjavaproject.png[title="New Java Project wizard"]
+3. Type *JMXAnagramManager* as the Project Name.
+4. Select Set as Main Project (if not selected) and deselect Create Main Class. Click Finish.
+
+*Note.* You will use the JMX Manager wizard to generate the main runnable class in the next exercise.
+
+When you click Finish the new project is added to the Projects tree. Notice that a JMX manager project is just like any other Java application project.
+
+
+=== Creating a Runnable Manager Class
+
+In this exercise, you will learn how to use the JMX Manager wizard to generate a runnable manager class.
+
+1. Confirm that the JMXAnagramManager project is set as the main project.
+2. Choose File > New File (Ctrl-N; ⌘-N on Mac) and select JMX Manager in the JMX category. Click Next.
+image::images/jmx-newjmxmanager.png[title="JMX Manager template in New File wizard"]
+3. Type *AnagramsManager* as the Class Name.
+4. Type *com.toys.anagrams.manager* as the package name.
+5. Confirm that Generate Main Method, Set as Project Main Class and Generate Sample MBean Discovery Code are selected. Click Next.
+6. Click Edit to enter the JMX agent URL to which you want to connect.
+7. Accept the default values in the RMI JMX Agent URL dialog box. Click OK.
+
+The RMI JMX Agent URL dialog box helps you enter a valid JMX URL, composed of a Protocol, a Host, a Port and an URL path.
+
+image::images/jmx-jmxagenturl.png[title="default values in RMI JMX Agent URL dialog box"]
+
+A single element is provided in the protocol drop-down list. The Protocol field is writable, enabling you to enter your own protocol. The default protocol RMI JVM Agent is the RMI protocol used to connect to a JDK JMX agent. The Agent that you started earlier in this tutorial is of this nature.
+
+You want to use the default host and port valued because the Agent is listening on  ``localhost:1099`` . The URL Path field is read-only and displays how the path is constructed for a RMI JVM Agent. The URL Path is automatically updated with the host and port values.
+
+When you click OK the JMX Agent URL field is updated with the full URL according to the details specified in the RMI JMX Agent URL dialog box.
+
+8. Confirm that Authenticated Connection and Generate Sample Code for Authenticated Connection are selected. Click Finish.
+image:::images/jmx-jmxagenturl2-sm.png[role="left", link="images/jmx-jmxagenturl2.png"]
+
+The connection to the Agent is not authenticated because you did not provide any authentication configuration when the agent was launched.
+
+When you click Finish the IDE creates the manager class and opens the file in the editor. You can see that the IDE generated some sample code to enable an authenticated connection generated.
+
+
+== Running the Manager
+
+In this exercise, you will learn how to run the manager and discover the MBeans.
+
+1. In the AnagramsManager.java file, uncomment the MBean discovery code located in the main method, so that it should read:
+
+[source,java]
+----
+
+    public static void main(String[] args) throws Exception {
+        
+        //Manager instantiation and connection to the remote agent
+        AnagramsManager manager = AnagramsManager.getDefault();
+
+        // SAMPLE MBEAN NAME DISCOVERY. Uncomment following code:
+          Set resultSet =
+          manager.getMBeanServerConnection().queryNames(null, null);
+          for(Iterator i = resultSet.iterator(); i.hasNext();) {
+          System.out.println("MBean name: " + i.next());
+          } 
+
+        // Close connection
+        manager.close();
+        System.out.println("Connection closed.");
+    }
+      
+----
+2. Right-click in the editor and choose Fix Imports (Alt-Shift-I; ⌘-Shift-I on Mac) to generate any necessary import statements ( ``java.util.Set``  and  ``java.util.Iterator`` ). Save your changes.
+3. Choose Run > Run Main Project from the main menu.
+
+Alternatively, right-click the JMXAnagramManager project node in the Projects window and choose Run.
+
+When you choose Run, the JMXAnagramManager application will launch and will connect to the remote agent, display the discovered MBean names in the Output window and then close the connection:
+
+The project is compiled and the manager is started. The discovered  ``ObejctNames``  are displayed in the Output window. You can notice the  ``AnagramsStats``  MBean name as well as the Java VM MBeans. All Java VM standard MBeans are located under the  ``java.lang``  JMX domain.
+
+Here is what you should see in the NetBeans Output Window of the JMXAnagramManager run:
+
+
+[source,java]
+----
+
+init:
+deps-jar:
+compile:
+run:
+MBean name: java.lang:type=MemoryManager,name=CodeCacheManager
+MBean name: java.lang:type=Compilation
+MBean name: java.lang:type=MemoryPool,name=PS Perm Gen
+MBean name: com.sun.management:type=HotSpotDiagnostic
+MBean name: java.lang:type=Runtime
+MBean name: com.toy.anagrams.mbeans:type=AnagramsStats
+MBean name: java.lang:type=ClassLoading
+MBean name: java.lang:type=Threading
+MBean name: java.lang:type=MemoryPool,name=PS Survivor Space
+MBean name: java.util.logging:type=Logging
+MBean name: java.lang:type=OperatingSystem
+MBean name: java.lang:type=Memory
+MBean name: java.lang:type=MemoryPool,name=Code Cache
+MBean name: java.lang:type=GarbageCollector,name=PS Scavenge
+MBean name: java.lang:type=MemoryPool,name=PS Eden Space
+MBean name: JMImplementation:type=MBeanServerDelegate
+MBean name: java.lang:type=GarbageCollector,name=PS MarkSweep
+MBean name: java.lang:type=MemoryPool,name=PS Old Gen
+Connection closed.
+BUILD SUCCESSFUL (total time: 1 second)
+
+----
+
+*Yes, you are done! Great job!*
+We hope that this tutorial helped you understand how to develop manager applications in order to access information exported thanks to JMX.
+
+link:/about/contact_form.html?to=3&subject=Feedback:%20Developing%20a%20Java%20Management%20Extensions%20Manager[+Send Feedback on This Tutorial+]
+
+
+
+== See Also
+
+For more information, see the following:
+
+* link:jmx-getstart.html[+Getting Started with JMX Monitoring in NetBeans IDE+]
+* link:jmx-tutorial.html[+Adding Java Management Extensions (JMX) Instrumentation to a Java Application+]

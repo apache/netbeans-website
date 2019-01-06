@@ -1,0 +1,124 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= Сквозная передача двоичных данных – вложение SOAP 2: создание веб-службы
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: Сквозная передача двоичных данных – вложение SOAP 2: создание веб-службы - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, Сквозная передача двоичных данных – вложение SOAP 2: создание веб-службы
+
+Целью этого урока является создание веб-приложения, содержащего веб-службу. Рассматривается реализация веб-службы в качестве сеансного компонента без сохранения состояния.
+
+Готовый образец веб-службы можно загрузить из link:https://netbeans.org/projects/samples/downloads/download/Samples%252FWeb%2520Services%252FWeb%2520Service%2520Passing%2520Binary%2520Data%2520--%2520EE6%252FFlowerAlbumService.zip[+каталога примеров NetBeans+].
+
+*Уроки, представленные в этом учебном курсе*
+
+image::images/netbeans-stamp-80-74-73.png[title="Содержимое этой страницы применимо к IDE NetBeans 7.2, 7.3, 7.4 и 8.0"]
+
+1. link:./flower_overview.html[+Обзор+]
+2. => Создание веб-службы
+3. link:flower-code-ws.html[+Написание кода веб-службы и ее тестирование+]
+4. link:./flower_wsdl_schema.html[+ Изменение файлов схемы и WSDL для передачи двоичных данных+]
+5. link:./flower_swing.html[+ Создание клиента Swing+]
+
+
+1. <<create-web-app,Создание веб-приложения>>
+2. <<add-ws,Добавление веб-службы>>
+
+
+[[create-web-app]]
+== Создание веб-приложения
+
+В этом разделе описывается создание веб-приложения Java EE. Также описывается добавление в это приложение изображений, передаваемых веб-службой в качестве двоичных данных.
+
+*Чтобы создать веб-приложение, выполните следующие действия.*
+
+1. Выберите 'Файл' > 'Создать проект' (Ctrl-Shift-N в Windows и Linux, ⌘-Shift-N в ОС Mac). Откроется мастер создания проекта. Выберите "Веб-приложение" из категории "Java Web" и нажмите кнопку "Далее". Откроется страница "Имя и местоположение".
+2. Введите текст  ``FlowerAlbumService``  в поле "Имя проекта". Выберите папку проекта. Сохраните настройки по умолчанию для остальных параметров и нажмите кнопку "Далее". Откроется страница "Сервер и параметры настройки".
+3. Выберите сервер GlassFish и укажите Java EE 6 Web или Java EE 7 Web в качестве версии Java EE.
+4. Нажмите кнопку "Завершить". Проект  ``FlowerAlbumService``  создан и отображается в окне "Проекты".
+5. Щелкните узел "Исходные файлы" правой кнопкой мыши и выберите в меню "Создать" пункт "Пакет Java".
+
+Также можно выбрать пункт меню "Создать > Другие" и выбрать "Пакет Java" в категории "Java" мастера создания файлов.
+
+6. Присвойте пакету имя  ``org.flower.resources`` . Нажмите кнопку "Завершить".
+image::images/new-package.png[]
+7. Скопируйте следующие изображения в пакет  ``org.flower.resources`` :
+* link:images/rose.jpg[+rose.jpg+]
+* link:images/sunflower.jpg[+sunflower.jpg+]
+* link:images/aster.jpg[+aster.jpg+]
+* link:images/honeysuckle.jpg[+honeysuckle.jpg+]
+
+Теперь в исходном файле проекта существует пакет  ``org.flower.resources`` . В файле содержится только этот пакет.
+
+image::images/project-w-resources.png[]
+
+
+[[add-ws]]
+== Добавление веб-службы
+
+В этом разделе рассматривается создание веб-службы в веб-приложении. Веб-служба создается как сеансный компонент без сохранения состояния. Необходимо добавить в службу следующие веб-операции:
+
+* операция, которая принимает имя цветка и получает связанный с ним объект  ``Image`` ;
+* операция, которая получает эскизы всех изображений цветов и возвращает их в виде объекта  `` List`` .
+
+*Добавление веб-службы:*
+
+1. В окне 'Проекты' щелкните правой кнопкой мыши узел проекта  ``FlowerAlbumService``  и выберите 'Создать' > 'Веб-служба'. Также можно выбрать в меню "Создать" пункт "Прочее" и затем выбрать веб-службу в списке веб-служб мастера создания файла. Откроется мастер создания веб-службы.
+2. В диалоговом окне мастера создания веб-службы введите в поле "Имя веб-службы" текст  ``FlowerService`` , а в поле "Имя пакета" –  ``org.flower.service`` . Установите флажок "Создать веб-службу "с нуля"". Установите флажок "Реализовать веб-службу в качестве сеансного компонента без оператора". Нажмите кнопку "Завершить". 
+image::images/new-service.png[]
+
+В узле проекта в окне "Проекты" появится веб-служба. Каталог "Исходные файлы" включает в себя пакет для веб-служб и пакет ресурсов.
+
+image::images/project-w-service-and-resources.png[]
+3. Откройте в редакторе файл  ``FlowerService.java`` . Перейдите к представлению "Проектирование". Появится форма для добавления операций и элементов качества обслуживания в веб-службу.
+image::images/flower-service-empty-design.png[]
+4. Нажмите кнопку "Добавить операцию". Откроется мастер добавления операции.
+5. Присвойте операции имя  ``getFlower`` . Введите в поле "Тип возвращаемого значения" текст  ``java.awt.Image``  или найдите этот тип, нажав кнопку "Обзор".
+6. Выберите вкладку "Параметры" и нажмите кнопку "Добавить". Введите текст  ``name``  в качестве имени параметра и примите тип  ``java.lang.String``  по умолчанию. 
+image::images/add-getflower-param.png[]
+7. Откройте вкладку "Исключения". Добавьте исключение  ``IOException`` .
+image::images/io-exception.png[]
+8. Нажмите кнопку "ОК" и закройте мастер. Снова нажмите кнопку "Добавить операцию" и добавьте операцию со следующими свойствами:
+* *Имя:* getThumbnails
+* *Тип возвращаемого значения:* java.util.List
+* *Исключение: * IOException
+
+Теперь в представлении "Проектирование" отображаются операции  ``getFlower``  и  ``getThumbnails`` . Перейдите в представление списка для обеих операций и просмотрите все параметры.
+
+image::images/flower-service-full-design.png[]
+
+
+==  
+
+
+== Что дальше?
+
+link:./flower-code-ws.html[+Написание кода веб-службы и ее тестирование+]
+
+link:/about/contact_form.html?to=3&subject=Feedback:%20Flower%20Creating%20WS%20EE6[+Отправить отзыв по этому учебному курсу+]
+
+
+Для отправки комментариев и предложений, получения поддержки и новостей о последних разработках, связанных с Java EE IDE NetBeans link:../../../community/lists/top.html[+присоединяйтесь к списку рассылки nbj2ee@netbeans.org+].
+

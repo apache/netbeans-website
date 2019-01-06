@@ -1,0 +1,568 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= Using Hibernate in a Java Swing Application
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: Using Hibernate in a Java Swing Application - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, Using Hibernate in a Java Swing Application
+
+In this tutorial, you use the NetBeans IDE to create and deploy a Java Swing application that displays data from a database. The application uses the Hibernate framework as the persistence layer to retrieve POJOs (plain old Java objects) from a relational database.
+
+Hibernate is framework that provides tools for object relational mapping (ORM). The tutorial demonstrates the support for the Hibernate framework included in the IDE and how to use wizards to create the necessary Hibernate files. After creating the Java objects and configuring the application to use Hibernate, you create a GUI interface for searching and displaying the data.
+
+The application that you build in this tutorial is a companion administration application for the link:../web/hibernate-webapp.html[+DVD Store web application+]. This tutorial covers how to create an application that allows you to query an actor's profile based on the match with first name or last name. If you wish you can extend the application to query film details and to add/update/delete items. This tutorial uses MySQL and the Sakila database, but you can use any supported database server with Hibernate applications. The Sakila database is a sample database that you can download from the MySQL site. Information for setting up the Sakila DB is provided in the following sections.
+
+Before starting this tutorial you may want to familiarize yourself with the following documentation.
+
+* Hibernate documentation at link:http://www.hibernate.org/[+hibernate.org+].
+* link:gui-functionality.html[+Introduction to GUI Building+]
+* link:../ide/mysql.html[+Connecting to a MySQL Database+] tutorial.
+
+To build this application using Maven, see link:maven-hib-java-se.html[+Creating a Maven Swing Application Using Hibernate+].
+
+
+image::images/netbeans-stamp-80-74-73.png[title="Content on this page applies to the NetBeans IDE 7.2, 7.3, 7.4 and 8.0"]
+
+
+*To follow this tutorial, you need the following software and resources.*
+
+|===
+|Software or Resource |Version Required 
+
+|link:https://netbeans.org/downloads/index.html[+NetBeans IDE+] |7.2, 7.3, 7.4, 8.0, Java 
+
+|link:http://java.sun.com/javase/downloads/index.jsp[+Java Development Kit (JDK)+] |version 7 or 8 
+
+|link:http://www.mysql.com/[+MySQL database server+] |version 5.x 
+
+|Sakila Database |plugin available from update center 
+|===
+
+You can download link:https://netbeans.org/projects/samples/downloads/download/Samples/Java/DVDStoreAdmin-Ant.zip[+a zip archive of the finished project+].
+
+
+== Creating the Database
+
+This tutorial uses a MySQL database called  ``sakila`` . The sample database is not included when you install the IDE so you need to first create the database to follow this tutorial.
+
+The Sakila database is a free sample MySQL database that is available from the MySQL site. To create the sakila database you can download and install the Sakila Sample Database plugin using the Plugins manager. After you install the plugin you can create the sakila database from the Services window. The sakila database is added to the list of databases in the Create MySQL database dialog box.
+
+For more information on configuring the IDE to work with MySQL, see the link:../ide/mysql.html[+Connecting to a MySQL Database+] tutorial.
+
+1. Open the Plugins manager and install the Sakila Sample Database plugin.
+2. After installing the plugin, start the MySQL database server by expanding the Databases node in the Services window, right-clicking the MySQL Server node and choosing Start.
+3. Right-click the MySQL Server node and choose Create Database.
+4. Select the Sakila database from the New Database Name drop down list in the Create MySQL Database dialog box. Click OK.
+image::images/create-sakila-mysql.png[title="Screenshot of Create MySQL Database dialog"]
+
+When you click OK a Sakila node appears under the MySQL Server node.
+
+5. Right-click the Sakila node and choose Connect.
+
+When you click Connect a database connection node for the Sakila database ( ``jdbc:mysql://localhost:3306/sakila [_username_ on Default]`` ) is listed under the Databases node. When a connection is open you can view the data in the database by expanding the connection node.
+
+
+== Creating the Java Swing Application Project
+
+In this exercise you create a simple Java Swing application project called DVDStoreAdmin.
+
+1. Choose File > New Project (Ctrl-Shift-N). Select Java Application from the Java category and click Next.
+2. Type *DVDStoreAdmin* for the project name and set the project location.
+3. Deselect the Use Dedicated Folder option, if selected.
+For this tutorial there is little reason to copy project libraries to a dedicated folder because you will not need to share libraries with other users.
+4. Deselect Create Main Class. Click Finish.
+
+When you click Finish, the IDE creates the Java application project. The project does not have a main class. You will create a form and then set the form as the main class.
+
+
+== Adding Hibernate Support to the Project
+
+To add support for Hibernate to a J2SE project you need to add the Hibernate library to the project. The Hibernate library is included with the IDE and can be added to any project by right-clicking the 'Libraries' node in the Projects window, selecting 'Add Library' and then selecting the Hibernate library in the Add Library dialog box.
+
+The IDE includes wizards to help you create the Hibernate files you may need in your project. You can use the wizards in the IDE to create a Hibernate configuration file and a utility helper class. If you create the Hibernate configuration file using a wizard the IDE automatically adds the Hibernate libraries to the project.
+
+
+=== Creating the Hibernate Configuration File
+
+The Hibernate configuration file ( ``hibernate.cfg.xml`` ) contains information about the database connection, resource mappings, and other connection properties. When you create a Hibernate configuration file using a wizard you specify the database connection by choosing from a list of database connection registered with the IDE. When generating the configuration file the IDE automatically adds the connection details and dialect information based on the selected database connection. The IDE also automatically adds the Hibernate library to the project classpath. After you create the configuration file you can edit the file using the multi-view editor, or edit the XML directly in the XML editor.
+
+1. Right-click the Source Packages node in the Projects window and choose New > Other to open the New File wizard.
+2. Select Hibernate Configuration Wizard from the Hibernate category. Click Next.
+3. Keep the default settings in the Name and Location pane (you want to create the file in the  ``src``  directory). Click Next.
+4. Select the sakila connection in the Database Connection drop down list. Click Finish.
+image::images/hib-config.png[title="Dialog for selecting database connection"]
+
+When you click Finish the IDE opens  ``hibernate.cfg.xml``  in the source editor. The IDE creates the configuration file at the root of the context classpath of the application (in the Files window, WEB-INF/classes). In the Projects window the file is located in the  ``<default package>``  source package. The configuration file contains information about a single database. If you plan to connect to multiple databases, you can create multiple configuration files in the project, one for each database servers, but by default the helper utility class will use the  ``hibernate.cfg.xml``  file located in the root location.
+
+If you expand the Libraries node in the Projects window you can see that the IDE added the required Hibernate JAR files and the MySQL connector JAR.
+
+image::images/hib-libraries-config.png[title="Screenshot of Projects window showing Hibernate libraries"]
+
+*Note.* NetBeans IDE 8.0 bundles the Hibernate 4 libraries. Older versions of the IDE bundled Hibernate 3.
+
+
+=== Modifying the Hibernate Configuration File
+
+In this exercise you will edit the default properties specified in  ``hibernate.cfg.xml``  to enable debug logging for SQL statements.
+
+1. Open  ``hibernate.cfg.xml``  in the Design tab. You can open the file by expanding the Configuration Files node in the Projects window and double-clicking  ``hibernate.cfg.xml`` .
+2. Expand the Configuration Properties node under Optional Properties.
+3. Click Add to open the Add Hibernate Property dialog box.
+4. In the dialog box, select the  ``hibernate.show_sql``  property and set the value to  ``true`` . Click OK. This enables the debug logging of the SQL statements.
+image::images/add-property-showsql.png[title="Add Hibernate Property dialog box showing setting value for the hibernate.show_sql property"]
+5. Click Add under the Miscellaneous Properties node and select  ``hibernate.query.factory_class``  in the Property Name dropdown list.
+6. Type *org.hibernate.hql.internal.classic.ClassicQueryTranslatorFactory* as the Property Value.
+
+This is the translator factory class that is used in Hibernate 4 that is bundled with the IDE.
+
+Click OK.
+
+image::images/add-property-factoryclass-4.png[title="Add Hibernate Property dialog box showing setting value for the hibernate.query.factory_class property"]
+
+If you are using NetBeans IDE 7.4 or earlier you should select *org.hibernate.hql.classic.ClassicQueryTranslatorFactory* as the Property Value in the dialog box. NetBeans IDE 7.4 and earlier bundled Hibernate 3.
+
+image::images/add-property-factoryclass.png[title="Add Hibernate Property dialog box showing setting value for the hibernate.query.factory_class property"]
+
+If you click the XML tab in the editor you can see the file in XML view. Your file should look like the following:
+
+
+[source,xml]
+----
+
+<hibernate-configuration>
+    <session-factory name="session1">
+        <property name="hibernate.dialect">org.hibernate.dialect.MySQLDialect</property>
+        <property name="hibernate.connection.driver_class">com.mysql.jdbc.Driver</property>
+        <property name="hibernate.connection.url">jdbc:mysql://localhost:3306/sakila</property>
+        <property name="hibernate.connection.username">root</property>
+        <property name="hibernate.connection.password">######</property>
+        <property name="hibernate.show_sql">true</property>
+        <property name="hibernate.query.factory_class">org.hibernate.hql.internal.classic.ClassicQueryTranslatorFactory</property>
+    </session-factory>
+</hibernate-configuration>
+----
+7. Save your changes to the file.
+
+After you create the form and set it as the main class you will be able to see the SQL query printed in the IDE's Output window when you run the project.
+
+
+=== Creating the  ``HibernateUtil.java``  Helper File
+
+To use Hibernate you need to create a helper class that handles startup and that accesses Hibernate's  ``SessionFactory``  to obtain a Session object. The class calls Hibernate's  ``configure()``  method, loads the  ``hibernate.cfg.xml``  configuration file and then builds the  ``SessionFactory``  to obtain the Session object.
+
+In this section you use the New File wizard to create the helper class  ``HibernateUtil.java`` .
+
+1. Right-click the Source Packages node and select New > Other to open the New File wizard.
+2. Select Hibernate from the Categories list and HibernateUtil.java from the File Types list. Click Next.
+image::images/hib-util.png[title="New File wizard showing how to create HibernateUtil"]
+3. Type *HibernateUtil* for the class name and *sakila.util* as the package name. Click Finish.
+
+When you click Finish,  ``HibernateUtil.java``  opens in the editor. You can close the file because you do not need to edit the file.
+
+
+== Generating Hibernate Mapping Files and Java Classes
+
+In this tutorial you use a plain old Java object (POJO),  ``Actor.java`` , to represent the data in the table ACTOR in the database. The class specifies the fields for the columns in the tables and uses simple setters and getters to retrieve and write the data. To map  ``Actor.java``  to the ACTOR table you can use a Hibernate mapping file or use annotations in the class.
+
+You can use the Reverse Engineering wizard and the Hibernate Mapping Files and POJOs from a Database wizard to create multiple POJOs and mapping files based on database tables that you select. Alternatively, you can use wizards in the IDE to help you create individual POJOs and mapping files from scratch.
+
+*Notes.*
+
+* When you want to create files for multiple tables you will most likely want to use the wizards. In this tutorial you only need to create one POJO and one mapping file so it is fairly easy to create the files individually. You can see the steps for <<10,creating the POJOs and mapping files individually>> at the end of this tutorial.
+
+
+=== Creating the Reverse Engineering File
+
+The reverse engineering file ( ``hibernate.reveng.xml`` ) is an XML file that can be used to modify the default settings used when generating Hibernate files from the metadata of the database specified in  ``hibernate.cfg.xml`` . The wizard generates the file with basic default settings. You can modify the file to explicitly specify the database schema that is used, to filter out tables that should not be used and to specify how JDBC types are mapped to Hibernate types.
+
+1. Right-click the Source Packages node and select New > Other to open the New File wizard.
+2. Select Hibernate from the Categories list and Hibernate Reverse Engineering Wizard from the File Types list. Click Next.
+3. Type *hibernate.reveng* for the file name.
+4. Keep the default * ``src`` * as the Location. Click Next.
+5. Select *actor* in the Available Tables pane and click Add. Click Finish.
+
+The wizard generates a  ``hibernate.reveng.xml``  reverse engineering file. You can close the reverse engineering file because you will not need to edit the file.
+
+
+=== Creating Hibernate Mapping Files and POJOs From a Database
+
+The Hibernate Mapping Files and POJOs from a Database wizard generates files based on tables in a database. When you use the wizard, the IDE generates POJOs and mapping files for you based on the database tables specified in  ``hibernate.reveng.xml``  and then adds the mapping entries to  ``hibernate.cfg.xml`` . When you use the wizard you can choose the files that you want the IDE to generate (only the POJOs, for example) and select code generation options (generate code that uses EJB 3 annotations, for example).
+
+1. Right-click the Source Packages node in the Projects window and choose New > Other to open the New File wizard.
+2. Select Hibernate Mapping Files and POJOs from a Database in the Hibernate category. Click Next.
+3. Select  ``hibernate.cfg.xml``  from the Hibernate Configuration File dropdown list, if not selected.
+4. Select  ``hibernate.reveng.xml``  from the Hibernate Reverse Engineering File dropdown list, if not selected.
+5. Ensure that the *Domain Code* and *Hibernate XML Mappings* options are selected.
+6. Type *sakila.entity* for the Package name. Click Finish.
+image::images/mapping-pojos-wizard-ant.png[title="Generate Hibernate Mapping Files and POJOs wizard"]
+
+When you click Finish, the IDE generates the POJO  ``Actor.java``  with all the required fields and generates a Hibernate mapping file and adds the mapping entry to  ``hibernate.cfg.xml`` .
+
+Now that you have the POJO and necessary Hibernate-related files you can create a simple Java GUI front end for the application. You will also create and then add an HQL query that queries the database to retrieve the data. In this process we also use the HQL editor to build and test the query.
+
+
+== Creating the Application GUI
+
+In this exercise you will create a simple JFrame Form with some fields for entering and displaying data. You will also add a button that will trigger a database query to retrieve the data.
+
+If you are not familiar with using the GUI builder to create forms, you might want to review the link:gui-functionality.html[+Introduction to GUI Building+] tutorial.
+
+
+=== Creating the JFrame Form
+
+1. Right-click the project node in the Projects window and choose New > Other to open the New File wizard.
+2. Select JFrame Form from the Swing GUI Forms category. Click Next.
+3. Type *DVDStoreAdmin* for the Class Name and type *sakila.ui* for the Package. Click Finish.
+
+When you click Finish the IDE creates the class and opens the JFrame Form in the Design view of the editor.
+
+
+=== Adding Elements to the Form
+
+You now need to add the UI elements to the form. When the form is open in Design view in the editor, the Palette appears in the left side of the IDE. To add an element to the form, drag the element from the Palette into the form area. After you add an element to the form you need to modify the default value of the Variable Name property for that element.
+
+1. Drag a Label element from the Palette and change the text to *Actor Profile*.
+2. Drag a Label element from the Palette and change the text to *First Name*.
+3. Drag a Text Field element next to the First Name label and delete the default text.
+4. Drag a Label element from the Palette and change the text to *Last Name*.
+5. Drag a Text Field element next to the Last Name label and delete the default text.
+6. Drag a Button element from the Palette and change the text to *Query*.
+7. Drag a Table element from the Palette into the form.
+8. Modify the Variable Name values of the following UI elements according to the values in the following table.
+
+You can modify the Variable Name value of an element by right-clicking the element in the Design view and then choosing Change Variable Name. Alternatively, you can change the Variable Name directly in the Inspector window.
+
+You do not need to assign Variable Name values to the Label elements.
+
+|===
+|Element |Variable Name 
+
+|First Name text field | ``firstNameTextField``  
+
+|Last Name text field | ``lastNameTextField``  
+
+|Query button | ``queryButton``  
+
+|Table | ``resultTable``  
+|===
+9. Save your changes.
+
+In Design view your form should look similar to the following image.
+
+image::images/hib-jframe-form.png[title="GUI form in Design view of the editor"]
+
+Now that you have a form you need to create the code to assign events to the form elements. In the next exercise you will construct queries based on Hibernate Query Language to retrieve data. After you construct the queries you will add methods to the form to invoke the appropriate query when the Query button is pressed.
+
+
+== Creating the Query in the HQL Query Editor
+
+In the IDE you can construct and test queries based on the Hibernate Query Language (HQL) using the HQL Query Editor. As you type the query the editor shows the equivalent (translated) SQL query. When you click the 'Run HQL Query' button in the toolbar, the IDE executes the query and shows the results at the bottom of editor.
+
+In this exercise you use the HQL Editor to construct simple HQL queries that retrieve a list of actors' details based on matching the first name or last name. Before you add the query to the class you will use the HQL Query Editor to test that the connection is working correctly and that the query produces the desired results. Before you can run the query you first need to compile the application.
+
+1. Right-click the project node and choose Build.
+2. Expand the <default package> source package node in the Projects window.
+3. Right-click  ``hibernate.cfg.xml``  and choose Run HQL Query to open the HQL Editor.
+4. Test the connection by typing  ``from Actor``  in the HQL Query Editor. Click the Run HQL Query button ( image::images/run_hql_query_16.png[title="Run HQL Query button"] ) in the toolbar.
+
+When you click Run HQL Query you should see the query results in the bottom pane of the HQL Query Editor.
+
+image::images/hib-query-hqlresults.png[title="HQL Query Editor showing HQL query results"]
+5. Type the following query in the HQL Query Editor and click Run HQL Query to check the query results when the search string is 'PE'.
+
+[source,java]
+----
+
+from Actor a where a.firstName like 'PE%'
+----
+
+The query returns a list of actors' details for those actors whose first names begin with 'PE'.
+
+If you click the SQL button above the results you should see the following equivalent SQL query.
+
+
+[source,java]
+----
+
+select actor0_.actor_id as col_0_0_ from sakila.actor actor0_ where (actor0_.first_name like 'PE%' )
+----
+6. Open a new HQL Query Editor tab and type the following query in the editor pane. Click Run HQL Query.
+
+[source,java]
+----
+
+from Actor a where a.lastName like 'MO%'
+----
+
+The query returns a list of actors' details for those actors whose last names begin with 'MO'.
+
+Testing the queries shows that the queries return the desired results. The next step is to implement the queries in the application so that the appropriate query is invoked by clicking the Query button in the form.
+
+
+== Adding the Query to the Form
+
+You now need to modify  ``DVDStoreAdmin.java``  to add the query strings and create the methods to construct and invoke a query that incorporates the input variables. You also need to modify the button event handler to invoke the correct query and add a method to display the query results in the table.
+
+1. Open  ``DVDStoreAdmin.java``  and click the Source tab.
+2. Add the following query strings (in bold) to the class.
+
+[source,java]
+----
+
+public DVDStoreAdmin() {
+    initComponents();
+}
+
+*private static String QUERY_BASED_ON_FIRST_NAME="from Actor a where a.firstName like '";
+private static String QUERY_BASED_ON_LAST_NAME="from Actor a where a.lastName like '";*
+----
+
+It is possible to copy the queries from the HQL Query Editor tabs into the file and then modify the code.
+
+3. Add the following methods to create the query based on the user input string.
+
+[source,java]
+----
+
+private void runQueryBasedOnFirstName() {
+    executeHQLQuery(QUERY_BASED_ON_FIRST_NAME + firstNameTextField.getText() + "%'");
+}
+    
+private void runQueryBasedOnLastName() {
+    executeHQLQuery(QUERY_BASED_ON_LAST_NAME + lastNameTextField.getText() + "%'");
+}
+----
+
+The methods call a method called  ``executeHQLQuery()``  and create the query by combining the query string with the user entered search string.
+
+4. Add the  ``executeHQLQuery()``  method.
+
+[source,java]
+----
+
+private void executeHQLQuery(String hql) {
+    try {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        session.beginTransaction();
+        Query q = session.createQuery(hql);
+        List resultList = q.list();
+        displayResult(resultList);
+        session.getTransaction().commit();
+    } catch (HibernateException he) {
+        he.printStackTrace();
+    }
+}
+----
+
+The  ``executeHQLQuery()``  method calls Hibernate to execute the selected query. This method makes use of the  ``HibernateUtil.java``  utility class to obtain the Hibernate Session.
+
+5. Right-click in the editor and choose Fix Imports (Ctrl-Shift-I; ⌘-Shift-I on Mac) to generate import statements for the Hibernate libraries ( ``org.hibernate.Query`` ,  ``org.hibernate.Session`` ) and  ``java.util.List`` . Save your changes.
+6. Create a Query button event handler by switching to the Design view and double-clicking the Query button.
+
+The IDE creates the  ``queryButtonActionPerformed``  method and displays the method in the Source view.
+
+7. Modify the  ``queryButtonActionPerformed``  method in the Source view by adding the following code so that a query is run when the user clicks the button.
+
+[source,java]
+----
+
+private void queryButtonActionPerformed(java.awt.event.ActionEvent evt) {
+    *if(!firstNameTextField.getText().trim().equals("")) {
+        runQueryBasedOnFirstName();
+    } else if(!lastNameTextField.getText().trim().equals("")) {
+        runQueryBasedOnLastName();
+    }*
+}
+----
+8. Add the following method to display the results in the JTable.
+
+[source,java]
+----
+
+private void displayResult(List resultList) {
+    Vector<String> tableHeaders = new Vector<String>();
+    Vector tableData = new Vector();
+    tableHeaders.add("ActorId"); 
+    tableHeaders.add("FirstName");
+    tableHeaders.add("LastName");
+    tableHeaders.add("LastUpdated");
+
+    for(Object o : resultList) {
+        Actor actor = (Actor)o;
+        Vector<Object> oneRow = new Vector<Object>();
+        oneRow.add(actor.getActorId());
+        oneRow.add(actor.getFirstName());
+        oneRow.add(actor.getLastName());
+        oneRow.add(actor.getLastUpdate());
+        tableData.add(oneRow);
+    }
+    resultTable.setModel(new DefaultTableModel(tableData, tableHeaders));
+}
+----
+9. Right-click in the editor and choose Fix Imports (Ctrl-Shift-I; ⌘-Shift-I on Mac) to generate an import statement for  ``java.util.Vector``  and  ``java.util.List`` . Save your changes.
+
+After you save the form you can run the project.
+
+
+== Running the Project
+
+Now that the coding is finished, you can launch the application. Before you run the project, you need to specify the application's Main Class in the project's properties dialog box. If no Main Class is specified, you are prompted to set it the first time that you run the application.
+
+1. Right-click the project node in the Projects window and choose Properties.
+2. Select the Run category in the Project Properties dialog box.
+3. Type *sakila.ui.DVDStoreAdmin* for the Main Class. Click OK.
+
+Alternatively, you can click the Browse button and choose the main class in the dialog box.
+
+image::images/browse-main-class.png[title="Setting the main class in the Browse Main Classes dialog"]
+4. Click Run Project in the main toolbar to launch the application.
+
+Type in a search string in the First Name or Last Name text field and click Query to search for an actor and see the details.
+
+image::images/application-run.png[title="DVDStoreAdmin application showing results"]
+
+If you look in the Output window of the IDE you can see the SQL query that retrieved the displayed results.
+
+
+=== Downloading the Solution Project
+
+You can download the solution to this tutorial as a project in the following ways.
+
+* Download link:https://netbeans.org/projects/samples/downloads/download/Samples/Java/DVDStoreAdmin-Ant.zip[+a zip archive of the finished project+].
+* Checkout the project sources from the NetBeans Samples by performing the following steps:
+1. Choose Team > Subversion > Checkout from the main menu.
+2. In the Checkout dialog box, enter the following Repository URL:
+ ``https://svn.netbeans.org/svn/samples~samples-source-code`` 
+Click Next.
+3. Click Browse to open the Browse Repostiory Folders dialog box.
+4. Expand the root node and select *samples/java/DVDStoreAdmin-Ant*. Click OK.
+5. Specify the Local Folder for the sources (the local folder must be empty).
+6. Click Finish.
+
+When you click Finish, the IDE initializes the local folder as a Subversion repository and checks out the project sources.
+
+7. Click Open Project in the dialog that appears when checkout is complete.
+
+*Note.* You need a Subversion client to checkout the sources. For more about installing Subversion, see the section on link:../ide/subversion.html#settingUp[+Setting up Subversion+] in the link:../ide/subversion.html[+Guide to Subversion in NetBeans IDE+].
+
+
+== Creating POJOs and Mapping Files Individually
+
+Because a POJO is a simple Java class you can use the New Java Class wizard to create the class and then edit the class in the source editor to add the necessary fields and getters and setters. After you create the POJO you then use a wizard to create a Hibernate mapping file to map the class to the table and add mapping information to  ``hibernate.cfg.xml`` . When you create a mapping file from scratch you need to map the fields to the columns in the XML editor.
+
+*Note.* This exercise is optional and describes how to create the POJO and mapping file that you created with the Hibernate Mapping Files and POJOs from Database wizard.
+
+1. Right-click the Source Packages node in the Projects window and choose New > Java Class to open the New Java Class wizard.
+2. In the wizard, type *Actor* for the class name and type *sakila.entity* for the package. Click Finish.
+3. Make the following changes (displayed in bold) to the class to implement the Serializable interface and add fields for the table columns.
+
+[source,java]
+----
+
+public class Actor *implements Serializable* {
+    *private Short actorId;
+    private String firstName;
+    private String lastName;
+    private Date lastUpdate;*
+}
+----
+4. Right-click in the editor and choose Insert Code (Alt-Insert; Ctrl-I on Mac) and select Getter and Setter in the popup menu to generate getters and setters for the fields.
+5. In the Generate Getters and Setters dialog box, select all the fields and click Generate.
+image::images/getters-setters.png[title="Generate Getters and Setters dialog box"]
+
+In the Generate Getters and Setters dialog box, you can use the Up arrow on the keyboard to move the selected item to the Actor node and then press the Space bar to select all fields in Actor.
+
+6. Fix your imports and save your changes.
+
+After you create the POJO for the table you will want to create an Hibernate Mapping File for  ``Actor.java`` .
+
+1. Right-click the  ``sakila.entity``  source packages node in the Projects window and choose New > Other to open the New File wizard.
+2. Select Hibernate Mapping Wizard in the Hibernate category. Click Next.
+3. Type *Actor.hbm* for the File Name and check that the Folder is *src/sakila/entity*. Click Next.
+4. Type *sakila.entity.Actor* for the Class to Map and select *actor* from the Database Table drop down list. Click Finish.
+image::images/mapping-wizard.png[title="Generate Hibernate Mapping Files wizard"]
+
+When you click Finish the  ``Actor.hbm.xml``  Hibernate mapping file opens in the source editor. The IDE also automatically adds an entry for the mapping resource to  ``hibernate.cfg.xml`` . You can view the entry details by expanding the Mapping node in the Design view of  ``hibernate.cfg.xml``  or in the XML view. The  ``mapping``  entry in the XML view will look like the following:
+
+
+[source,xml]
+----
+
+        <mapping resource="sakila/entity/Actor.hbm.xml"/>
+    </session-factory>
+</hibernate-configuration>
+----
+5. Map the fields in  ``Actor.java``  to the columns in the ACTOR table by making the following changes (in bold) to  ``Actor.hbm.xml`` .
+
+[source,xml]
+----
+
+<hibernate-mapping>
+  <class name="sakila.entity.Actor" *table="actor">
+    <id name="actorId" type="java.lang.Short">
+      <column name="actor_id"/>
+      <generator class="identity"/>
+    </id>
+    <property name="firstName" type="string">
+      <column length="45" name="first_name" not-null="true"/>
+    </property>
+    <property name="lastName" type="string">
+      <column length="45" name="last_name" not-null="true"/>
+    </property>
+    <property name="lastUpdate" type="timestamp">
+      <column length="19" name="last_update" not-null="true"/>
+    </property>
+  </class>*
+</hibernate-mapping>
+----
+
+You can use code completion in the editor to complete the values when modifying the mapping file.
+
+*Note:* By default, the generated  ``class``  element has a closing tag. Because you need to add property elements between the opening and closing  ``class``  element tags, you need to make the following changes (displayed in bold). After making the changes you can then use code completion between the  ``class``  tags.
+
+
+[source,xml]
+----
+
+<hibernate-mapping>
+  <class name="sakila.entity.Actor" *table="actor">
+  </class>*
+</hibernate-mapping>
+----
+6. Click the Validate XML button in the toolbar and save your changes.
+
+Creating individual POJOs and Hibernate mapping files might be a convenient way to further customizing your application.
+
+link:/about/contact_form.html?to=3&subject=Feedback:%20Using%20Hibernate%20in%20a%20Java%20Swing%20Application[+Send Feedback on This Tutorial+]
+
+
+
+== See Also
+
+For additional information on creating Swing GUI applications, see the following tutorials.
+
+* link:quickstart-gui.html[+Designing a Swing GUI in NetBeans IDE+]
+* link:gui-functionality.html[+Introduction to GUI Building+]
+* link:../../trails/matisse.html[+Java GUI Applications Learning Trail+]

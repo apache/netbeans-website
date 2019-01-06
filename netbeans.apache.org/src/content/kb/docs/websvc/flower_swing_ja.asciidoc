@@ -1,0 +1,527 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= バイナリ・データを渡すWebサービス(パート5): Swingクライアントの作成
+:jbake-type: tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:description: バイナリ・データを渡すWebサービス(パート5): Swingクライアントの作成 - Apache NetBeans
+:keywords: Apache NetBeans, Tutorials, バイナリ・データを渡すWebサービス(パート5): Swingクライアントの作成
+
+この課題の目標は、すでに作成、デプロイしたWebサービスのクライアントを作成し、そのクライアントにGUIインタフェースを追加することです。このインタフェースには、Webサービスがバイナリ・データとして渡すイメージが表示されます。
+
+クライアントの完全版サンプルは、link:https://netbeans.org/projects/samples/downloads/download/Samples%252FWeb%2520Services%252FWeb%2520Service%2520Passing%2520Binary%2520Data%2520--%2520EE6%252FFlowerClient.zip[+NetBeansサンプル・カタログ+]からダウンロードできます。
+
+*このチュートリアルのレッスン*
+
+image::images/netbeans-stamp-74-73-72.png[title="このページの内容は、NetBeans IDE 7.2、7.3および7.4に適用されます"]
+
+1. link:./flower_overview.html[+概要+]
+2. link:./flower_ws.html[+Webサービスの作成+]
+3. link:./flower-code-ws.html[+Webサービスのコーディングおよびテスト+]
+4. link:./flower_wsdl_schema.html[+バイナリ・データを渡すためのスキーマとWSDLファイルの変更+]
+5. => Swingクライアントの作成
+
+
+1. <<create-client-app,クライアント・アプリケーションの作成>>
+
+2. <<design-jframe,JFrameのデザイン>>
+3. 
+<<bind-jframe,JFrameコンポーネントのバインディング>>
+
+4. <<code-main-class,メイン・クラスのコーディング>>
+
+
+== クライアント・アプリケーションの作成
+
+この項では、Webアプリケーションを作成します。このアプリケーション内で、前のチュートリアルで作成および変更したWebサービスを使用するクライアントを作成します。
+
+*クライアント・アプリケーションを作成するには:*
+
+1. 「ファイル」>「新規プロジェクト」(LinuxおよびWindowsでは[Ctrl]-[Shift]-[N]、MacOSでは[⌘]-[Shift]-[N])を選択します。新規プロジェクト・ウィザードが表示されます。
+2. 「Java」カテゴリから「Javaアプリケーション」を選択します。「次」をクリックします。新規Javaアプリケーション・ウィザードが表示されます。「プロジェクト名」に「 ``FlowerClient`` 」と入力します。プロジェクトの場所を選択し、「終了」をクリックします。IDEにより新しいJavaアプリケーション・プロジェクトが作成されます。
+3. 「 ``FlowerClient`` 」プロジェクト・ノードを右クリックし、コンテキスト・メニューから「新規」>「Webサービス・クライアント」を選択します。新規Webサービス・クライアント・ウィザードが開きます。
+4. 「WSDL URL」ラジオ・ボタンを選択し、WSDLファイルのURLをそのフィールドに貼り付けます。デフォルトでは、URLは ``http://localhost:8080/FlowerAlbumService/FlowerServiceService?wsdl`` です。ブラウザでURLを見つけるには、Webサービスをテストし、URLの末尾を ``?Tester`` から ``?wsdl`` に置き換えます。空のパッケージ名を含め、他のデフォルト値をすべて受け入れます。
+image::images/ws-client-wiz.png[]
+5. 「終了」をクリックします。IDEによりWSDLファイルがダウンロードされ、Webサービスと対話するためのクライアント・スタブが追加され、Javaアプリケーション・プロジェクトの「プロジェクト」ウィンドウにノードが追加されます。
+image::images/client-generated-sources.png[title="新しいWebサービス・クライアントが表示された「プロジェクト」ビュー"]
+
+
+[[design-jframe]]
+== JFrameフォームのデザイン
+
+この項では、 ``JFrame`` をWebアプリケーションに追加し、Swingコンポーネントを使用してJFrame内にGUIインタフェースをデザインします。最後に、SwingコンポーネントをWebサービス・クライアント・コードにバインドします。
+
+自分でJFrameフォームをデザインしない場合は、すでにデザインされたJFrame Javaファイルをlink:https://netbeans.org/projects/www/downloads/download/webservices%252FFlowerFrame.java[+ここから+]ダウンロードできます。
+
+1. 「 ``FlowerClient`` 」ノードを右クリックし、「新規」>「JFrameフォーム」を選択します。フレームに「 ``FlowerFrame`` 」という名前を付けます。このフレームを ``flowerclient`` パッケージに配置します。
+2.  ``FlowerFrame`` がエディタに表示されます。パレットが開かれていない場合は、パレットを開きます。フレームの下部の境界線をおよそ3分の1まで拡げます。
+image::images/opened-flowerform.png[]
+3. パレットの「Swingコンテナ」セクションからJPanelを ``FlowerFrame`` にドラッグします。 ``FlowerFrame`` 全体を埋めるように拡げます。
+image::images/add-panel.png[]
+4. 「デザイン」ビューでこのパネルを右クリックします。コンテキスト・メニューから「変数名を変更...」を選択します。パネルに「 ``gardenFlowersPanel`` 」という名前を付けます。
+5. パレットからJLabelを ``gardenFlowersPanel`` の上にドラッグします。ラベルを右クリックし、ラベルの変数名を ``titleLabel`` に変更します。「 ``titleLabel`` 」を再度右クリックし、「テキストを編集」を選択します。テキストを「Garden Flowers」に変更します。必要に応じて、 ``titleLabel`` のプロパティを表示して、目立つフォントに変更します。
+6. 「ボタン・グループ」を「デザイン」ビューにドラッグします。ボタン・グループの変数名はデフォルトの ``buttonGroup1`` のままにします。
+7. 4つの「ラジオ・ボタン」を、 ``titleLabel`` の真下に横一列に並ぶようにドラッグします。各ボタンのプロパティで、 ``buttonGroup1`` のメンバーとして設定します。これらのボタンの他のプロパティは、次のとおりです。
+|===
+buttonGroup1のラジオ・ボタン
+
+|変数名 |選択状態 |テキスト 
+
+|asterRadioButton |true |Aster 
+
+|honeysuckleRadioButton |false |Honeysuckle 
+
+|roseRadioButton |false |Rose 
+
+|sunflowerRadioButton |false |Sunflower 
+|===
+8. 「スクロール・ペイン」をラジオ・ボタンの下にドラッグします。横のスペースのすべて、および縦のスペースのおよそ3分の2を埋めるようにスクロール・ペインを拡げます。スクロール・ペインの変数名を ``mainScrollPane`` に変更します。
+9. 「パネル」を ``mainScrollPane`` にドラッグします。パネルの変数名を ``mainPanel`` に変更します。
+10. 「デザイン」ビューで ``mainPanel`` を右クリックし、「レイアウトを設定」>「境界線レイアウト」を選択します。
+11. 「ボタン」を ``mainPanel`` にドラッグします。 ``mainPanel`` に境界線レイアウトが設定されているため、ボタンはパネル全体を埋めるように自動的に拡げられます。ボタンの変数名を ``mainPictureButton`` に、ボタンのテキストを「Waiting for picture...」に変更します。
+12. もう1つの「スクロール・ペイン」を ``mainScrollPane`` の下のスペースにドラッグします。残りの全スペースを埋めるように、このスクロール・ペインを拡げます。新しいスクロール・ペインの変数名を ``thumbnailScrollPane`` に変更します。
+13. 「パネル」を ``thumbnailScrollPane`` にドラッグします。このパネルの変数名を ``thumbnailPanel`` に変更します。 ``thumbnailPanel`` のレイアウトを「グリッド・レイアウト」に設定します。
+14. 4つの「ボタン」を ``thumbnailPanel`` にドラッグします。 ``thumbnailPanel`` にグリッド・レイアウトが設定されているため、すべてのボタンが自動的に同じサイズになり、パネル全体を埋めるように拡げられます。これらのボタンのプロパティは、次のとおりです。 thumbnailPanelのボタン
+|===
+
+|変数名 |テキスト 
+
+|asterButton |待機中... 
+
+|honeysuckleButton |待機中... 
+
+|roseButton |待機中 
+
+|sunflowerButton |待機中... 
+|===
+
+これでJFrameフォームのデザインは完成です。この段階で、 ``FlowerFrame`` は次のように表示されます。
+image::images/designed-form.png[title="イメージのかわりにボタンのテキストが表示された、完成したFlowerFrame"]
+
+
+== JFrameコンポーネントのバインディング
+
+この項では、コンストラクタでコンポーネントを初期化し、そのコンポーネントをリスナーにバインドします。リスナーは、花のイメージを表示するコードをコールします。
+
+
+=== [[コンポーネントの初期化]] 
+
+[[この項では、 ``FlowerFrame`` コンストラクタを記述します。
+
+]]
+
+1. エディタの「ソース」ビューに変更します。 ``FlowerFrame`` クラス本文の先頭と ``FlowerFrame`` コンストラクタを探します。
+image::images/ff-empty-constructor.png[]
+1. コンストラクタの前にある ``FlowerFrame`` のクラス本文の先頭に、すべての花の名前の文字列配列を作成します。
+
+[source,java]
+----
+
+protected static final String[] FLOWERS = {"aster", "honeysuckle", "rose", "sunflower"};
+----
+1. FLOWERS文字列配列とコンストラクタの間に、 ``flowers`` という名前の ``link:http://download.oracle.com/javase/6/docs/api/java/util/Map.html[+java.util.Map+]`` を初期化する行を追加します。このマップは ``String`` を取って ``Image`` にマップします。
+
+[source,java]
+----
+
+private Map<String, Image> flowers;
+----
+1.  ``java.util.Map`` と ``java.awt.Image`` のインポート文を追加します。
+2.  ``flowers`` マップの特定のインスタンスで特定の ``Image`` を特定の ``String`` に関連付けるコードを、 ``FlowerFrame`` コンストラクタに追加します。
+
+[source,java]
+----
+
+public FlowerFrame(Map<String, Image> flowers) {
+
+    this.flowers = flowers;
+    for (String flower:FLOWERS) {
+        flowers.put(flower,null);
+    }
+
+    initComponents();    
+} 
+----
+3. ラジオ・ボタン用の ``ItemListener`` と4つの花のボタン用の ``ActionListener`` を初期化し、デフォルトのタイトルを設定します。
+
+[source,java]
+----
+
+public FlowerFrame(Map<String, Image> flowers) {
+
+    this.flowers = flowers;
+    for (String flower:FLOWERS) {
+        flowers.put(flower,null);
+    }
+
+    initComponents(); 
+    
+    setTitle("Garden Flowers [waiting for picture]");
+    
+    ItemListener rbListener = new RBListener();
+    asterRadioButton.addItemListener(rbListener);
+    honeysuckleRadioButton.addItemListener(rbListener);
+    roseRadioButton.addItemListener(rbListener);
+    sunflowerRadioButton.addItemListener(rbListener);
+    
+    ActionListener bListener = new ButtonListener();
+    asterButton.addActionListener(bListener);
+    honeysuckleButton.addActionListener(bListener);
+    roseButton.addActionListener(bListener);
+    sunflowerButton.addActionListener(bListener);
+}
+----
+4.  ``link:http://download.oracle.com/javase/6/docs/api/java/awt/event/ItemListener.html[+java.awt.event.ItemListener+]`` と ``link:http://download.oracle.com/javase/6/docs/api/java/awt/event/ActionListener.html[+java.awt.event.ActionListener+]`` のインポート文を追加します。
+
+これでコンストラクタは完成しました。ただし、コードに ``RBListener`` クラスと ``ButtonListener`` クラスが含まれていないため、コンパイル・エラーの警告が表示されます。この2つのクラスは、それぞれ ``ItemListener`` と ``ActionListener`` のカスタム実装です。この2つのクラスの記述は、次の項で行います。
+
+
+=== [[花の表示]] 
+
+[[この項では、ラジオ・ボタンと花のボタンのカスタム・リスナーを記述します。また、ボタンによって選択された花を判断し、その花の ``Image`` を ``flowers`` マップから取得するメソッドを記述します。最後に、 ``Main`` クラスによってコールされ、各サムネイルの ``Image`` を取得するメソッドを記述します。
+
+]]
+
+1.  ``FlowerFrame`` のクラス本文で ``public static void main(String args[])`` メソッドを探します。このメソッドとそのドキュメントを削除します。このアプリケーションでは、かわりに ``Main`` クラスを使用します。
+1.  ``main`` メソッドのかわりに、カスタム ``ItemListener`` をラジオ・ボタン用に記述します。このリスナーは、ラジオ・ボタンが選択されたときに新しい花のイメージを表示します。
+
+[source,java]
+----
+
+private class RBListener implements ItemListener {
+    public void itemStateChanged(ItemEvent e) {
+        showFlower();
+    }
+}
+----
+1.  ``link:http://download.oracle.com/javase/6/docs/api/java/awt/event/ItemEvent.html[+java.awt.event.ItemEvent+]`` のインポート文を追加します。
+1. カスタム ``ItemListener`` の下に、カスタム ``ActionListener`` を4つの花のボタン用に記述します。ボタンがクリックされると、リスナーは関連するラジオ・ボタンを選択します。
+
+[source,java]
+----
+
+private class ButtonListener implements ActionListener {
+
+    public void actionPerformed(ActionEvent e) {
+        if (e.getSource() == asterButton) asterRadioButton.setSelected(true);
+        else if (e.getSource() == honeysuckleButton) honeysuckleRadioButton.setSelected(true);
+        else if (e.getSource() == roseButton) roseRadioButton.setSelected(true);
+        else if (e.getSource() == sunflowerButton) sunflowerRadioButton.setSelected(true);
+    }
+}
+----
+2.  ``link:http://download.oracle.com/javase/6/docs/api/java/awt/event/ActionEvent.html[+java.awt.event.ActionEvent+]`` のインポート文を追加します。
+3. カスタム ``ActionListener`` の下に ``showFlower`` メソッドを記述します。このメソッドは、選択されているラジオ・ボタンを判断し、対応する花の ``Image`` を ``flowers`` マップから取得します。
+
+[source,java]
+----
+
+void showFlower() {
+    Image img = null;
+    if (asterRadioButton.isSelected()) {
+        img = flowers.get("aster");
+        if (img != null) {
+            mainPictureButton.setIcon(new ImageIcon(img));
+            setTitle("Garden Flowers [Aster]");
+        }
+    } else if (honeysuckleRadioButton.isSelected()) {
+        img = flowers.get("honeysuckle");
+        if (img != null) {
+            mainPictureButton.setIcon(new ImageIcon(img));
+            setTitle("Garden Flowers [Honeysuckle]");
+        }
+
+    } else if (roseRadioButton.isSelected()) {
+        img = flowers.get("rose");
+        if (img != null) {
+            mainPictureButton.setIcon(new ImageIcon(img));
+            setTitle("Garden Flowers [Rose]");
+        }
+    } else if (sunflowerRadioButton.isSelected()) {
+        img = flowers.get("sunflower");
+        if (img != null) {
+            mainPictureButton.setIcon(new ImageIcon(img));
+            setTitle("Garden Flowers [Sunflower]");
+        }
+    }
+    if (img == null) {
+        mainPictureButton.setIcon(null);
+        setTitle("Garden Flowers [waiting for picture]");            
+    } else mainPictureButton.setText("");
+}
+----
+4.  ``link:http://download.oracle.com/javase/6/docs/api/javax/swing/ImageIcon.html[+javax.swing.ImageIcon+]`` のインポート文を追加します。
+5.  ``setThumbnails`` メソッドを記述します。このメソッドは、各サムネイルのイメージを ``flowers`` マップから取得します。 ``Main`` クラスがこのメソッドをコールします。
+
+[source,java]
+----
+
+void setThumbnails(Map<String, Image> thumbs) {
+    Image img = thumbs.get("aster");
+    if (img != null) {
+        asterButton.setIcon(new ImageIcon(img));
+        asterButton.setText("");
+    }
+    img = thumbs.get("honeysuckle");
+    if (img != null) {
+        honeysuckleButton.setIcon(new ImageIcon(img));
+        honeysuckleButton.setText("");
+    }
+    img = thumbs.get("rose");
+    if (img != null) {
+        roseButton.setIcon(new ImageIcon(img));
+        roseButton.setText("");
+    }
+    img = thumbs.get("sunflower");
+    if (img != null) {
+        sunflowerButton.setIcon(new ImageIcon(img));
+        sunflowerButton.setText("");
+    }
+}
+----
+6.  ``FlowerFrame`` のコードに貼り付けたときにインポートを修正していない場合は、インポートを修正します。エディタで右クリックし、コンテキスト・メニューから「インポートを修正」を選択すると、すべてのインポートを一度に修正できます。完成した一連のインポート文は次のようになります。
+
+[source,java]
+----
+
+import java.awt.Image;import java.awt.event.ActionEvent;import java.awt.event.ActionListener;import java.awt.event.ItemEvent;import java.awt.event.ItemListener;import java.util.Map;import javax.swing.ImageIcon;
+----
+
+これで ``FlowerFrame`` は完成しました。
+
+
+== [[メイン・クラスのコーディング]] 
+
+[[この項では、 ``Main`` クラスを完成させ、 ``FlowerFrame`` の表示、Webサービスへの接続、およびWebサービスの操作のコールを実行できるようにします。
+
+1.  ``Main.java`` クラスをエディタで開きます。
+image::images/main-empty.png[]
+2. クラス本文の ``main`` メソッドの前で、ダウンロードした写真の数を示す ``int`` 変数を初期化します。
+
+[source,java]
+----
+
+ private static int downloadedPictures;
+----
+3.  ``main`` メソッドの本文で、4つの花用の ``HashMap`` と、4つのサムネイル用に別の ``HashMap`` を作成します。
+
+[source,java]
+----
+
+final Map<String,Image> flowers = new HashMap<String,Image>(4);
+final Map<String,Image> thumbs = new HashMap<String,Image>(4);
+----
+4.  ``java.awt.Image`` 、 ``java.util.Map`` および ``java.util.HashMap`` のインポート文を追加します。
+5.  ``main`` メソッドの本文で、 ``FlowerFrame`` を表示するコードを追加します。*// Show the FlowerFrame.*
+
+[source,java]
+----
+
+final FlowerFrame frame = new FlowerFrame(flowers);
+frame.setVisible(true);  
+----
+6.  ``main`` メソッドの本文で、クライアントをサービスに接続するコードを追加します。*// The client connects to the service with this code.*
+
+[source,java]
+----
+
+FlowerServiceService service = new FlowerServiceService();
+final FlowerService port = service.getFlowerServicePort();
+----
+7.  ``org.flower.service.FlowerService`` と ``org.flower.service.FlowerServiceService`` のインポート文を追加します。
+8.  ``main`` メソッドの本文で、4つの ``Runnable`` スレッドの配列を作成し、Webサービスの ``getFlower`` 操作をスレッドごとに一度コールするコードを追加します。*// The web service getFlower operation
+// is called 4 times, each in a separate thread.
+// When the operation finishes the picture is shown in
+// a specific button.*
+
+[source,java]
+----
+
+Runnable[] tasks = new Runnable[4];
+
+for (int i=0; i<4;i++) {
+    final int index = i;
+    tasks[i] = new Runnable() {
+        public void run() {
+            try {
+            
+                *// Call the getFlower operation
+                // on the web service:*
+                Image img = port.getFlower(FlowerFrame.FLOWERS[index]);
+                System.out.println("picture downloaded: "+FlowerFrame.FLOWERS[index]);
+                     
+                *// Add strings to the hashmap:*
+                flowers.put(FlowerFrame.FLOWERS[index],img);
+                        
+                *// Call the showFlower operation
+                // on the FlowerFrame:*
+                frame.showFlower();
+                        
+            } catch (IOException_Exception ex) {
+                ex.printStackTrace();
+            }
+            downloadedPictures++;
+        }
+    };
+    new Thread(tasks[i]).start();
+}
+----
+9.  ``org.flower.service.IOException_Exception`` のインポート文を追加します。
+10. the ``main`` メソッドの本文で、Webサービスの ``getThumbnails`` 操作を別スレッドでコールするコードを追加します。*// The web service getThumbnails operation is called
+// in a separate thread, just after the previous four threads finish.
+// When the images are downloaded, the thumbnails are shown at 
+// the bottom of the frame.*
+
+[source,java]
+----
+
+Runnable thumbsTask = new Runnable() {
+    public void run() {
+        try {
+            while (downloadedPictures < 4) {                        
+                try {Thread.sleep(100);} catch (InterruptedException ex) {}
+            }
+                 
+            *// Call the getThumbnails operation
+            // on the web service:*
+            List<Image> images = port.getThumbnails();
+            System.out.println("thumbs downloaded");
+                    
+            if (images != null &amp;&amp; images.size() == 4) {
+                for (int i=0;i<4;i++) {
+                    thumbs.put(FlowerFrame.FLOWERS[i],images.get(i));
+                }
+                frame.setThumbnails(thumbs);
+            }
+        } catch (IOException_Exception ex) {
+            ex.printStackTrace();
+        }
+    }            
+};
+new Thread(thumbsTask).start();
+
+----
+11.  ``Main.java`` のコードに貼り付けたときにインポートを修正していない場合は、インポートを修正します。エディタで右クリックし、コンテキスト・メニューから「インポートを修正」を選択すると、すべてのインポートを一度に修正できます。インポートするListクラスの選択肢が表示されたら、「 ``java.util.List`` 」を選択します。完成した一連のインポート文は次のようになります。
+
+[source,java]
+----
+
+import flower.album.FlowerService;import flower.album.FlowerService_Service;import flower.album.IOException_Exception;import java.awt.Image;import java.util.HashMap;import java.util.List;import java.util.Map;
+----
+
+これで ``Main`` クラスは完成しました。
+
+
+[source,java]
+----
+
+public class Main {
+
+     private static int downloadedPictures;
+    
+     public static void main(String[] args) {
+    
+        final Map<String,Image> flowers = new HashMap<String,Image>(4);
+        final Map<String,Image> thumbs = new HashMap<String,Image>(4);
+        
+        *// Show the FlowerFrame.*
+        final FlowerFrame frame = new FlowerFrame(flowers);
+        frame.setVisible(true);
+        *        // The client connects to the service with this code.*
+        FlowerService_Service service = new FlowerService_Service();
+        final FlowerService port = service.getFlowerServicePort();
+        
+        Runnable[] tasks = new Runnable[4];
+        
+        *// The web service getFlower operation
+        // is called 4 times, each in a separate thread.
+        // When the operation finishes the picture is shown in
+        // a specific button.*
+        for (int i=0; i<4;i++) {
+            final int index = i;
+            tasks[i] = new Runnable() {
+                public void run() {
+                    try {
+                    
+                        *// Call the getFlower operation
+                        // on the web service:*
+                        Image img = port.getFlower(FlowerFrame.FLOWERS[index]);
+                        System.out.println("picture downloaded: "+FlowerFrame.FLOWERS[index]);
+                        
+                        *// Add strings to the hashmap:*
+                        flowers.put(FlowerFrame.FLOWERS[index],img);
+                        
+                        *// Call the showFlower operation
+                        // on the FlowerFrame:*
+                        frame.showFlower();
+                        
+                    } catch (IOException_Exception ex) {
+                        ex.printStackTrace();
+                    }
+                    downloadedPictures++;
+                }
+            };
+            new Thread(tasks[i]).start();
+        }
+        *// The web service getThumbnails operation is called
+        // in a separate thread, just after the previous four threads finish.
+        // When the images are downloaded, the thumbnails are shown at 
+        // the bottom of the frame.*
+        Runnable thumbsTask = new Runnable() {
+            public void run() {
+                try {
+                    while (downloadedPictures < 4) {                        
+                        try {Thread.sleep(100);} catch (InterruptedException ex) {}
+                    }
+                    
+                    *// Call the getThumbnails operation
+                    // on the web service:*
+                    List<Image> images = port.getThumbnails();
+                    System.out.println("thumbs downloaded");
+                    
+                    if (images != null &amp;&amp; images.size() == 4) {
+                        for (int i=0;i<4;i++) {
+                            thumbs.put(FlowerFrame.FLOWERS[i],images.get(i));
+                        }
+                        frame.setThumbnails(thumbs);
+                    }
+                } catch (IOException_Exception ex) {
+                    ex.printStackTrace();
+                }
+            }            
+        };
+        new Thread(thumbsTask).start();
+    }
+
+}
+----
+
+これでクライアント・アプリケーションは完了です。EJBモジュールに委譲してそのイメージを公開するWebサービスと対話するコードを作成しました。クライアントを右クリックし、「実行」を選択します。Swingアプリケーションが起動し、しばらくするとWebサービスから受信されるイメージが表示されます。表示されないイメージがある場合は、FlowerServiceプロジェクトを消去およびビルドしてから、再度実行します。メイン・フレームに表示されるイメージは、ラジオ・ボタンを選択するか、サムネイルをクリックすることによって変更できることに注意してください。
+
+]]
+
+link:/about/contact_form.html?to=3&subject=Feedback:%20Flower%20Swing%20Client%20EE6[+このチュートリアルに関するご意見をお寄せください+]
+
+link:../../../community/lists/top.html[+nbj2ee@netbeans.orgメーリング・リスト+]に登録することによって、NetBeans IDE Java EE開発機能に関するご意見やご提案を送信したり、サポートを受けたり、最新の開発情報を入手したりできます。
+
