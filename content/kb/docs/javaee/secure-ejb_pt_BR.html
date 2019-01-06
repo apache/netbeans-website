@@ -1,0 +1,766 @@
+
+<!DOCTYPE html>
+<html class="no-js" lang="en" dir="ltr">
+    
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>Construindo Enterprise Beans Seguros no Java EE</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Construindo Enterprise Beans Seguros no Java EE - Apache NetBeans">
+    <meta name="author" content="Apache NetBeans">
+    <meta name="keywords" content="Apache NetBeans, Tutorials, Construindo Enterprise Beans Seguros no Java EE">
+    <meta name="generator" content="Apache NetBeans">
+    <link rel="stylesheet" href="/css/font-awesome.min.css">
+     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/styles/default.min.css"> 
+    <link rel="stylesheet" href="/css/netbeans.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#ffc40d">
+    <meta name="theme-color" content="#ffffff">
+    <link href="https://fonts.googleapis.com/css?family=Lato:400,700" rel="stylesheet"> 
+    <!--
+        Licensed to the Apache Software Foundation (ASF) under one
+        or more contributor license agreements.  See the NOTICE file
+        distributed with this work for additional information
+        regarding copyright ownership.  The ASF licenses this file
+        to you under the Apache License, Version 2.0 (the
+        "License"); you may not use this file except in compliance
+        with the License.  You may obtain a copy of the License at
+        http://www.apache.org/licenses/LICENSE-2.0
+        Unless required by applicable law or agreed to in writing,
+        software distributed under the License is distributed on an
+        "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+        KIND, either express or implied.  See the License for the
+        specific language governing permissions and limitations
+        under the License.
+    -->
+</head>
+
+
+    <body>
+        
+
+<div class="title-bar" data-responsive-toggle="responsive-menu" data-hide-for="medium">
+    <button type="button" data-toggle="responsive-menu"><i style='font-size: 32px; color: #fff; padding: 8px' class='fa fa-bars'></i></button>
+    <div class="title-bar-title">Apache NetBeans</div>
+</div>
+<div class="top-bar" id="responsive-menu">
+    <div class='top-bar-left'>
+        <a class='title' href="/"><img src='/images/apache-netbeans.svg' style='padding: 8px; height: 48px;'></img> Apache NetBeans (incubating)</a>
+    </div>
+    <div class="top-bar-right">
+        <ul class="vertical medium-horizontal menu" data-responsive-menu="drilldown medium-dropdown">
+            <li> <a href="/community/index.html">Community</a> </li>
+            <li> <a href="/participate/index.html">Participate</a> </li>
+            <li> <a href="https://blogs.apache.org/netbeans/">Blog</a></li>
+            <li> <a href="/help/index.html">Get Help</a> </li>
+            <li> <a href="/plugins/index.html">Plugins</a> </li>
+            <li> <a href="/download/nb100/nb100.html">Download</a> </li>
+        </ul>
+    </div>
+</div>
+
+
+        
+<!-- src/templates/news -->
+<section class="hero news alternate" style='margin-bottom: 2em'>
+    <div class='grid-container'>
+        <div class='cell'>
+            <div class="annotation">Just released!</div>
+            <h1>Apache NetBeans 10.0</h1>
+            <p><a class="button success" href="/download/nb100/nb100.html">Read more</a></p>
+        </div>
+    </div>
+</section>
+
+        <div class='grid-container main-content'>
+            <div id="toc" class="toc">
+<div id="toctitle"></div>
+<ul class="sectlevel1">
+<li><a href="#_criando_um_grupo_de_segurança_no_servidor_de_aplicações">Criando um Grupo de Segurança no Servidor de Aplicações</a></li>
+<li><a href="#_criando_uma_biblioteca_de_classe_java_para_a_interface_remota">Criando uma Biblioteca de Classe Java para a Interface Remota</a></li>
+<li><a href="#_criando_e_protegendo_a_aplicação_corporativa">Criando e Protegendo a Aplicação Corporativa</a>
+<ul class="sectlevel2">
+<li><a href="#_criando_o_projeto_da_aplicação_corporativa">Criando o Projeto da Aplicação Corporativa</a></li>
+<li><a href="#_protegendo_um_método_em_um_bean_de_sessão">Protegendo um Método em um Bean de Sessão</a></li>
+<li><a href="#_configurando_os_descritores_de_implantação">Configurando os Descritores de Implantação</a></li>
+</ul>
+</li>
+<li><a href="#_criando_o_cliente_de_aplicação">Criando o Cliente de Aplicação</a></li>
+<li><a href="#_executando_a_aplicação">Executando a Aplicação</a></li>
+<li><a href="#_consulte_também">Consulte Também</a></li>
+</ul>
+</div>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>O suporte para a especificação Java EE no NetBeans IDE permite que você aproveite as muitas funcionalidades do Java EE , simplificando o desenvolvimento de aplicações. Um desenvolvimento significativo na especificação Java EE 5 foi a incorporação de anotações. O uso anotações permite que você elimine muito do código básico usado ao codificar aplicações e minimiza a quantidade de configuração necessária ao implantar uma aplicação.</p>
+</div>
+<div class="paragraph">
+<p>Uma área que se tornou muito simplificada por meio do uso de anotações é o desenvolvimento e a configuração de beans corporativos. As anotações permitem que você especifique muitas propriedades de configuração que foram especificadas anteriormente em arquivos do descritor de implantação, tornando desnecessários muitos arquivos do descritor de implantação. Embora as aplicações ainda requeiram alguns arquivos do descritor de implantação (como o  <code>web.xml</code> ), o editor do descritor de implantação com multiview do IDE facilita a edição dos arquivos.</p>
+</div>
+<div class="paragraph">
+<p>Usando anotações, construir enterprise beans seguros agora é muito mais fácil. Em vez de configurar a segurança do enterprise bean no descritor de implantação  <code>ejb-jar.xml</code> , você pode usar anotações de segurança para configurar a autorização diretamente no código-fonte. Aplicações corporativas Java EE 5 não requerem  <code>ejb-jar.xml</code>  ou  <code>application.xml</code> .</p>
+</div>
+<div class="paragraph">
+<p>Para obter uma visão geral de algumas funcionalidades da especificação Java EE , consulte a <a href="javaee-intro.html">Introdução à Tecnologia Java EE</a>. Para obter mais informações sobre as especificações de anotação, consulte <a href="http://jcp.org/en/jsr/detail?id=250">+ JSR 250: Anotações Comuns da Plataforma Java+</a>.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/netbeans-stamp-80-74-73.png" alt="netbeans stamp 80 74 73">
+</div>
+<div class="title">Figure 1. O conteúdo desta página se aplica ao NetBeans IDE 7.2, 7.3, 7.4 e 8.0</div>
+</div>
+<div class="paragraph">
+<p><strong>Para seguir este tutorial, são necessários os recursos e o software a seguir.</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Software ou Recurso</th>
+<th class="tableblock halign-left valign-top">Versão Necessária</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://netbeans.org/downloads/index.html">NetBeans IDE</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Versão Java EE 7.2, 7.3, 7.4, 8.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://www.oracle.com/technetwork/java/javase/downloads/index.html">JDK (Java Development Kit)</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">versão 7 ou 8</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">GlassFish Server</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">3.1.x, 4.x</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>Para este tutorial, é necessário registrar uma instância local do GlassFish Server com o IDE. Se uma versão “Java EE” do IDE foi instalada, o servidor de aplicações já deve estar instalado e registrado. Se o servidor de aplicações não estiver registrado no IDE, selecione Ferramentas &gt; Servidores para registrar o servidor no gerenciador de Servidores. Não é possível implantar aplicações corporativas no servidor Web Tomcat.</p>
+</div>
+<div class="paragraph">
+<p><strong>Pré-requisitos</strong></p>
+</div>
+<div class="paragraph">
+<p>Este tutorial pressupõe que você tenha algum conhecimento básico das tecnologias a seguir, ou alguma experiência de programação com elas:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Programação em Java</p>
+</li>
+<li>
+<p>NetBeans IDE</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_criando_um_grupo_de_segurança_no_servidor_de_aplicações">Criando um Grupo de Segurança no Servidor de Aplicações</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Neste exemplo, é melhor que somente os usuários do grupo  <code>bank_users</code>  acessem o enterprise bean. É preciso criar o usuário  <code>manager</code>  no grupo  <code>bank_users</code>  no realm de segurança  <code>file</code>  no servidor de aplicações.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Inicie o servidor de aplicações clicando com o botão direito do mouse em seu nó na janela Serviços e selecionando Iniciar.</p>
+</li>
+<li>
+<p>Clique com o botão direito do mouse no nó do servidor de aplicações e selecione Exibir Console de Admin do Domínio para abrir a Console de Admin do GlassFish Server no browser.</p>
+</li>
+<li>
+<p>Expanda o nó <strong>server-config</strong> sob o nó Configurações na barra de navegação esquerda.</p>
+</li>
+<li>
+<p>Clique em *Segurança &gt; Realms &gt; arquivo * para abrir o quadro Editar Realm.
+image::images/console-file-realm.png[title="Selecionando o nó realm de arquivo na console de admin do servidor de aplicações"]</p>
+</li>
+<li>
+<p>Clique no botão Gerenciar Usuários na parte superior do painel Editar Realm para abrir o painel Usuários do Arquivo.
+image::images/console-edit-realm.png[title="Nó do painel Editar Realm console de admin do servidor de aplicações"]</p>
+</li>
+<li>
+<p>Clique no botão Novo na parte superior da tabela Usuários do Arquivo no painel Usuários do Arquivo.</p>
+</li>
+<li>
+<p>Digite os seguintes dados no form Novo Usuário de Realm do Arquivo. Clique em OK.</p>
+</li>
+</ol>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Nome</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Valor</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ID do Usuário</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">gerenciador</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Lista de Grupos</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">bank_users</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Password</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">senha</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>O form deve se parecer com a figura a seguir.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/console-new-user.png" alt="console new user">
+</div>
+<div class="title">Figure 2. Painel Novo Realm de Arquivo do Usuário na console de admin do servidor de aplicações</div>
+</div>
+<div class="paragraph">
+<p>Quando você clicar em OK, o servidor criará o usuário e abrirá o painel Usuários do Arquivo. Você verá que agora existe um usuário chamado <code>manager (gerenciador)</code> .</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/console-file-users.png" alt="console file users">
+</div>
+<div class="title">Figure 3. Painel Usuários do Arquivo na console de admin com lista de usuários</div>
+</div>
+<div class="paragraph">
+<p>Agora que o usuário foi criado, você criará uma aplicação corporativa que verificará se o usuário é capaz de visualizar os dados.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_criando_uma_biblioteca_de_classe_java_para_a_interface_remota">Criando uma Biblioteca de Classe Java para a Interface Remota</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Neste exercício você criará um simples projeto de biblioteca de classe Java que conterá as interfaces remotas do bean de sessão. A biblioteca de classe JAR compilada será adicionada ao classpath do módulo EJB e ao cliente da aplicação que serão usados para chamar o bean de sessão.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Selecione Arquivo &gt; Novo Projeto e Biblioteca de Classe Java na categoria Java. Clique em Próximo.</p>
+</li>
+<li>
+<p>Digite SecureRemoteInterface como nome do projeto.</p>
+</li>
+<li>
+<p>Selecione uma localização para o projeto. Clique em Finalizar.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>Na próxima sessão, você criará um bean de sessão em uma aplicação corporativa. O bean de sessão será acessado usando uma interface remota. Quando você criar o bean de sessão, o IDE criará automaticamente a interface remota na biblioteca de classes e adicionará a biblioteca de classes JAR ao classpath da aplicação corporativa.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_criando_e_protegendo_a_aplicação_corporativa">Criando e Protegendo a Aplicação Corporativa</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>A aplicação corporativa consistirá de um simples bean de sessão que será acessado usando uma interface remota no projeto de biblioteca de classes.</p>
+</div>
+<div class="sect2">
+<h3 id="_criando_o_projeto_da_aplicação_corporativa">Criando o Projeto da Aplicação Corporativa</h3>
+<div class="paragraph">
+<p>Neste exercício você criará uma aplicação corporativa que contém um módulo EJB.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Selecione Arquivo &gt; Novo Projeto (Ctrl-Shift-N; ⌘-Shift-N no Mac) e selecione o modelo Aplicação Corporativa na categoria Java EE. Clique em Próximo.</p>
+</li>
+<li>
+<p>Digite <strong>Secure</strong> para o Nome do Projeto e defina o Local do Projeto.</p>
+</li>
+<li>
+<p>Desmarque a opção Usar Pasta Dedicada, se estiver selecionada.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>Para este tutorial, há pouco motivo para copiar as bibliotecas de projeto em uma pasta dedicada, pois você não precisará compartilhar bibliotecas com outros usuários ou projetos.</p>
+</div>
+<div class="paragraph">
+<p>Clique em Próximo.
+4. Defina o servidor como GlassFish e defina a Versão para Java EE 6.
+5. Selecione Criar Módulo EJB e desmarque a seleção Criar Módulo da Aplicação Web. Clique em Finalizar.
+image::images/new-entapp-wizard.png[title="Painel Novo Realm de Arquivo do Usuário na console de admin do servidor de aplicações"]</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_protegendo_um_método_em_um_bean_de_sessão">Protegendo um Método em um Bean de Sessão</h3>
+<div class="paragraph">
+<p>Neste exercício você criará um bean de sessão no projeto do módulo EJB. O bean de sessão não faz nada demais. Ele apenas retorna um saldo total de amostra. Você criará um método  <code>getStatus</code>  e irá proteger o bean do método, anotando-o com a anotação  <code>@RolesAllowed</code>  e especificará as atribuições de segurança permitidas para acessar o método. Essa atribuição de segurança é usada pela aplicação e não é a mesma que dos usuários e grupos no servidor. Você irá mapear a atribuição de segurança para os usuários e grupos mais tarde, quando configurar os descritores de implantação.</p>
+</div>
+<div class="paragraph">
+<p>As anotações de segurança podem ser aplicadas individualmente a cada método em uma classe, ou a uma classe inteira. Neste exercício simples, você utilizará o  <code>@RolesAllowed</code>  para anotar um método, mas a especificação Java EE define outras anotações de segurança que podem ser usadas nos enterprise beans.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Na janela Projetos, clique com o botão direito do mouse no nó do módulo EJB (Secure-ejb) e selecione Novo &gt; Bean de Sessão.</p>
+</li>
+<li>
+<p>Digite <strong>AccountStatus</strong> como nome do bean, e <strong>bean</strong> para o pacote.</p>
+</li>
+<li>
+<p>Selecione Remoto no projeto para o tipo de interface.</p>
+</li>
+<li>
+<p>Selecione SecureRemoteInterface na lista drop-down. Clique em Finalizar.
+image::images/new-sessionbean-wizard.png[title="Interface remota selecionada no assistente Novo Bean de Sessão"]</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>Quando você clica em Finalizar, o IDE cria a classe  <code>AccountStatus</code>  e abre o arquivo no editor de código-fonte.</p>
+</div>
+<div class="paragraph">
+<p>O IDE também cria a interface remota  <code>AccountStatusRemote</code>  para o bean no pacote  <code>bean</code>  no projeto de biblioteca de classes SecureRemoteInterface e adiciona a biblioteca de classes JAR SecureRemoteInterface ao classpath do projeto do módulo EJB.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/projects-window-bean.png" alt="projects window bean">
+</div>
+<div class="title">Figure 4. Janela Projetos mostrando o bean de sessão e a biblioteca de classe no classpath</div>
+</div>
+<div class="paragraph">
+<p>Ao abrir a categoria Bibliotecas da caixa de diálogo Propriedades do módulo EJB, você verá que o JAR é adicionado às bibliotecas de tempo de compilação.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>No editor de código-fonte, adicione a declaração de campo a seguir (em negrito) em  <code>AccountStatusBean</code> :</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public class AccountStatus implements AccountStatusRemote {
+    *private String amount = "250";*</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>No editor de código fonte, clique com o botão direito do mouse na classe e selecione Inserir Código (Alt-Insert; Ctrl-I on Mac) e, então, selecione Adicionar Método de Negócios para abrir a caixa de diálogo Adicionar Método de Negócio.</p>
+</li>
+<li>
+<p>Digite <strong>getStatus</strong> como nome do método e defina o tipo de retorno como  <code>String</code> .</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>O IDE expõe automaticamente o método de negócios na interface remota.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>No editor de código-fonte, adicione a linha a seguir em negrito ao método  <code>getStatus</code> .</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public String getStatus() {
+*    return "The account contains $" + amount;*
+}</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Digite o seguinte (em negrito) para anotar o método  <code>getStatus</code> .<strong>@RolesAllowed({"USERS"})</strong></p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public String getStatus() {</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Essa anotação significa que somente os usuários na atribuição de segurança  <code>USERS</code>  podem acessar o método  <code>getStatus</code> .</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Clique com o botão direito do mouse no editor, selecione Corrigir Importações (Alt-Shift-I; ⌘-Shift-I no Mac) e salve as alterações. Certifique-se de que o  <code>javax.annotation.security.RolesAllowed</code>  tenha sido adicionado ao arquivo.</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_configurando_os_descritores_de_implantação">Configurando os Descritores de Implantação</h3>
+<div class="paragraph">
+<p>Em Java EE, as aplicações corporativas geralmente não requerem arquivos do descritor de implantação, tal como o  <code>ejb-jar.xml</code> . Se você expandir o nó Arquivos de Configuração sob Secure-ejb ou a aplicação corporativa Secure, é possível ver que não há descritores de implantação. É possível usar anotações para especificar muitas propriedades que foram configuradas no  <code>ejb-jar.xml</code> . Neste exemplo, você especificou as atribuições de segurança dos métodos EJB usando a anotação  <code>@RolesAllowed</code>  no bean de sessão.</p>
+</div>
+<div class="paragraph">
+<p>Entretanto, ao configurar a segurança de uma aplicação, ainda é preciso especificar algumas propriedades nos descritores de implantação. Neste exemplo, é preciso mapear as atribuições de segurança na aplicação corporativa ( <code>USERS</code> ) para os usuários e grupos configurados no servidor de aplicações. Você criou o grupo  <code>bank_users</code>  no servidor de aplicações, e agora você precisa mapear esse grupo para a atribuição de segurança  <code>USERS</code>  na aplicação corporativa. Para fazer isso, você deve editar o descritor de implantação  <code>glassfish-application.xml</code>  na aplicação corporativa.</p>
+</div>
+<div class="paragraph">
+<p>Como a aplicação corporativa não precisa de descritores de implantação para ser executada, o IDE não cria os descritores de implantação por default. Primeiro, você precisa criar o arquivo do descritor de implantação e, então, editar o arquivo no editor com multiview para configurar os mapeamentos de implementação de segurança.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Clique com o botão direito do mouse no projeto Proteger da aplicação corporativa e selecione Novo &gt; Outros para abrir o assistente Novo Arquivo.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>Outra opção é abrir o assistente Novo Arquivo selecionando Arquivo &gt; Novo Arquivo no menu principal. Nesse caso, certifique-se de que o projeto Proteger seja selecionando na lista drop-down do Projeto.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Selecione o tipo de arquivo Descritor GlassFish na categoria GlassFish. Clique em Próximo.
+image::images/new-gf-descriptor.png[title="Tipo de arquivo do descritor do GlassFish no assistente Novo Arquivo"]</p>
+</li>
+<li>
+<p>Aceite os valores default no assistente e clique em Finalizar.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>Quando você clica em Finalizar, o IDE cria  <code>glassfish-application.xml</code>  e abre o arquivo no editor com multiview.</p>
+</div>
+<div class="paragraph">
+<p>Ao expandir o nó do projeto Proteger aplicação corporativa na janela Projetos, você pode ver que o arquivo do descritor é criado abaixo do nó dos Arquivos de Configuração.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/glassfish-application-descriptor.png" alt="glassfish application descriptor">
+</div>
+<div class="title">Figure 5. Guia Segurança no editor com multiview</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Na guia Segurança do editor com multiview, clique em Adicionar Mapeamento de Atribuição de Segurança e digite <strong>USERS</strong> como Nome da Atribuição de Segurança.</p>
+</li>
+<li>
+<p>Clique em Adicionar Grupo e digite <strong>bank_users</strong> como Nome do Grupo na caixa de diálogo. Clique em OK.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>O editor deve estar parecido com o mostrado a seguir.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/security-tab-descriptor.png" alt="security tab descriptor">
+</div>
+<div class="title">Figure 6. Guia Segurança no editor com multiview</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Salve as alterações.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>Você pode clicar na guia XML no editor com multiview para ver o arquivo do descritor de implantação na exibição XML. Você pode ver que o arquivo do descritor de implantação agora contém o seguinte:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;glassfish-application&gt;
+  &lt;security-role-mapping&gt;
+    &lt;role-name&gt;USERS&lt;/role-name&gt;
+    &lt;group-name&gt;bank_users&lt;/group-name&gt;
+  &lt;/security-role-mapping&gt;
+&lt;/glassfish-application&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>O método  <code>getStatus</code>  está agora seguro e somente os usuários do grupo  <code>bank_users</code>  especificados no servidor podem acessar o método.</p>
+</div>
+<div class="paragraph">
+<p>Você agora precisa testar de alguma forma as definições de segurança. A forma mais simples é criar um cliente de aplicação básico que solicitará ao usuário o nome e a senha.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_criando_o_cliente_de_aplicação">Criando o Cliente de Aplicação</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Nesta seção, você criará um cliente de aplicação simples para acessar o bean de sessão  <code>AccountStatus</code> . Você usará a anotação  <code>@EJB</code>  no código para chamar o bean usando a interface remota. O IDE adicionará automaticamente a biblioteca de classes JAR que contém a interface para o classpath do cliente de aplicação.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Selecione Arquivo &gt; Novo Projeto e selecione Cliente de Aplicação Corporativa na categoria Java EE. Clique em Próximo.</p>
+</li>
+<li>
+<p>Digite SecureAppClient para o Nome do Projeto. Clique em Próximo.</p>
+</li>
+<li>
+<p>Selecione <strong>&lt;Nenhum&gt;</strong> na lista drop-down Adicionar Aplicação Corporativa.</p>
+</li>
+<li>
+<p>Selecione o GlassFish Server na lista drop-down Servidor e Java EE 6 ou Java EE 7 como a versão do Java EE. Clique em Finalizar.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>Quando você clicar em Finalizar, o  <code>Main.java</code>  abrirá no editor de código-fonte.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>No editor de código-fonte, clique com o botão direito do mouse no arquivo  <code>Main.java</code>  e selecione Inserir Código (Alt-Insert; Ctrl-I no Mac) e selecione Chamar Enterprise Beans.</p>
+</li>
+<li>
+<p>Na caixa de diálogo Chamar Enterprise Eean, expanda o nó Secure-ejb e selecione AccountStatus. Clique em OK.
+image::images/call-enterprise-bean.png[title="Interface selecionada na caixa de diálogo Chamar Enterprise Bean"]</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>O IDE adiciona o seguinte código ao cliente da aplicação para procurar o bean de sessão.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@EJB
+private static AccountStatusRemote accountStatus;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Se expandir o nó Bibliotecas na janela Projetos, você poderá ver que o IDE adicionou SecureRemoteInterface JAR ao classpath do projeto.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Modifique o método  <code>main</code>  para adicionar o código a seguir e salvar suas alterações.</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public static void main(String[] args) {
+    *System.out.println(accountStatus.getStatus());*
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Para obter mais informações sobre clientes de aplicações, consulte <a href="entappclient.html">Criando e Executando um Cliente de Aplicação no GlassFish Server</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_executando_a_aplicação">Executando a Aplicação</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>A aplicação agora está pronta. Primeiro, você implantará a aplicação corporativa no servidor. Após implantar a aplicação corporativa, você poderá executar o cliente de aplicação para testar se o método na aplicação corporativa está seguro e se as atribuições de usuário estão mapeadas corretamente. Ao executar o projeto, você será solicitado a fornecer um nome de usuário e senha para um usuário no grupo  <code>bank_users</code> .</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Clique com o botão direito do mouse no nó Proteger projeto de aplicação corporativa na janela Projetos e selecione Implantar.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>Quando você clica em Implantar, o IDE constrói o arquivo EAR, inicia o servidor de aplicações (se ainda não estiver em execução) e implanta o arquivo EAR no servidor.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Clique com o botão direito do mouse no nó do projeto SecureAppClient na janela Projetos e selecione Executar. Aparecerá uma caixa de diálogo solicitando um nome de usuário e senha.
+image::images/login-window.png[title="Janela de Log-in para solicitar um nome de usuário e senha"]</p>
+</li>
+<li>
+<p>Digite o nome de usuário ( <code>manager</code> ) e a senha ( <code>password</code> ) na caixa de diálogo e clique em OK. A mensagem a seguir é exibida na janela de Saída:</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">The account contains 250$</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Este exemplo muito simples demonstra como proteger um método em um enterprise bean usando anotações Java.</p>
+</div>
+<div class="paragraph">
+<p><a href="/about/contact_form.html?to=3&amp;subject=Feedback:%20Building%20Secure%20Enterprise%20Beans">Enviar Feedback neste Tutorial</a></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_consulte_também">Consulte Também</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Para obter mais informações sobre o uso de anotações e descritores de implantação para proteger enterprise beans, consulte os seguintes recursos:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Capítulos <a href="http://docs.oracle.com/javaee/7/tutorial/doc/security-intro003.htm">Protegendo Contêineres</a> e <a href="http://docs.oracle.com/javaee/7/tutorial/doc/security-advanced008.htm">Configurando Segurança Usando Descritores de Implantação</a> na seção <a href="http://docs.oracle.com/javaee/7/tutorial/doc/partsecurity.htm">Segurança</a> do Tutorial do Java EE 7</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Para obter mais informações sobre o uso do NetBeans IDE para desenvolver aplicações Java EE, consulte os seguintes recursos:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="javaee-intro.html">Introdução à Tecnologia Java EE</a></p>
+</li>
+<li>
+<p><a href="javaee-gettingstarted.html">Conceitos Básicos sobre Aplicações do Java EE</a></p>
+</li>
+<li>
+<p><a href="../../trails/java-ee.html">Trilha de Aprendizado do Java EE e Java Web</a></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Para enviar comentários e sugestões, obter suporte e se manter informado sobre os mais recentes desenvolvimentos das funcionalidades de desenvolvimento do Java EE do NetBeans IDE, <a href="../../../community/lists/top.html">inscreva-se na lista de correspondência de nbj2ee</a>.</p>
+</div>
+</div>
+</div>
+            
+<section class='tools'>
+    <ul class="menu align-center">
+        <li><a title="Facebook" href="https://www.facebook.com/NetBeans"><i class="fa fa-md fa-facebook"></i></a></li>
+        <li><a title="Twitter" href="https://twitter.com/netbeans"><i class="fa fa-md fa-twitter"></i></a></li>
+        <li><a title="Github" href="https://github.com/apache/incubator-netbeans"><i class="fa fa-md fa-github"></i></a></li>
+        <li><a title="YouTube" href="https://www.youtube.com/user/netbeansvideos"><i class="fa fa-md fa-youtube"></i></a></li>
+        <li><a title="Slack" href="https://tinyurl.com/netbeans-slack-signup/"><i class="fa fa-md fa-slack"></i></a></li>
+        <li><a title="JIRA" href="https://issues.apache.org/jira/projects/NETBEANS/summary"><i class="fa fa-mf fa-bug"></i></a></li>
+    </ul>
+    <ul class="menu align-center">
+        
+        <li><a href="https://github.com/apache/incubator-netbeans-website/blob/master/netbeans.apache.org/src/content/kb/docs/javaee/secure-ejb_pt_BR.asciidoc" title="See this page in github"><i class="fa fa-md fa-edit"></i> See this page in GitHub.</a></li>
+    </ul>
+</section>
+
+        </div>
+        
+
+<div class='grid-container incubator-area' style='margin-top: 64px'>
+    <div class='grid-x grid-padding-x'>
+        <div class='large-auto cell text-center'>
+            <a href="https://www.apache.org/">
+                <img style="width: 320px" title="Apache Software Foundation" src="/images/asf_logo_wide.svg" />
+            </a>
+        </div>
+        <div class='large-auto cell text-center'>
+            <a href="https://www.apache.org/events/current-event.html">
+               <img style="width:234px; height: 60px;" title="Apache Software Foundation current event" src="https://www.apache.org/events/current-event-234x60.png"/>
+            </a>
+        </div>
+    </div>
+</div>
+<footer>
+    <div class="grid-container">
+        <div class="grid-x grid-padding-x">
+            <div class="large-auto cell">
+                
+                <h1>About</h1>
+                <ul>
+                    <li><a href="https://www.apache.org/foundation/thanks.html">Thanks</a></li>
+                    <li><a href="https://www.apache.org/foundation/sponsorship.html">Sponsorship</a></li>
+                    <li><a href="https://www.apache.org/security/">Security</a></li>
+                    <li><a href="https://incubator.apache.org/projects/netbeans.html">Incubation Status</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/community/index.html">Community</a></h1>
+                <ul>
+                    <li><a href="/community/mailing-lists.html">Mailing lists</a></li>
+                    <li><a href="/community/committer.html">Becoming a committer</a></li>
+                    <li><a href="/community/events.html">NetBeans Events</a></li>
+                    <li><a href="https://www.apache.org/events/current-event.html">Apache Events</a></li>
+                    <li><a href="/community/who.html">Who is who</a></li>
+                    <li><a href="/community/nekobean.html">NekoBean</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/participate/index.html">Participate</a></h1>
+                <ul>
+                    <li><a href="/participate/submit-pr.html">Submitting Pull Requests</a></li>
+                    <li><a href="/participate/report-issue.html">Reporting Issues</a></li>
+                    <li><a href="/participate/netcat.html">NetCAT - Community Acceptance Testing</a></li>
+                    <li><a href="/participate/index.html#documentation">Improving the documentation</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/help/index.html">Get Help</a></h1>
+                <ul>
+                    <li><a href="/help/index.html#documentation">Documentation</a></li>
+                    <li><a href="/help/getting-started.html">Platform videos</a></li>
+                    <li><a href="/wiki/index.asciidoc">Wiki</a></li>
+                    <li><a href="/help/index.html#support">Community Support</a></li>
+                    <li><a href="/help/commercial-support.html">Commercial Support</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/download/nb100/nb100.html">Download</a></h1>
+                <ul>
+                    <li><a href="/download/index.html#releases">Releases</a></li>
+                    <ul>
+                        <li><a href="/download/nb100/nb100.html">Apache NetBeans 10.0</a></li>
+                        <li><a href="/download/nb90/nb90.html">Apache NetBeans 9.0</a></li>
+                    </ul>
+                    <li><a href="/plugins/index.html">Plugins</a></li>
+                    <li><a href="/download/index.html#source">Building from source</a></li>
+                    <li><a href="/download/index.html#previous">Previous releases</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</footer>
+<div class='footer-disclaimer'>
+    <div class="footer-disclaimer-content">
+        <p>Copyright &copy; 2017-2018 <a href="https://www.apache.org">The Apache Software Foundation</a>.</p>
+        <p>Licensed under the Apache <a href="https://www.apache.org/licenses/">license</a>, version 2.0</p>
+        <p><a href="https://incubator.apache.org/" alt="Apache Incubator"><img src='/images/incubator_feather_egg_logo_bw_crop.png' title='Apache Incubator'></img></a></p>
+        <div style='max-width: 40em; margin: 0 auto'>
+            <p>Apache NetBeans is an effort undergoing incubation at The Apache Software Foundation (ASF), sponsored by the Apache Incubator. Incubation is required of all newly accepted projects until a further review indicates that the infrastructure, communications, and decision making process have stabilized in a manner consistent with other successful ASF projects. While incubation status is not necessarily a reflection of the completeness or stability of the code, it does indicate that the project has yet to be fully endorsed by the ASF.</p>
+            <p>Apache Incubator, Apache, the Apache feather logo, the Apache NetBeans logo, and the Apache Incubator project logo are trademarks of <a href="https://www.apache.org">The Apache Software Foundation</a>.</p>
+            <p>Oracle and Java are registered trademarks of Oracle and/or its affiliates.</p>
+        </div>
+        
+    </div>
+</div>
+
+
+
+        <script src="/js/vendor/jquery-3.2.1.min.js"></script>
+        <script src="/js/vendor/what-input.js"></script>
+        <script src="/js/vendor/jquery.colorbox-min.js"></script>
+        <script src="/js/vendor/foundation.min.js"></script>
+        <script src="/js/netbeans.js"></script>
+        <script>
+            
+            $(function(){ $(document).foundation(); });
+        </script>
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/highlight.min.js"></script>
+        <script>
+         $(document).ready(function() { $("pre code").each(function(i, block) { hljs.highlightBlock(block); }); }); 
+        </script>
+        
+    </body>
+</html>

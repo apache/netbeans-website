@@ -1,0 +1,721 @@
+
+<!DOCTYPE html>
+<html class="no-js" lang="en" dir="ltr">
+    
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>NetBeans IDEでのマルチスレッド・アプリケーションのデバッグ</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="NetBeans IDEでのマルチスレッド・アプリケーションのデバッグ - Apache NetBeans">
+    <meta name="author" content="Apache NetBeans">
+    <meta name="keywords" content="Apache NetBeans, Tutorials, NetBeans IDEでのマルチスレッド・アプリケーションのデバッグ">
+    <meta name="generator" content="Apache NetBeans">
+    <link rel="stylesheet" href="/css/font-awesome.min.css">
+     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/styles/default.min.css"> 
+    <link rel="stylesheet" href="/css/netbeans.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#ffc40d">
+    <meta name="theme-color" content="#ffffff">
+    <link href="https://fonts.googleapis.com/css?family=Lato:400,700" rel="stylesheet"> 
+    <!--
+        Licensed to the Apache Software Foundation (ASF) under one
+        or more contributor license agreements.  See the NOTICE file
+        distributed with this work for additional information
+        regarding copyright ownership.  The ASF licenses this file
+        to you under the Apache License, Version 2.0 (the
+        "License"); you may not use this file except in compliance
+        with the License.  You may obtain a copy of the License at
+        http://www.apache.org/licenses/LICENSE-2.0
+        Unless required by applicable law or agreed to in writing,
+        software distributed under the License is distributed on an
+        "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+        KIND, either express or implied.  See the License for the
+        specific language governing permissions and limitations
+        under the License.
+    -->
+</head>
+
+
+    <body>
+        
+
+<div class="title-bar" data-responsive-toggle="responsive-menu" data-hide-for="medium">
+    <button type="button" data-toggle="responsive-menu"><i style='font-size: 32px; color: #fff; padding: 8px' class='fa fa-bars'></i></button>
+    <div class="title-bar-title">Apache NetBeans</div>
+</div>
+<div class="top-bar" id="responsive-menu">
+    <div class='top-bar-left'>
+        <a class='title' href="/"><img src='/images/apache-netbeans.svg' style='padding: 8px; height: 48px;'></img> Apache NetBeans (incubating)</a>
+    </div>
+    <div class="top-bar-right">
+        <ul class="vertical medium-horizontal menu" data-responsive-menu="drilldown medium-dropdown">
+            <li> <a href="/community/index.html">Community</a> </li>
+            <li> <a href="/participate/index.html">Participate</a> </li>
+            <li> <a href="https://blogs.apache.org/netbeans/">Blog</a></li>
+            <li> <a href="/help/index.html">Get Help</a> </li>
+            <li> <a href="/plugins/index.html">Plugins</a> </li>
+            <li> <a href="/download/nb100/nb100.html">Download</a> </li>
+        </ul>
+    </div>
+</div>
+
+
+        
+<!-- src/templates/news -->
+<section class="hero news alternate" style='margin-bottom: 2em'>
+    <div class='grid-container'>
+        <div class='cell'>
+            <div class="annotation">Just released!</div>
+            <h1>Apache NetBeans 10.0</h1>
+            <p><a class="button success" href="/download/nb100/nb100.html">Read more</a></p>
+        </div>
+    </div>
+</section>
+
+        <div class='grid-container main-content'>
+            <div id="toc" class="toc">
+<div id="toctitle"></div>
+<ul class="sectlevel1">
+<li><a href="#_サンプル_プロジェクトのダウンロード">サンプル・プロジェクトのダウンロード</a></li>
+<li><a href="#_プロジェクトを開く">プロジェクトを開く</a>
+<ul class="sectlevel2">
+<li><a href="#_galleryプロジェクトの実行">Galleryプロジェクトの実行</a></li>
+<li><a href="#_deadlockプロジェクトの実行">Deadlockプロジェクトの実行</a></li>
+</ul>
+</li>
+<li><a href="#_サンプル_プロジェクトのデバッグ">サンプル・プロジェクトのデバッグ</a>
+<ul class="sectlevel2">
+<li><a href="#_スレッドの一時停止">スレッドの一時停止</a></li>
+<li><a href="#_スレッドの切替え">スレッドの切替え</a></li>
+<li><a href="#_デッドロックの検出">デッドロックの検出</a></li>
+</ul>
+</li>
+<li><a href="#_関連項目">関連項目</a></li>
+</ul>
+</div>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>このドキュメントでは、NetBeans IDEの「デバッグ」ウィンドウを使用してマルチスレッド・アプリケーションをデバッグする方法を説明します。このチュートリアルでは、IDEを使用してアプリケーションのデッドロックを検出する方法も示します。</p>
+</div>
+<div class="paragraph">
+<p>「デバッグ」ウィンドウは、デバッグ・セッション、アプリケーション・スレッド、およびスレッド・コール・スタックに関する情報を1つのウィンドウにまとめることにより、デバッグ処理を簡素化します。「デバッグ」ウィンドウを使用すると、アプリケーション・スレッドの状態を簡単に確認したり、セッション内の任意のスレッドを一時停止および再開できます。</p>
+</div>
+<div class="paragraph">
+<p>このチュートリアルでは2つのサンプル・プロジェクトを使用し、「デバッグ」ウィンドウの操作方法を示します。このチュートリアルを完了するには、まずGalleryプロジェクトおよびDeadlockプロジェクトをダウンロードして開きます。</p>
+</div>
+<div class="paragraph">
+<p><a href="debug-multithreaded-screencast.html">NetBeans IDEでのマルチスレッド・アプリケーションのデバッグのビデオ</a>をご覧ください。</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/netbeans-stamp-80-74-73.png" alt="netbeans stamp 80 74 73">
+</div>
+<div class="title">Figure 1. このページの内容は、NetBeans IDE 7.2、7.3、7.4および8.0に適用されます</div>
+</div>
+<div class="paragraph">
+<p><strong>このチュートリアルに従うには、次のソフトウェアとリソースが必要です。</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">ソフトウェアまたはリソース</th>
+<th class="tableblock halign-left valign-top">必須バージョン</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://netbeans.org/downloads/index.html">NetBeans IDE</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">7.2, 7.3, 7.4, 8.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://www.oracle.com/technetwork/java/javase/downloads/index.html">Java Development Kit (JDK)</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">バージョン7または8</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://netbeans.org/projects/samples/downloads/download/Samples/Java/debugging-samples.zip">GalleryプロジェクトおよびDeadlockプロジェクト</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"> </p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_サンプル_プロジェクトのダウンロード">サンプル・プロジェクトのダウンロード</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>このチュートリアルで使用するサンプル・プロジェクトは、次の方法でダウンロードできます。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://netbeans.org/projects/samples/downloads/download/Samples/Java/debugging-samples.zip">終了したプロジェクトのZIPアーカイブ</a>をダウンロードします。</p>
+</li>
+<li>
+<p>次の手順を実行して、プロジェクト・ソースをNetBeansのサンプルからチェックアウトします。</p>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>メイン・メニューから「チーム」&gt;「Subversion」&gt;「チェックアウト」を選択します。</p>
+</li>
+<li>
+<p>「チェックアウト」ダイアログ・ボックスで次のリポジトリURLを入力します。
+ <code><a href="https://svn.netbeans.org/svn/samples~samples-source-code" class="bare">https://svn.netbeans.org/svn/samples~samples-source-code</a></code>
+「次」をクリックします。</p>
+</li>
+<li>
+<p>「参照」をクリックして「リポジトリ・フォルダを参照」ダイアログ・ボックスを開きます。</p>
+</li>
+<li>
+<p>ルート・ノードを展開し、*samples/java/debugging-samples*を選択します。「OK」をクリックします。</p>
+</li>
+<li>
+<p>ソースのローカル・フォルダを指定します(ローカル・フォルダは空である必要があります)。</p>
+</li>
+<li>
+<p>「終了」をクリックします。</p>
+</li>
+</ol>
+</div>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>「終了」をクリックすると、IDEではローカル・フォルダがSubversionリポジトリとして初期化され、プロジェクト・ソースがチェックアウトされます。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>チェックアウトが完了するときに表示されるダイアログで、「プロジェクトを開く」をクリックします。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>*注意:*Subversionを使用したソースのチェックアウトの詳細は、<a href="../ide/subversion.html">NetBeans IDEでのSubversionガイド</a>の<a href="../ide/subversion.html#settingUp">Subversionの設定</a>の項を参照してください。</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_プロジェクトを開く">プロジェクトを開く</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>このチュートリアルでは、2つのアプリケーションを使用して、マルチスレッド・アプリケーションのデバッグがIDEでどのようにサポートされているかを示します。この課題では、2つのプロジェクトをIDEで開いて、実行します。プロジェクトを実行したら、各プロジェクトのデバッグに進みます。</p>
+</div>
+<div class="sect2">
+<h3 id="_galleryプロジェクトの実行">Galleryプロジェクトの実行</h3>
+<div class="paragraph">
+<p>Galleryアプリケーションは、アニメーション・イメージを再生する単純なJava Swingアプリケーションです。このアプリケーションには、アニメーション・イメージを追加および除去するための2つのボタンがあります。この課題では、Galleryアプリケーションを実行します。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><a href="https://netbeans.org/projects/samples/downloads/download/Samples/Java/debugging-samples.zip">+ <code>debugging-samples.zip</code> +</a>アーカイブをローカル・システムにダウンロードし、展開します。</p>
+</li>
+<li>
+<p>メイン・メニューから「ファイル」&gt;「開く」を選択します。</p>
+</li>
+<li>
+<p>debugging-samplesディレクトリにあるGalleryプロジェクトを検索し、選択します。「開く」をクリックします。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>「開く」をクリックすると、IDEによりプロジェクトが「プロジェクト」ウィンドウで開かれ、表示されます。「プロジェクト」ウィンドウでプロジェクト・ノードを展開すると、このプロジェクトが単純なJava Swingアプリケーションであることがわかります。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>プロジェクト・ノードを右クリックし、「実行」を選択してGalleryアプリケーションを起動します。</p>
+</li>
+<li>
+<p>Galleryアプリケーションで、「詳細表示」をクリックしてイメージを追加したり、「簡易表示」をクリックしてイメージを除去したりします。
+image::images/debugging-gallery-app.png[title="Galleryアプリケーション"]</p>
+</li>
+<li>
+<p>Galleryアプリケーションのウィンドウを閉じます。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>Galleryプロジェクトは、このチュートリアルでデバッグする単純なマルチスレッド・アプリケーションです。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_deadlockプロジェクトの実行">Deadlockプロジェクトの実行</h3>
+<div class="paragraph">
+<p>Deadlockアプリケーションには、500000ミリ秒間実行されるスレッドを開始する <code>main</code> メソッドが含まれています。 <code>main</code> メソッドは、2つのスレッドを開始し、これらが終了すると「出力」ウィンドウに出力します。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>メイン・メニューから「ファイル」&gt;「開く」を選択します。</p>
+</li>
+<li>
+<p>debugging-samplesディレクトリにあるDeadlockプロジェクトを検索し、選択します。「開く」をクリックします。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>「開く」をクリックすると、IDEによりプロジェクトが「プロジェクト」ウィンドウで開かれ、表示されます。「プロジェクト」ウィンドウでプロジェクト・ノードを展開すると、このプロジェクトが単純なJavaアプリケーションであることがわかります。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>プロジェクト・ノードを右クリックし、「実行」を選択してDeadlockアプリケーションを起動します。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>「実行」をクリックすると、「出力」ウィンドウが開き、次の出力が表示されます。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">run:
+Application started
+MyThread2 successfully finished.
+MyThread1 successfully finished</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>アプリケーションが通常どおり終了するのを待ちます(5分)。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>Deadlockアプリケーションが終了したら、次の内容が「出力」ウィンドウに表示されます。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">Main thread finished</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Deadlockプロジェクトは、2つのスレッドを持つ単純なJavaアプリケーションです。アプリケーションをデバッグするとき、IDEがデッドロックの検出にどのように役立つかを示すため、デッドロックを作成します。</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_サンプル_プロジェクトのデバッグ">サンプル・プロジェクトのデバッグ</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Galleryプロジェクトは、アニメーション・イメージを表示する単純なJava Swingアプリケーションです。アプリケーションのボタンをクリックしてイメージを追加および除去します。「詳細表示」ボタンをクリックすると、イメージを表示してアニメーション化する新しいスレッドが開始されます。「簡易表示」ボタンをクリックすると、直近のスレッドが停止し、アニメーションが停止してイメージが除去されます。</p>
+</div>
+<div class="sect2">
+<h3 id="_スレッドの一時停止">スレッドの一時停止</h3>
+<div class="paragraph">
+<p>この課題では、Galleryアプリケーションのデバッグを開始してイメージをいくつか追加し、一部のアプリケーション・スレッドを開始します。デバッグ・セッションを開始すると、IDEの左ペインに「デバッグ」ウィンドウが表示されます。「デバッグ」ウィンドウには、セッション内のスレッドが一覧表示されます。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>「プロジェクト」ウィンドウでGalleryプロジェクトを右クリックし、「デバッグ」を選択します。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>「デバッグ」をクリックすると、IDEでGalleryアプリケーションが起動し、デフォルトのデバッグ用ウィンドウが表示されます。IDEによって、メイン・ウィンドウの左側に「デバッグ」ウィンドウが自動的に表示され、「出力」ウィンドウに「デバッガ・コンソール」が表示されます。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Galleryアプリケーションで「詳細表示」を3回クリックし、アニメーション・イメージを表示する3つのスレッドを開始します。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>「デバッグ」ウィンドウでは、各アニメーションに対して新しいスレッドが開始されたことがわかります。</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/debugging-start.png" alt="debugging start">
+</div>
+<div class="title">Figure 2. 「デバッグ」ウィンドウ</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>「デバッグ」ウィンドウのスレッドの右にある「スレッドを一時停止」ボタンをクリックして、スレッドのうち2つを一時停止します。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>スレッドが一時停止されると、スレッドのアイコンが新しい状態に変わります。スレッド・ノードを展開してスレッドのコール・スタックを表示できます。デバッグ・コマンドを使用してポップアップ・メニューを開くには、「デバッグ」ウィンドウの項目を右クリックします。</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/debugging-start-suspend.png" alt="debugging start suspend">
+</div>
+<div class="title">Figure 3. 一時停止した2つのスレッドが表示された「デバッグ」ウィンドウ</div>
+</div>
+<div class="paragraph">
+<p>Galleryアプリケーションでは、スレッドを一時停止すると、これらのスレッドのアニメーションが停止することがわかります。</p>
+</div>
+<div class="paragraph">
+<p>「デバッグ」ウィンドウを使用すると、セッション内のスレッドの状態をすばやく表示および変更できます。デフォルトでは、「デバッグ」ウィンドウの右側に「再開」ボタンと「一時停止」ボタンが表示されます。「デバッグ」ウィンドウの下部にあるツールバーを使用すると、これらのボタンを非表示にし、「デバッグ」ウィンドウの表示をさらにカスタマイズすることができます。複数のデバッグ・セッションを実行している場合、「デバッグ」ウィンドウの上部にあるドロップダウン・リストを使用して、ウィンドウに表示するセッションを選択できます。</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/debugging-window-toolbar.png" alt="debugging window toolbar">
+</div>
+<div class="title">Figure 4. 「デバッグ」ウィンドウのツールバー</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_スレッドの切替え">スレッドの切替え</h3>
+<div class="paragraph">
+<p>この課題では、アプリケーションをステップ実行した場合、および別のアプリケーション・スレッドがブレークポイントをヒットした場合の動作を説明します。この課題では、メソッド・ブレークポイントを設定し、アプリケーションのステップ実行を開始します。アプリケーションのステップ実行中に、ブレークポイントをヒットする新しいスレッドを開始します。これが発生すると、IDEでは「デバッグ」ウィンドウに通知が表示されます。次にスレッド間を切り替えます。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Galleryアプリケーションのウィンドウで、ウィンドウに2つまたは3つのアニメーションしか表示されなくなるまで、「簡易表示」または「詳細表示」をクリックします。</p>
+</li>
+<li>
+<p>IDEの「プロジェクト」ウィンドウで <code>gallery</code> パッケージを展開し、 <code>Gallery.java</code> をダブルクリックして、ファイルをエディタで開きます。</p>
+</li>
+<li>
+<p>「 <code>Gallery.java</code> 」で、175行目の左マージンをクリックすることで、 <code>run</code> メソッドの最初にメソッド・ブレークポイントを挿入します。</p>
+</li>
+<li>
+<p>Galleryアプリケーションで「詳細表示」をクリックして、メソッド・ブレークポイントをヒットする新しいスレッドを開始します。</p>
+</li>
+<li>
+<p>「ステップ・オーバー」([F8])をクリックし、「プログラム・カウンタ」が行191に達するまでメソッドをステップ実行します。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>エディタのマージンにある「プログラム・カウンタ」に、メソッドのステップ実行での位置が示されます。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Galleryアプリケーションで「詳細表示」をクリックして、メソッド・ブレークポイントをヒットする新しいスレッドを開始します。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>新しいスレッドがメソッド・ブレークポイントをヒットすると、メソッドのステップ実行中に別のスレッドがブレークポイントをヒットしたことを通知する「新しいブレークポイントのヒット」通知が「デバッグ」ウィンドウに表示されます。</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/debugging-newbreakpointhit.png" alt="debugging newbreakpointhit">
+</div>
+<div class="title">Figure 5. 「新しいブレークポイントのヒット」通知</div>
+</div>
+<div class="paragraph">
+<p>スレッドをステップ実行しているときに別のスレッドでブレークポイントがヒットされると、IDEでは、他のスレッドに切り替えるか、または現在のスレッドのステップ実行を続けるかを決めるオプションが提示されます。「新しいブレークポイントのヒット」通知の矢印ボタンをクリックすると、ブレークポイントに遭遇したスレッドに切り替えることができます。通知ウィンドウ内のスレッドを選択すると、いつでも新しいスレッドに切り替えることができます。現在のブレークポイント・スレッドをステップ実行すると、現在のスレッドが再開されますが、他のアプリケーション・スレッドの状態は変わりません。</p>
+</div>
+<div class="paragraph">
+<p><strong>注意:</strong>「デバッグ」ウィンドウでは、現在のスレッド(Thread_Jirka)がマージン内の緑色のバーで示されていることがわかります。ブレークポイント(Thread_Roman)のヒットによって通知が呼び出されたスレッドは黄色のバーで示され、ブレークポイントによって一時停止されたスレッドはスレッド・アイコンで示されます。</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/debugging-current-suspended.png" alt="debugging current suspended">
+</div>
+<div class="title">Figure 6. 「新しいブレークポイントのヒット」通知</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>「新しいブレークポイントのヒット」通知内の矢印をクリックして、現在のスレッドを新しいスレッド(Thread_Roman)に切り替えます。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>新しいスレッドに切り替えるとき、次のことを確認できます。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>新しい現在のスレッド(Thread_Roman)で、プログラム・カウンタが175行目に移動します。</p>
+</li>
+<li>
+<p>191行目のマージンに一時停止しているスレッドを示す注釈が表示され、スレッド(Thread_Jirka)がその行で一時停止されていることを示します。
+image::images/debugging-editor-suspendedannot.png[title="デバッグ注釈が表示されたエディタ"]</p>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>「ステップ・オーバー」を何回かクリックして、新しい現在のスレッド(Thread_Roman)をステップ実行します。</p>
+</li>
+<li>
+<p>一時停止しているスレッドを示す注釈をエディタのマージンで右クリックし、「現在のスレッドとして設定」&gt;「Thread_Jirka」を選択して、元の一時停止されたスレッドに切り替えます。
+image::images/debugging-editor-setcurrent.png[title="「現在のスレッドとして設定」ポップアップが表示されたエディタ"]</p>
+</li>
+</ol>
+</div>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>または、「現在のスレッド・チューザ」(<span class="Alt">[Shift]</span>[T]、Macの場合は[Ctrl][Shift][T])を呼び出して、任意のアプリケーション・スレッドに切り替えることもできます。</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/debugging-thread-chooser.png" alt="debugging thread chooser">
+</div>
+<div class="title">Figure 7. Galleryアプリケーション</div>
+</div>
+<div class="paragraph">
+<p>元のThread_Jirkaに切り替えると、Thread_Romanが一時停止されている行の横に、一時停止しているスレッドを示す注釈が表示されます。「デバッグ」ウィンドウの「再開」をクリックすると、Thread_Romanを再開できます。</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/debugging-editor-suspendedannot2.png" alt="debugging editor suspendedannot2">
+</div>
+<div class="title">Figure 8. デバッグ注釈が表示されたエディタ</div>
+</div>
+<div class="paragraph">
+<p>「デバッグ」ウィンドウを使用すると、スレッドの状態を正確に表示して制御できます。デバッガは、デバッグのワークフローを簡素化し、デバッグ処理でデッドロックが作成されるのを防ぐために、アプリケーション・スレッドを管理します。この課題では、IDEでアプリケーションをデバッグする際に発生する次の動作を確認しました。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>スレッドがブレークポイントをヒットすると、ブレークポイント・スレッドのみが一時停止されます。</p>
+</li>
+<li>
+<p>アプリケーションをステップ実行しているとき、他のアプリケーション・スレッドがブレークポイントをヒットしても現在のスレッドには影響しません。</p>
+</li>
+<li>
+<p>ステップ実行は現在のスレッドのみを再開します。ステップが完了すると、現在のスレッドのみが一時停止されます。</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Galleryアプリケーションを終了できます。次の課題では、Deadlockアプリケーションをデバッグし、IDEを使用してデッドロックの検出に役立てます。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_デッドロックの検出">デッドロックの検出</h3>
+<div class="paragraph">
+<p>IDEは、一時停止されたすべてのスレッドに対してデッドロックを自動的に検索して、潜在的なデッドロックの状況を特定するのに役立ちます。デッドロックが検出されると、IDEでは「デバッグ」ウィンドウに通知が表示され、関連するスレッドが特定されます。</p>
+</div>
+<div class="paragraph">
+<p>IDEのデッドロック検出を示すために、デバッガにあるサンプルのDeadlockプロジェクトを実行し、デッドロックの状況を作成します。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><code>myapplication</code> パッケージを展開し、ソース・エディタで <code>Thread1.java</code> と <code>Thread2.java</code> を開きます。</p>
+</li>
+<li>
+<p><code>Thread1.java</code> の20行目および <code>Thread2.java</code> の20行目にブレークポイントを設定します。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>ブレークポイントを設定するには、ブレークポイントを設定する行の横で、ソース・エディタ内のマージンをクリックします。ブレークポイント注釈が、行の横の左マージンに表示されます。「ブレークポイント」ウィンドウ(<span class="Alt">[Shift]</span>[5]、Macの場合は[Ctrl][Shift][5])を開くと、2つのブレークポイントが設定され、有効になっていることがわかります。</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/debug-deadlock-setbkpt.png" alt="debug deadlock setbkpt">
+</div>
+<div class="title">Figure 9. 20行目にブレークポイントが設定されていることを示すエディタ</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>「プロジェクト」ウィンドウでDeadlockプロジェクトを右クリックし、「デバッグ」を選択します。</p>
+<div class="literalblock">
+<div class="content">
+<pre>``main`` メソッドによって2つのスレッドが実行され、これらのスレッドは、ブレークポイントの1つで両方とも一時停止されます。「デバッグ」ウィンドウでは、スレッドがブレークポイントによって一時停止されたことがわかります。</pre>
+</div>
+</div>
+</li>
+<li>
+<p>「デバッグ」ウィンドウで、「デバッグ」ウィンドウ内の一時停止されたスレッドの右にある「再開」ボタンをクリックすることによって、一時停止されたスレッド( <code>MyThread1</code> および <code>MyThread2</code> )を再開します。
+image::images/debug-deadlock-resume.png[title="「デバッグ」ウィンドウでの一時停止されたスレッドの再開"]</p>
+<div class="literalblock">
+<div class="content">
+<pre>``MyThread1`` スレッドおよび ``MyThread2`` スレッドを再開すると、デッドロックの状況が作成されます。</pre>
+</div>
+</div>
+</li>
+<li>
+<p>メイン・メニューから「デバッグ」-「デッドロックを確認」を選択して、一時停止されたスレッドにデッドロックがないかを確認します。
+image::images/debug-deadlock-detected.png[title="「デバッグ」ウィンドウでの一時停止されたスレッドの再開"]</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>アプリケーションのデッドロックを確認してデッドロックを検出した場合、デッドロックについて知らせるメッセージが「デバッグ」ウィンドウに表示されます。デッドロックのあるスレッドは、「デバッグ」ウィンドウの左マージンに赤色のバーで示されます。</p>
+</div>
+<div class="paragraph">
+<p>このチュートリアルでは、IDEのデバッグ機能の一部に関する基本を紹介しました。「デバッグ」ウィンドウを使用すると、アプリケーションをデバッグするときにスレッドを簡単に一時停止および再開できます。これは、マルチスレッド・アプリケーションをデバッグする際に特に便利です。</p>
+</div>
+<div class="paragraph">
+<p><a href="https://netbeans.org/about/contact_form.html?to=3&amp;subject=Feedback:%20Debugging%20Multithreaded%20Applications">このチュートリアルに関するご意見をお寄せください</a></p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_関連項目">関連項目</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>NetBeans IDEでのJavaアプリケーションの開発およびテストの詳細は、次のリソースを参照してください。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>デモ: <a href="debug-multithreaded-screencast.html">NetBeans IDEでのマルチスレッド・アプリケーションのデバッグ</a></p>
+</li>
+<li>
+<p>デモ: <a href="debug-stepinto-screencast.html">NetBeansデバッガでの視覚的なステップ・イン・アクション</a></p>
+</li>
+<li>
+<p>デモ: <a href="debug-deadlock-screencast.html">NetBeansデバッガを使用したデッドロックの検出</a></p>
+</li>
+<li>
+<p>デモ: <a href="debug-evaluator-screencast.html">NetBeansデバッガのコード・スニペット評価の使用</a></p>
+</li>
+<li>
+<p><a href="../../trails/java-se.html">基本的なIDEおよびJavaプログラミングの学習</a></p>
+</li>
+<li>
+<p><a href="junit-intro.html">JUnitテストの作成</a></p>
+</li>
+<li>
+<p><a href="profiler-intro.html">Javaアプリケーションのプロファイリング入門</a></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+            
+<section class='tools'>
+    <ul class="menu align-center">
+        <li><a title="Facebook" href="https://www.facebook.com/NetBeans"><i class="fa fa-md fa-facebook"></i></a></li>
+        <li><a title="Twitter" href="https://twitter.com/netbeans"><i class="fa fa-md fa-twitter"></i></a></li>
+        <li><a title="Github" href="https://github.com/apache/incubator-netbeans"><i class="fa fa-md fa-github"></i></a></li>
+        <li><a title="YouTube" href="https://www.youtube.com/user/netbeansvideos"><i class="fa fa-md fa-youtube"></i></a></li>
+        <li><a title="Slack" href="https://tinyurl.com/netbeans-slack-signup/"><i class="fa fa-md fa-slack"></i></a></li>
+        <li><a title="JIRA" href="https://issues.apache.org/jira/projects/NETBEANS/summary"><i class="fa fa-mf fa-bug"></i></a></li>
+    </ul>
+    <ul class="menu align-center">
+        
+        <li><a href="https://github.com/apache/incubator-netbeans-website/blob/master/netbeans.apache.org/src/content/kb/docs/java/debug-multithreaded_ja.asciidoc" title="See this page in github"><i class="fa fa-md fa-edit"></i> See this page in GitHub.</a></li>
+    </ul>
+</section>
+
+        </div>
+        
+
+<div class='grid-container incubator-area' style='margin-top: 64px'>
+    <div class='grid-x grid-padding-x'>
+        <div class='large-auto cell text-center'>
+            <a href="https://www.apache.org/">
+                <img style="width: 320px" title="Apache Software Foundation" src="/images/asf_logo_wide.svg" />
+            </a>
+        </div>
+        <div class='large-auto cell text-center'>
+            <a href="https://www.apache.org/events/current-event.html">
+               <img style="width:234px; height: 60px;" title="Apache Software Foundation current event" src="https://www.apache.org/events/current-event-234x60.png"/>
+            </a>
+        </div>
+    </div>
+</div>
+<footer>
+    <div class="grid-container">
+        <div class="grid-x grid-padding-x">
+            <div class="large-auto cell">
+                
+                <h1>About</h1>
+                <ul>
+                    <li><a href="https://www.apache.org/foundation/thanks.html">Thanks</a></li>
+                    <li><a href="https://www.apache.org/foundation/sponsorship.html">Sponsorship</a></li>
+                    <li><a href="https://www.apache.org/security/">Security</a></li>
+                    <li><a href="https://incubator.apache.org/projects/netbeans.html">Incubation Status</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/community/index.html">Community</a></h1>
+                <ul>
+                    <li><a href="/community/mailing-lists.html">Mailing lists</a></li>
+                    <li><a href="/community/committer.html">Becoming a committer</a></li>
+                    <li><a href="/community/events.html">NetBeans Events</a></li>
+                    <li><a href="https://www.apache.org/events/current-event.html">Apache Events</a></li>
+                    <li><a href="/community/who.html">Who is who</a></li>
+                    <li><a href="/community/nekobean.html">NekoBean</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/participate/index.html">Participate</a></h1>
+                <ul>
+                    <li><a href="/participate/submit-pr.html">Submitting Pull Requests</a></li>
+                    <li><a href="/participate/report-issue.html">Reporting Issues</a></li>
+                    <li><a href="/participate/netcat.html">NetCAT - Community Acceptance Testing</a></li>
+                    <li><a href="/participate/index.html#documentation">Improving the documentation</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/help/index.html">Get Help</a></h1>
+                <ul>
+                    <li><a href="/help/index.html#documentation">Documentation</a></li>
+                    <li><a href="/help/getting-started.html">Platform videos</a></li>
+                    <li><a href="/wiki/index.asciidoc">Wiki</a></li>
+                    <li><a href="/help/index.html#support">Community Support</a></li>
+                    <li><a href="/help/commercial-support.html">Commercial Support</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/download/nb100/nb100.html">Download</a></h1>
+                <ul>
+                    <li><a href="/download/index.html#releases">Releases</a></li>
+                    <ul>
+                        <li><a href="/download/nb100/nb100.html">Apache NetBeans 10.0</a></li>
+                        <li><a href="/download/nb90/nb90.html">Apache NetBeans 9.0</a></li>
+                    </ul>
+                    <li><a href="/plugins/index.html">Plugins</a></li>
+                    <li><a href="/download/index.html#source">Building from source</a></li>
+                    <li><a href="/download/index.html#previous">Previous releases</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</footer>
+<div class='footer-disclaimer'>
+    <div class="footer-disclaimer-content">
+        <p>Copyright &copy; 2017-2018 <a href="https://www.apache.org">The Apache Software Foundation</a>.</p>
+        <p>Licensed under the Apache <a href="https://www.apache.org/licenses/">license</a>, version 2.0</p>
+        <p><a href="https://incubator.apache.org/" alt="Apache Incubator"><img src='/images/incubator_feather_egg_logo_bw_crop.png' title='Apache Incubator'></img></a></p>
+        <div style='max-width: 40em; margin: 0 auto'>
+            <p>Apache NetBeans is an effort undergoing incubation at The Apache Software Foundation (ASF), sponsored by the Apache Incubator. Incubation is required of all newly accepted projects until a further review indicates that the infrastructure, communications, and decision making process have stabilized in a manner consistent with other successful ASF projects. While incubation status is not necessarily a reflection of the completeness or stability of the code, it does indicate that the project has yet to be fully endorsed by the ASF.</p>
+            <p>Apache Incubator, Apache, the Apache feather logo, the Apache NetBeans logo, and the Apache Incubator project logo are trademarks of <a href="https://www.apache.org">The Apache Software Foundation</a>.</p>
+            <p>Oracle and Java are registered trademarks of Oracle and/or its affiliates.</p>
+        </div>
+        
+    </div>
+</div>
+
+
+
+        <script src="/js/vendor/jquery-3.2.1.min.js"></script>
+        <script src="/js/vendor/what-input.js"></script>
+        <script src="/js/vendor/jquery.colorbox-min.js"></script>
+        <script src="/js/vendor/foundation.min.js"></script>
+        <script src="/js/netbeans.js"></script>
+        <script>
+            
+            $(function(){ $(document).foundation(); });
+        </script>
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/highlight.min.js"></script>
+        <script>
+         $(document).ready(function() { $("pre code").each(function(i, block) { hljs.highlightBlock(block); }); }); 
+        </script>
+        
+    </body>
+</html>

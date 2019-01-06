@@ -1,0 +1,679 @@
+
+<!DOCTYPE html>
+<html class="no-js" lang="en" dir="ltr">
+    
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>Anexo SOAP Binário Completo parte 3: Codificando e Testando o Web Service</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Anexo SOAP Binário Completo parte 3: Codificando e Testando o Web Service - Apache NetBeans">
+    <meta name="author" content="Apache NetBeans">
+    <meta name="keywords" content="Apache NetBeans, Tutorials, Anexo SOAP Binário Completo parte 3: Codificando e Testando o Web Service">
+    <meta name="generator" content="Apache NetBeans">
+    <link rel="stylesheet" href="/css/font-awesome.min.css">
+     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/styles/default.min.css"> 
+    <link rel="stylesheet" href="/css/netbeans.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#ffc40d">
+    <meta name="theme-color" content="#ffffff">
+    <link href="https://fonts.googleapis.com/css?family=Lato:400,700" rel="stylesheet"> 
+    <!--
+        Licensed to the Apache Software Foundation (ASF) under one
+        or more contributor license agreements.  See the NOTICE file
+        distributed with this work for additional information
+        regarding copyright ownership.  The ASF licenses this file
+        to you under the Apache License, Version 2.0 (the
+        "License"); you may not use this file except in compliance
+        with the License.  You may obtain a copy of the License at
+        http://www.apache.org/licenses/LICENSE-2.0
+        Unless required by applicable law or agreed to in writing,
+        software distributed under the License is distributed on an
+        "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+        KIND, either express or implied.  See the License for the
+        specific language governing permissions and limitations
+        under the License.
+    -->
+</head>
+
+
+    <body>
+        
+
+<div class="title-bar" data-responsive-toggle="responsive-menu" data-hide-for="medium">
+    <button type="button" data-toggle="responsive-menu"><i style='font-size: 32px; color: #fff; padding: 8px' class='fa fa-bars'></i></button>
+    <div class="title-bar-title">Apache NetBeans</div>
+</div>
+<div class="top-bar" id="responsive-menu">
+    <div class='top-bar-left'>
+        <a class='title' href="/"><img src='/images/apache-netbeans.svg' style='padding: 8px; height: 48px;'></img> Apache NetBeans (incubating)</a>
+    </div>
+    <div class="top-bar-right">
+        <ul class="vertical medium-horizontal menu" data-responsive-menu="drilldown medium-dropdown">
+            <li> <a href="/community/index.html">Community</a> </li>
+            <li> <a href="/participate/index.html">Participate</a> </li>
+            <li> <a href="https://blogs.apache.org/netbeans/">Blog</a></li>
+            <li> <a href="/help/index.html">Get Help</a> </li>
+            <li> <a href="/plugins/index.html">Plugins</a> </li>
+            <li> <a href="/download/nb100/nb100.html">Download</a> </li>
+        </ul>
+    </div>
+</div>
+
+
+        
+<!-- src/templates/news -->
+<section class="hero news alternate" style='margin-bottom: 2em'>
+    <div class='grid-container'>
+        <div class='cell'>
+            <div class="annotation">Just released!</div>
+            <h1>Apache NetBeans 10.0</h1>
+            <p><a class="button success" href="/download/nb100/nb100.html">Read more</a></p>
+        </div>
+    </div>
+</section>
+
+        <div class='grid-container main-content'>
+            <div id="toc" class="toc">
+<div id="toctitle"></div>
+<ul class="sectlevel1">
+<li><a href="#coding-ws">Codificando o Web Service</a>
+<ul class="sectlevel2">
+<li><a href="#retrieve-jpeg-as-bytes">Obter um Arquivo JPEG como um Array de Bytes</a></li>
+<li><a href="#read-bytes-as-image">Ler um Array de Bytes como uma Imagem</a></li>
+<li><a href="#implement-getflower">Implementar o getFlower</a></li>
+<li><a href="#create-byte-array-list">Crie uma Lista de Arrays de Bytes para Todos os Arquivos JPEG</a></li>
+<li><a href="#implement-getthumbnails">Implementar getThumbnails</a></li>
+</ul>
+</li>
+<li><a href="#test-ws">Testando o Web Service</a></li>
+<li><a href="#_próxima_etapa">Próxima etapa:</a></li>
+</ul>
+</div>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Nesta lição você adicionará código à classe bean do Web serviço/sessão para converter arquivos JPEG em arrays de bytes e arrays de bytes em objetos  <code>java.awt.Image</code> . Você também adiciona código às operações do Web service público para que eles retornem esses objetos  <code>Imagem</code> . Por último, você testará o Web service em um browser utilizando o utilitário do Web service de Teste do NetBeans IDE.</p>
+</div>
+<div class="paragraph">
+<p>É possível fazer download de uma amostra completa do Web service do <a href="https://netbeans.org/projects/samples/downloads/download/Samples%252FWeb%2520Services%252FWeb%2520Service%2520Passing%2520Binary%2520Data%2520--%2520EE6%252FFlowerAlbumService.zip">Catálogo de Amostras do NetBeans</a>.</p>
+</div>
+<div class="paragraph">
+<p><strong>Lições Deste Tutorial</strong></p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/netbeans-stamp-80-74-73.png" alt="netbeans stamp 80 74 73">
+</div>
+<div class="title">Figure 1. O conteúdo desta página se aplica ao NetBeans IDE 7.2, 7.3, 7.4 e 8.0</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><a href="./flower_overview.html">Visão Geral</a></p>
+</li>
+<li>
+<p><a href="flower_ws.html">+ Criando o Web Service+</a></p>
+</li>
+<li>
+<p>&#8658; Codificando e Testando o Web Service</p>
+</li>
+<li>
+<p><a href="./flower_wsdl_schema.html">+ Modificando o Esquema e os Arquivos WSDL para Passar Dados Binários+</a></p>
+</li>
+<li>
+<p><a href="./flower_swing.html">+ Criando o Cliente Swing+</a></p>
+</li>
+<li>
+<p><a href="#coding-ws">Codificando o Web Service</a></p>
+</li>
+<li>
+<p><a href="#retrieve-jpeg-as-bytes">Obter um Arquivo JPEG como um Array de Bytes</a></p>
+</li>
+<li>
+<p><a href="#read-bytes-as-image">Ler um Array de Bytes como uma Imagem</a></p>
+</li>
+<li>
+<p><a href="#implement-getflower">Implementar getFlower</a></p>
+</li>
+<li>
+<p><a href="#create-byte-array-list">Criar uma Lista de Arrays de Bytes para Todos os Arquivos JPEG</a></p>
+</li>
+<li>
+<p><a href="#implement-getthumbnails">Implementar getThumbnails</a></p>
+</li>
+<li>
+<p><a href="#test-ws">Testando o Web Service</a></p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="coding-ws">Codificando o Web Service</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Agora você tem uma aplicação da Web que contém um conjunto de arquivos JPEG e um Web service. O Web service é implementado como um bean de sessão sem estado. O Web service contém duas operações Web vazias. Nesta lição, você adicionará um código ao Web service para converter arquivos JPEG em arrays de bytes e arrays de bytes em objetos  <code>java.awt.Image</code> . Você também adiciona código às operações do Web service público para que eles retornem esses objetos  <code>Imagem</code> .</p>
+</div>
+<div class="sect2">
+<h3 id="retrieve-jpeg-as-bytes">Obter um Arquivo JPEG como um Array de Bytes</h3>
+<div class="paragraph">
+<p>Nesta seção, você adicionará um par de métodos privados ao corpo da classe  <code>FlowerService </code> . Esses métodos recebem o nome de uma flor, criam o caminho para o arquivo JPEG da flor e retornam uma representação binária do arquivo JPEG (um array de bytes). Em seções posteriores, você adicionará o código às operações de Web service públicas para que as operações chamem esses métodos privados.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Abra a view Código-fonte do projeto. É necessário adicionar o código que recebe o nome de uma imagem, criar um caminho para a imagem com base nesse nome e recuperar a imagem como um array de bytes. Digite ou cole o código a seguir no corpo da classe  <code>FlowerService</code> :</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">private byte[] getFlowerBytes(String name) throws IOException {
+    URL resource = this.getClass().getResource("/org/flower/resources/"+name+".jpg");
+    return getBytes(resource);
+}</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Será exibida uma advertência informando que o IDE não consegue encontrar o  <code>URL</code>  da classe. Adicione uma instrução de importação para o  <code><a href="http://download.oracle.com/javase/6/docs/api/java/net/URL.html">java.net.URL</a></code>  manualmente ou pressionando Ctrl-Shift-I (⌘-Shift-I no Mac).</p>
+</li>
+<li>
+<p>Uma nova advertência será exibida. A advertência afirma que o IDE não pode encontrar o método  <code>getBytes</code> . Clique com o botão esquerdo do mouse no ícone de advertência e clique na dica para criar o método  <code>getBytes</code> .
+image::images/create-method-tip.png[]</p>
+</li>
+<li>
+<p>O editor se concentra no método  <code>getBytes</code>  que você acabou de criar. Adicione o código a seguir ao método. Esse código <a href="http://download.oracle.com/javase/6/docs/api/java/net/URL.html#openStream%28%29">abre uma conexão para o URL</a> que obtido do método  <code>getFlowerBytes</code>  e retorna um  <code><a href="http://download.oracle.com/javase/6/docs/api/java/io/InputStream.html">InputStream</a></code> . Em seguida, o código lê o fluxo de entrada 1024 bytes por vez, armazena os bytes em um buffer de array de bytes e grava do buffer em um  <code><a href="http://download.oracle.com/javase/6/docs/api/java/io/ByteArrayOutputStream.html">ByteArrayOutputStream</a></code> .</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">private byte[] getBytes(URL resource) throws IOException {
+    InputStream in = resource.openStream();
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    byte[] buf = new byte[1024];
+    for(int read; (read = in.read(buf)) != -1;) {
+        bos.write(buf, 0, read);
+    }
+    return bos.toByteArray();
+}</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Adicione instruções importantes para  <code>java.io.InputStream</code>  e  <code>java.io.ByteArrayOutputStream</code> .</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="read-bytes-as-image">Ler um Array de Bytes como uma Imagem</h3>
+<div class="paragraph">
+<p>Nesta seção, você adicionará um método privado ao corpo da classe  <code>FlowerService </code> . Esse método pega um array de bytes que representa um arquivo JPEG e retorna um objeto <code> java.awt.Image</code> . Observe que o array de bytes é criado pelo método  <code>getBytes(URL)</code>  que você criou na seção <a href="#retrieve-jpeg-as-bytes">Obter um arquivo JPEG como um Array de Bytes</a>.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>No corpo da classe  <code>FlowerService</code> , adicione o método privado a seguir, chamado  <code>getImage</code> . O tipo de retorno do método  <code>getImage</code>  é  <code>Image</code> . O método utiliza dois parâmetros. O primeiro parâmetro é um array de bytes criado pelo método  <code>getBytes</code> . O segundo parâmetro é um booliano que indica se a imagem é uma miniatura. O método  <code>getImage</code>  lança uma exceção  <code>IOException</code> .</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">private Image getImage(byte[] bytes, boolean isThumbnail) throws IOException {
+    }</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>No corpo do método  <code>getImage</code> , adicione uma linha que crie um  <code><a href="http://download.oracle.com/javase/6/docs/api/java/io/ByteArrayInputStream.html">ByteArrayInputStream</a></code>  do array de bytes que o método utiliza como parâmetro.</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">ByteArrayInputStream bis = new ByteArrayInputStream(bytes);</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Adicione uma linha que crie um  <code>Object</code>  do  <code>ByteArrayInputStream</code> .</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">Object source = bis;</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Adicione uma linha que crie uma  <code><a href="http://download.oracle.com/javase/6/docs/api/javax/imageio/stream/ImageInputStream.html">ImageInputStream</a></code>  do  <code>Object</code>  genérico.</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">ImageInputStream iis = ImageIO.createImageInputStream(source);</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Adicione uma linha que crie um  <code><a href="http://download.oracle.com/javase/6/docs/api/java/util/Iterator.html">Iterator</a></code>  de todos os  <code><a href="http://download.oracle.com/javase/6/docs/api/javax/imageio/ImageReader.html">ImageReader</a></code>  atualmente registrados que podem decodificar arquivos JPEG.</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">Iterator readers = ImageIO.getImageReadersByFormatName("jpeg");</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Adicione uma linha que crie um  <code>ImageReader</code>  do próximo elemento do  <code>Iterator</code> .</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">ImageReader reader = (ImageReader) readers.next();</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Adicione linhas que criem <a href="http://download.oracle.com/javase/6/docs/api/javax/imageio/IIOParam.html">parâmetros de leitura de imagem</a> default, mas adicione 1 em 4 <a href="http://download.oracle.com/javase/6/docs/api/javax/imageio/IIOParam.html#setSourceSubsampling%28int,%20int,%20int,%20int%29">subamostragem</a> aos parâmetros de leitura da imagem  se a  <code>Image</code>  representar uma miniatura.</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">ImageReadParam param = reader.getDefaultReadParam();
+if (isThumbnail) {
+    param.setSourceSubsampling(4, 4, 0, 0);
+}</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Por último, adicione o código que utiliza o objeto  <code>ImageReader</code>  para ler o objeto  <code>ImageInputStream</code>  e retornar uma  <code>Image</code>  com base nesse objeto e nos parâmetros de leitura da imagem.</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">reader.setInput(iis, true);
+return reader.read(0, param);</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Pressione Ctrl-Shift-I (⌘-Shift-I no MacOS). A caixa de diálogo Corrigir Todas as Importações será aberta. Aceite as sugestões default da caixa de diálogo Corrigir todas as Importações e clique em OK.
+image::images/fix-getimage-imports.png[]</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>O método  <code>getImage</code>  agora está concluído.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">private Image getImage(byte[] bytes, boolean isThumbnail) throws IOException {
+    ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+    Object source = bis; // File or InputStream
+    ImageInputStream iis = ImageIO.createImageInputStream(source);
+    Iterator readers = ImageIO.getImageReadersByFormatName("jpeg");
+    ImageReader reader = (ImageReader) readers.next();
+    ImageReadParam param = reader.getDefaultReadParam();
+    if (isThumbnail) {
+        param.setSourceSubsampling(4, 4, 0, 0);
+    }
+    reader.setInput(iis, true);
+    return reader.read(0, param);
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="implement-getflower">Implementar o getFlower</h3>
+<div class="paragraph">
+<p>Adicione o código de implementação a seguir ao método  <code>getFlower()</code>  para obter uma flor pelo seu nome e retornar a imagem dessa flor, conforme indicado a seguir. Observe que esse código chama o método  <code>getFlowerBytes(name)</code>  para obter o arquivo JPEG como um array de bytes. Em seguida, o código chama o método  <code>getImage</code>  privado para retornar o array de bytes como um objeto  <code>Image</code> .</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@WebMethod(operationName = "getFlower")
+public Image getFlower(@WebParam(name = "name") String name) throws IOException {
+    byte[] bytes = getFlowerBytes(name);
+    return getImage(bytes, false);
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="create-byte-array-list">Crie uma Lista de Arrays de Bytes para Todos os Arquivos JPEG</h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Na parte superior do corpo da classe de  <code>FlowerService</code> , crie um array de Strings dos nomes de cada flor.</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">private static final String[] FLOWERS = {"aster", "honeysuckle", "rose", "sunflower"};</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Adicione um método que crie uma  <code><a href="http://download.oracle.com/javase/6/docs/api/java/util/ArrayList.html">ArrayList</a></code>  e que adicione um array de bytes para cada flor à  <code>List</code> .</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">private List allFlowers() throws IOException {
+    List flowers = new ArrayList();
+    for (String flower:FLOWERS) {
+        URL resource = this.getClass().getResource("/org/flower/resources/"+flower+".jpg");
+        flowers.add(getBytes(resource));
+    }
+    return flowers;
+}</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Adicione instruções de importação para  <code>java.util.ArrayList</code>  e  <code>java.util.List</code> .</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="implement-getthumbnails">Implementar getThumbnails</h3>
+<div class="paragraph">
+<p>Altere o método  <code>getThumbnails()</code>  da seguinte forma. Observe que você adiciona o código de implementação e altera o tipo de retorno de  <code>List</code>  para  <code>List&lt;Image&gt;</code> . Observe também que você passa o valor booliano de  <code>isThumbnail </code>  de  <code>true</code>  para o método  <code>getImage</code> . O código de implementação de  <code>getThumbnails</code>  chama o método  <code>allFlowers</code>  para <a href="#create-byte-array-list">criar uma lista de arrays de bytes para todos os arquivos JPEG</a>. O método  <code>getThumbnails</code>  cria, em seguida, uma  <code>List</code>  de  <code>Image</code>  e chama o método  <code>getImage</code>  para cada flor, para retornar o array de bytes para essa flor como um objeto  <code>Image</code>  e adiciona essa  <code>Image</code>  à  <code>List</code> .</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@WebMethod(operationName = "getThumbnails")
+public List&lt;Image&gt; getThumbnails() throws IOException {
+    List&lt;byte[]&gt; flowers = allFlowers();
+    List&lt;Image&gt; flowerList = new ArrayList&lt;Image&gt;(flowers.size());
+    for (byte[] flower : flowers) {
+        flowerList.add(getImage(flower, true));
+    }
+    return flowerList;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>O bean de sessão/Web serviço combinado agora está completo. O form final da classe do Web service será:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">package org.flower.service;import java.awt.Image;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import javax.jws.WebMethod;
+import javax.jws.WebParam;
+import javax.jws.WebService;
+import javax.ejb.Stateless;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReadParam;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;@WebService(serviceName = "FlowerService")
+@Stateless()
+public class FlowerService {private static final String[] FLOWERS = {"aster", "honeysuckle", "rose", "sunflower"};@WebMethod(operationName = "getFlower")
+    public Image getFlower(@WebParam(name = "name") String name) throws IOException {
+        byte[] bytes = getFlowerBytes(name);
+        return getImage(bytes, false);
+    }@WebMethod(operationName = "getThumbnails")
+    public List&lt;Image&gt; getThumbnails() throws IOException {
+        List flowers = allFlowers();
+        List&lt;Image&gt; flowerList = new ArrayList&lt;Image&gt;(flowers.size());
+        for (byte[] flower : flowers) {
+            flowerList.add(getImage(flower, true));
+        }
+        return flowerList;
+    }private byte[] getFlowerBytes(String name) throws IOException {
+        URL resource = this.getClass().getResource("/org/flower/resources/" + name + ".jpg");
+        return getBytes(resource);
+    }private byte[] getBytes(URL resource) throws IOException {
+        InputStream in = resource.openStream();
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        byte[] buf = new byte[1024];
+        for (int read; (read = in.read(buf)) != -1;) {
+            bos.write(buf, 0, read);
+        }
+        return bos.toByteArray();
+    }private Image getImage(byte[] bytes, boolean isThumbnail) throws IOException {
+        ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+        Iterator readers = ImageIO.getImageReadersByFormatName("jpeg");
+        ImageReader reader = (ImageReader) readers.next();
+        Object source = bis; // File or InputStream
+        ImageInputStream iis = ImageIO.createImageInputStream(source);
+        reader.setInput(iis, true);
+        ImageReadParam param = reader.getDefaultReadParam();
+        if (isThumbnail) {
+            param.setSourceSubsampling(4, 4, 0, 0);
+        }
+        return reader.read(0, param);
+    }private List allFlowers() throws IOException {
+        List flowers = new ArrayList();
+        for (String flower : FLOWERS) {
+            URL resource = this.getClass().getResource("/flower/album/resources/" + flower + ".jpg");
+            flowers.add(getBytes(resource));
+        }
+        return flowers;
+    }
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="test-ws">Testando o Web Service</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Agora que o Web service está completo, você pode implantá-lo e testá-lo.</p>
+</div>
+<div class="paragraph">
+<p><strong>Para testar o Web service:</strong></p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Clique com o botão direito do mouse no nó FlowerAlbumService, e selecione Implantar. O IDE compila o código-fonte, inicia o servidor GlassFish e implanta o arquivo WAR do projeto no servidor. Se você abrir a janela Serviços, você poderá ver o  <code>FlowerService</code>  implantado no nó Aplicações do servidor.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p><strong>Importante:</strong> é necessária a Versão 3.1 ou posterior do GlassFish Server Open Source Edition.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/deployed-service.png" alt="deployed service">
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Expanda o nó Web Services do projeto. Clique com o botão direito do mouse em FlowerService e selecione Testar Web Service.
+image::images/test-ws-node.png[]</p>
+</li>
+<li>
+<p>O testador do Web service será aberto no browser. Digite "rosa" no campo do parâmetro de  <code>getFlower</code> .
+image::images/ws-tester.png[]</p>
+</li>
+<li>
+<p>Pressione o botão  <code>getFlower</code> . O IDE mostrará as informações sobre o chamado no browser. Ao observar o "Método Retornado", você verá que ele está truncado. Você deseja ver uma imagem, não uma série de símbolos. Entretanto, já que  <code>java.awt.Image</code>  não é um tipo de esquema válido, você precisa configurar manualmente o arquivo do esquema para retornar dados image/jpeg binários. Você fará isso no próximo tutorial.
+image::images/ws-tester-badschema.png[]
+5.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_próxima_etapa">Próxima etapa:</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><a href="./flower_wsdl_schema.html">+ Modificando o Esquema e os Arquivos WSDL para Passar Dados Binários+</a></p>
+</div>
+<div class="paragraph">
+<p><a href="/about/contact_form.html?to=3&amp;subject=Feedback:%20Flower%20Coding%20WS%20EE6">Enviar Feedback neste Tutorial</a></p>
+</div>
+<div class="paragraph">
+<p>Para enviar comentários e sugestões, obter suporte e se manter informado sobre os mais recentes desenvolvimentos das funcionalidades de desenvolvimento Java EE do NetBeans IDE, <a href="../../../community/lists/top.html">inscreva-se na lista de notícias nbj2ee@netbeans.org</a>.</p>
+</div>
+</div>
+</div>
+            
+<section class='tools'>
+    <ul class="menu align-center">
+        <li><a title="Facebook" href="https://www.facebook.com/NetBeans"><i class="fa fa-md fa-facebook"></i></a></li>
+        <li><a title="Twitter" href="https://twitter.com/netbeans"><i class="fa fa-md fa-twitter"></i></a></li>
+        <li><a title="Github" href="https://github.com/apache/incubator-netbeans"><i class="fa fa-md fa-github"></i></a></li>
+        <li><a title="YouTube" href="https://www.youtube.com/user/netbeansvideos"><i class="fa fa-md fa-youtube"></i></a></li>
+        <li><a title="Slack" href="https://tinyurl.com/netbeans-slack-signup/"><i class="fa fa-md fa-slack"></i></a></li>
+        <li><a title="JIRA" href="https://issues.apache.org/jira/projects/NETBEANS/summary"><i class="fa fa-mf fa-bug"></i></a></li>
+    </ul>
+    <ul class="menu align-center">
+        
+        <li><a href="https://github.com/apache/incubator-netbeans-website/blob/master/netbeans.apache.org/src/content/kb/docs/websvc/flower-code-ws_pt_BR.asciidoc" title="See this page in github"><i class="fa fa-md fa-edit"></i> See this page in GitHub.</a></li>
+    </ul>
+</section>
+
+        </div>
+        
+
+<div class='grid-container incubator-area' style='margin-top: 64px'>
+    <div class='grid-x grid-padding-x'>
+        <div class='large-auto cell text-center'>
+            <a href="https://www.apache.org/">
+                <img style="width: 320px" title="Apache Software Foundation" src="/images/asf_logo_wide.svg" />
+            </a>
+        </div>
+        <div class='large-auto cell text-center'>
+            <a href="https://www.apache.org/events/current-event.html">
+               <img style="width:234px; height: 60px;" title="Apache Software Foundation current event" src="https://www.apache.org/events/current-event-234x60.png"/>
+            </a>
+        </div>
+    </div>
+</div>
+<footer>
+    <div class="grid-container">
+        <div class="grid-x grid-padding-x">
+            <div class="large-auto cell">
+                
+                <h1>About</h1>
+                <ul>
+                    <li><a href="https://www.apache.org/foundation/thanks.html">Thanks</a></li>
+                    <li><a href="https://www.apache.org/foundation/sponsorship.html">Sponsorship</a></li>
+                    <li><a href="https://www.apache.org/security/">Security</a></li>
+                    <li><a href="https://incubator.apache.org/projects/netbeans.html">Incubation Status</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/community/index.html">Community</a></h1>
+                <ul>
+                    <li><a href="/community/mailing-lists.html">Mailing lists</a></li>
+                    <li><a href="/community/committer.html">Becoming a committer</a></li>
+                    <li><a href="/community/events.html">NetBeans Events</a></li>
+                    <li><a href="https://www.apache.org/events/current-event.html">Apache Events</a></li>
+                    <li><a href="/community/who.html">Who is who</a></li>
+                    <li><a href="/community/nekobean.html">NekoBean</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/participate/index.html">Participate</a></h1>
+                <ul>
+                    <li><a href="/participate/submit-pr.html">Submitting Pull Requests</a></li>
+                    <li><a href="/participate/report-issue.html">Reporting Issues</a></li>
+                    <li><a href="/participate/netcat.html">NetCAT - Community Acceptance Testing</a></li>
+                    <li><a href="/participate/index.html#documentation">Improving the documentation</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/help/index.html">Get Help</a></h1>
+                <ul>
+                    <li><a href="/help/index.html#documentation">Documentation</a></li>
+                    <li><a href="/help/getting-started.html">Platform videos</a></li>
+                    <li><a href="/wiki/index.asciidoc">Wiki</a></li>
+                    <li><a href="/help/index.html#support">Community Support</a></li>
+                    <li><a href="/help/commercial-support.html">Commercial Support</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/download/nb100/nb100.html">Download</a></h1>
+                <ul>
+                    <li><a href="/download/index.html#releases">Releases</a></li>
+                    <ul>
+                        <li><a href="/download/nb100/nb100.html">Apache NetBeans 10.0</a></li>
+                        <li><a href="/download/nb90/nb90.html">Apache NetBeans 9.0</a></li>
+                    </ul>
+                    <li><a href="/plugins/index.html">Plugins</a></li>
+                    <li><a href="/download/index.html#source">Building from source</a></li>
+                    <li><a href="/download/index.html#previous">Previous releases</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</footer>
+<div class='footer-disclaimer'>
+    <div class="footer-disclaimer-content">
+        <p>Copyright &copy; 2017-2018 <a href="https://www.apache.org">The Apache Software Foundation</a>.</p>
+        <p>Licensed under the Apache <a href="https://www.apache.org/licenses/">license</a>, version 2.0</p>
+        <p><a href="https://incubator.apache.org/" alt="Apache Incubator"><img src='/images/incubator_feather_egg_logo_bw_crop.png' title='Apache Incubator'></img></a></p>
+        <div style='max-width: 40em; margin: 0 auto'>
+            <p>Apache NetBeans is an effort undergoing incubation at The Apache Software Foundation (ASF), sponsored by the Apache Incubator. Incubation is required of all newly accepted projects until a further review indicates that the infrastructure, communications, and decision making process have stabilized in a manner consistent with other successful ASF projects. While incubation status is not necessarily a reflection of the completeness or stability of the code, it does indicate that the project has yet to be fully endorsed by the ASF.</p>
+            <p>Apache Incubator, Apache, the Apache feather logo, the Apache NetBeans logo, and the Apache Incubator project logo are trademarks of <a href="https://www.apache.org">The Apache Software Foundation</a>.</p>
+            <p>Oracle and Java are registered trademarks of Oracle and/or its affiliates.</p>
+        </div>
+        
+    </div>
+</div>
+
+
+
+        <script src="/js/vendor/jquery-3.2.1.min.js"></script>
+        <script src="/js/vendor/what-input.js"></script>
+        <script src="/js/vendor/jquery.colorbox-min.js"></script>
+        <script src="/js/vendor/foundation.min.js"></script>
+        <script src="/js/netbeans.js"></script>
+        <script>
+            
+            $(function(){ $(document).foundation(); });
+        </script>
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/highlight.min.js"></script>
+        <script>
+         $(document).ready(function() { $("pre code").each(function(i, block) { hljs.highlightBlock(block); }); }); 
+        </script>
+        
+    </body>
+</html>

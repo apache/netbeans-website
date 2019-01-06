@@ -1,0 +1,779 @@
+
+<!DOCTYPE html>
+<html class="no-js" lang="en" dir="ltr">
+    
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>NetBeans IDEでの注釈プロセッサのサポート、パートII: IDEでの独自のカスタム注釈プロセッサの使用</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="NetBeans IDEでの注釈プロセッサのサポート、パートII: IDEでの独自のカスタム注釈プロセッサの使用 - Apache NetBeans">
+    <meta name="author" content="Apache NetBeans">
+    <meta name="keywords" content="Apache NetBeans, Tutorials, NetBeans IDEでの注釈プロセッサのサポート、パートII: IDEでの独自のカスタム注釈プロセッサの使用">
+    <meta name="generator" content="Apache NetBeans">
+    <link rel="stylesheet" href="/css/font-awesome.min.css">
+     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/styles/default.min.css"> 
+    <link rel="stylesheet" href="/css/netbeans.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#ffc40d">
+    <meta name="theme-color" content="#ffffff">
+    <link href="https://fonts.googleapis.com/css?family=Lato:400,700" rel="stylesheet"> 
+    <!--
+        Licensed to the Apache Software Foundation (ASF) under one
+        or more contributor license agreements.  See the NOTICE file
+        distributed with this work for additional information
+        regarding copyright ownership.  The ASF licenses this file
+        to you under the Apache License, Version 2.0 (the
+        "License"); you may not use this file except in compliance
+        with the License.  You may obtain a copy of the License at
+        http://www.apache.org/licenses/LICENSE-2.0
+        Unless required by applicable law or agreed to in writing,
+        software distributed under the License is distributed on an
+        "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+        KIND, either express or implied.  See the License for the
+        specific language governing permissions and limitations
+        under the License.
+    -->
+</head>
+
+
+    <body>
+        
+
+<div class="title-bar" data-responsive-toggle="responsive-menu" data-hide-for="medium">
+    <button type="button" data-toggle="responsive-menu"><i style='font-size: 32px; color: #fff; padding: 8px' class='fa fa-bars'></i></button>
+    <div class="title-bar-title">Apache NetBeans</div>
+</div>
+<div class="top-bar" id="responsive-menu">
+    <div class='top-bar-left'>
+        <a class='title' href="/"><img src='/images/apache-netbeans.svg' style='padding: 8px; height: 48px;'></img> Apache NetBeans (incubating)</a>
+    </div>
+    <div class="top-bar-right">
+        <ul class="vertical medium-horizontal menu" data-responsive-menu="drilldown medium-dropdown">
+            <li> <a href="/community/index.html">Community</a> </li>
+            <li> <a href="/participate/index.html">Participate</a> </li>
+            <li> <a href="https://blogs.apache.org/netbeans/">Blog</a></li>
+            <li> <a href="/help/index.html">Get Help</a> </li>
+            <li> <a href="/plugins/index.html">Plugins</a> </li>
+            <li> <a href="/download/nb100/nb100.html">Download</a> </li>
+        </ul>
+    </div>
+</div>
+
+
+        
+<!-- src/templates/news -->
+<section class="hero news alternate" style='margin-bottom: 2em'>
+    <div class='grid-container'>
+        <div class='cell'>
+            <div class="annotation">Just released!</div>
+            <h1>Apache NetBeans 10.0</h1>
+            <p><a class="button success" href="/download/nb100/nb100.html">Read more</a></p>
+        </div>
+    </div>
+</section>
+
+        <div class='grid-container main-content'>
+            <div id="toc" class="toc">
+<div id="toctitle"></div>
+<ul class="sectlevel1">
+<li><a href="#_注釈の定義および注釈プロセッサの作成">注釈の定義および注釈プロセッサの作成</a></li>
+<li><a href="#_ideでの注釈プロセッサの使用">IDEでの注釈プロセッサの使用</a></li>
+<li><a href="#_関連項目">関連項目</a></li>
+</ul>
+</div>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p><em>執筆: Jesse Glick、執筆および管理: Irina Filippova</em></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>IDEでの独自のカスタム注釈プロセッサの使用</strong></p>
+</li>
+</ul>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="../../../images_www/articles/71/netbeans-stamp-71-72-73.png" alt="netbeans stamp 71 72 73">
+</div>
+<div class="title">Figure 1. このページの内容は、NetBeans IDE 7.0、7.1、7.2および7.3に適用されます</div>
+</div>
+<div class="paragraph">
+<p>チュートリアルのこの項では、ユーザーが自身で記述したカスタム注釈プロセッサをIDEのプロジェクトに追加する方法を学習します。このチュートリアルでは注釈プロセッサの記述方法については扱いません。NetBeans IDEプロジェクトに追加する方法を説明します。</p>
+</div>
+<div class="paragraph">
+<p>この項で使用されているサンプル・アプリケーションはJesse Glick氏によって作成され、以前のIDEリリースの<a href="http://wiki.netbeans.org/FaqApt">FAQエントリ</a>として公開されました。</p>
+</div>
+<div class="paragraph">
+<p>例として使用されている注釈プロセッサは、注釈付きクラスの親クラスを生成します。生成された親クラスには、注釈付きクラスからコールされるメソッドも含まれています。次の手順に従って、カスタム注釈プロセッサを作成し、IDEのプロジェクトに追加します。</p>
+</div>
+<div class="paragraph">
+<p><strong>このチュートリアルを完了するには、次のソフトウェアとリソースが必要です。</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">ソフトウェアまたはリソース</th>
+<th class="tableblock halign-left valign-top">必須バージョン</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://netbeans.org/downloads/index.html">NetBeans IDE</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">7.0, 7.1, 7.2, 7.3</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://www.oracle.com/technetwork/java/javase/downloads/index.html">Java Development Kit (JDK)</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">バージョン6または7</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://code.google.com/p/projectlombok/downloads/list">lombok.jar</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">v1.12.4以降</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_注釈の定義および注釈プロセッサの作成">注釈の定義および注釈プロセッサの作成</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>この課題では、クラス・ライブラリ・プロジェクトを作成します。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>「ファイル」&gt;「新規プロジェクト」を選択し、「Java」カテゴリで「Javaクラス・ライブラリ」プロジェクト・タイプを選択します。「次」をクリックします。</p>
+</li>
+<li>
+<p>「プロジェクト名」として* <code>「AnnProcessor」</code> *と入力し、プロジェクトの場所を指定します。「終了」をクリックします。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>「終了」をクリックすると、IDEによってクラス・ライブラリ・プロジェクトが作成され、そのプロジェクトが「プロジェクト」ウィンドウに表示されます。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>「プロジェクト」ウィンドウで「AnnProcessor」プロジェクト・ノードを右クリックし、「プロパティ」を選択します。</p>
+</li>
+<li>
+<p>「ソース」カテゴリで、ソース/バイナリ形式としてJDK 6またはJDK 7が指定されていることを確認します。</p>
+</li>
+<li>
+<p>「ライブラリ」タブを選択し、「Javaプラットフォーム」がJDK 1.6またはJDK 1.7またはに設定されていることを確認します。「OK」をクリックして、「プロジェクト・プロパティ」ウィンドウを閉じます。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>この課題では、2つのJavaパッケージを作成し、各パッケージ内に1つのJavaクラスを作成します。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>「AnnProcessor」プロジェクト・ノードで「ソース・パッケージ」ノードを右クリックし、「新規」&gt;「Javaパッケージ」を選択します。</p>
+</li>
+<li>
+<p>パッケージ名に* <code>「ann」</code> *と入力して「終了」をクリックし、新しいJavaパッケージを作成します。</p>
+</li>
+<li>
+<p>前の2つのステップを繰り返して* <code>proc</code> *という名前のJavaパッケージを作成します。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>2つのJavaパッケージを作成すると、プロジェクトの構造は次のイメージのようになるはずです。</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/packages.png" alt="packages">
+</div>
+<div class="title">Figure 2. 注釈プロセッサのプロジェクトの構造。</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>「 <code>ann</code> 」Javaパッケージを右クリックし、「新規」&gt;「Javaクラス」を選択します。</p>
+</li>
+<li>
+<p>「クラス名」に「* <code>Handleable</code> *」と入力します。「終了」をクリックします。</p>
+</li>
+<li>
+<p>新しい <code>Handleable.java</code> ファイルを編集して、次の変更を加えます。ファイルを保存します。</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">package ann;
+
+public *@interface* Handleable {
+
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>これは注釈を宣言するための方法であり、インタフェースの宣言と非常によく似ています。異なるのは、 <code>interface</code> キーワードの前に <code>at</code> 記号(@)が必要であることです。この注釈は <code>Handleable</code> と呼ばれます。</p>
+</div>
+<div class="paragraph">
+<p>*追加情報: *注釈宣言では、注釈を付けることができる要素のタイプ(例: クラス、メソッド)などの追加のパラメータを指定することもできます。これを行うには、 <code>@Target(value = {ElementType.TYPE})</code> (クラスの場合)および <code>@Target(value = {ElementType.METHOD})</code> を追加します。つまり、注釈宣言は、自身に_meta-annotations_で注釈が付けられます。</p>
+</div>
+<div class="paragraph">
+<p>ここで、 <code>Handleable</code> 注釈を処理する注釈プロセッサのコードを追加する必要があります。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>「* <code>proc</code> *」Javaパッケージを右クリックし、「新規」&gt;「Javaクラス」を選択します。</p>
+</li>
+<li>
+<p>「クラス名」に「* <code>HandleableProcessor</code> *」と入力します。「終了」をクリックします。</p>
+</li>
+<li>
+<p><code>HandleableProcessor.java</code> クラスを変更して次のコードを追加します。変更を保存します。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p><strong>注意:</strong> <code>@SupportedSourceVersion</code>  (<strong>太字</strong>)の値は使用しているJDKのバージョンによって異なり、 <code>(SourceVersion.RELEASE_7)</code> または <code>(SourceVersion.RELEASE_6)</code> になります。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">package proc;
+
+import ann.Handleable;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.Writer;
+import java.util.Set;
+import javax.annotation.processing.AbstractProcessor;
+import javax.annotation.processing.RoundEnvironment;
+import javax.annotation.processing.SupportedAnnotationTypes;
+import javax.annotation.processing.SupportedSourceVersion;
+import javax.lang.model.SourceVersion;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeMirror;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
+
+@SupportedAnnotationTypes("ann.Handleable")
+@SupportedSourceVersion(*SourceVersion.RELEASE_7*)
+public class HandleableProcessor extends AbstractProcessor {
+
+    /** public for ServiceLoader */
+    public HandleableProcessor() {
+    }
+
+    public boolean process(Set&lt;? extends TypeElement&gt; annotations,
+            RoundEnvironment roundEnv) {
+        for (Element e : roundEnv.getElementsAnnotatedWith(Handleable.class)) {
+            if (e.getKind() != ElementKind.FIELD) {
+                processingEnv.getMessager().printMessage(
+                        Diagnostic.Kind.WARNING,
+                        "Not a field", e);
+                continue;
+            }
+            String name = capitalize(e.getSimpleName().toString());
+            TypeElement clazz = (TypeElement) e.getEnclosingElement();
+            try {
+                JavaFileObject f = processingEnv.getFiler().
+                        createSourceFile(clazz.getQualifiedName() + "Extras");
+                processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
+                        "Creating " + f.toUri());
+                Writer w = f.openWriter();
+                try {
+                    PrintWriter pw = new PrintWriter(w);
+                    pw.println("package "
+                            + clazz.getEnclosingElement().getSimpleName() + ";");
+                    pw.println("public abstract class "
+                            + clazz.getSimpleName() + "Extras {");
+                    pw.println("    protected " + clazz.getSimpleName()
+                            + "Extras() {}");
+                    TypeMirror type = e.asType();
+                    pw.println("    /** Handle something. */");
+                    pw.println("    protected final void handle" + name
+                            + "(" + type + " value) {");
+                    pw.println("        System.out.println(value);");
+                    pw.println("    }");
+                    pw.println("}");
+                    pw.flush();
+                } finally {
+                    w.close();
+                }
+            } catch (IOException x) {
+                processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR,
+                        x.toString());
+            }
+        }
+        return true;
+    }
+
+    private static String capitalize(String name) {
+        char[] c = name.toCharArray();
+        c[0] = Character.toUpperCase(c[0]);
+        return new String(c);
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>ここで、注釈プロセッサのコードを構成する主要な部分について少し詳しく見てみます(便宜上、コードの一部しか示されていないことに注意してください)。</p>
+</div>
+<div class="paragraph">
+<p>最初に、注釈プロセッサでサポートされている注釈型( <code>@SupportedAnnotationTypes</code> を使用)と、サポートされているソース・ファイルのバージョン( <code>@SupportedSourceVersion</code> を使用。この場合のバージョンはJDK 6)を指定します。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@SupportedAnnotationTypes("ann.Handleable")
+@SupportedSourceVersion(SourceVersion.RELEASE_6)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>次に、 <code>javax.annotation.processing</code> パッケージの <code>AbstractProcessor</code> クラスを拡張する、このプロセッサのための公開クラスを宣言します。 <code>AbstractProcessor</code> は、注釈を処理するために必要なメソッドを含む、具象注釈プロセッサの標準スーパー・クラスです。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public class HandleableProcessor extends AbstractProcessor {
+...
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>ここで、このクラスのpublicコンストラクタを指定する必要があります。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public class HandleableProcessor extends AbstractProcessor {
+*    public HandleableProcessor() {
+    }*
+...
+
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>次に、親 <code>AbstractProcessor</code> クラスの <code>process</code> ()メソッドをコールします。このメソッドを通して、処理対象の注釈が提供されます。また、このメソッドには、処理のラウンドについての情報も含まれています。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public class HandleableProcessor extends AbstractProcessor {*
+   *...
+*     public boolean process(Set&lt;? extends TypeElement&gt; annotations,
+            RoundEnvironment roundEnv) {
+     ...
+     }
+*
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>注釈プロセッサのロジックは、 <code>AbstractProcessor</code> クラスの <code>process()</code> メソッド内に含まれています。 <code>AbstractProcessor</code> を通して <code>ProcessingEnvironment</code> のインタフェースにもアクセスすることにより、注釈プロセッサはFiler(注釈プロセッサが新しいファイルを作成できるようになるファイラ・ハンドラ)やMessager(注釈プロセッサがエラーを報告する手段)のような複数の便利な機能を使用できるようになります。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public class HandleableProcessor extends AbstractProcessor {*
+   *...
+     public boolean process(Set&lt;? extends TypeElement&gt; annotations,
+            RoundEnvironment roundEnv) {//For each element annotated with the Handleable annotation
+            *for (Element e : roundEnv.getElementsAnnotatedWith(Handleable.class)) {
+
+*//Check if the type of the annotated element is not a field. If yes, return a warning*.
+if (e.getKind() != ElementKind.FIELD) {
+processingEnv.getMessager().printMessage(
+Diagnostic.Kind.WARNING,
+"Not a field", e);
+continue;
+}
+            *//Define the following variables: name and clazz*.**
+String name = capitalize(e.getSimpleName().toString());
+TypeElement clazz = (TypeElement) e.getEnclosingElement();
+*//Generate a source file with a specified class name. *
+            try {
+JavaFileObject f = processingEnv.getFiler().
+createSourceFile(clazz.getQualifiedName() + "Extras");
+processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
+"Creating " + f.toUri());
+Writer w = f.openWriter();
+*//Add the content to the newly generated file*.
+                    try {
+PrintWriter pw = new PrintWriter(w);
+pw.println("package "
++ clazz.getEnclosingElement().getSimpleName() + ";");
+pw.println("public abstract class "
++ clazz.getSimpleName() + "Extras {");
+pw.println("    protected " + clazz.getSimpleName()
++ "Extras() {}");
+TypeMirror type = e.asType();
+pw.println("    /** Handle something. */");
+pw.println("    protected final void handle" + name
++ "(" + type + " value) {");
+pw.println("        System.out.println(value);");
+pw.println("    }");
+pw.println("}");
+pw.flush();
+} finally {
+w.close();
+}
+} catch (IOException x) {
+processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR,
+x.toString());
+}
+}*return true;
+    * }*
+...
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>このコードの最後のブロックでは、注釈付き要素の名前を大文字にするために使用される <code>capitalize</code> メソッドを宣言しています。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public class HandleableProcessor extends AbstractProcessor {*
+   *...*
+
+  private static String capitalize(String name) {
+char[] c = name.toCharArray();
+c[0] = Character.toUpperCase(c[0]);
+return new String(c);
+}
+*}</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>「 <code>AnnProcessor</code> 」プロジェクトを右クリックし、「ビルド」を選択することによってプロジェクトをビルドします。</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_ideでの注釈プロセッサの使用">IDEでの注釈プロセッサの使用</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>この項では、注釈プロセッサが使用されるJavaアプリケーション・プロジェクトを作成します。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>「ファイル」&gt;「新規プロジェクト」を選択し、「Java」カテゴリで「Javaアプリケーション」プロジェクト・タイプを選択します。「次」をクリックします。</p>
+</li>
+<li>
+<p>名前と場所ページで、「プロジェクト名」として* <code>「Demo」</code> *と入力し、プロジェクトの場所を指定します。</p>
+</li>
+<li>
+<p>「メイン・クラスの作成」フィールドに「* <code>demo.Main</code> *」と入力します。「終了」をクリックします。
+image::images/demo-project-wizard.png[title="新規プロジェクト・ウィザードでのDemoプロジェクトの作成。"]</p>
+</li>
+<li>
+<p>「プロジェクト・プロパティ」ウィンドウを開き、「ソース」パネルでソース/バイナリ形式としてJDK 6またはJDK 7が選択されていること、および「ライブラリ」パネルで「Javaプラットフォーム」がJDK 1.6またはJDK 1.7に設定されていることを確認します。</p>
+</li>
+<li>
+<p><code>Main.java</code> クラスを変更して次のコードを追加します。変更を保存します。</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">package demo;
+
+*import ann.Handleable;*
+
+public class Main *extends MainExtras* {
+
+    *@Handleable
+    private String stuff;*
+
+    *public static void main(String[] args) {
+        new Main().handleStuff("hello");
+    }*
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>このコードには、次の要素が含まれています。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>カスタム注釈プロセッサ <code>ann.Handleable</code> のインポート文</p>
+</li>
+<li>
+<p><code>MainExtras</code> クラスを拡張する公開クラス <code>Main</code>  ( <code>MainExtras</code> は、コンパイル中にこの注釈プロセッサによって生成される)</p>
+</li>
+<li>
+<p><code>@Handleable</code> 注釈が付いている <code>stuff</code> という名前のprivateフィールド</p>
+</li>
+<li>
+<p>自動的に生成された <code>MainExtras</code> クラスで宣言されている、 <code>handleStuff</code> メソッドをコールする <code>main</code> メソッド</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>この単純な例では、 <code>handleStuff</code> メソッドは現在の値の出力のみを行います。他のタスクを行うように、このメソッドを変更できます。</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>``Main.java`` コードを保存した後、IDEによって複数のコンパイル・エラーが報告されたことが表示されます。これは、まだこのプロジェクトに注釈プロセッサが追加されていないためです。</pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>「プロジェクト・プロパティ」ウィンドウで <code>「Demo」</code> プロジェクト・ノードを右クリックし、「プロパティ」を選択した後、「プロパティ」ウィンドウで「ライブラリ」カテゴリを選択します。</p>
+</li>
+<li>
+<p>「コンパイル」タブで「プロジェクトの追加」をクリックし、「 <code>AnnProcessor</code> 」プロジェクトを指定します。
+image::images/demo-properties-compile.png[title="プロジェクトの「プロパティ」ウィンドウ内の「ライブラリ」カテゴリにある「コンパイル」タブ"]</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>「コンパイル」タブは、<a href="http://download.oracle.com/javase/6/docs/technotes/tools/windows/javac.html#options">Javaコンパイラ</a>の <code>-classpath</code> オプションに相当します。この注釈プロセッサは、注釈定義と注釈プロセッサの両方を含む単一のJARファイルであるため、これをプロジェクトのクラスパス(つまり「コンパイル」タブ)に追加する必要があります。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>「プロジェクト・プロパティ」ウィンドウで「コンパイル」カテゴリを選択し、「注釈処理を有効にする」および「エディタでの注釈処理を有効にする」チェックボックスを選択します。</p>
+</li>
+<li>
+<p>「注釈プロセッサ」テキスト領域の横にある「追加」ボタンをクリックし、「注釈プロセッサFQN」フィールドに * <code>「proc.HandleableProcessor」</code> *と入力することによって、実行する注釈プロセッサを指定します。
+image::images/demo-processor-fqn.png[title="「注釈プロセッサFQN」ダイアログ・ボックス"]</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>「プロジェクト・プロパティ」ウィンドウ内の「コンパイル」カテゴリは、次のイメージのように表示されるはずです。</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/demo-properties-compiling.png" alt="demo properties compiling">
+</div>
+<div class="title">Figure 3. プロジェクトの「プロパティ」ウィンドウ内の「コンパイル」カテゴリ</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>「プロパティ」ウィンドウで「OK」をクリックします。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p><strong>注意:</strong> <code>Main.java</code> ファイルでは、依然としてコンパイル・エラーが表示される場合があります。これは、 <code>handleStuff</code> メソッドを宣言している <code>MainExtras.java</code> ファイルを、IDEがまだ認識できていないためです。 <code>MainExtras.java</code> ファイルは、最初にDemoプロジェクトをビルドした後で生成されます。プロジェクトで「保存時にコンパイル」が有効になっている場合は、 <code>Main.java</code> を保存したときにIDEがプロジェクトをコンパイルしました。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>「Demo」プロジェクトを右クリックし、「ビルド」を選択します。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>プロジェクトをビルドした後に「プロジェクト」ウィンドウでそのプロジェクトを見ると、新しい <code>「生成されたソース」</code> ノードが <code>demo/MainExtras.java</code> ファイルとともに表示されます。</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/demo-generated-sources.png" alt="demo generated sources">
+</div>
+<div class="title">Figure 4. 生成されたソースが表示された「プロジェクト」ウィンドウ</div>
+</div>
+<div class="paragraph">
+<p>生成された <code>MainExtras.java</code> ファイルの内容を確認すると、注釈プロセッサが <code>handleStuff</code> メソッドを使用して <code>MainExtras</code> クラスを生成したことがわかります。 <code>handleStuff</code> メソッドは、注釈付きの <code>Main.java</code> ファイルから呼び出されるメソッドです。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">package demo;
+public abstract class MainExtras {
+    protected MainExtras() {}
+    /** Handle something. */
+    protected final void handleStuff(java.lang.String value) {
+        System.out.println(value);
+    }
+}</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>「Demo」プロジェクトを右クリックし、「実行」を選択します。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>「実行」をクリックすると、「出力」ウィンドウに次が表示されるはずです。Demoプロジェクトがコンパイルされ、メッセージが出力されます。</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/demo-run.png" alt="demo run">
+</div>
+<div class="title">Figure 5. 生成されたソースが表示された「プロジェクト」ウィンドウ</div>
+</div>
+<div class="paragraph">
+<p><a href="/about/contact_form.html?to=3&amp;subject=Feedback:%20Using%20the%20Annotation%20Processors%20Support%20in%20NetBeans%20IDE">このチュートリアルに関するご意見をお寄せください</a></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_関連項目">関連項目</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Javaアプリケーションでの注釈の詳細は、次のリソースを参照してください。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Java SEのドキュメント - <a href="http://download.oracle.com/javase/6/docs/technotes/guides/language/annotations.html">注釈</a></p>
+</li>
+<li>
+<p>Java SEのチュートリアル - <a href="http://download.oracle.com/javase/tutorial/java/javaOO/annotations.html">注釈</a></p>
+</li>
+<li>
+<p><a href="http://download.oracle.com/javase/6/docs/technotes/tools/windows/javac.html#processing">Javaコンパイラ: 注釈処理のオプション</a></p>
+</li>
+<li>
+<p><a href="http://blogs.oracle.com/darcy/">Joseph D. Darcy氏のブログ</a> - JSR-269仕様リードによる役立つヒント</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+            
+<section class='tools'>
+    <ul class="menu align-center">
+        <li><a title="Facebook" href="https://www.facebook.com/NetBeans"><i class="fa fa-md fa-facebook"></i></a></li>
+        <li><a title="Twitter" href="https://twitter.com/netbeans"><i class="fa fa-md fa-twitter"></i></a></li>
+        <li><a title="Github" href="https://github.com/apache/incubator-netbeans"><i class="fa fa-md fa-github"></i></a></li>
+        <li><a title="YouTube" href="https://www.youtube.com/user/netbeansvideos"><i class="fa fa-md fa-youtube"></i></a></li>
+        <li><a title="Slack" href="https://tinyurl.com/netbeans-slack-signup/"><i class="fa fa-md fa-slack"></i></a></li>
+        <li><a title="JIRA" href="https://issues.apache.org/jira/projects/NETBEANS/summary"><i class="fa fa-mf fa-bug"></i></a></li>
+    </ul>
+    <ul class="menu align-center">
+        
+        <li><a href="https://github.com/apache/incubator-netbeans-website/blob/master/netbeans.apache.org/src/content/kb/docs/java/annotations-custom_ja.asciidoc" title="See this page in github"><i class="fa fa-md fa-edit"></i> See this page in GitHub.</a></li>
+    </ul>
+</section>
+
+        </div>
+        
+
+<div class='grid-container incubator-area' style='margin-top: 64px'>
+    <div class='grid-x grid-padding-x'>
+        <div class='large-auto cell text-center'>
+            <a href="https://www.apache.org/">
+                <img style="width: 320px" title="Apache Software Foundation" src="/images/asf_logo_wide.svg" />
+            </a>
+        </div>
+        <div class='large-auto cell text-center'>
+            <a href="https://www.apache.org/events/current-event.html">
+               <img style="width:234px; height: 60px;" title="Apache Software Foundation current event" src="https://www.apache.org/events/current-event-234x60.png"/>
+            </a>
+        </div>
+    </div>
+</div>
+<footer>
+    <div class="grid-container">
+        <div class="grid-x grid-padding-x">
+            <div class="large-auto cell">
+                
+                <h1>About</h1>
+                <ul>
+                    <li><a href="https://www.apache.org/foundation/thanks.html">Thanks</a></li>
+                    <li><a href="https://www.apache.org/foundation/sponsorship.html">Sponsorship</a></li>
+                    <li><a href="https://www.apache.org/security/">Security</a></li>
+                    <li><a href="https://incubator.apache.org/projects/netbeans.html">Incubation Status</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/community/index.html">Community</a></h1>
+                <ul>
+                    <li><a href="/community/mailing-lists.html">Mailing lists</a></li>
+                    <li><a href="/community/committer.html">Becoming a committer</a></li>
+                    <li><a href="/community/events.html">NetBeans Events</a></li>
+                    <li><a href="https://www.apache.org/events/current-event.html">Apache Events</a></li>
+                    <li><a href="/community/who.html">Who is who</a></li>
+                    <li><a href="/community/nekobean.html">NekoBean</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/participate/index.html">Participate</a></h1>
+                <ul>
+                    <li><a href="/participate/submit-pr.html">Submitting Pull Requests</a></li>
+                    <li><a href="/participate/report-issue.html">Reporting Issues</a></li>
+                    <li><a href="/participate/netcat.html">NetCAT - Community Acceptance Testing</a></li>
+                    <li><a href="/participate/index.html#documentation">Improving the documentation</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/help/index.html">Get Help</a></h1>
+                <ul>
+                    <li><a href="/help/index.html#documentation">Documentation</a></li>
+                    <li><a href="/help/getting-started.html">Platform videos</a></li>
+                    <li><a href="/wiki/index.asciidoc">Wiki</a></li>
+                    <li><a href="/help/index.html#support">Community Support</a></li>
+                    <li><a href="/help/commercial-support.html">Commercial Support</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/download/nb100/nb100.html">Download</a></h1>
+                <ul>
+                    <li><a href="/download/index.html#releases">Releases</a></li>
+                    <ul>
+                        <li><a href="/download/nb100/nb100.html">Apache NetBeans 10.0</a></li>
+                        <li><a href="/download/nb90/nb90.html">Apache NetBeans 9.0</a></li>
+                    </ul>
+                    <li><a href="/plugins/index.html">Plugins</a></li>
+                    <li><a href="/download/index.html#source">Building from source</a></li>
+                    <li><a href="/download/index.html#previous">Previous releases</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</footer>
+<div class='footer-disclaimer'>
+    <div class="footer-disclaimer-content">
+        <p>Copyright &copy; 2017-2018 <a href="https://www.apache.org">The Apache Software Foundation</a>.</p>
+        <p>Licensed under the Apache <a href="https://www.apache.org/licenses/">license</a>, version 2.0</p>
+        <p><a href="https://incubator.apache.org/" alt="Apache Incubator"><img src='/images/incubator_feather_egg_logo_bw_crop.png' title='Apache Incubator'></img></a></p>
+        <div style='max-width: 40em; margin: 0 auto'>
+            <p>Apache NetBeans is an effort undergoing incubation at The Apache Software Foundation (ASF), sponsored by the Apache Incubator. Incubation is required of all newly accepted projects until a further review indicates that the infrastructure, communications, and decision making process have stabilized in a manner consistent with other successful ASF projects. While incubation status is not necessarily a reflection of the completeness or stability of the code, it does indicate that the project has yet to be fully endorsed by the ASF.</p>
+            <p>Apache Incubator, Apache, the Apache feather logo, the Apache NetBeans logo, and the Apache Incubator project logo are trademarks of <a href="https://www.apache.org">The Apache Software Foundation</a>.</p>
+            <p>Oracle and Java are registered trademarks of Oracle and/or its affiliates.</p>
+        </div>
+        
+    </div>
+</div>
+
+
+
+        <script src="/js/vendor/jquery-3.2.1.min.js"></script>
+        <script src="/js/vendor/what-input.js"></script>
+        <script src="/js/vendor/jquery.colorbox-min.js"></script>
+        <script src="/js/vendor/foundation.min.js"></script>
+        <script src="/js/netbeans.js"></script>
+        <script>
+            
+            $(function(){ $(document).foundation(); });
+        </script>
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/highlight.min.js"></script>
+        <script>
+         $(document).ready(function() { $("pre code").each(function(i, block) { hljs.highlightBlock(block); }); }); 
+        </script>
+        
+    </body>
+</html>

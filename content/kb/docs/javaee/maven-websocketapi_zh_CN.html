@@ -1,0 +1,1493 @@
+
+<!DOCTYPE html>
+<html class="no-js" lang="en" dir="ltr">
+    
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>在 Web 应用程序中使用 WebSocket API</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="在 Web 应用程序中使用 WebSocket API - Apache NetBeans">
+    <meta name="author" content="Apache NetBeans">
+    <meta name="keywords" content="Apache NetBeans, Tutorials, 在 Web 应用程序中使用 WebSocket API">
+    <meta name="generator" content="Apache NetBeans">
+    <link rel="stylesheet" href="/css/font-awesome.min.css">
+     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/styles/default.min.css"> 
+    <link rel="stylesheet" href="/css/netbeans.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#ffc40d">
+    <meta name="theme-color" content="#ffffff">
+    <link href="https://fonts.googleapis.com/css?family=Lato:400,700" rel="stylesheet"> 
+    <!--
+        Licensed to the Apache Software Foundation (ASF) under one
+        or more contributor license agreements.  See the NOTICE file
+        distributed with this work for additional information
+        regarding copyright ownership.  The ASF licenses this file
+        to you under the Apache License, Version 2.0 (the
+        "License"); you may not use this file except in compliance
+        with the License.  You may obtain a copy of the License at
+        http://www.apache.org/licenses/LICENSE-2.0
+        Unless required by applicable law or agreed to in writing,
+        software distributed under the License is distributed on an
+        "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+        KIND, either express or implied.  See the License for the
+        specific language governing permissions and limitations
+        under the License.
+    -->
+</head>
+
+
+    <body>
+        
+
+<div class="title-bar" data-responsive-toggle="responsive-menu" data-hide-for="medium">
+    <button type="button" data-toggle="responsive-menu"><i style='font-size: 32px; color: #fff; padding: 8px' class='fa fa-bars'></i></button>
+    <div class="title-bar-title">Apache NetBeans</div>
+</div>
+<div class="top-bar" id="responsive-menu">
+    <div class='top-bar-left'>
+        <a class='title' href="/"><img src='/images/apache-netbeans.svg' style='padding: 8px; height: 48px;'></img> Apache NetBeans (incubating)</a>
+    </div>
+    <div class="top-bar-right">
+        <ul class="vertical medium-horizontal menu" data-responsive-menu="drilldown medium-dropdown">
+            <li> <a href="/community/index.html">Community</a> </li>
+            <li> <a href="/participate/index.html">Participate</a> </li>
+            <li> <a href="https://blogs.apache.org/netbeans/">Blog</a></li>
+            <li> <a href="/help/index.html">Get Help</a> </li>
+            <li> <a href="/plugins/index.html">Plugins</a> </li>
+            <li> <a href="/download/nb100/nb100.html">Download</a> </li>
+        </ul>
+    </div>
+</div>
+
+
+        
+<!-- src/templates/news -->
+<section class="hero news alternate" style='margin-bottom: 2em'>
+    <div class='grid-container'>
+        <div class='cell'>
+            <div class="annotation">Just released!</div>
+            <h1>Apache NetBeans 10.0</h1>
+            <p><a class="button success" href="/download/nb100/nb100.html">Read more</a></p>
+        </div>
+    </div>
+</section>
+
+        <div class='grid-container main-content'>
+            <div id="toc" class="toc">
+<div id="toctitle"></div>
+<ul class="sectlevel1">
+<li><a href="#_创建_web_应用程序项目">创建 Web 应用程序项目</a></li>
+<li><a href="#_创建_websocket_端点">创建 WebSocket 端点</a>
+<ul class="sectlevel2">
+<li><a href="#_创建端点">创建端点</a></li>
+<li><a href="#_启动_websocket_会话">启动 WebSocket 会话</a></li>
+<li><a href="#_测试端点">测试端点</a></li>
+</ul>
+</li>
+<li><a href="#_创建白板">创建白板</a>
+<ul class="sectlevel2">
+<li><a href="#_将画布添加到_web_页中">将画布添加到 Web 页中</a></li>
+<li><a href="#_创建_pojo">创建 POJO</a></li>
+<li><a href="#_创建坐标类">创建坐标类</a></li>
+<li><a href="#_生成_json_字符串">生成 JSON 字符串</a></li>
+<li><a href="#_实现编码器和解码器接口">实现编码器和解码器接口</a></li>
+<li><a href="#_运行应用程序">运行应用程序</a></li>
+</ul>
+</li>
+<li><a href="#_向端点发送二进制数据">向端点发送二进制数据</a></li>
+<li><a href="#_另请参见">另请参见</a></li>
+</ul>
+</div>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>本教程演示了如何创建简单 Web 应用程序，以在连接到单个服务器应用程序的客户端浏览器之间实现协作。当用户在客户端浏览器中的画布上绘制图形元素时，该元素将显示在所有已连接客户端的画布上。如何工作？当浏览器加载 Web 页时，客户端脚本将向应用程序服务器发送 WebSocket 握手请求。应用程序可以从会话中连接的客户端接受 JSON 和二进制消息，并将消息广播到连接的所有客户端。</p>
+</div>
+<div class="paragraph">
+<p>在本教程中，您将创建一个 Web 应用程序，该应用程序使用用于 WebSocket 的 Java API (<a href="http://www.jcp.org/en/jsr/detail?id=356">JSR 356</a>)，从而支持浏览器客户端与应用程序服务器之间的双向通信。用于 WebSocket 的 Java API 支持创建 WebSocket Java 组件，启动和拦截 WebSocket 事件，以及创建和使用 WebSocket 文本和二进制消息。本教程还将演示如何使用用于 JSON 处理的 Java API (<a href="http://jcp.org/en/jsr/detail?id=353">JSR 353</a>) 以生成和使用 JSON。用于 WebSocket 的 Java API 和用于 JSON 处理的 Java API 是 Java EE 7 平台的组成部分 (<a href="http://jcp.org/en/jsr/detail?id=342">JSR 342</a>)。</p>
+</div>
+<div class="paragraph">
+<p>应用程序中包含一个 WebSocket 端点和一些解码器和编码器接口、一个 Web 页和一些 JavaScript 文件，加载 Web 页时或从 Web 页中的窗体调用时，这些 JavaScript 文件将运行在客户端浏览器中。将应用程序部署到 GlassFish Server Open Source Edition 4（Java EE 7 技术的引用实现）。</p>
+</div>
+<div class="paragraph">
+<p>*注：*本教程基于 <a href="https://blogs.oracle.com/arungupta/entry/collaborative_whiteboard_using_websocket_in">Collaborative Whiteboard using WebSocket in GlassFish 4 - Text/JSON and Binary/ArrayBuffer Data Transfer (TOTD #189)</a>（在 GlassFish 4 中使用 WebSocket 的协作白板 - 文本/JSON 和二进制/ArrayBuffer 数据传输 (TOTD #189)）博客帖子和其他可在 <a href="http://blog.arungupta.me/">Arun Gupta 的博客</a>上找到的博客条目。请确保访问此博客，并查看许多其他有关使用 WebSocket API 和 GlassFish 4 的优秀博客。</p>
+</div>
+<div class="paragraph">
+<p>您也可以观看<a href="maven-websocketapi-screencast.html">在 Web 应用程序中使用 WebSocket API 的视频</a>。</p>
+</div>
+<div class="paragraph">
+<p><strong>教程练习</strong></p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/netbeans-stamp-80-74-73.png" alt="netbeans stamp 80 74 73">
+</div>
+<div class="title">Figure 1. 此页上的内容适用于 NetBeans IDE 7.3、7.4 和 8.0</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="#Exercise_1">创建 Web 应用程序项目</a></p>
+</li>
+<li>
+<p><a href="#createendpoint">创建 WebSocket 端点</a></p>
+</li>
+<li>
+<p><a href="#createendpoint1">创建端点</a></p>
+</li>
+<li>
+<p><a href="#createendpoint2">启动 WebSocket 会话</a></p>
+</li>
+<li>
+<p><a href="#createendpoint3">测试端点</a></p>
+</li>
+<li>
+<p><a href="#createwhiteboard">创建白板</a></p>
+</li>
+<li>
+<p><a href="#createwhiteboard1">添加画布</a></p>
+</li>
+<li>
+<p><a href="#createwhiteboard2">创建 POJO</a></p>
+</li>
+<li>
+<p><a href="#createwhiteboard3">创建坐标类</a></p>
+</li>
+<li>
+<p><a href="#createwhiteboard6">生成 JSON 字符串</a></p>
+</li>
+<li>
+<p><a href="#createwhiteboard4">实现编码器和解码器接口</a></p>
+</li>
+<li>
+<p><a href="#createwhiteboard5">运行应用程序</a></p>
+</li>
+<li>
+<p><a href="#sendbinary">向端点发送二进制数据</a></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><strong>要学习本教程，您需要具备以下软件和资源。</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">软件或资源</th>
+<th class="tableblock halign-left valign-top">要求的版本</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://netbeans.org/downloads/index.html">NetBeans IDE</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">7.3.1、7.4、8.0、Java EE 版本</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://www.oracle.com/technetwork/java/javase/downloads/index.html">Java 开发工具包 (JDK)</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">版本 7 或 8</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://glassfish.java.net/">GlassFish Server 开源版</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">4</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>*注：*GlassFish 4 随 NetBeans IDE 的 Java EE 下载包捆绑提供。</p>
+</div>
+<div class="paragraph">
+<p><strong>先决条件</strong></p>
+</div>
+<div class="paragraph">
+<p>本文档假定您具备以下技术的一些基本知识或编程经验：</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Java 编程</p>
+</li>
+<li>
+<p>JavaScript/HTML 编程</p>
+</li>
+<li>
+<p>NetBeans IDE</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>在开始本教程之前，您可以先阅读下面这些文档。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="http://wiki.netbeans.org/MavenBestPractices">NetBeans IDE 中的 Apache Maven 最佳做法</a></p>
+</li>
+<li>
+<p><a href="http://books.sonatype.com/mvnref-book/reference/introduction.html">Chapter 1. Introducing Apache Maven</a>（第 1 章. Apache Maven 简介，来自 <a href="http://books.sonatype.com/mvnref-book/reference/index.html">Maven: The Complete Reference</a>（Maven：完整参考））</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>您可以下载<a href="https://netbeans.org/projects/samples/downloads/download/Samples/JavaEE/WhiteboardApp.zip">已完成项目的 zip 档案文件</a>。</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_创建_web_应用程序项目">创建 Web 应用程序项目</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>本练习的目标是使用 IDE 中的 "New Project"（新建项目）向导创建一个 Web 应用程序项目。创建该项目时，将选择 Java EE 7 作为 Java EE 版本，并选择 GlassFish 4 作为应用程序服务器。GlassFish 4 是 Java EE 7 平台的引用实现。您必须具有支持注册到 IDE 的 Java EE 7 的应用程序服务器才能在本教程中创建应用程序。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>从主菜单中选择 "File"（文件）&gt; "New Project"（新建项目）（在 Windows 上为 Ctrl-Shift-N 组合键；在 Mac 上为 ⌘-Shift-N 组合键）。</p>
+</li>
+<li>
+<p>从 "Maven" 类别中选择 "Web Application"（Web 应用程序）。单击 "Next"（下一步）。</p>
+</li>
+<li>
+<p>键入 <strong>WhiteboardApp</strong> 作为项目名称并设置项目位置。</p>
+</li>
+<li>
+<p>键入 <strong>org.sample</strong> 作为组 ID。单击 "Next"（下一步）。</p>
+</li>
+<li>
+<p>选择 <strong>GlassFish Server 4.0</strong> 作为服务器。</p>
+</li>
+<li>
+<p>将 Java EE 版本设置为 <strong>Java EE 7 Web</strong>。单击 "Finish"（完成）。
+image::images/websocket-newproject.png[title="&quot;New Project&quot;（新建项目）向导中的服务器和 Java EE 版本"]</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>单击 "Finish"（完成），此时 IDE 将创建项目并在 "Projects"（项目）窗口中打开该项目。</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_创建_websocket_端点">创建 WebSocket 端点</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>在此部分，您将创建一个 WebSocket 端点类和一个 JavaScript 文件。WebSocket 端点类包含一些在打开会话时运行的基本方法。然后，将创建一个 JavaScript 文件，在加载页面时该文件将启动与服务器的握手操作。随后将运行应用程序以测试连接是否成功。</p>
+</div>
+<div class="paragraph">
+<p>有关使用 WebSocket API 和标注的更多信息，请参见 <a href="https://javaee-spec.java.net/nonav/javadocs/javax/websocket/package-summary.html">javax.websocket</a> 包的概要。</p>
+</div>
+<div class="sect2">
+<h3 id="_创建端点">创建端点</h3>
+<div class="paragraph">
+<p>在此练习中，您将使用 IDE 中的向导帮助创建 WebSocket 端点类。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>在 "Projects"（项目）窗口中右键单击 "Source Packages"（源包）节点，然后选择 "New"（新建）&gt; "Other"（其他）。</p>
+</li>
+<li>
+<p>在 "Web" 类别中选择 "WebSocket Endpoint"（WebSocket 端点）。单击 "Next"（下一步）。</p>
+</li>
+<li>
+<p>键入 <strong>MyWhiteboard</strong> 作为类名。</p>
+</li>
+<li>
+<p>在 "Package"（包）下拉列表中选择  <code>org.sample.whiteboardapp</code> 。</p>
+</li>
+<li>
+<p>键入 <strong>/whiteboardendpoint</strong> 作为 WebSocket URI。单击 "Finish"（完成）。
+image::images/websocket-newendpoint.png[title="&quot;New File&quot;（新建文件）向导中的 WebSocket 端点"]</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>在单击 "Finish"（完成）后，IDE 将生成 WebSocket 端点类，并在源代码编辑器中打开文件。在编辑器中，您会看到 IDE 生成了一些属于 WebSocket API 一部分的标注。使用  <code><a href="https://javaee-spec.java.net/nonav/javadocs/javax/websocket/server/ServerEndpoint.html">@ServerEndpoint</a></code>  标注类以将类标识为端点，并将 WebSocket URI 指定为该标注的参数。IDE 还生成了一个使用  <code><a href="https://javaee-spec.java.net/nonav/javadocs/javax/websocket/OnMessage.html">@OnMessage</a></code>  标注的默认  <code>onMessage</code>  方法。每次客户端收到 WebSocket 消息时都会调用使用  <code>@OnMessage</code>  标注的方法。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@ServerEndpoint("/whiteboardendpoint")
+public class MyWhiteboard {
+
+    @OnMessage
+    public String onMessage(String message) {
+        return null;
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>将以下字段（<strong>粗体</strong>）添加到类中。</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@ServerEndpoint("/whiteboardendpoint")
+public class MyWhiteboard {
+    *private static Set&lt;Session&gt; peers = Collections.synchronizedSet(new HashSet&lt;Session&gt;());*
+
+    @OnMessage
+    public String onMessage(String message) {
+        return null;
+    }
+}</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>添加以下  <code>onOpen</code>  和  <code>onClose</code>  方法。</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">    @OnOpen
+    public void onOpen (Session peer) {
+        peers.add(peer);
+    }
+
+    @OnClose
+    public void onClose (Session peer) {
+        peers.remove(peer);
+    }</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>您会看到  <code>onOpen</code>  和  <code>onClose</code>  方法使用  <code><a href="https://javaee-spec.java.net/nonav/javadocs/javax/websocket/OnOpen.html">@OnOpen</a></code>  和  <code><a href="https://javaee-spec.java.net/nonav/javadocs/javax/websocket/OnClose.html">@OnClose</a></code>  WebSocket API 标注进行了标注。打开 Web 套接字会话时会调用使用  <code>@OnOpen</code>  进行标注的方法。在此示例中，标注的  <code>onOpen</code>  方法将浏览器客户端添加到当前会话中的对等组中，而  <code>onClose</code>  方法则从组中删除浏览器。</p>
+</div>
+<div class="paragraph">
+<p>使用源代码编辑器中的提示和代码完成可帮助生成这些方法。单击类声明旁边的左旁注中的提示图标（或者将插入光标置于类声明中并按下 Alt-Enter 组合键），然后在弹出菜单中选择相应方法。代码完成功能可帮助您对方法进行编码。</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/websocket-endpoint-hint.png" alt="websocket endpoint hint">
+</div>
+<div class="title">Figure 2. 源代码编辑器中的代码提示</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>在编辑器中右键单击，然后选择 "Fix Imports"（修复导入）（Alt-Shift-I 组合键；在 Mac 上为 ⌘-Shift-I 组合键）。保存所做的更改。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>您将看到  <code>javax.websocket</code>  中类的 import 语句会添加到文件中。</p>
+</div>
+<div class="paragraph">
+<p>端点现已创建。现在，您需要创建 JavaScript 文件以启动 WebSocket 会话。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_启动_websocket_会话">启动 WebSocket 会话</h3>
+<div class="paragraph">
+<p>在此练习中，您将创建一个 JavaScript 文件以启动 WebSocket 会话。浏览器客户端通过 TCP 与服务器进行 HTTP“握手”，从而加入会话。在 JavaScript 文件中，将指定端点的  <code>wsURI</code>  的名称并声明 WebSocket。 <code>wsURI</code>  URI 方案是 WebSocket 协议的一部分，指定应用程序端点的路径。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>在项目窗口中，右键单击项目节点，然后选择 "New"（新建）&gt; "Other"（其他）。</p>
+</li>
+<li>
+<p>在 "New File"（新建文件）向导的 "Web" 类别中选择 "JavaScript File"（JavaScript 文件）。单击 "Next"（下一步）。</p>
+</li>
+<li>
+<p>键入 <strong>websocket</strong> 作为 JavaScript 文件名。单击 "Finish"（完成）。</p>
+</li>
+<li>
+<p>将以下内容添加到 JavaScript 文件中。</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">var wsUri = "ws://" + document.location.host + document.location.pathname + "whiteboardendpoint";
+var websocket = new WebSocket(wsUri);
+
+websocket.onerror = function(evt) { onError(evt) };
+
+function onError(evt) {
+    writeToScreen('&lt;span style="color: red;"&gt;ERROR:&lt;/span&gt; ' + evt.data);
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>当浏览器加载  <code>websocket.js</code>  时，此脚本将启动与服务器的会话握手。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>打开  <code>index.html</code> ，然后将以下代码（<strong>粗体</strong>）添加到文件底部，以便在页面完成加载时加载  <code>websocket.js</code> 。</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;body&gt;
+    *&lt;h1&gt;Collaborative Whiteboard App&lt;/h1&gt;
+
+    &lt;script type="text/javascript" src="websocket.js"&gt;&lt;/script&gt;*
+&lt;/body&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>现在，您可以测试 WebSocket 端点是否正在工作，会话是否已启动，以及客户端是否已添加到会话中。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_测试端点">测试端点</h3>
+<div class="paragraph">
+<p>在此练习中，您将向 JavaScript 文件中添加一些简单方法，以便在浏览器连接到端点时将  <code>wsURI</code>  输出到浏览器窗口。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>将以下  <code>&lt;div&gt;</code>  标记（<strong>粗体</strong>）添加到  <code>index.html</code></p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-html" data-lang="html">&lt;h1&gt;Collaborative Whiteboard App&lt;/h1&gt;
+
+*&lt;div id="output"&gt;&lt;/div&gt;*
+&lt;script type="text/javascript" src="websocket.js"&gt;&lt;/script&gt;</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>将以下声明和方法添加到  <code>websocket.js</code> 。保存所做的更改。</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">// For testing purposes
+var output = document.getElementById("output");
+websocket.onopen = function(evt) { onOpen(evt) };
+
+function writeToScreen(message) {
+    output.innerHTML += message + "&lt;br&gt;";
+}
+
+function onOpen() {
+    writeToScreen("Connected to " + wsUri);
+}
+// End test functions</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>当页面加载 JavaScript 时，这些函数将输出浏览器已连接到端点的消息。在确认端点正确执行之后，可以删除这些函数。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>在 "Projects"（项目）窗口中右键单击项目，然后选择 "Run"（运行）。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>运行应用程序时，IDE 将启动 GlassFish Server，然后构建并部署应用程序。索引页将在浏览器中打开，并且您将会在浏览器窗口中看到以下消息。</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/websocket-browser1.png" alt="websocket browser1">
+</div>
+<div class="title">Figure 3. 浏览器窗口中的已连接到端点的消息</div>
+</div>
+<div class="paragraph">
+<p>在浏览器窗口中，您会看到以下接受消息的端点： <code><a href="http://localhost:8080/WhiteboardApp/whiteboardendpoint" class="bare">http://localhost:8080/WhiteboardApp/whiteboardendpoint</a></code></p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_创建白板">创建白板</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>在此部分，您将创建类和 JavaScript 文件以发送和接收 JSON 文本消息。您还将添加一个 <a href="http://www.whatwg.org/specs/web-apps/current-work/multipage/the-canvas-element.html">HTML5 Canvas</a> 元素（用于绘制和显示一些内容）和一个含有单选按钮的 HTML  <code>&lt;form&gt;</code> （用于指定画笔的形状和颜色）。</p>
+</div>
+<div class="sect2">
+<h3 id="_将画布添加到_web_页中">将画布添加到 Web 页中</h3>
+<div class="paragraph">
+<p>在此练习中，将向默认索引页中添加  <code>canvas</code>  元素和  <code>form</code>  元素。窗体中的复选框确定画布的画笔属性。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>在源代码编辑器中打开  <code>index.html</code> 。</p>
+</li>
+<li>
+<p>删除您添加的  <code>&lt;div&gt;</code>  标记以测试端点，并在开始的 body 标记之后添加以下  <code>&lt;table&gt;</code>  和  <code>&lt;form&gt;</code>  元素（<strong>粗体</strong>）。</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;h1&gt;Collaborative Whiteboard App&lt;/h1&gt;
+
+    *&lt;table&gt;
+        &lt;tr&gt;
+            &lt;td&gt;
+            &lt;/td&gt;
+            &lt;td&gt;
+                &lt;form name="inputForm"&gt;
+
+
+                &lt;/form&gt;
+            &lt;/td&gt;
+        &lt;/tr&gt;
+    &lt;/table&gt;*
+    &lt;script type="text/javascript" src="websocket.js"&gt;&lt;/script&gt;
+    &lt;/body&gt;</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>为 canvas 元素添加以下代码（<strong>粗体</strong>）。</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">        &lt;table&gt;
+            &lt;tr&gt;
+                &lt;td&gt;
+                    *&lt;canvas id="myCanvas" width="150" height="150" style="border:1px solid #000000;"&gt;&lt;/canvas&gt;*
+                &lt;/td&gt;</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>添加以下  <code>&lt;table&gt;</code>  以添加单选按钮用于选择颜色和形状。保存所做的更改。</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">        &lt;table&gt;
+            &lt;tr&gt;
+                &lt;td&gt;
+                    &lt;canvas id="myCanvas" width="150" height="150" style="border:1px solid #000000;"&gt;&lt;/canvas&gt;
+                &lt;/td&gt;
+                &lt;td&gt;
+                    &lt;form name="inputForm"&gt;
+                        *&lt;table&gt;
+
+                            &lt;tr&gt;
+                                &lt;th&gt;Color&lt;/th&gt;
+                                &lt;td&gt;&lt;input type="radio" name="color" value="#FF0000" checked="true"&gt;Red&lt;/td&gt;
+                                &lt;td&gt;&lt;input type="radio" name="color" value="#0000FF"&gt;Blue&lt;/td&gt;
+                                &lt;td&gt;&lt;input type="radio" name="color" value="#FF9900"&gt;Orange&lt;/td&gt;
+                                &lt;td&gt;&lt;input type="radio" name="color" value="#33CC33"&gt;Green&lt;/td&gt;
+                            &lt;/tr&gt;
+
+                            &lt;tr&gt;
+                                &lt;th&gt;Shape&lt;/th&gt;
+                                &lt;td&gt;&lt;input type="radio" name="shape" value="square" checked="true"&gt;Square&lt;/td&gt;
+                                &lt;td&gt;&lt;input type="radio" name="shape" value="circle"&gt;Circle&lt;/td&gt;
+                                &lt;td&gt; &lt;/td&gt;
+                                &lt;td&gt; &lt;/td&gt;
+                            &lt;/tr&gt;
+
+                        &lt;/table&gt;*
+                    &lt;/form&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>画布上绘制的任何图形的形状、颜色和坐标都将转换为 JSON 结构中的字符串并作为消息发送至 WebSocket 端点。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_创建_pojo">创建 POJO</h3>
+<div class="paragraph">
+<p>在此练习中，您将创建一个简单的 POJO。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>右键单击项目节点，然后选择 "New"（新建）&gt; "Java Class"（Java 类）。</p>
+</li>
+<li>
+<p>键入 <strong>Figure</strong> 作为类名，并从 "Package"（包）下拉列表中选择  <code>org.sample.whiteboardapp</code> 。单击 "Finish"（完成）。</p>
+</li>
+<li>
+<p>在源代码编辑器中，添加以下内容（<strong>粗体</strong>）：</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public class Figure {
+    *private JsonObject json;*
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>添加代码时，系统将提示您为  <code>javax.json.JsonObject</code>  添加 import 语句。如果未进行提示，请按下 Alt-Enter 组合键。</p>
+</div>
+<div class="paragraph">
+<p>有关  <code>javax.json.JsonObject</code>  的更多信息，请参见属于 Java EE 7 规范一部分的用于 JSON 处理的 Java API (<a href="http://jcp.org/en/jsr/detail?id=353">JSR 353</a>)。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>为  <code>json</code>  创建 getter 和 setter。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>可以在 "Insert Code"（插入代码）弹出菜单中选择 getter 和 setter（在 Windows 上为 Alt-Ins；在 Mac 上为 Ctrl-I），以便打开 "Generate Getters and Setter"（生成 getter 和 setter）对话框。或者，也可以从主菜单中选择 "Source"（源）&gt; "Insert Code"（插入代码）。</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/websocket-generategetter.png" alt="websocket generategetter">
+</div>
+<div class="title">Figure 4. &quot;Generate Getter and Setter&quot;（生成 getter 和 setter）对话框</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>为  <code>json</code>  添加构造函数。</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">    public Figure(JsonObject json) {
+        this.json = json;
+    }</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>可以在 "Insert Code"（插入代码）弹出菜单中选择 "Constructor"（构造函数）（Ctrl-I 组合键）。</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/websocket-generateconstructor.png" alt="websocket generateconstructor">
+</div>
+<div class="title">Figure 5. &quot;Generate Constructor&quot;（生成构造函数）弹出菜单</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>添加以下  <code>toString</code>  方法：</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">    @Override
+    public String toString() {
+        StringWriter writer = new StringWriter();
+        Json.createWriter(writer).write(json);
+        return writer.toString();
+    }</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>在编辑器中右键单击，然后选择 "Fix Imports"（修复导入）（Alt-Shift-I 组合键；在 Mac 上为 ⌘-Shift-I 组合键）。保存所做的更改。</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_创建坐标类">创建坐标类</h3>
+<div class="paragraph">
+<p>现在，将为画布上绘制的图形坐标创建一个类。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>右键单击项目节点，然后选择 "New"（新建）&gt; "Java Class"（Java 类）。</p>
+</li>
+<li>
+<p>在 "New Java Class"（新建 Java 类）向导中，键入 <strong>Coordinates</strong> 作为类名，然后在 "Package"（包）下拉列表中选择  <code>org.sample.whiteboardapp</code> 。单击 "Finish"（完成）。</p>
+</li>
+<li>
+<p>在源代码编辑器中，添加以下代码。保存所做的更改。</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">    private float x;
+    private float y;
+
+    public Coordinates() {
+    }
+
+    public Coordinates(float x, float y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    public float getX() {
+        return x;
+    }
+
+    public void setX(float x) {
+        this.x = x;
+    }
+
+    public float getY() {
+        return y;
+    }
+
+    public void setY(float y) {
+        this.y = y;
+    }</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>该类只包含  <code>x</code>  和  <code>y</code>  坐标字段以及某些 getter 和 setter。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_生成_json_字符串">生成 JSON 字符串</h3>
+<div class="paragraph">
+<p>在此练习中，您将创建一个 JavaScript 文件，该文件将  <code>canvas</code>  元素上绘制的图形的详细信息放入发送到 WebSocket 端点的 JSON 结构。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>右键单击项目节点，然后选择 "New"（新建）&gt; "JavaScript File"（JavaScript 文件）以打开 "New JavaScript File"（新建 JavaScript 文件）向导。</p>
+</li>
+<li>
+<p>键入 <strong>whiteboard</strong> 作为文件名。单击 "Finish"（完成）。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>单击 "Finish"（完成）后，IDE 将创建空 JavaScript 文件并在编辑器中打开该文件。您可以在 "Projects"（项目）窗口中的 "Web Pages"（Web 页）节点下看到该新文件。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>添加以下代码以初始化画布并添加事件监听程序。</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">var canvas = document.getElementById("myCanvas");
+var context = canvas.getContext("2d");
+canvas.addEventListener("click", defineImage, false);</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>您可以看到当用户在  <code>canvas</code>  元素中单击时调用了  <code>defineImage</code>  方法。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>添加下面的  <code>getCurrentPos</code> 、 <code>defineImage</code>  和  <code>drawImageText</code>  方法以构造 JSON 结构并将其发送到端点 ( <code>sendText(json)</code> )。</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">function getCurrentPos(evt) {
+    var rect = canvas.getBoundingClientRect();
+    return {
+        x: evt.clientX - rect.left,
+        y: evt.clientY - rect.top
+    };
+}
+
+function defineImage(evt) {
+    var currentPos = getCurrentPos(evt);
+
+    for (i = 0; i &lt; document.inputForm.color.length; i++) {
+        if (document.inputForm.color[i].checked) {
+            var color = document.inputForm.color[i];
+            break;
+        }
+    }
+
+    for (i = 0; i &lt; document.inputForm.shape.length; i++) {
+        if (document.inputForm.shape[i].checked) {
+            var shape = document.inputForm.shape[i];
+            break;
+        }
+    }
+
+    var json = JSON.stringify({
+        "shape": shape.value,
+        "color": color.value,
+        "coords": {
+            "x": currentPos.x,
+            "y": currentPos.y
+        }
+    });
+    drawImageText(json);
+        sendText(json);
+}
+
+function drawImageText(image) {
+    console.log("drawImageText");
+    var json = JSON.parse(image);
+    context.fillStyle = json.color;
+    switch (json.shape) {
+    case "circle":
+        context.beginPath();
+        context.arc(json.coords.x, json.coords.y, 5, 0, 2 * Math.PI, false);
+        context.fill();
+        break;
+    case "square":
+    default:
+        context.fillRect(json.coords.x, json.coords.y, 10, 10);
+        break;
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>发送的 JSON 结构将类似于以下内容：</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">{
+ "shape": "square",
+ "color": "#FF0000",
+ "coords": {
+ "x": 31.59999942779541,
+ "y": 49.91999053955078
+ }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>现在，您需要添加  <code>sendText(json)</code>  方法以使用  <code>websocket.send()</code>  发送 JSON 字符串。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>在编辑器中打开  <code>websocket.js</code> ，然后添加以下方法，用于将 JSON 发送到端点，以及在从端点收到消息时绘制图像。</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">websocket.onmessage = function(evt) { onMessage(evt) };
+
+function sendText(json) {
+    console.log("sending text: " + json);
+    websocket.send(json);
+}
+
+function onMessage(evt) {
+    console.log("received: " + evt.data);
+    drawImageText(evt.data);
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>*注：*可以删除已添加到  <code>websocket.js</code>  中的代码以测试端点。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>将以下行（<strong>粗体</strong>）添加到  <code>index.html</code>  的底部以加载  <code>whiteboard.js</code> 。</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">        &lt;/table&gt;
+    &lt;script type="text/javascript" src="websocket.js"&gt;&lt;/script&gt;
+    *&lt;script type="text/javascript" src="whiteboard.js"&gt;&lt;/script&gt;*
+&lt;body&gt;</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_实现编码器和解码器接口">实现编码器和解码器接口</h3>
+<div class="paragraph">
+<p>在此练习中，将创建用于实现解码器和编码器接口的类，以便将 Web 套接字消息 (JSON) 解码为 POJO 类  <code>Figure</code> ，并将  <code>Figure</code>  编码为 JSON 字符串以发送到端点。</p>
+</div>
+<div class="paragraph">
+<p>有关更多详细信息，请参见技术文章<a href="http://www.oracle.com/technetwork/articles/java/jsr356-1937161.html">用于 WebSocket 的 Java API (JSR 356)</a> 中有关消息类型以及编码器和解码器的部分。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>右键单击项目节点，然后选择 "New"（新建）&gt; "Java Class"（Java 类）。</p>
+</li>
+<li>
+<p>键入 <strong>FigureEncoder</strong> 作为类名，并在 "Package"（包）下拉列表中选择  <code>org.sample.whiteboardapp</code> 。单击 "Finish"（完成）。</p>
+</li>
+<li>
+<p>在源代码编辑器中，通过添加以下代码（<strong>粗体</strong>）来实现 WebSocket 编码器接口：</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public class FigureEncoder *implements Encoder.Text&lt;Figure&gt;* {
+
+}</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>为  <code>javax.websocket.Encoder</code>  添加 import 语句并实现抽象方法。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>将光标放在类声明中，按下 Alt-Enter 组合键，然后从弹出菜单中选择 <strong>Implement all abstract methods</strong>（实现所有抽象方法）。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>通过进行以下更改（<strong>粗体</strong>）修改生成的抽象方法。保存所做的更改。</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">    @Override
+    public String encode(Figure *figure*) throws EncodeException {
+        *return figure.getJson().toString();*
+    }
+
+    @Override
+    public void init(EndpointConfig ec) {
+        *System.out.println("init");*
+    }
+
+    @Override
+    public void destroy() {
+        *System.out.println("destroy");*
+    }</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>右键单击项目节点，然后选择 "New"（新建）&gt; "Java Class"（Java 类）。</p>
+</li>
+<li>
+<p>键入 <strong>FigureDecoder</strong> 作为类名，并在 "Package"（包）下拉列表中选择  <code>org.sample.whiteboardapp</code> 。单击 "Finish"（完成）。</p>
+</li>
+<li>
+<p>在源代码编辑器中，通过添加以下代码（<strong>粗体</strong>）来实现 WebSocket 解码器接口：</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public class FigureDecoder *implements Decoder.Text&lt;Figure&gt;* {
+
+}</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>为  <code>javax.websocket.Decoder</code>  添加 import 语句并实现抽象方法。</p>
+</li>
+<li>
+<p>对生成的抽象方法进行以下更改（<strong>粗体</strong>）。</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">    @Override
+    public Figure decode(String *string*) throws DecodeException {
+        *JsonObject jsonObject = Json.createReader(new StringReader(string)).readObject();
+        return  new Figure(jsonObject);*
+    }
+
+    @Override
+    public boolean willDecode(String *string*) {
+        *try {
+            Json.createReader(new StringReader(string)).readObject();
+            return true;
+        } catch (JsonException ex) {
+            ex.printStackTrace();
+            return false;
+        }*
+
+    }
+
+    @Override
+    public void init(EndpointConfig ec) {
+        *System.out.println("init");*
+    }
+
+    @Override
+    public void destroy() {
+        *System.out.println("destroy");*
+    }</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>修复导入并保存更改。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>现在，您需要修改  <code>MyWhiteboard.java</code>  以指定编码器和解码器。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_运行应用程序">运行应用程序</h3>
+<div class="paragraph">
+<p>您现在几乎准备好运行应用程序了。在此练习中，您将修改 WebSocket 端点类以便为 JSON 字符串指定编码器和解码器，并添加方法以便在收到消息时将 JSON 字符串发送到已连接的客户端。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>在编辑器中打开  <code>MyWhiteboard.java</code> 。</p>
+</li>
+<li>
+<p>修改  <code>@ServerEndpoint</code>  标注以便为端点指定编码器和解码器。请注意，您需要显式为端点的名称指定  <code>value</code>  参数。</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@ServerEndpoint(*value=*"/whiteboardendpoint"*, encoders = {FigureEncoder.class}, decoders = {FigureDecoder.class}*)</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>删除默认情况下生成的  <code>onMessage</code>  方法。</p>
+</li>
+<li>
+<p>添加以下  <code>broadcastFigure</code>  方法并使用  <code>@OnMessage</code>  标注该方法。</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">    @OnMessage
+    public void broadcastFigure(Figure figure, Session session) throws IOException, EncodeException {
+        System.out.println("broadcastFigure: " + figure);
+        for (Session peer : peers) {
+            if (!peer.equals(session)) {
+                peer.getBasicRemote().sendObject(figure);
+            }
+        }
+    }</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>在编辑器中右键单击，然后选择 "Fix Imports"（修复导入）（Alt-Shift-I 组合键；在 Mac 上为 ⌘-Shift-I 组合键）。保存所做的更改。</p>
+</li>
+<li>
+<p>在 "Projects"（项目）窗口中右键单击项目，然后选择 "Run"（运行）。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>当您单击 "Run"（运行）时，IDE 会将浏览器窗口打开到 <a href="http://localhost:8080/WhiteboardApp/">http://localhost:8080/WhiteboardApp/</a>。</p>
+</div>
+<div class="paragraph">
+<p>*注：*您可能需要从应用程序服务器取消部署以前的应用程序，或者强制在浏览器中重新加载此页。</p>
+</div>
+<div class="paragraph">
+<p>如果查看浏览器消息，您会看到每次在画布中单击时，都会通过 JSON 将字符串发送到端点。</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/websocket-onebrowser.png" alt="websocket onebrowser">
+</div>
+<div class="title">Figure 6. 包含浏览器中的图形和 Web 控制台中显示的 JSON 的画布</div>
+</div>
+<div class="paragraph">
+<p>如果将另一个浏览器打开到  <code><a href="http://localhost:8080/WhiteboardApp/" class="bare">http://localhost:8080/WhiteboardApp/</a></code> ，您会看到每次在一个浏览器的画布中单击时，都会在另一个浏览器的画布中重新生成新的圆形或方形。</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/websocket-twobrowsers.png" alt="websocket twobrowsers">
+</div>
+<div class="title">Figure 7. 通过端点发送 JSON 的两个浏览器</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_向端点发送二进制数据">向端点发送二进制数据</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>应用程序现在可以处理字符串并通过 JSON 将字符串发送到端点，然后将字符串发送到已连接的客户端。在此部分，您将修改 JavaScript 文件以发送和接收二进制数据。</p>
+</div>
+<div class="paragraph">
+<p>要将二进制数据发送到端点，您需要将 WebSocket 的  <code>binaryType</code>  属性设置为  <code>arraybuffer</code> 。这可确保通过  <code>ArrayBuffer</code>  完成使用 WebSocket 的任何二进制数据传输。由  <code>whiteboard.js</code>  中的  <code>defineImageBinary</code>  方法执行二进制数据转换。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>打开  <code>websocket.js</code> ，然后添加以下代码以将 WebSocket 的  <code>binaryType</code>  属性设置为  <code>arraybuffer</code> 。</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">websocket.binaryType = "arraybuffer";</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>添加以下方法以将二进制数据发送到端点。</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">function sendBinary(bytes) {
+    console.log("sending binary: " + Object.prototype.toString.call(bytes));
+    websocket.send(bytes);
+}</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>修改  <code>onMessage</code>  方法以添加以下代码（<strong>粗体</strong>），从而选择该方法用于根据传入消息中的数据类型更新画布。</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">function onMessage(evt) {
+    console.log("received: " + evt.data);
+    *if (typeof evt.data == "string") {*
+        drawImageText(evt.data);
+    *} else {
+        drawImageBinary(evt.data);
+    }*
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>如果收到包含二进制数据的消息，则会调用  <code>drawImageBinary</code>  方法。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>打开  <code>whiteboard.js</code>  并添加以下方法。在解析传入的二进制数据之后，会调用  <code>drawImageBinary</code>  方法以更新画布。 <code>defineImageBinary</code>  方法用于将画布快照准备为二进制数据。</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">function drawImageBinary(blob) {
+    var bytes = new Uint8Array(blob);
+//    console.log('drawImageBinary (bytes.length): ' + bytes.length);
+
+    var imageData = context.createImageData(canvas.width, canvas.height);
+
+    for (var i=8; i&lt;imageData.data.length; i++) {
+        imageData.data[i] = bytes[i];
+    }
+    context.putImageData(imageData, 0, 0);
+
+    var img = document.createElement('img');
+    img.height = canvas.height;
+    img.width = canvas.width;
+    img.src = canvas.toDataURL();
+}
+
+function defineImageBinary() {
+    var image = context.getImageData(0, 0, canvas.width, canvas.height);
+    var buffer = new ArrayBuffer(image.data.length);
+    var bytes = new Uint8Array(buffer);
+    for (var i=0; i&lt;bytes.length; i++) {
+        bytes[i] = image.data[i];
+    }
+    sendBinary(buffer);
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>现在，当您想要以  <code>ArrayBuffer</code>  类型生成二进制数据并将其发送到端点时，需要添加一种方法来调用  <code>defineImageBinary</code> 。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>打开  <code>index.html</code> ，然后修改  <code>&lt;table&gt;</code>  元素以将以下行添加到窗体中的表中。</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;tr&gt;
+    &lt;th&gt; &lt;/th&gt;
+    &lt;td&gt;&lt;input type="submit" value="Send Snapshot" onclick="defineImageBinary(); return false;"&gt;&lt;/td&gt;
+    &lt;td&gt; &lt;/td&gt;
+    &lt;td&gt; &lt;/td&gt;
+    &lt;td&gt; &lt;/td&gt;
+&lt;/tr&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>新行包含 "Send Snapshot"（发送快照）按钮，用于将画布的二进制快照发送到已连接的对等方。单击此按钮时，将调用  <code>whiteboard.js</code>  中的  <code>defineImageBinary</code>  方法。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>打开  <code>MyWhiteboard.java</code> ，然后添加以下方法，用于在端点收到包含二进制数据的消息时将二进制数据发送到对等方。</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@OnMessage
+public void broadcastSnapshot(ByteBuffer data, Session session) throws IOException {
+    System.out.println("broadcastBinary: " + data);
+    for (Session peer : peers) {
+        if (!peer.equals(session)) {
+            peer.getBasicRemote().sendBinary(data);
+        }
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>*注：*需要为  <code>java.nio.ByteBuffer</code>  添加 import 语句。</p>
+</div>
+<div class="paragraph">
+<p>可以修改应用程序以使用户能够停止向端点发送数据。默认情况下，只要对等方打开了页面就会立即连接所有这些对等方，并将数据从浏览器发送到连接的所有对等方。可以添加简单条件，以便只有在选择了此选项时才会将数据发送到端点。这并不影响接收数据。仍会从端点接收数据。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>修改  <code>whiteboard.js</code>  中的  <code>defineImage</code>  方法以添加以下代码（<strong>粗体</strong>）。</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">        drawImageText(json);
+*    if (document.getElementById("instant").checked) {*
+        sendText(json);
+*    }*
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>检查元素的 ID 是否为  <code>checked</code>  的条件代码</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>打开  <code>index.html</code> ，然后修改  <code>&lt;table&gt;</code>  元素以向窗体中添加复选框。</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;tr&gt;
+    &lt;th&gt; &lt;/th&gt;
+    &lt;td&gt;&lt;input type="submit" value="Send Snapshot" onclick="defineImageBinary(); return false;"&gt;&lt;/td&gt;
+    &lt;td&gt;*&lt;input type="checkbox" id="instant" value="Online" checked="true"&gt;Online*&lt;/td&gt;
+    &lt;td&gt; &lt;/td&gt;
+    &lt;td&gt; &lt;/td&gt;
+&lt;/tr&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>取消选中 "Online"（联机）复选框时不会发送数据，但客户端仍将从端点接收数据。</p>
+</div>
+<div class="paragraph">
+<p>如果添加 "Send Snapshot"（发送快照）按钮和 "Online"（联机）复选框并再次运行应用程序，则您将会在索引页中看到新元素。如果打开另一个浏览器并取消选中 "Online"（联机）按钮，您会看到在画布中单击时不会将 JSON 消息发送到端点。</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/websocket-onebrowser-binary.png" alt="websocket onebrowser binary">
+</div>
+<div class="title">Figure 8. 浏览器中显示已发送二进制数据的消息的 Web 控制台</div>
+</div>
+<div class="paragraph">
+<p>如果单击 "Send Snapshot"（发送快照），则二进制数据将发送到端点并广播到已连接的客户端。</p>
+</div>
+<div class="paragraph">
+<p><a href="/about/contact_form.html?to=3&amp;subject=Feedback:%20Using%20the%20WebSocket%20API%20in%20a%20Web%20Application">发送有关此教程的反馈意见</a></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_另请参见">另请参见</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>有关使用 NetBeans IDE 开发 Java EE 应用程序的更多信息，请参见以下资源：</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>演示：<a href="maven-websocketapi-screencast.html">在 Web 应用程序中使用 WebSocket API</a></p>
+</li>
+<li>
+<p><a href="javaee-intro.html">Java EE 技术简介</a></p>
+</li>
+<li>
+<p><a href="javaee-gettingstarted.html">Java EE 应用程序入门指南</a></p>
+</li>
+<li>
+<p><a href="../../trails/java-ee.html">Java EE 和 Java Web 学习资源</a></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>您可以在 <a href="http://download.oracle.com/javaee/6/tutorial/doc/">Java EE 教程</a>中找到有关使用 Java EE 的详细信息。</p>
+</div>
+<div class="paragraph">
+<p>要发送意见和建议、获得支持以及随时了解 NetBeans IDE Java EE 开发功能的最新开发情况，请<a href="../../../community/lists/top.html">加入 nbj2ee 邮件列表</a>。</p>
+</div>
+</div>
+</div>
+            
+<section class='tools'>
+    <ul class="menu align-center">
+        <li><a title="Facebook" href="https://www.facebook.com/NetBeans"><i class="fa fa-md fa-facebook"></i></a></li>
+        <li><a title="Twitter" href="https://twitter.com/netbeans"><i class="fa fa-md fa-twitter"></i></a></li>
+        <li><a title="Github" href="https://github.com/apache/incubator-netbeans"><i class="fa fa-md fa-github"></i></a></li>
+        <li><a title="YouTube" href="https://www.youtube.com/user/netbeansvideos"><i class="fa fa-md fa-youtube"></i></a></li>
+        <li><a title="Slack" href="https://tinyurl.com/netbeans-slack-signup/"><i class="fa fa-md fa-slack"></i></a></li>
+        <li><a title="JIRA" href="https://issues.apache.org/jira/projects/NETBEANS/summary"><i class="fa fa-mf fa-bug"></i></a></li>
+    </ul>
+    <ul class="menu align-center">
+        
+        <li><a href="https://github.com/apache/incubator-netbeans-website/blob/master/netbeans.apache.org/src/content/kb/docs/javaee/maven-websocketapi_zh_CN.asciidoc" title="See this page in github"><i class="fa fa-md fa-edit"></i> See this page in GitHub.</a></li>
+    </ul>
+</section>
+
+        </div>
+        
+
+<div class='grid-container incubator-area' style='margin-top: 64px'>
+    <div class='grid-x grid-padding-x'>
+        <div class='large-auto cell text-center'>
+            <a href="https://www.apache.org/">
+                <img style="width: 320px" title="Apache Software Foundation" src="/images/asf_logo_wide.svg" />
+            </a>
+        </div>
+        <div class='large-auto cell text-center'>
+            <a href="https://www.apache.org/events/current-event.html">
+               <img style="width:234px; height: 60px;" title="Apache Software Foundation current event" src="https://www.apache.org/events/current-event-234x60.png"/>
+            </a>
+        </div>
+    </div>
+</div>
+<footer>
+    <div class="grid-container">
+        <div class="grid-x grid-padding-x">
+            <div class="large-auto cell">
+                
+                <h1>About</h1>
+                <ul>
+                    <li><a href="https://www.apache.org/foundation/thanks.html">Thanks</a></li>
+                    <li><a href="https://www.apache.org/foundation/sponsorship.html">Sponsorship</a></li>
+                    <li><a href="https://www.apache.org/security/">Security</a></li>
+                    <li><a href="https://incubator.apache.org/projects/netbeans.html">Incubation Status</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/community/index.html">Community</a></h1>
+                <ul>
+                    <li><a href="/community/mailing-lists.html">Mailing lists</a></li>
+                    <li><a href="/community/committer.html">Becoming a committer</a></li>
+                    <li><a href="/community/events.html">NetBeans Events</a></li>
+                    <li><a href="https://www.apache.org/events/current-event.html">Apache Events</a></li>
+                    <li><a href="/community/who.html">Who is who</a></li>
+                    <li><a href="/community/nekobean.html">NekoBean</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/participate/index.html">Participate</a></h1>
+                <ul>
+                    <li><a href="/participate/submit-pr.html">Submitting Pull Requests</a></li>
+                    <li><a href="/participate/report-issue.html">Reporting Issues</a></li>
+                    <li><a href="/participate/netcat.html">NetCAT - Community Acceptance Testing</a></li>
+                    <li><a href="/participate/index.html#documentation">Improving the documentation</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/help/index.html">Get Help</a></h1>
+                <ul>
+                    <li><a href="/help/index.html#documentation">Documentation</a></li>
+                    <li><a href="/help/getting-started.html">Platform videos</a></li>
+                    <li><a href="/wiki/index.asciidoc">Wiki</a></li>
+                    <li><a href="/help/index.html#support">Community Support</a></li>
+                    <li><a href="/help/commercial-support.html">Commercial Support</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/download/nb100/nb100.html">Download</a></h1>
+                <ul>
+                    <li><a href="/download/index.html#releases">Releases</a></li>
+                    <ul>
+                        <li><a href="/download/nb100/nb100.html">Apache NetBeans 10.0</a></li>
+                        <li><a href="/download/nb90/nb90.html">Apache NetBeans 9.0</a></li>
+                    </ul>
+                    <li><a href="/plugins/index.html">Plugins</a></li>
+                    <li><a href="/download/index.html#source">Building from source</a></li>
+                    <li><a href="/download/index.html#previous">Previous releases</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</footer>
+<div class='footer-disclaimer'>
+    <div class="footer-disclaimer-content">
+        <p>Copyright &copy; 2017-2018 <a href="https://www.apache.org">The Apache Software Foundation</a>.</p>
+        <p>Licensed under the Apache <a href="https://www.apache.org/licenses/">license</a>, version 2.0</p>
+        <p><a href="https://incubator.apache.org/" alt="Apache Incubator"><img src='/images/incubator_feather_egg_logo_bw_crop.png' title='Apache Incubator'></img></a></p>
+        <div style='max-width: 40em; margin: 0 auto'>
+            <p>Apache NetBeans is an effort undergoing incubation at The Apache Software Foundation (ASF), sponsored by the Apache Incubator. Incubation is required of all newly accepted projects until a further review indicates that the infrastructure, communications, and decision making process have stabilized in a manner consistent with other successful ASF projects. While incubation status is not necessarily a reflection of the completeness or stability of the code, it does indicate that the project has yet to be fully endorsed by the ASF.</p>
+            <p>Apache Incubator, Apache, the Apache feather logo, the Apache NetBeans logo, and the Apache Incubator project logo are trademarks of <a href="https://www.apache.org">The Apache Software Foundation</a>.</p>
+            <p>Oracle and Java are registered trademarks of Oracle and/or its affiliates.</p>
+        </div>
+        
+    </div>
+</div>
+
+
+
+        <script src="/js/vendor/jquery-3.2.1.min.js"></script>
+        <script src="/js/vendor/what-input.js"></script>
+        <script src="/js/vendor/jquery.colorbox-min.js"></script>
+        <script src="/js/vendor/foundation.min.js"></script>
+        <script src="/js/netbeans.js"></script>
+        <script>
+            
+            $(function(){ $(document).foundation(); });
+        </script>
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/highlight.min.js"></script>
+        <script>
+         $(document).ready(function() { $("pre code").each(function(i, block) { hljs.highlightBlock(block); }); }); 
+        </script>
+        
+    </body>
+</html>

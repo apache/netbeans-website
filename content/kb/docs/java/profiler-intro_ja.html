@@ -1,0 +1,875 @@
+
+<!DOCTYPE html>
+<html class="no-js" lang="en" dir="ltr">
+    
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>NetBeans IDEでのJavaアプリケーションのプロファイリングの概要</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="NetBeans IDEでのJavaアプリケーションのプロファイリングの概要 - Apache NetBeans">
+    <meta name="author" content="Apache NetBeans">
+    <meta name="keywords" content="Apache NetBeans, Tutorials, NetBeans IDEでのJavaアプリケーションのプロファイリングの概要">
+    <meta name="generator" content="Apache NetBeans">
+    <link rel="stylesheet" href="/css/font-awesome.min.css">
+     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/styles/default.min.css"> 
+    <link rel="stylesheet" href="/css/netbeans.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#ffc40d">
+    <meta name="theme-color" content="#ffffff">
+    <link href="https://fonts.googleapis.com/css?family=Lato:400,700" rel="stylesheet"> 
+    <!--
+        Licensed to the Apache Software Foundation (ASF) under one
+        or more contributor license agreements.  See the NOTICE file
+        distributed with this work for additional information
+        regarding copyright ownership.  The ASF licenses this file
+        to you under the Apache License, Version 2.0 (the
+        "License"); you may not use this file except in compliance
+        with the License.  You may obtain a copy of the License at
+        http://www.apache.org/licenses/LICENSE-2.0
+        Unless required by applicable law or agreed to in writing,
+        software distributed under the License is distributed on an
+        "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+        KIND, either express or implied.  See the License for the
+        specific language governing permissions and limitations
+        under the License.
+    -->
+</head>
+
+
+    <body>
+        
+
+<div class="title-bar" data-responsive-toggle="responsive-menu" data-hide-for="medium">
+    <button type="button" data-toggle="responsive-menu"><i style='font-size: 32px; color: #fff; padding: 8px' class='fa fa-bars'></i></button>
+    <div class="title-bar-title">Apache NetBeans</div>
+</div>
+<div class="top-bar" id="responsive-menu">
+    <div class='top-bar-left'>
+        <a class='title' href="/"><img src='/images/apache-netbeans.svg' style='padding: 8px; height: 48px;'></img> Apache NetBeans (incubating)</a>
+    </div>
+    <div class="top-bar-right">
+        <ul class="vertical medium-horizontal menu" data-responsive-menu="drilldown medium-dropdown">
+            <li> <a href="/community/index.html">Community</a> </li>
+            <li> <a href="/participate/index.html">Participate</a> </li>
+            <li> <a href="https://blogs.apache.org/netbeans/">Blog</a></li>
+            <li> <a href="/help/index.html">Get Help</a> </li>
+            <li> <a href="/plugins/index.html">Plugins</a> </li>
+            <li> <a href="/download/nb100/nb100.html">Download</a> </li>
+        </ul>
+    </div>
+</div>
+
+
+        
+<!-- src/templates/news -->
+<section class="hero news alternate" style='margin-bottom: 2em'>
+    <div class='grid-container'>
+        <div class='cell'>
+            <div class="annotation">Just released!</div>
+            <h1>Apache NetBeans 10.0</h1>
+            <p><a class="button success" href="/download/nb100/nb100.html">Read more</a></p>
+        </div>
+    </div>
+</section>
+
+        <div class='grid-container main-content'>
+            <div id="toc" class="toc">
+<div id="toctitle"></div>
+<ul class="sectlevel1">
+<li><a href="#_開始">開始</a>
+<ul class="sectlevel2">
+<li><a href="#_前提条件">前提条件</a></li>
+<li><a href="#_チュートリアルに必要なソフトウェア">チュートリアルに必要なソフトウェア</a></li>
+</ul>
+</li>
+<li><a href="#_初めてのプロファイリング">初めてのプロファイリング</a>
+<ul class="sectlevel2">
+<li><a href="#_サンプル_プロジェクトの作成">サンプル・プロジェクトの作成</a></li>
+<li><a href="#_初めてのプロファイラの使用">初めてのプロファイラの使用</a></li>
+</ul>
+</li>
+<li><a href="#_プロファイリング_タスクの選択">プロファイリング・タスクの選択</a>
+<ul class="sectlevel2">
+<li><a href="#_アプリケーションのモニタリング">アプリケーションのモニタリング</a></li>
+<li><a href="#_cpuパフォーマンスの解析">CPUパフォーマンスの解析</a></li>
+<li><a href="#_メモリー使用状況の解析">メモリー使用状況の解析</a></li>
+</ul>
+</li>
+<li><a href="#_スナップショットの作成">スナップショットの作成</a>
+<ul class="sectlevel2">
+<li><a href="#_メモリー_スナップショットの作成と比較">メモリー・スナップショットの作成と比較</a></li>
+</ul>
+</li>
+<li><a href="#_関連項目">関連項目</a></li>
+</ul>
+</div>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>NetBeans IDEには、アプリケーションの実行時動作に関する重要な情報を提供できる強力なプロファイリング・ツールが含まれています。NetBeansプロファイリング・ツールを使用すると、IDE内からスレッドの状態、CPUパフォーマンス、およびアプリケーションのメモリー使用状況を容易にモニターすることができ、しかも比較的低いオーバーヘッドしかかかりません。</p>
+</div>
+<div class="paragraph">
+<p>この入門ドキュメントは、IDEに含まれているプロファイリング・ツールの概要であり、NetBeansプロジェクトのプロファイリングをすばやく開始するのに役立つガイドです。このドキュメントは、IDEで使用できる様々なプロファイリング・タスクと、プロジェクトをプロファイリングしたときに得られるプロファイリング結果を示すことを目的としています。IDEに含まれているすべてのプロファイリング機能を対象としているわけではなく、またアプリケーションで発生する可能性のある特定のパフォーマンスの問題を解決するためにプロファイリング結果を解釈する方法を説明しているわけでもありません。</p>
+</div>
+<div class="paragraph">
+<p>このドキュメントでは、プロファイリング・ツールを使用して、IDEに含まれている単純なJavaアプリケーションであるAnagram Gameサンプル・アプリケーションに関するプロファイリング・データを取得します。Anagram Gameは非常に単純なJavaアプリケーション・プロジェクトですが、より大規模で複雑なJavaアプリケーションや、Webおよびエンタープライズ・アプリケーション・プロジェクトをプロファイルする場合も同じ手順に従います。</p>
+</div>
+<div class="paragraph">
+<p>このドキュメントでは、IDEを使用してアプリケーションをプロファイルし、次のプロファイリング結果を取得する方法を示します。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>アプリケーションの実行時動作</p>
+</li>
+<li>
+<p>アプリケーションのメソッドによって使用されたCPU時間</p>
+</li>
+<li>
+<p>オブジェクト作成</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>さらに、このドキュメントでは、プロファイリング結果のスナップショットを作成して比較する方法も示します。</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/netbeans-stamp-80-74-73.png" alt="netbeans stamp 80 74 73">
+</div>
+<div class="title">Figure 1. このページの内容は、NetBeans IDE 7.3、7.4および8.0に適用されます</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_開始">開始</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_前提条件">前提条件</h3>
+<div class="paragraph">
+<p>このドキュメントは、次のテクノロジについて基本的な知識またはプログラミング経験を持つ読者を想定して書かれています。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Javaプログラミング</p>
+</li>
+<li>
+<p>NetBeans IDE</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_チュートリアルに必要なソフトウェア">チュートリアルに必要なソフトウェア</h3>
+<div class="paragraph">
+<p>このチュートリアルでは、コンピュータに次のソフトウェアをインストールしておく必要があります。</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">ソフトウェアまたはリソース</th>
+<th class="tableblock halign-left valign-top">必須バージョン</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://netbeans.org/downloads/index.html">NetBeans IDE</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">7.3, 7.4, 8.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://www.oracle.com/technetwork/java/javase/downloads/index.html">Java Development Kit (JDK)</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">バージョン7または8</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><strong>注意:</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>プロファイリング・ツールはNetBeans IDEにバンドルされているため、アプリケーションのプロファイリングを開始するための特殊な設定は必要ありません。</p>
+</li>
+<li>
+<p>NetBeans IDE 7.2またはそれ以前を使用している場合は、<a href="../../72/java/profiler-intro.html">NetBeans IDE 7.2でのJavaアプリケーションのプロファイリングの概要</a>を参照してください。</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_初めてのプロファイリング">初めてのプロファイリング</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>初めてプロファイリング・ツールを使用する場合は、正確なプロファイル結果が得られるようにするとともに、このツールをプロジェクトに統合するために、IDEでいくつかの初期操作を実行する必要があります。これを示すために、まずAnagramGameプロジェクトを作成し、次に調整を実行します。AnagramGameプロジェクトを初めてプロファイルすると、IDEによって自動的に統合が実行されます。</p>
+</div>
+<div class="sect2">
+<h3 id="_サンプル_プロジェクトの作成">サンプル・プロジェクトの作成</h3>
+<div class="paragraph">
+<p>このドキュメントでは、Anagram Gameサンプル・アプリケーションをプロファイルします。これを行うには、まず新規プロジェクト・ウィザードを使用してサンプル・アプリケーションを作成し、プロジェクトをメイン・プロジェクトとして設定します。</p>
+</div>
+<div class="paragraph">
+<p>Anagram Gameアプリケーションを作成するには、次の手順を実行します。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>メイン・メニューから「ファイル」&gt;「新規プロジェクト」([Ctrl]-[Shift]-[N]、Macの場合は[⌘]-[Shift]-[N])を選択します。</p>
+</li>
+<li>
+<p>新規プロジェクト・ウィザードで、「サンプル」&gt;「Java」カテゴリを選択します。</p>
+</li>
+<li>
+<p>Anagram Gameプロジェクトを選択します。「次」をクリックします。</p>
+</li>
+<li>
+<p>プロジェクトの場所を指定します。「終了」をクリックします。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>「終了」をクリックすると、IDEによってAnagram Gameサンプル・プロジェクトが作成されます。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>メイン・メニューから「実行」&gt;「メイン・プロジェクトとして設定」&gt;「AnagramGame」を選択します。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>プロジェクトをメイン・プロジェクトに設定すると、Anagram Gameプロジェクトの名前が太字で「プロジェクト」ウィンドウに表示されます。デフォルトでは、IDEを使用してプロジェクトをプロファイルすると、IDEによってメイン・プロジェクトがプロファイルされます。メイン・プロジェクトとして設定されたプロジェクトがない場合、IDEでは、「プロジェクト」ウィンドウで選択されたプロジェクトがプロファイルされます。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_初めてのプロファイラの使用">初めてのプロファイラの使用</h3>
+<div class="paragraph">
+<p>正確なプロファイリング結果を得るには、プロファイリングに使用されるJavaプラットフォームごとに調整データが必要です。初めてプロファイリング・ツールを実行している場合や、そのJavaプラットフォームの有効な調整データが使用できない場合は、IDEによって、使用しているプラットフォーム用の調整プロセスを実行するよう求められます。</p>
+</div>
+<div class="paragraph">
+<p>調整は1回のみ実行する必要があります。ただし、マシンの構成に対して、マシンのパフォーマンスに影響を与える可能性のある大幅な変更を加えた場合は、再度調整を実行してください。次の手順を実行することによって、いつでも調整を実行できます。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>「プロファイル」メニューから*「拡張コマンド」<strong>&gt;</strong>「調整データの管理」*を選択します。</p>
+</li>
+<li>
+<p>「Javaプラットフォーム」を選択します。「調整」をクリックします。
+image::images/calibrate-select-platform.png[title="調整時にJavaプラットフォームを選択するためのダイアログ・ボックス。"]</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>調整操作が完了すると、ダイアログ・ボックスが表示されます。「詳細を表示」をクリックして、調整結果に関する情報を含むダイアログ・ボックスを表示できます。Javaプラットフォームごとの調整データは、ホーム・ディレクトリ内の <code>.nbprofile</code> ディレクトリ内に保存されます。</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/calibrate-information.png" alt="calibrate information">
+</div>
+<div class="title">Figure 2. 調整情報ダイアログ</div>
+</div>
+<div class="paragraph">
+<p><strong>注意:*NetBeans IDE 7.4以前を使用している場合は、「プロファイル」メニューから</strong>「拡張コマンド」<strong>&gt;</strong>「プロファイラの調整の実行」*を選択し、「調整するJavaプラットフォームを選択」ダイアログ・ボックスでJavaプラットフォームを選択する必要があります。</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/calibrate-select-platform.png" alt="calibrate select platform">
+</div>
+<div class="title">Figure 3. 調整時にJavaプラットフォームを選択するためのダイアログ・ボックス。</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_プロファイリング_タスクの選択">プロファイリング・タスクの選択</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>IDEには、ニーズに応じてプロファイリングを調整できる多数の内部設定が用意されています。たとえば、生成される情報の量がいくぶん減るのと引き替えに、プロファイリングのオーバーヘッドを減らすことができます。ただし、使用可能な多数の設定の意味や使用方法を理解するには、ある程度時間がかかる可能性があります。多くのアプリケーションでは、ほとんどの場合、プロファイリング・タスクに指定されたデフォルト設定で十分です。</p>
+</div>
+<div class="paragraph">
+<p>プロジェクトをプロファイリングする場合は、「プロファイリング・タスクの選択」ダイアログ・ボックスを使用して、取得するプロファイリング情報のタイプに応じたタスクを選択します。次の表は、プロファイリング・タスクと、そのタスクの実行から得られるプロファイリング結果を示しています。</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">プロファイリング・タスク</th>
+<th class="tableblock halign-left valign-top">結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#monitor">アプリケーションをモニター</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">スレッドのアクティビティやメモリー割当てなどの、ターゲットJVMのプロパティに関する概要を取得する場合にこれを選択します。</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#cpu">CPUパフォーマンスを解析</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">メソッドの実行時間やメソッドが呼び出された回数などの、アプリケーション・パフォーマンスに関する詳細データを取得する場合にこれを選択します。</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#memory">メモリー使用状況を解析</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">オブジェクト割当てとガベージ・コレクションに関する詳細データを取得する場合にこれを選択します。</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>「プロファイリング・タスクの選択」ダイアログ・ボックスは、プロファイリング・タスクを実行するための主要なインタフェースです。タスクを選択した後、そのタスク設定を変更して、得られる結果を微調整できます。また、プロファイリング・タスクごとに、そのタスクに基づいたカスタムのプロファイリング・タスクを作成して保存することもできます。カスタムのプロファイリング・タスクを作成すると、そのカスタム・タスクが「プロファイリング・タスクの選択」ダイアログ・ボックスに表示され、後でカスタム設定を容易に検索したり、実行したりできるようになります。カスタムのプロファイリング・タスクを作成する場合は、「プロファイリング・タスクの選択」ダイアログ・ボックスで「<strong>詳細設定</strong>」をクリックすることによって、さらに高度なプロファイリング設定を変更できます。</p>
+</div>
+<div class="sect2">
+<h3 id="_アプリケーションのモニタリング">アプリケーションのモニタリング</h3>
+<div class="paragraph">
+<p>「モニター」タスクを選択した場合、ターゲット・アプリケーションはインストゥルメントなしで起動されます。アプリケーションをモニタリングしている場合は、ターゲットJVMのいくつかの重要なプロパティに関する概要を取得します。アプリケーションのモニタリングにかかるオーバーヘッドは非常に低いため、このモードではアプリケーションを長時間実行できます。</p>
+</div>
+<div class="paragraph">
+<p>Anagram Gameアプリケーションをモニターするには、次の手順を実行します。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>AnagramGameプロジェクトがメイン・プロジェクトとして設定されていることを確認します。</p>
+</li>
+<li>
+<p>メイン・メニューから「プロファイル」&gt;「メイン・プロジェクトのプロファイル」を選択します。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>または、「プロジェクト」ウィンドウでプロジェクト・ノードを右クリックし、「プロファイル」を選択します。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>「プロファイリング・タスクの選択」ダイアログ・ボックスで「モニター」を選択します。</p>
+</li>
+<li>
+<p>必要に応じて、追加のモニター・オプションを選択します。「実行」をクリックします。
+image::images/monitor-task.png[title="「アプリケーションのモニター」プロファイリング・タスクの選択"]</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>オプションの上にカーソルを置くと、ツールチップにそのオプションの詳細を表示できます。</p>
+</div>
+<div class="paragraph">
+<p>「実行」をクリックすると、IDEによってアプリケーションが起動され、IDEの左ペインに「プロファイラ」ウィンドウが開きます。「プロファイラ」ウィンドウには、次を実行できるコントロールが含まれています。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>プロファイリング・タスクの制御</p>
+</li>
+<li>
+<p>現在のプロファイリング・タスクのステータスの確認</p>
+</li>
+<li>
+<p>プロファイリング結果の表示</p>
+</li>
+<li>
+<p>プロファイリング結果のスナップショットの管理</p>
+</li>
+<li>
+<p>基本的な遠隔測定統計の確認</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>「プロファイラ」ウィンドウまたはメイン・メニュー内のコントロールを使用して、モニタリング・データを表示できる各ウィンドウを開くことができます。「遠隔測定の概要」ウィンドウを使用すると、モニタリング・データの概要をリアル・タイムですばやく取得できます。グラフの上にカーソルを置くと、そのグラフに表示されているデータに関するより詳細な統計情報を表示できます。「遠隔測定の概要」ウィンドウ内のいずれかのグラフをダブルクリックして、そのグラフのより大きく、より詳細なバージョンを開くことができます。</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/profile-intro-telemoverview.png" alt="profile intro telemoverview">
+</div>
+<div class="title">Figure 4. 「遠隔測定の概要」ウィンドウ</div>
+</div>
+<div class="paragraph">
+<p>概要が自動的に開かれない場合は、「ウィンドウ」&gt;「プロファイリング」&gt;「VM遠隔測定の概要」を選択して、「出力」ウィンドウに概要を開くことができます。プロファイリング・セッション中はいつでも、「VM遠隔測定の概要」ウィンドウを開いてモニタリング・データを確認できます。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_cpuパフォーマンスの解析">CPUパフォーマンスの解析</h3>
+<div class="paragraph">
+<p>「CPU」タスクを選択すると、IDEによってアプリケーションのメソッド・レベルのCPUパフォーマンス(実行時間)がプロファイルされ、結果がリアル・タイムで処理されます。パフォーマンスを解析する方法として、定期的にスタック・トレースを取得するか、またはアプリケーション内のメソッドをインストゥルメントするかを選択できます。すべてのメソッドをインストゥルメントするか、またはインストゥルメントをアプリケーション・コードの一部に(場合によっては、特定のコード・フラグメントにまで)制限するかを選択できます。</p>
+</div>
+<div class="paragraph">
+<p>CPUパフォーマンスを解析するには、次のオプションのいずれかを選択することによって、アプリケーションがプロファイルされる方法を選択します。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>*簡易(サンプリング)。*このモードでは、IDEはアプリケーションをサンプリングし、定期的にスタック・トレースを取得します。このオプションは、メソッドをインストゥルメントする方法と比較して正確性が低下しますが、オーバーヘッドは低くなります。このオプションは、インストゥルメントが必要になる可能性のあるメソッドを見つけるのに役立ちます。</p>
+</li>
+<li>
+<p>*詳細(インストゥルメント済)。*このモードでは、プロファイルされたアプリケーションのメソッドがインストゥルメントされます。IDEでは、スレッドがプロジェクトのメソッドに入った時刻と出た時刻が記録されるため、各メソッド内で費やされた時間の長さを確認できます。メソッドに入るときは、スレッドによって「メソッドに入る」イベントが生成されます。メソッドから出るときは、スレッドによって対応する「メソッドから出る」イベントが生成されます。この両方のイベントのタイムスタンプが記録されます。これらのデータはリアル・タイムで処理されます。</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>アプリケーション内のすべてのメソッドをインストゥルメントするか、または1つ以上の*ルート・メソッド*を指定することによってインストゥルメントをアプリケーションのコードのサブセットに制限するかを選択できます。ルート・メソッドは、ソース・コード内でポップアップ・メニューを使用するか、または「<strong>カスタマイズ</strong>」をクリックして「プロファイリング・ルートの編集」ダイアログ・ボックスを開くことによって指定できます。</p>
+</div>
+<div class="paragraph">
+<p>ルート・メソッドは、ユーザーがインストゥルメントのルートとして指定する、ソース・コード内のメソッド、クラス、またはパッケージです。プロファイリング・データは、アプリケーションのスレッドのいずれかがインストゥルメントのルートに入ったときと出たときに収集されます。アプリケーションのスレッドのいずれかがルート・メソッドに入るまで、プロファイリング・データは収集されません。ルート・メソッドを指定すると、プロファイリングのオーバーヘッドを大幅に削減できます。一部のアプリケーションでは、アプリケーション全体をプロファイリングすると、大量のプロファイリング・データが生成されてアプリケーションが使用できなくなるか、またはアプリケーションがクラッシュする原因になる可能性があるため、ルート・メソッドを指定することが、詳細な、または現実的なパフォーマンス・データを取得するための唯一の方法である場合があります。</p>
+</div>
+<div class="paragraph">
+<p><strong>注意:</strong> クイック・プロファイル・モードはNetBeans IDE 7.0以前では使用できません。プロファイリング結果を取得するにはインストゥルメントを使用するしかありませんが、アプリケーション全体をインストゥルメントするか、または1つ以上のルート・メソッドを指定することによってインストゥルメントをアプリケーションの一部に制限するかを選択できます。</p>
+</div>
+<div class="paragraph">
+<p>インストゥルメントされるソースを制限するためのフィルタを使用することによって、プロファイルされるコードの量をさらに微調整できます。</p>
+</div>
+<div class="paragraph">
+<p>ここで、IDEを使用してAnagram GameアプリケーションのCPUパフォーマンスを解析します。「アプリケーションの一部」オプションを選択した後、プロファイリング・ルートとして <code>WordLibrary.java</code> を選択します。このクラスをプロファイリング・ルートとして選択することによって、プロファイリングがこのクラス内のメソッドに制限されます。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>「プロファイラ」ウィンドウ内の「停止」ボタンをクリックして、以前のプロファイリング・セッションを停止します(まだ実行されている場合)。</p>
+</li>
+<li>
+<p>メイン・メニューから「プロファイル」&gt;「メイン・プロジェクトのプロファイル」を選択します。</p>
+</li>
+<li>
+<p>「プロファイリング・タスクの選択」ダイアログ・ボックスで「CPU」を選択します。</p>
+</li>
+<li>
+<p>「<strong>詳細(インストゥルメント済)</strong>」を選択します。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>このオプションを使用するには、プロファイリング用ルート・メソッドも指定する必要があります。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>「<strong>カスタマイズ</strong>」をクリックして「プロファイリング・ルートの編集」ダイアログ・ボックスを開きます。
+image::images/select-cpu-task.png[title="「CPU」プロファイリング・タスクの選択"]</p>
+</li>
+<li>
+<p>「プロファイリング・ルートの編集」ダイアログ・ボックスで、「AnagramGame」ノードを展開し、 <code>Sources/com.toy.anagrams.lib/WordLibrary</code> を選択します。プロジェクトをプロファイリングする場合は、複数のルート・メソッドを指定できます。
+image::images/edit-profiling-roots.png[title="ルート・メソッドを選択するためのダイアログ・ボックス"]</p>
+</li>
+<li>
+<p>「詳細」ボタンをクリックして、ルート・メソッドを追加、編集、および除去するためのより詳細なオプションを提供する「プロファイリング・ルートの編集(詳細)」ダイアログ・ボックスを開きます。
+image::images/edit-profiling-roots-adv.png[title="ルート・メソッドを指定するためのダイアログ・ボックス"]</p>
+<div class="literalblock">
+<div class="content">
+<pre>``WordLibrary`` がルート・メソッドとして表示されていることが確認できます。「OK」をクリックして「プロファイリング・ルートの編集(詳細)」ダイアログ・ボックスを閉じます。</pre>
+</div>
+</div>
+</li>
+<li>
+<p>「OK」をクリックして「プロファイリング・ルートの編集」ダイアログ・ボックスを閉じます。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>プロファイリング・ルートを選択した後に、「プロファイリング・タスクの選択」ダイアログ・ボックスで「<strong>編集</strong>」をクリックし、選択したルート・メソッドを変更できます。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>「フィルタ」値で「<strong>プロジェクト・クラスだけをプロファイル</strong>」を選択します。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>フィルタを使用すると、インストゥルメントされるクラスを制限できます。IDEの事前定義されたプロファイリング・フィルタから選択するか、または独自のカスタム・フィルタを作成することができます。「<strong>フィルタ値を表示</strong>」をクリックして、選択したフィルタが適用されたときにプロファイルされるクラスの一覧を確認できます。</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/show-filter-value.png" alt="show filter value">
+</div>
+<div class="title">Figure 5. 「フィルタ値を表示」ダイアログ・ボックス</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>「プロファイリング・タスクの選択」ダイアログ・ボックスで「実行」をクリックし、プロファイリング・セッションを開始します。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>「実行」をクリックすると、IDEによってアプリケーションが起動され、プロファイリング・セッションが開始されます。プロファイリング結果を表示するには、「プロファイラ」ウィンドウ内の「ライブ結果」をクリックして「ライブ結果」ウィンドウを開きます。「ライブ結果」ウィンドウには、これまでに収集されたプロファイリング・データが表示されます。表示されるデータは、デフォルトでは数秒ごとにリフレッシュされます。CPUパフォーマンスを解析している場合、「ライブ結果」ウィンドウには、各メソッドの所要時間と各メソッドの呼出し回数に関する情報が表示されます。Anagram Gameアプリケーションでは、選択されたルート・メソッドのみが最初に呼び出されていることが確認できます。</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/cpu-liveresults1.png" alt="cpu liveresults1">
+</div>
+<div class="title">Figure 6. CPUのライブ結果</div>
+</div>
+<div class="paragraph">
+<p>メソッドの名前を右クリックし、「ソースへ移動」を選択することによって、一覧表示された任意のメソッドを含むソース・コードにすばやく移動できます。「ソースへ移動」をクリックすると、そのクラスがソース・エディタに表示されます。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_メモリー使用状況の解析">メモリー使用状況の解析</h3>
+<div class="paragraph">
+<p>「メモリー使用状況を解析」タスクによって、ターゲット・アプリケーション内で割り当てられているオブジェクトに関するデータ(割り当てられたオブジェクトの数、型、場所など)が提供されます。</p>
+</div>
+<div class="paragraph">
+<p>メモリー・パフォーマンスを解析するには、次のオプションのいずれかを選択することによって、取得するデータの量を選択します。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>*簡易。*このオプションが選択されている場合、プロファイラはアプリケーションをサンプリングして、ライブ・オブジェクトに限定されたデータを提供します。このオプションは、ライブ・オブジェクトのみ追跡し、計測時に割当てを追跡しません。このオプションを選択した場合は、スタック・トレースを記録したり、プロファイリング・ポイントを使用したりすることはできません。このオプションを選択すると、「詳細」オプションよりもオーバーヘッドが大幅に削減されます。</p>
+</li>
+<li>
+<p>*詳細。*このオプションを選択すると、割り当てられたオブジェクトの数、タイプおよび場所に関する情報を取得できます。ターゲットJVMによって現在ロードされているすべてのクラス(および新規にロードされる各クラス)が計測され、オブジェクト割当てに関する情報が生成されます。メモリ使用状況の分析時にプロファイリング・ポイントを使用する場合、またはコール・スタックを記録する場合は、このオプションを選択する必要があります。このオプションを選択すると、簡易オプションよりもプロファイリング・オーバーヘッドが増加します。</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>「詳細」オプションを選択した場合は、次のオプションも設定できます。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>*完全なオブジェクト・ライフスタイルを記録。*存続している世代数など、各オブジェクトのすべての情報を記録するには、このオプションを選択します。</p>
+</li>
+<li>
+<p>*割当てのスタック・トレースを記録。*完全なコール・スタックを記録するには、このオプションを選択します。このオプションでは、メモリー・スナップショットを表示する際にメソッド呼出しの逆呼出しツリーを表示できます。</p>
+</li>
+<li>
+<p>*定義済みプロファイリング・ポイントを使用。*プロファイリング・ポイントを有効にするには、このオプションを選択します。無効なプロファイリング・ポイントは無視されます。選択解除されている場合は、プロジェクト内のすべてのプロファイリング・ポイントが無視されます。</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>「プロファイリング・タスクの選択」ウィンドウの「オーバーヘッド」メーターは、ユーザーが選択したプロファイリング・オプションに応じて、プロファイリングのオーバーヘッドの大まかな増減を示します。</p>
+</div>
+<div class="paragraph">
+<p>この課題では、IDEを使用してAnagram Gameアプリケーションのメモリー・パフォーマンスを解析します。<strong>「詳細」*オプションを選択し、</strong>「割当てのスタック・トレースを記録」*を選択して、IDEで完全なコール・スタックを記録できます。このオプションを選択すると、メモリー・スナップショットを作成したときに、逆呼出しツリーを表示できます。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>「プロファイラ」ウィンドウ内の「停止」ボタンをクリックして以前のプロファイリング・セッションを停止し(まだ実行されている場合)、Anagram Gameアプリケーションを停止します。</p>
+</li>
+<li>
+<p>メイン・メニューから「プロファイル」&gt;「メイン・プロジェクトのプロファイル」を選択します。</p>
+</li>
+<li>
+<p>「プロファイリング・タスクの選択」ダイアログ・ボックスで「メモリー」を選択します。</p>
+</li>
+<li>
+<p>*「詳細」*を選択します。</p>
+</li>
+<li>
+<p>*「割当てのスタック・トレースを記録」*を選択します。「実行」をクリックして、プロファイリング・セッションを開始します。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>このオプションを選択すると、「オーバーヘッド」メーターが大幅に増加しますが、このアプリケーションは十分に小さいためにパフォーマンスの低下は管理可能であるはずです。</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/profile-java-memory.png" alt="profile java memory">
+</div>
+<div class="title">Figure 7. 「メモリー」プロファイリング・タスクの選択</div>
+</div>
+<div class="paragraph">
+<p>「実行」をクリックすると、IDEによってアプリケーションが起動され、プロファイリング・セッションが開始されます。プロファイリング結果を表示するには、「プロファイラ」ウィンドウ内の「ライブ結果」をクリックして「ライブ結果」ウィンドウを開きます。「ライブ結果」ウィンドウに、プロジェクト内で割り当てられているオブジェクトのサイズと数に関する情報が表示されます。</p>
+</div>
+<div class="paragraph">
+<p>デフォルトでは、結果は「ライブ・バイト数」の数でソートされて表示されますが、列ヘッダーをクリックすると結果の表示方法を変更できます。また、リストの下にあるフィルタ・ボックスにクラス名を入力して結果をフィルタすることもできます。</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/profile-java-memresults1.png" alt="profile java memresults1">
+</div>
+<div class="title">Figure 8. メモリーのプロファイリング結果</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_スナップショットの作成">スナップショットの作成</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>プロファイリング・セッションが進行中の場合は、スナップショットを作成することによってプロファイリング結果を取り込むことができます。スナップショットでは、そのスナップショットが作成された時点のプロファイリング・データが取り込まれます。ただし、スナップショットは、次の点でプロファイリングのライブ結果とは異なります。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>スナップショットは、プロファイリング・セッションが実行中でなくても確認できます。</p>
+</li>
+<li>
+<p>スナップショットには、ライブ結果よりも詳細なプロファイリング・データの記録が含まれます。</p>
+</li>
+<li>
+<p>スナップショットは簡単に比較できます(メモリー・スナップショット)。</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>プロジェクトのスナップショットを開くためにプロファイリング・セッションが進行中である必要はないため、「プロファイラ」ウィンドウで、保存されたスナップショットの一覧にあるスナップショットを選択し、「開く」をクリックすることによって、いつでもプロジェクトのスナップショットを開くことができます。</p>
+</div>
+<div class="sect2">
+<h3 id="_メモリー_スナップショットの作成と比較">メモリー・スナップショットの作成と比較</h3>
+<div class="paragraph">
+<p>Anagram Gameアプリケーションでは、結果のスナップショットを作成して、型 <code>String</code> のオブジェクトの割当てスタック・トレースを表示できます。次に、別のスナップショットを作成してこの2つを比較できます。メモリー・スナップショットを比較することによって、2つのスナップショットを作成した時点の間にヒープに作成されたオブジェクト、またはヒープから解放されたオブジェクトを確認できます。これらのスナップショットは比較可能である必要があるため、プロファイリング・タイプ(たとえば、割当てまたはライブ)とトラックされたオブジェクトの数が一致している必要があります。</p>
+</div>
+<div class="paragraph">
+<p>この課題では、スナップショットを作成してプロジェクトに保存します。次に、2番目のスナップショットを作成し、2番目のスナップショットを保存されたスナップショットと比較します。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>プロファイリング・セッションが引続き実行中であることを確認します。
+(プロファイリング・セッションを停止した場合は、メモリー・パフォーマンスを解析するための手順を繰り返し、「ライブ結果」ウィンドウを開きます。)</p>
+</li>
+<li>
+<p>「ライブ結果」ウィンドウで <code>java.lang.String</code> を含む行を右クリックし、「スナップショットを取得して割当てスタック・トレースを表示」を選択します。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>「ライブ結果」ウィンドウでフィルタを使用して、行を検索できます。</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/profile-java-memstack1.png" alt="profile java memstack1">
+</div>
+<div class="title">Figure 9. メモリーのプロファイリング結果のスナップショット</div>
+</div>
+<div class="paragraph">
+<p>IDEによってメモリー・スナップショットが作成され、そのスナップショットが「割当てスタック・トレース」タブに表示されます。「割当てスタック・トレース」タブでは、選択されたオブジェクトをインスタンス化したメソッドの逆コール・ツリーを調べることができます。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>スナップショット・ツールバーの「プロジェクトにスナップショットを保存」ボタンをクリックして([Ctrl]-[S]、Macの場合は[⌘]-[S])、メモリー・スナップショットをプロジェクトに保存します。スナップショットをプロジェクトに保存すると、そのスナップショットが「プロファイラ」ウィンドウ内のAnagram Gameの保存されたスナップショットの一覧に追加されます。デフォルトでは、スナップショットはプロジェクトの <code>nbproject/private/profiler</code> ディレクトリ内に物理的に保存されます。保存されたスナップショットには <code>.nps</code> の接尾辞が付加されます。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>*注意:*スナップショットはファイルシステム上の任意の場所に保存できますが、「プロファイラ」ウィンドウに一覧表示されるのは、プロジェクト内のデフォルトの場所に保存されたスナップショットのみです。また、スナップショットのツールバーにある「現在のビューをイメージに保存」ボタンをクリックして、そのスナップショットをIDEの外部で表示できるイメージ・ファイル( <code>.png</code> )として保存することもできます。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>「ライブ結果」ツールバーの「収集結果のスナップショットの作成」ボタンをクリックして、別のスナップショットを作成します(または、「プロファイラ」ウィンドウで「スナップショットの取得」ボタンをクリックします)。スナップショットを保存します。</p>
+</li>
+<li>
+<p>いずれかのメモリー・スナップショットのウィンドウで、スナップショット・ツールバーの「相違の計算」ボタン(image::images/comparesnapshots.png[title="スナップショットの比較ボタン"])をクリックします。または、メイン・メニューから「プロファイル」&gt;「メモリー・スナップショットを比較」を選択します。</p>
+</li>
+<li>
+<p>「比較するスナップショットを選択」で、一覧から開いたスナップショットのいずれかを選択します。「OK」をクリックします。
+image::images/profile-java-selectsnap.png[title="「比較するスナップショットを選択」ダイアログ・ボックス"]</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>メモリー・スナップショットが開いている場合は、それを他の比較可能なメモリー・スナップショットと比較できます。スナップショットを、現在開いている保存されていないスナップショットと比較することも、プロジェクトまたはシステム上の他の任意の場所に保存されたスナップショットと比較することもできます。</p>
+</div>
+<div class="paragraph">
+<p>「OK」をクリックすると、「ライブの比較」ウィンドウが開き、2つのメモリー・スナップショット間の違いが表示されます。</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/profile-java-compare.png" alt="profile java compare">
+</div>
+<div class="title">Figure 10. 2つのメモリー・スナップショットのライブの比較の結果を示すタブ</div>
+</div>
+<div class="paragraph">
+<p>スナップショットの比較はメモリー・スナップショットと同じように見えますが、比較された2つのスナップショット間の違いのみが表示されます。列の数値を参照すると、プラス記号(+)が値の増加を示し、マイナス記号(-)が値の減少を示すことがわかります。「ライブ・バイト数」列にあるグラフィカルなバーを使用すると、割り当てられたバイト数の違いを容易に確認できます。その列のセルの左半分が緑色である場合は、そのオブジェクトに割り当てられたバイト数が、最初のスナップショットが作成された時点より2番目のスナップショットが作成された時点の方が少ないことを示します。そのセルの右半分が赤色である場合は、最初のスナップショットより2番目のスナップショットで割り当てられたバイト数の方が多いことを示します。</p>
+</div>
+<div class="paragraph">
+<p>*注意:*スナップショットが作成される時期をより正確に制御するために、「スナップショットの取得」プロファイリング・ポイントを設定することもできます。プロファイリング・ポイントを使用してスナップショットを作成する方法の詳細は、<a href="../../docs/java/profiler-profilingpoints.html">NetBeans IDEでのプロファイリング・ポイントの使用</a>を参照してください。</p>
+</div>
+<div class="paragraph">
+<p><a href="/about/contact_form.html?to=3&amp;subject=Feedback:%20Introduction%20to%20Profiling">このチュートリアルに関するご意見をお寄せください</a></p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_関連項目">関連項目</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>これで、NetBeans IDEを使用したアプリケーションのプロファイリングの概要は終了です。このドキュメントでは、IDEを使用して単純なNetBeansプロジェクトをプロファイルし、プロファイリング結果を表示する方法の基本を示しました。上に概要を示した手順は、ほとんどのプロジェクトのプロファイリングに適用できます。エンタープライズ・アプリケーションや自由形式プロジェクトなどのより複雑なプロジェクトのプロファイリングには、追加の構成手順が必要になることがあります。</p>
+</div>
+<div class="paragraph">
+<p>このドキュメントで説明されていないプロファイリング設定および機能の詳細は、製品に含まれ、「ヘルプ」メニュー項目から使用できるドキュメントを参照してください。</p>
+</div>
+<div class="paragraph">
+<p>関連ドキュメントについては、次のリソースを参照してください。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="http://wiki.netbeans.org/wiki/view/NetBeansUserFAQ#section-NetBeansUserFAQ-Profiler">NetBeansプロファイラのFAQ</a>
+NetBeans IDEでのアプリケーションのプロファイリングに関連した、よくある質問を含むドキュメント</p>
+</li>
+<li>
+<p><a href="http://wiki.netbeans.org/wiki/view/FaqProfilerProfileFreeForm">FAQ: 自由形式プロジェクトのプロファイリング</a></p>
+</li>
+<li>
+<p><a href="profiler-screencast.html">スクリーンキャスト: プロファイリング・ポイント、ドリルダウン・グラフ、ヒープ・ウォーカ</a>
+NetBeans IDEのいくつかのプロファイリング機能を示すデモ。</p>
+</li>
+<li>
+<p><a href="../../../community/magazine/html/04/profiler.html">詳細なプロファイリング: 実行理論</a></p>
+</li>
+<li>
+<p><a href="http://www.javapassion.com/handsonlabs/nbprofilermemory/">NetBeansプロファイラを使用したメモリー・リークの検索</a>
+<a href="http://www.javapassion.com/">JavaPassionのサイト</a>でのハンズオン・ラボ</p>
+</li>
+<li>
+<p><a href="http://profiler.netbeans.org/index.html">profiler.netbeans.org</a>
+NetBeansプロファイラ・プロジェクトのサイト</p>
+</li>
+<li>
+<p><a href="http://blogs.oracle.com/nbprofiler">NetBeansプロファイラのブログ</a></p>
+</li>
+<li>
+<p><a href="http://profiler.netbeans.org/mailinglists.html">NetBeansプロファイラのメーリング・リスト</a></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><a href="#top">先頭</a></p>
+</div>
+</div>
+</div>
+            
+<section class='tools'>
+    <ul class="menu align-center">
+        <li><a title="Facebook" href="https://www.facebook.com/NetBeans"><i class="fa fa-md fa-facebook"></i></a></li>
+        <li><a title="Twitter" href="https://twitter.com/netbeans"><i class="fa fa-md fa-twitter"></i></a></li>
+        <li><a title="Github" href="https://github.com/apache/incubator-netbeans"><i class="fa fa-md fa-github"></i></a></li>
+        <li><a title="YouTube" href="https://www.youtube.com/user/netbeansvideos"><i class="fa fa-md fa-youtube"></i></a></li>
+        <li><a title="Slack" href="https://tinyurl.com/netbeans-slack-signup/"><i class="fa fa-md fa-slack"></i></a></li>
+        <li><a title="JIRA" href="https://issues.apache.org/jira/projects/NETBEANS/summary"><i class="fa fa-mf fa-bug"></i></a></li>
+    </ul>
+    <ul class="menu align-center">
+        
+        <li><a href="https://github.com/apache/incubator-netbeans-website/blob/master/netbeans.apache.org/src/content/kb/docs/java/profiler-intro_ja.asciidoc" title="See this page in github"><i class="fa fa-md fa-edit"></i> See this page in GitHub.</a></li>
+    </ul>
+</section>
+
+        </div>
+        
+
+<div class='grid-container incubator-area' style='margin-top: 64px'>
+    <div class='grid-x grid-padding-x'>
+        <div class='large-auto cell text-center'>
+            <a href="https://www.apache.org/">
+                <img style="width: 320px" title="Apache Software Foundation" src="/images/asf_logo_wide.svg" />
+            </a>
+        </div>
+        <div class='large-auto cell text-center'>
+            <a href="https://www.apache.org/events/current-event.html">
+               <img style="width:234px; height: 60px;" title="Apache Software Foundation current event" src="https://www.apache.org/events/current-event-234x60.png"/>
+            </a>
+        </div>
+    </div>
+</div>
+<footer>
+    <div class="grid-container">
+        <div class="grid-x grid-padding-x">
+            <div class="large-auto cell">
+                
+                <h1>About</h1>
+                <ul>
+                    <li><a href="https://www.apache.org/foundation/thanks.html">Thanks</a></li>
+                    <li><a href="https://www.apache.org/foundation/sponsorship.html">Sponsorship</a></li>
+                    <li><a href="https://www.apache.org/security/">Security</a></li>
+                    <li><a href="https://incubator.apache.org/projects/netbeans.html">Incubation Status</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/community/index.html">Community</a></h1>
+                <ul>
+                    <li><a href="/community/mailing-lists.html">Mailing lists</a></li>
+                    <li><a href="/community/committer.html">Becoming a committer</a></li>
+                    <li><a href="/community/events.html">NetBeans Events</a></li>
+                    <li><a href="https://www.apache.org/events/current-event.html">Apache Events</a></li>
+                    <li><a href="/community/who.html">Who is who</a></li>
+                    <li><a href="/community/nekobean.html">NekoBean</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/participate/index.html">Participate</a></h1>
+                <ul>
+                    <li><a href="/participate/submit-pr.html">Submitting Pull Requests</a></li>
+                    <li><a href="/participate/report-issue.html">Reporting Issues</a></li>
+                    <li><a href="/participate/netcat.html">NetCAT - Community Acceptance Testing</a></li>
+                    <li><a href="/participate/index.html#documentation">Improving the documentation</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/help/index.html">Get Help</a></h1>
+                <ul>
+                    <li><a href="/help/index.html#documentation">Documentation</a></li>
+                    <li><a href="/help/getting-started.html">Platform videos</a></li>
+                    <li><a href="/wiki/index.asciidoc">Wiki</a></li>
+                    <li><a href="/help/index.html#support">Community Support</a></li>
+                    <li><a href="/help/commercial-support.html">Commercial Support</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/download/nb100/nb100.html">Download</a></h1>
+                <ul>
+                    <li><a href="/download/index.html#releases">Releases</a></li>
+                    <ul>
+                        <li><a href="/download/nb100/nb100.html">Apache NetBeans 10.0</a></li>
+                        <li><a href="/download/nb90/nb90.html">Apache NetBeans 9.0</a></li>
+                    </ul>
+                    <li><a href="/plugins/index.html">Plugins</a></li>
+                    <li><a href="/download/index.html#source">Building from source</a></li>
+                    <li><a href="/download/index.html#previous">Previous releases</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</footer>
+<div class='footer-disclaimer'>
+    <div class="footer-disclaimer-content">
+        <p>Copyright &copy; 2017-2018 <a href="https://www.apache.org">The Apache Software Foundation</a>.</p>
+        <p>Licensed under the Apache <a href="https://www.apache.org/licenses/">license</a>, version 2.0</p>
+        <p><a href="https://incubator.apache.org/" alt="Apache Incubator"><img src='/images/incubator_feather_egg_logo_bw_crop.png' title='Apache Incubator'></img></a></p>
+        <div style='max-width: 40em; margin: 0 auto'>
+            <p>Apache NetBeans is an effort undergoing incubation at The Apache Software Foundation (ASF), sponsored by the Apache Incubator. Incubation is required of all newly accepted projects until a further review indicates that the infrastructure, communications, and decision making process have stabilized in a manner consistent with other successful ASF projects. While incubation status is not necessarily a reflection of the completeness or stability of the code, it does indicate that the project has yet to be fully endorsed by the ASF.</p>
+            <p>Apache Incubator, Apache, the Apache feather logo, the Apache NetBeans logo, and the Apache Incubator project logo are trademarks of <a href="https://www.apache.org">The Apache Software Foundation</a>.</p>
+            <p>Oracle and Java are registered trademarks of Oracle and/or its affiliates.</p>
+        </div>
+        
+    </div>
+</div>
+
+
+
+        <script src="/js/vendor/jquery-3.2.1.min.js"></script>
+        <script src="/js/vendor/what-input.js"></script>
+        <script src="/js/vendor/jquery.colorbox-min.js"></script>
+        <script src="/js/vendor/foundation.min.js"></script>
+        <script src="/js/netbeans.js"></script>
+        <script>
+            
+            $(function(){ $(document).foundation(); });
+        </script>
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/highlight.min.js"></script>
+        <script>
+         $(document).ready(function() { $("pre code").each(function(i, block) { hljs.highlightBlock(block); }); }); 
+        </script>
+        
+    </body>
+</html>

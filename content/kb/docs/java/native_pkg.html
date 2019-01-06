@@ -1,0 +1,816 @@
+
+<!DOCTYPE html>
+<html class="no-js" lang="en" dir="ltr">
+    
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>Native Packaging in NetBeans IDE</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Native Packaging in NetBeans IDE - Apache NetBeans">
+    <meta name="author" content="Apache NetBeans">
+    <meta name="keywords" content="Apache NetBeans, Tutorials, Native Packaging in NetBeans IDE">
+    <meta name="generator" content="Apache NetBeans">
+    <link rel="stylesheet" href="/css/font-awesome.min.css">
+     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/styles/default.min.css"> 
+    <link rel="stylesheet" href="/css/netbeans.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#ffc40d">
+    <meta name="theme-color" content="#ffffff">
+    <link href="https://fonts.googleapis.com/css?family=Lato:400,700" rel="stylesheet"> 
+    <!--
+        Licensed to the Apache Software Foundation (ASF) under one
+        or more contributor license agreements.  See the NOTICE file
+        distributed with this work for additional information
+        regarding copyright ownership.  The ASF licenses this file
+        to you under the Apache License, Version 2.0 (the
+        "License"); you may not use this file except in compliance
+        with the License.  You may obtain a copy of the License at
+        http://www.apache.org/licenses/LICENSE-2.0
+        Unless required by applicable law or agreed to in writing,
+        software distributed under the License is distributed on an
+        "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+        KIND, either express or implied.  See the License for the
+        specific language governing permissions and limitations
+        under the License.
+    -->
+</head>
+
+
+    <body>
+        
+
+<div class="title-bar" data-responsive-toggle="responsive-menu" data-hide-for="medium">
+    <button type="button" data-toggle="responsive-menu"><i style='font-size: 32px; color: #fff; padding: 8px' class='fa fa-bars'></i></button>
+    <div class="title-bar-title">Apache NetBeans</div>
+</div>
+<div class="top-bar" id="responsive-menu">
+    <div class='top-bar-left'>
+        <a class='title' href="/"><img src='/images/apache-netbeans.svg' style='padding: 8px; height: 48px;'></img> Apache NetBeans (incubating)</a>
+    </div>
+    <div class="top-bar-right">
+        <ul class="vertical medium-horizontal menu" data-responsive-menu="drilldown medium-dropdown">
+            <li> <a href="/community/index.html">Community</a> </li>
+            <li> <a href="/participate/index.html">Participate</a> </li>
+            <li> <a href="https://blogs.apache.org/netbeans/">Blog</a></li>
+            <li> <a href="/help/index.html">Get Help</a> </li>
+            <li> <a href="/plugins/index.html">Plugins</a> </li>
+            <li> <a href="/download/nb100/nb100.html">Download</a> </li>
+        </ul>
+    </div>
+</div>
+
+
+        
+<!-- src/templates/news -->
+<section class="hero news alternate" style='margin-bottom: 2em'>
+    <div class='grid-container'>
+        <div class='cell'>
+            <div class="annotation">Just released!</div>
+            <h1>Apache NetBeans 10.0</h1>
+            <p><a class="button success" href="/download/nb100/nb100.html">Read more</a></p>
+        </div>
+    </div>
+</section>
+
+        <div class='grid-container main-content'>
+            <div id="toc" class="toc">
+<div id="toctitle"></div>
+<ul class="sectlevel1">
+<li><a href="#_installing_and_adding_required_tools_to_the_path">Installing and Adding Required Tools to the Path</a></li>
+<li><a href="#_native_packaging_in_java_se_projects">Native Packaging in Java SE Projects</a>
+<ul class="sectlevel2">
+<li><a href="#_setting_up_a_java_se_project">Setting Up a Java SE Project</a></li>
+<li><a href="#_enabling_native_packaging_in_the_ide">Enabling Native Packaging in the IDE</a></li>
+<li><a href="#_building_an_application">Building an Application</a></li>
+<li><a href="#_making_an_code_exe_code_installer">Making an  <code>EXE</code>  Installer</a></li>
+</ul>
+</li>
+<li><a href="#_self_contained_application_packaging_in_javafx_projects">Self-Contained Application Packaging in JavaFX Projects</a>
+<ul class="sectlevel2">
+<li><a href="#_creating_a_javafx_project">Creating a JavaFX Project</a></li>
+<li><a href="#_enabling_native_packaging_in_the_project">Enabling Native Packaging in the Project</a></li>
+<li><a href="#_building_an_application_2">Building an Application</a></li>
+<li><a href="#_making_an_code_msi_code_installer">Making an  <code>MSI</code>  Installer</a></li>
+</ul>
+</li>
+<li><a href="#_verifying_the_installable_applications">[[Verifying the Installable Applications]]</a></li>
+<li><a href="#_see_also">See Also</a></li>
+</ul>
+</div>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Written by Petr Somol and Alyona Stashkova</p>
+</div>
+<div class="paragraph">
+<p>Native packaging was first introduced as a part of the JavaFX 2.2 SDK enabling you to package an application as a <em>native bundle</em> and then installing and running the application without any external dependencies on a system JRE or JavaFX SDK. Next it became usable for Java SE projects as well.</p>
+</div>
+<div class="paragraph">
+<p>Native packaging does not change the deployment model of your application: it takes your application as it is, packages it together with Java runtime, and produces an installer that is common for the operating system you are using. The point is to make the whole thing independent on whatever Java runtime users have or do not have on the target machine. You can take such an installer and run it on a machine where there is no trace of Java, and it will install both the application and the necessary Java runtime bits.The size of such installers is quite big, because even a "Hello world" application will carry with itself a large portion of Java runtime artifacts.</p>
+</div>
+<div class="paragraph">
+<p>In this tutorial you will create an  <code>EXE</code>  installer for a Java SE application and an  <code>MSI</code>  installer for a JavaFX application for the Windows operating system based on the sample applications bundled with the IDE.</p>
+</div>
+<div class="paragraph">
+<p><strong>Note:</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>The  <code>EXE</code>  and  <code>MSI</code>  installers you get are platform-specific, they will run only on a system that is compatible with the target Java platform for which the  <code>EXE</code> / <code>MSI</code>  installable packages have been created. (For example, if an  <code>EXE</code>  or  <code>MSI</code>  installer has been created on a machine with a 64-bit JDK installed, it must be run on a machine with 64-bit Windows installed.)</p>
+</li>
+<li>
+<p>On Windows, both the applications are installed into the  <code>C:\Users\&lt;username&gt;\AppData\Local\</code>  directory and are available in the Start menu.</p>
+</li>
+</ul>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/netbeans-stamp-80-74.png" alt="netbeans stamp 80 74">
+</div>
+<div class="title">Figure 1. Content on this page applies to NetBeans IDE 7.4 or 8.0</div>
+</div>
+<div class="paragraph">
+<p><strong>To follow this tutorial, you need the following software and resources.</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Software or Resource</th>
+<th class="tableblock halign-left valign-top">Version Required</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://netbeans.org/downloads/index.html">NetBeans IDE</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">7.4 or 8.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://www.oracle.com/technetwork/java/javafx/downloads/index.html">Java Development Kit (JDK)</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">7 update 25 (or more recent) or 8</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://www.jrsoftware.org/">Inno Setup</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">5.5 or more recent</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://wixtoolset.org/">WiX</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">3.7 or more recent</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_installing_and_adding_required_tools_to_the_path">Installing and Adding Required Tools to the Path</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To use the IDE&#8217;s support for native packaging, the following additional tools need to be installed:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="http://www.jrsoftware.org/">Inno Setup 5.5</a> (or more recent) for producing EXE installers on Windows is required.</p>
+</li>
+<li>
+<p><a href="http://wixtoolset.org/">WiX 3.7</a> (or more recent) for producing MSI installers on Windows is required.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><strong>Note:</strong> For a list of tools required for making installers for different platforms, see "<a href="http://www.oracle.com/pls/topic/lookup?ctx=nb7400&amp;id=NBDAG2508">Packaging an Application as a Native Installer</a>" in <em>Developing Applications with NetBeans IDE</em>.</p>
+</div>
+<div class="paragraph">
+<p><strong>To install Inno Setup:</strong></p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Download  <code>ispack-5.5.3.exe</code>  from the <a href="http://www.jrsoftware.org/isdl.php">Inno Setup Downloads</a> page.</p>
+</li>
+<li>
+<p>Double-click the file to launch the installer.</p>
+</li>
+<li>
+<p>Accept the Inno Setup license agreement and click Next.</p>
+</li>
+<li>
+<p>Follow the instructions in the install wizard for installing Inno Setup.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p><strong>To install WiX:</strong></p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Download  <code>wix37.exe</code>  from the <a href="http://wix.codeplex.com/releases/view/99514">WiX Toolset - Download</a> page.</p>
+</li>
+<li>
+<p>Double-click the file to launch the installer.</p>
+</li>
+<li>
+<p>Follow the instructions in the install wizard for installing WiX.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p><strong>To add Inno Setup and/or WiX to the system Path variable:</strong></p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>On Windows 7, select Start &gt; Computer &gt; System Properties &gt; Advanced system settings.</p>
+</li>
+<li>
+<p>Select the Advanced tab and click the Environment Variables button.</p>
+</li>
+<li>
+<p>In the System Variables pane, double-click the Path variable.</p>
+</li>
+<li>
+<p>In the Edit System Variable dialog box, add a semicolon followed by a new path to the Variable value field (for example,  <code>C:\Program Files (x86)\Inno Setup 5 </code>  or  <code>C:\Program Files (x86)\WiX Toolset v3.6\bin</code> ).</p>
+</li>
+<li>
+<p>Click OK to close all the open dialog boxes.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p><strong>Notes:</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>To check if the installed tool is in the Path, open the Command Prompt window and type  <code>iscc.exe</code>  for Inno Setup or  <code>candle.exe</code>  for WiX. (In case the Command Prompt closes instantly, try specifying  <code>cmd.exe /c cmd.exe /k iscc.exe</code>  or  <code>cmd.exe /c cmd.exe /k candle.exe</code>  respectively.)
+The following figure shows what the Command Prompt should display if Inno Setup is added to the system Path variable.</p>
+</li>
+</ul>
+</div>
+<div class="imageblock left">
+<div class="content">
+<a class="image" href="images/cmd.png"><img src=":images/cmd_small.png" alt="cmd small"></a>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Make sure the IDE is restarted after the tools are added to the system Path variable.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_native_packaging_in_java_se_projects">Native Packaging in Java SE Projects</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To utilize the native packaging support in the IDE, you need to complete the following:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="#createse">create an IDE project</a></p>
+</li>
+<li>
+<p><a href="#enable">enable the native packaging actions in the project</a></p>
+</li>
+<li>
+<p><a href="#buildse">clean and build the project</a></p>
+</li>
+<li>
+<p><a href="#instse">package the application in an installer</a></p>
+</li>
+</ul>
+</div>
+<div class="sect2">
+<h3 id="_setting_up_a_java_se_project">Setting Up a Java SE Project</h3>
+<div class="paragraph">
+<p>Before packaging an application in an installer an application itself needs to be created.</p>
+</div>
+<div class="paragraph">
+<p>You will create a new Java SE project with the Anagram game example which is shipped with NetBeans IDE.</p>
+</div>
+<div class="paragraph">
+<p><strong>To create an IDE project:</strong></p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>In the IDE, choose File &gt; New Project.</p>
+</li>
+<li>
+<p>In the New Project wizard, expand the Samples category and select Java.</p>
+</li>
+<li>
+<p>Choose Anagram Game in the Projects list. Then click Next.</p>
+</li>
+</ol>
+</div>
+<div class="imageblock left">
+<div class="content">
+<a class="image" href="images/new_javase_prj.png"><img src=":images/new_javase_prj_small.png" alt="new javase prj small"></a>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>In the Name and Location panel, leave the default values for the Project Name and Project Location fields.</p>
+</li>
+<li>
+<p>Click Finish.
+The IDE creates and opens the Java SE project.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>To test that the created project works fine, run it by choosing Run &gt; Run Project from the main menu.
+The Anagrams application should launch and display on your machine.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/anagrams.png" alt="anagrams">
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_enabling_native_packaging_in_the_ide">Enabling Native Packaging in the IDE</h3>
+<div class="paragraph">
+<p>The native packaging actions are disabled in the IDE by default.</p>
+</div>
+<div class="paragraph">
+<p>Right-click the AnagramGame project in the Projects window, to check the actions available for the created Java SE project in the IDE: there are no package related actions in the project&#8217;s context menu.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/context_wo_pkg.png" alt="context wo pkg">
+</div>
+</div>
+<div class="paragraph">
+<p><strong>To enable native packaging actions for the project:</strong></p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Right-click the project node in the Projects window and select Properties from the context menu.</p>
+</li>
+<li>
+<p>In the Project Properties dialog box, choose the Deployment category and select the Enable Native Packaging Actions in Project Menu option.</p>
+</li>
+</ol>
+</div>
+<div class="imageblock left">
+<div class="content">
+<a class="image" href="images/enable_native_pkg.png"><img src=":images/enable_native_pkg_small.png" alt="enable native pkg small"></a>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Click OK.
+A Package as command is added to the project&#8217;s context menu.</p>
+</li>
+</ol>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/pkg_enabled.png" alt="pkg enabled">
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_building_an_application">Building an Application</h3>
+<div class="paragraph">
+<p>It is time to clean and build your application for deployment.</p>
+</div>
+<div class="paragraph">
+<p><strong>To clean and build your project:</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Choose Run &gt; Clean and Build Project from the main menu.
+The IDE displays the results in the Output window.</p>
+</li>
+</ul>
+</div>
+<div class="imageblock left">
+<div class="content">
+<a class="image" href="images/output.png"><img src=":images/output_small.png" alt="output small"></a>
+</div>
+</div>
+<div class="paragraph">
+<p>A  <code>dist</code>  folder that contains a  <code>jar</code>  file is created in the project folder.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_making_an_code_exe_code_installer">Making an  <code>EXE</code>  Installer</h3>
+<div class="paragraph">
+<p>The application can now be packaged in an installer for Windows.</p>
+</div>
+<div class="paragraph">
+<p><strong>To build an  <code>EXE</code>  installer:</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Right-click the AnagramGame project and choose Package as &gt; EXE Installer from the context menu.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><strong>Note:</strong> The IDE creates an  <code>EXE</code>  installer only if Inno Setup is <a href="#tool">installed and added to the system Path variable</a>.</p>
+</div>
+<div class="paragraph">
+<p>The IDE displays the progress and result of the packaging process in the Output window.</p>
+</div>
+<div class="imageblock left">
+<div class="content">
+<a class="image" href="images/output_se_exe.png"><img src=":images/output_se_exe_small.png" alt="output se exe small"></a>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Note:</strong> The IDE first logs some progress and then for some time it looks as if nothing is happening - this is exactly the moment when Inno Setup is working in the background. It takes a while for the packaging to get completed.</p>
+</div>
+<div class="paragraph">
+<p>When the  <code>EXE</code>  installer is ready, it is placed in the  <code>AnagramGame/dist/bundles/</code>  directory.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/anagram_exe.png" alt="anagram exe">
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_self_contained_application_packaging_in_javafx_projects">Self-Contained Application Packaging in JavaFX Projects</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To build an installable JavaFX application using the native packaging support in the IDE, you need to complete the following:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="#createfx">create a JavaFX project in the IDE</a></p>
+</li>
+<li>
+<p><a href="#enablefx">enable native packaging support for the project</a></p>
+</li>
+<li>
+<p><a href="#buildfx">clean and build a JavaFX application</a></p>
+</li>
+<li>
+<p><a href="#instfx">build an installable JavaFX application</a></p>
+</li>
+</ul>
+</div>
+<div class="sect2">
+<h3 id="_creating_a_javafx_project">Creating a JavaFX Project</h3>
+<div class="paragraph">
+<p>You begin by creating a JavaFX project using the BrickBreaker sample project bundled with the IDE.</p>
+</div>
+<div class="paragraph">
+<p><strong>To create a JavaFX project in the IDE:</strong></p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>In the IDE, choose File &gt; New Project.</p>
+</li>
+<li>
+<p>In the New Project wizard, expand the Samples category and select JavaFX.</p>
+</li>
+<li>
+<p>Choose BrickBreaker in the Projects list. Then click Next.</p>
+</li>
+<li>
+<p>In the Name and Location panel, leave the default values for the Project Name, Project Location, and JavaFX Platform fields.</p>
+</li>
+</ol>
+</div>
+<div class="imageblock left">
+<div class="content">
+<a class="image" href="images/new_javafx_prj.png"><img src=":images/new_javafx_prj_small.png" alt="new javafx prj small"></a>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Click Finish.
+The BrickBreaker JavaFX project displays in the Projects window in the IDE.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>To test that the created project works fine, run it by choosing Run &gt; Run Project(BrickBreaker) from the main menu.
+The Brick Breaker application should launch and display on your machine.</p>
+</div>
+<div class="imageblock left">
+<div class="content">
+<a class="image" href="images/brickbreaker.png"><img src=":images/brickbreaker_small.png" alt="brickbreaker small"></a>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_enabling_native_packaging_in_the_project">Enabling Native Packaging in the Project</h3>
+<div class="paragraph">
+<p>To use the native packaging support in the IDE for your project, you need to enable it first.</p>
+</div>
+<div class="paragraph">
+<p>If you right-click the Brick Breaker project, you will see no native packaging related actions in it.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/javafx_wo_pkg.png" alt="javafx wo pkg">
+</div>
+</div>
+<div class="paragraph">
+<p><strong>To enable native packaging actions in the project context menu:</strong></p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Right-click the project node in the Projects window and select Properties from the context menu.</p>
+</li>
+<li>
+<p>In the Project Properties dialog box, choose Deployment in the Build category and select the Enable Native Packaging option.</p>
+</li>
+</ol>
+</div>
+<div class="imageblock left">
+<div class="content">
+<a class="image" href="images/enable_native_pkg_fx.png"><img src=":images/enable_native_pkg_fx_small.png" alt="enable native pkg fx small"></a>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Click OK.
+The Package as item is added to the project&#8217;s context menu.</p>
+</li>
+</ol>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/pkg_fx_enabled.png" alt="pkg fx enabled">
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_building_an_application_2">Building an Application</h3>
+<div class="paragraph">
+<p>Your JavaFX application is now ready to be cleaned and built.</p>
+</div>
+<div class="paragraph">
+<p><strong>To clean and build your project:</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Choose Run &gt; Clean and Build Project from the main menu.
+The IDE displays the results in the Output window.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><strong>Note:</strong> If the build is successful but the IDE displays  <code>warning: [options] bootstrap class path not set in conjunction with -source 1.6</code>  in the Output window, the Source/Binary format needs to be set to JDK 8 in the project properties and the project needs to be cleaned and built again as follows:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Right-click the BrickBreaker project in the Projects windows and choose Properties.</p>
+</li>
+<li>
+<p>In the Project Properties dialog box, select the Sources category.</p>
+</li>
+<li>
+<p>Set the Source/Binary format to JDK 8 and click OK.</p>
+</li>
+<li>
+<p>Right-click BrickBreaker in the Projects window and choose Clean and Build from the context menu.</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_making_an_code_msi_code_installer">Making an  <code>MSI</code>  Installer</h3>
+<div class="paragraph">
+<p>The application can now be wrapped into a Windows-specific installable package.</p>
+</div>
+<div class="paragraph">
+<p><strong>To build an  <code>MSI</code>  installer:</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Right-click the BrickBreaker project and choose Package as &gt; MSI Installer from the context menu.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><strong>Note:</strong> The IDE creates an  <code>MSI</code>  installer only if WiX is <a href="#tool">installed and added to the system Path variable</a>.</p>
+</div>
+<div class="paragraph">
+<p>The IDE displays the progress and result of the packaging process in the Output window.</p>
+</div>
+<div class="imageblock left">
+<div class="content">
+<a class="image" href="images/output_fx_msi.png"><img src=":images/output_fx_msi_small.png" alt="output fx msi small"></a>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Note:</strong> The IDE first logs some progress and then for some time it looks as if nothing is happening - this is exactly the moment when WiX is working in the background. It takes a while for the packaging to get completed.</p>
+</div>
+<div class="paragraph">
+<p>The installable JavaFX application is located in the  <code>BrickBreaker/dist/bundles/</code>  directory.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/brickbreaker_msi.png" alt="brickbreaker msi">
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_verifying_the_installable_applications">[[Verifying the Installable Applications]]</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>When the  <code>AnagramGame-1.0.exe</code>  and  <code>BrickBreaker-1.0.msi</code>  installers are done, you need to check which directory the Anagram and BrickBreaker applications are installed natively into.</p>
+</div>
+<div class="paragraph">
+<p><strong>To check the installers:</strong></p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Browse to the installer file ( <code>AnagramGame-1.0.exe</code>  or  <code>BrickBreaker-1.0.msi</code> ) on your hard drive.</p>
+</li>
+<li>
+<p>Double-click to run the installer.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>Both the applications should be installed into the  <code>C:\Users\&lt;username&gt;\AppData\Local\</code>  directory and be available in the Start menu.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_see_also">See Also</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><a href="http://www.oracle.com/pls/topic/lookup?ctx=nb8000&amp;id=NBDAG2508">Packaging an Application as a Native Installer</a> in <em>Developing Applications with NetBeans IDE</em></p>
+</li>
+<li>
+<p><a href="http://docs.oracle.com/javafx/2/deployment/self-contained-packaging.htm">Deploying JavaFX Applications: Self-Contained Application Packaging</a></p>
+</li>
+<li>
+<p><a href="http://docs.oracle.com/javase/7/docs/technotes/guides/jweb/packagingAppsForMac.html">Packaging a Java App for Distribution on a Mac</a>
+<a href="/about/contact_form.html?to=3&amp;subject=Feedback:%20Native%20Packaging%20In%20NetBeans%20IDE">Send Feedback on This Tutorial</a></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><a href="../../trails/matisse.html">Back to the Learning Trail</a></p>
+</div>
+</div>
+</div>
+            
+<section class='tools'>
+    <ul class="menu align-center">
+        <li><a title="Facebook" href="https://www.facebook.com/NetBeans"><i class="fa fa-md fa-facebook"></i></a></li>
+        <li><a title="Twitter" href="https://twitter.com/netbeans"><i class="fa fa-md fa-twitter"></i></a></li>
+        <li><a title="Github" href="https://github.com/apache/incubator-netbeans"><i class="fa fa-md fa-github"></i></a></li>
+        <li><a title="YouTube" href="https://www.youtube.com/user/netbeansvideos"><i class="fa fa-md fa-youtube"></i></a></li>
+        <li><a title="Slack" href="https://tinyurl.com/netbeans-slack-signup/"><i class="fa fa-md fa-slack"></i></a></li>
+        <li><a title="JIRA" href="https://issues.apache.org/jira/projects/NETBEANS/summary"><i class="fa fa-mf fa-bug"></i></a></li>
+    </ul>
+    <ul class="menu align-center">
+        
+        <li><a href="https://github.com/apache/incubator-netbeans-website/blob/master/netbeans.apache.org/src/content/kb/docs/java/native_pkg.asciidoc" title="See this page in github"><i class="fa fa-md fa-edit"></i> See this page in GitHub.</a></li>
+    </ul>
+</section>
+
+        </div>
+        
+
+<div class='grid-container incubator-area' style='margin-top: 64px'>
+    <div class='grid-x grid-padding-x'>
+        <div class='large-auto cell text-center'>
+            <a href="https://www.apache.org/">
+                <img style="width: 320px" title="Apache Software Foundation" src="/images/asf_logo_wide.svg" />
+            </a>
+        </div>
+        <div class='large-auto cell text-center'>
+            <a href="https://www.apache.org/events/current-event.html">
+               <img style="width:234px; height: 60px;" title="Apache Software Foundation current event" src="https://www.apache.org/events/current-event-234x60.png"/>
+            </a>
+        </div>
+    </div>
+</div>
+<footer>
+    <div class="grid-container">
+        <div class="grid-x grid-padding-x">
+            <div class="large-auto cell">
+                
+                <h1>About</h1>
+                <ul>
+                    <li><a href="https://www.apache.org/foundation/thanks.html">Thanks</a></li>
+                    <li><a href="https://www.apache.org/foundation/sponsorship.html">Sponsorship</a></li>
+                    <li><a href="https://www.apache.org/security/">Security</a></li>
+                    <li><a href="https://incubator.apache.org/projects/netbeans.html">Incubation Status</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/community/index.html">Community</a></h1>
+                <ul>
+                    <li><a href="/community/mailing-lists.html">Mailing lists</a></li>
+                    <li><a href="/community/committer.html">Becoming a committer</a></li>
+                    <li><a href="/community/events.html">NetBeans Events</a></li>
+                    <li><a href="https://www.apache.org/events/current-event.html">Apache Events</a></li>
+                    <li><a href="/community/who.html">Who is who</a></li>
+                    <li><a href="/community/nekobean.html">NekoBean</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/participate/index.html">Participate</a></h1>
+                <ul>
+                    <li><a href="/participate/submit-pr.html">Submitting Pull Requests</a></li>
+                    <li><a href="/participate/report-issue.html">Reporting Issues</a></li>
+                    <li><a href="/participate/netcat.html">NetCAT - Community Acceptance Testing</a></li>
+                    <li><a href="/participate/index.html#documentation">Improving the documentation</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/help/index.html">Get Help</a></h1>
+                <ul>
+                    <li><a href="/help/index.html#documentation">Documentation</a></li>
+                    <li><a href="/help/getting-started.html">Platform videos</a></li>
+                    <li><a href="/wiki/index.asciidoc">Wiki</a></li>
+                    <li><a href="/help/index.html#support">Community Support</a></li>
+                    <li><a href="/help/commercial-support.html">Commercial Support</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/download/nb100/nb100.html">Download</a></h1>
+                <ul>
+                    <li><a href="/download/index.html#releases">Releases</a></li>
+                    <ul>
+                        <li><a href="/download/nb100/nb100.html">Apache NetBeans 10.0</a></li>
+                        <li><a href="/download/nb90/nb90.html">Apache NetBeans 9.0</a></li>
+                    </ul>
+                    <li><a href="/plugins/index.html">Plugins</a></li>
+                    <li><a href="/download/index.html#source">Building from source</a></li>
+                    <li><a href="/download/index.html#previous">Previous releases</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</footer>
+<div class='footer-disclaimer'>
+    <div class="footer-disclaimer-content">
+        <p>Copyright &copy; 2017-2018 <a href="https://www.apache.org">The Apache Software Foundation</a>.</p>
+        <p>Licensed under the Apache <a href="https://www.apache.org/licenses/">license</a>, version 2.0</p>
+        <p><a href="https://incubator.apache.org/" alt="Apache Incubator"><img src='/images/incubator_feather_egg_logo_bw_crop.png' title='Apache Incubator'></img></a></p>
+        <div style='max-width: 40em; margin: 0 auto'>
+            <p>Apache NetBeans is an effort undergoing incubation at The Apache Software Foundation (ASF), sponsored by the Apache Incubator. Incubation is required of all newly accepted projects until a further review indicates that the infrastructure, communications, and decision making process have stabilized in a manner consistent with other successful ASF projects. While incubation status is not necessarily a reflection of the completeness or stability of the code, it does indicate that the project has yet to be fully endorsed by the ASF.</p>
+            <p>Apache Incubator, Apache, the Apache feather logo, the Apache NetBeans logo, and the Apache Incubator project logo are trademarks of <a href="https://www.apache.org">The Apache Software Foundation</a>.</p>
+            <p>Oracle and Java are registered trademarks of Oracle and/or its affiliates.</p>
+        </div>
+        
+    </div>
+</div>
+
+
+
+        <script src="/js/vendor/jquery-3.2.1.min.js"></script>
+        <script src="/js/vendor/what-input.js"></script>
+        <script src="/js/vendor/jquery.colorbox-min.js"></script>
+        <script src="/js/vendor/foundation.min.js"></script>
+        <script src="/js/netbeans.js"></script>
+        <script>
+            
+            $(function(){ $(document).foundation(); });
+        </script>
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/highlight.min.js"></script>
+        <script>
+         $(document).ready(function() { $("pre code").each(function(i, block) { hljs.highlightBlock(block); }); }); 
+        </script>
+        
+    </body>
+</html>

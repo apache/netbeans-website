@@ -1,0 +1,638 @@
+
+<!DOCTYPE html>
+<html class="no-js" lang="en" dir="ltr">
+    
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>Java Management Extensions (JMX)マネージャの開発およびリモートJMXエージェントへの接続</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Java Management Extensions (JMX)マネージャの開発およびリモートJMXエージェントへの接続 - Apache NetBeans">
+    <meta name="author" content="Apache NetBeans">
+    <meta name="keywords" content="Apache NetBeans, Tutorials, Java Management Extensions (JMX)マネージャの開発およびリモートJMXエージェントへの接続">
+    <meta name="generator" content="Apache NetBeans">
+    <link rel="stylesheet" href="/css/font-awesome.min.css">
+     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/styles/default.min.css"> 
+    <link rel="stylesheet" href="/css/netbeans.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#ffc40d">
+    <meta name="theme-color" content="#ffffff">
+    <link href="https://fonts.googleapis.com/css?family=Lato:400,700" rel="stylesheet"> 
+    <!--
+        Licensed to the Apache Software Foundation (ASF) under one
+        or more contributor license agreements.  See the NOTICE file
+        distributed with this work for additional information
+        regarding copyright ownership.  The ASF licenses this file
+        to you under the Apache License, Version 2.0 (the
+        "License"); you may not use this file except in compliance
+        with the License.  You may obtain a copy of the License at
+        http://www.apache.org/licenses/LICENSE-2.0
+        Unless required by applicable law or agreed to in writing,
+        software distributed under the License is distributed on an
+        "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+        KIND, either express or implied.  See the License for the
+        specific language governing permissions and limitations
+        under the License.
+    -->
+</head>
+
+
+    <body>
+        
+
+<div class="title-bar" data-responsive-toggle="responsive-menu" data-hide-for="medium">
+    <button type="button" data-toggle="responsive-menu"><i style='font-size: 32px; color: #fff; padding: 8px' class='fa fa-bars'></i></button>
+    <div class="title-bar-title">Apache NetBeans</div>
+</div>
+<div class="top-bar" id="responsive-menu">
+    <div class='top-bar-left'>
+        <a class='title' href="/"><img src='/images/apache-netbeans.svg' style='padding: 8px; height: 48px;'></img> Apache NetBeans (incubating)</a>
+    </div>
+    <div class="top-bar-right">
+        <ul class="vertical medium-horizontal menu" data-responsive-menu="drilldown medium-dropdown">
+            <li> <a href="/community/index.html">Community</a> </li>
+            <li> <a href="/participate/index.html">Participate</a> </li>
+            <li> <a href="https://blogs.apache.org/netbeans/">Blog</a></li>
+            <li> <a href="/help/index.html">Get Help</a> </li>
+            <li> <a href="/plugins/index.html">Plugins</a> </li>
+            <li> <a href="/download/nb100/nb100.html">Download</a> </li>
+        </ul>
+    </div>
+</div>
+
+
+        
+<!-- src/templates/news -->
+<section class="hero news alternate" style='margin-bottom: 2em'>
+    <div class='grid-container'>
+        <div class='cell'>
+            <div class="annotation">Just released!</div>
+            <h1>Apache NetBeans 10.0</h1>
+            <p><a class="button success" href="/download/nb100/nb100.html">Read more</a></p>
+        </div>
+    </div>
+</section>
+
+        <div class='grid-container main-content'>
+            <div id="toc" class="toc">
+<div id="toctitle"></div>
+<ul class="sectlevel2">
+<li><a href="#_チュートリアルの課題">チュートリアルの課題</a></li>
+<li><a href="#_前提条件">前提条件</a></li>
+<li><a href="#_チュートリアルに必要なソフトウェア">チュートリアルに必要なソフトウェア</a></li>
+<li><a href="#_リソース">リソース</a></li>
+<li><a href="#_管理サンプルanagramプロジェクトの作成">管理サンプルAnagramプロジェクトの作成</a></li>
+<li><a href="#_エージェントの実行">エージェントの実行</a></li>
+<li><a href="#_マネージャ_プロジェクトの作成">マネージャ・プロジェクトの作成</a>
+<ul class="sectlevel2">
+<li><a href="#_プロジェクトの作成">プロジェクトの作成</a></li>
+<li><a href="#_実行可能マネージャ_クラスの作成">実行可能マネージャ・クラスの作成</a></li>
+</ul>
+</li>
+<li><a href="#_マネージャの実行">マネージャの実行</a></li>
+<li><a href="#_関連項目">関連項目</a></li>
+</ul>
+</div>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p><strong>予想される所要時間: 30分</strong></p>
+</div>
+<div class="paragraph">
+<p>NetBeans JMXウィザード・モジュールは、NetBeans IDEでJMXテクノロジとワークフローを統合します。このモジュールを使用すると、管理アプリケーションの迅速な開発、既存アプリケーションへの管理の追加、マネージャ・アプリケーションの開発、仮想マシンの状態のモニターが可能になります。</p>
+</div>
+<div class="paragraph">
+<p>このチュートリアルでは、次の処理を行う方法を示します。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>JMXエージェントを起動し、リモートのJMXマネージャからアクセスできるようにします。</p>
+</li>
+<li>
+<p>JMXマネージャを作成します。</p>
+</li>
+<li>
+<p>マネージャを実行します。</p>
+</li>
+<li>
+<p>マネージャを更新し、独自の管理ロジックを追加します。</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_チュートリアルの課題">チュートリアルの課題</h3>
+<div class="imageblock">
+<div class="content">
+<img src="images/netbeans-stamp-80-74-73.png" alt="netbeans stamp 80 74 73">
+</div>
+<div class="title">Figure 1. このページの内容は、NetBeans IDE 7.2、7.3、7.4および8.0に適用されます</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="#Exercise_1">管理サンプルAnagramプロジェクトの作成</a></p>
+</li>
+<li>
+<p><a href="#Exercise_2">エージェントの実行</a></p>
+</li>
+<li>
+<p><a href="#Exercise_3">マネージャ・プロジェクトの作成</a></p>
+</li>
+<li>
+<p><a href="#Exercise_3">プロジェクトの作成</a></p>
+</li>
+<li>
+<p><a href="#Exercise_4">実行可能マネージャ・クラスの作成</a></p>
+</li>
+<li>
+<p><a href="#Exercise_5">マネージャの実行</a></p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_前提条件">前提条件</h3>
+<div class="paragraph">
+<p>このチュートリアルは、次のテクノロジについて基本的な知識またはプログラミング経験を持つ読者を想定して書かれています。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>JMXテクノロジ: <a href="http://download.oracle.com/javase/6/docs/technotes/guides/jmx/index.html">JMXオンライン・ドキュメント</a></p>
+</li>
+<li>
+<p>Javaテクノロジ: <a href="http://www.oracle.com/technetwork/java/javase/tech/index.html">Java SEテクノロジ早見表</a></p>
+</li>
+<li>
+<p>NetBeans IDE</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><a href="http://download.oracle.com/javase/6/docs/technotes/guides/management/index.html">Javaプラットフォームのモニタリングおよび管理</a>の内容が参考になる場合もあります。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_チュートリアルに必要なソフトウェア">チュートリアルに必要なソフトウェア</h3>
+<div class="paragraph">
+<p>このチュートリアルでは、コンピュータに次のソフトウェアをインストールしておく必要があります。</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">ソフトウェアまたはリソース</th>
+<th class="tableblock halign-left valign-top">必須バージョン</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://netbeans.org/downloads/index.html">NetBeans IDE</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">7.2、7.3、7.4、8.0、Javaバージョン</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://www.oracle.com/technetwork/java/javase/downloads/index.html">Java Development Kit (JDK)</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">バージョン7または8</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">JMXプラグイン</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">NetBeans更新センターから入手可能</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">JConsoleプラグイン</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">NetBeans更新センターから入手可能</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>*JMX*および*JConsole*のプラグインをインストールするには、「ツール」&gt;「プラグイン」を選択し、NetBeansアップデート・センターからモジュールをダウンロードします。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_リソース">リソース</h3>
+
+</div>
+<div class="sect1">
+<h2 id="_管理サンプルanagramプロジェクトの作成">管理サンプルAnagramプロジェクトの作成</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>この課題の目標は、マネージャ・アプリケーションが接続できるJMXエージェントを作成することです。JMXプラグインには、JMXエージェント・サンプルJavaプロジェクトが含まれています。この課題では、JMXエージェントを一から記述するのではなく、このサンプル・プロジェクトを作成します。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>「ファイル」&gt;「新規プロジェクト」を選択します。</p>
+</li>
+<li>
+<p>「サンプル」でJMXカテゴリを選択します。</p>
+</li>
+<li>
+<p>JMXで管理されたアナグラム・ゲーム・プロジェクトを選択します。
+image::images/jmx-newproject.png[title="新規プロジェクト・ウィザードのJMXで管理されたアナグラム・ゲーム"]</p>
+</li>
+<li>
+<p>「次」をクリックします。既存のデフォルトのプロジェクト名と場所の値を変更する必要はありません。「メイン・プロジェクトとして設定」が選択されていることを確認し、「終了」をクリックします。</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_エージェントの実行">エージェントの実行</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>この課題の目標は、JMXリモート管理を有効にしてJavaアプリケーションを起動することです。リモート管理では、クライアント・アプリケーション(JMXマネージャ)からアプリケーション(JMXエージェント)に接続し、管理およびモニタリング情報を視覚化できます。</p>
+</div>
+<div class="paragraph">
+<p>*注意:*JDK 1.5、JDK 1.6またはJDK 1.7に基づいて実行されているアプリケーションは、リモート管理を有効にできるJMXエージェントです。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>JMXAnagramGameプロジェクトが選択され、メイン・プロジェクトとして設定されていることを確認します。</p>
+</li>
+<li>
+<p>JMXAnagramGameプロジェクトを右クリックし、「プロパティ」を選択します。</p>
+</li>
+<li>
+<p>プロジェクトの「プロパティ」ダイアログで*モニタリングおよび管理*カテゴリを選択します。</p>
+</li>
+<li>
+<p>*「JConsoleをプロジェクトにアタッチ」*を選択解除します。</p>
+</li>
+<li>
+<p>*「RMIリモート・アクセスの有効化」*を選択します。「OK」をクリックします。
+image::images/jmx-properties1.png[title="「プロジェクト・プロパティ」ダイアログの「モニタリングおよび管理」カテゴリ"]</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>エージェントが受信JMXリクエストを待機するポートを指定できます。このチュートリアルでは、デフォルト・ポート(1099)のままにします。別のポート番号を指定する場合は、このチュートリアルの各部分で適切な変更を行う必要があります。また、このチュートリアルでは、プロパティ・ファイルも指定しません。(独自のアプリケーションの場合、管理プロパティ・ファイルの作成に役立つウィザードが提供されます。)</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>メイン・メニューから「デバッグ」&gt;「モニタリングと管理付きでメイン・プロジェクトを実行」を選択し、Anagram Gameアプリケーションを起動します。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>あるいは、ツールバーの「モニタリングと管理付きでメイン・プロジェクトを実行」ボタン(image::images/run-project24.png[title="モニタリングおよび管理によるメイン・プロジェクトの実行のボタン"])をクリックします。</p>
+</div>
+<div class="paragraph">
+<p>アプリケーションを実行すると、「Anagram Game」ウィンドウが開きます。JVMは、ローカル・ホスト・ポート1099でRMIアクセスをリスニングしています。JMXエージェントが実行され、マネージャから管理リクエストが送信されるのを待機しています。</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/jmx-anagram.png" alt="jmx anagram">
+</div>
+<div class="title">Figure 2. アナグラム・ゲーム</div>
+</div>
+<div class="paragraph">
+<p>「Anagrams」ウィンドウを最小化できますが、アプリケーションを終了しないでください。</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_マネージャ_プロジェクトの作成">マネージャ・プロジェクトの作成</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>この課題では、 <code>JMXAnagramManager</code> という名前のJavaアプリケーション・プロジェクトを作成し、ウィザードを使用して実行可能なマネージャ・クラスを作成します。</p>
+</div>
+<div class="sect2">
+<h3 id="_プロジェクトの作成">プロジェクトの作成</h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>「ファイル」&gt;「新規プロジェクト」([Ctrl]-[Shift]-[N])を選択します。</p>
+</li>
+<li>
+<p>「Java」カテゴリで「Javaアプリケーション」を選択します。「次」をクリックします。
+image::images/jmx-newjavaproject.png[title="新規Javaプロジェクト・ウィザード"]</p>
+</li>
+<li>
+<p>プロジェクト名として*「JMXAnagramManager」*と入力します。</p>
+</li>
+<li>
+<p>「メイン・プロジェクトとして設定」を選択し(選択されていない場合)、「メイン・クラスの作成」を選択解除します。「終了」をクリックします。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>*注意:*次の課題で、JMXマネージャ・ウィザードを使用してメインの実行可能クラスを生成します。</p>
+</div>
+<div class="paragraph">
+<p>「終了」をクリックすると、新しいプロジェクトが「プロジェクト」ツリーに追加されます。JMXマネージャ・プロジェクトは他のJavaアプリケーション・プロジェクトと変わらないことに注意してください。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_実行可能マネージャ_クラスの作成">実行可能マネージャ・クラスの作成</h3>
+<div class="paragraph">
+<p>この課題では、JMXマネージャ・ウィザードを使用して実行可能マネージャ・クラスを作成する方法を学習します。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>JMXAnagramManagerプロジェクトがメイン・プロジェクトとして設定されていることを確認します。</p>
+</li>
+<li>
+<p>「ファイル」&gt;「新規ファイル」([Ctrl]-[N]、Macの場合は[⌘]-N)を選択し、「JMX」カテゴリで「JMXマネージャ」を選択します。「次」をクリックします。
+image::images/jmx-newjmxmanager.png[title="新規ファイル・ウィザードのJMXマネージャ・テンプレート"]</p>
+</li>
+<li>
+<p>クラス名として*「AnagramsManager」*と入力します。</p>
+</li>
+<li>
+<p>パッケージ名として*「com.toys.anagrams.manager」*と入力します。</p>
+</li>
+<li>
+<p>「mainメソッドを生成」、「プロジェクトのメイン・クラスとして設定」および「サンプルMBean検出コードの生成」が選択されていることを確認します。「次」をクリックします。</p>
+</li>
+<li>
+<p>「編集」をクリックして、接続するJMXエージェントURLを入力します。</p>
+</li>
+<li>
+<p>RMI JMXエージェントURLダイアログ・ボックスでデフォルト値を受け入れます。「OK」をクリックします。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>RMI JMXエージェントURLダイアログ・ボックスは、プロトコル、ホスト、ポートおよびURLパスで構成される有効なJMX URLの入力に有用です。</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/jmx-jmxagenturl.png" alt="jmx jmxagenturl">
+</div>
+<div class="title">Figure 3. RMI JMXエージェントURLダイアログ・ボックスでのデフォルト値</div>
+</div>
+<div class="paragraph">
+<p>「プロトコル」ドロップダウン・リストには1つの要素が表示されています。「プロトコル」フィールドは書込み可能で、独自のプロトコルを入力できます。デフォルト・プロトコルであるRMI JVMエージェントは、JDK JMXエージェントへの接続に使用されるRMIプロトコルです。このチュートリアルでこれより前に起動したエージェントは、この種のエージェントです。</p>
+</div>
+<div class="paragraph">
+<p>エージェントは <code>localhost:1099</code> でリスニングしているため、デフォルトのホストとポートの値を使用します。URLパス・フィールドは読取り専用で、RMI JVMエージェントのパスの構成が表示されます。URLパスは、ホストとポートの値で自動的に更新されます。</p>
+</div>
+<div class="paragraph">
+<p>「OK」をクリックすると、RMI JMXエージェントURLダイアログ・ボックスで指定された詳細に基づいた完全なURLでJMXエージェントURLフィールドが更新されます。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>「認証された接続」および「認証された接続に対するサンプル・コードの生成」が選択されていることを確認します。「終了」をクリックします。
+image:::images/jmx-jmxagenturl2-sm.png[role="left", link="images/jmx-jmxagenturl2.png"]</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>エージェントの起動時に認証構成を指定しなかったため、エージェントへの接続は認証されません。</p>
+</div>
+<div class="paragraph">
+<p>「終了」をクリックすると、IDEでマネージャ・クラスが作成され、エディタでファイルが開きます。認証された接続を生成できるようにするサンプル・コードが生成されたことを確認できます。</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_マネージャの実行">マネージャの実行</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>この課題では、マネージャを実行し、MBeanを検出する方法を学習します。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>AnagramsManager.javaファイルで、メイン・メソッドにあるMBean検出コードのコメントを解除します。次のようなコードになります。</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">    public static void main(String[] args) throws Exception {
+
+        //Manager instantiation and connection to the remote agent
+        AnagramsManager manager = AnagramsManager.getDefault();
+
+        // SAMPLE MBEAN NAME DISCOVERY. Uncomment following code:
+          Set resultSet =
+          manager.getMBeanServerConnection().queryNames(null, null);
+          for(Iterator i = resultSet.iterator(); i.hasNext();) {
+          System.out.println("MBean name: " + i.next());
+          }
+
+        // Close connection
+        manager.close();
+        System.out.println("Connection closed.");
+    }</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>エディタで右クリックして「インポートを修正」([Alt]-[Shift]-[I]、Macの場合は[⌘]-[Shift]-[I])を選択し、必要なインポート文( <code>java.util.Set</code> および <code>java.util.Iterator</code> )を生成します。変更を保存します。</p>
+</li>
+<li>
+<p>メイン・メニューから「実行」&gt;「メイン・プロジェクトの実行」を選択します。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>または、「プロジェクト」ウィンドウでJMXAnagramManagerプロジェクト・ノードを右クリックし、「実行」を選択します。</p>
+</div>
+<div class="paragraph">
+<p>「実行」を選択すると、JMXAnagramManagerアプリケーションが起動してリモート・エージェントに接続します。「出力」ウィンドウに検出されたMBean名を表示して、接続を閉じます。</p>
+</div>
+<div class="paragraph">
+<p>プロジェクトがコンパイルされ、マネージャが起動されます。検出された <code>ObejctNames</code> が「出力」ウィンドウに表示されます。 <code>AnagramsStats</code>  MBeanとJava VM MBeanが認められます。すべてのJava VM標準MBeanは、 <code>java.lang</code>  JMXドメイン下にあります。</p>
+</div>
+<div class="paragraph">
+<p>JMXAnagramManagerの実行のNetBeansの「出力」ウィンドウは次のような表示になります。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">init:
+deps-jar:
+compile:
+run:
+MBean name: java.lang:type=MemoryManager,name=CodeCacheManager
+MBean name: java.lang:type=Compilation
+MBean name: java.lang:type=MemoryPool,name=PS Perm Gen
+MBean name: com.sun.management:type=HotSpotDiagnostic
+MBean name: java.lang:type=Runtime
+MBean name: com.toy.anagrams.mbeans:type=AnagramsStats
+MBean name: java.lang:type=ClassLoading
+MBean name: java.lang:type=Threading
+MBean name: java.lang:type=MemoryPool,name=PS Survivor Space
+MBean name: java.util.logging:type=Logging
+MBean name: java.lang:type=OperatingSystem
+MBean name: java.lang:type=Memory
+MBean name: java.lang:type=MemoryPool,name=Code Cache
+MBean name: java.lang:type=GarbageCollector,name=PS Scavenge
+MBean name: java.lang:type=MemoryPool,name=PS Eden Space
+MBean name: JMImplementation:type=MBeanServerDelegate
+MBean name: java.lang:type=GarbageCollector,name=PS MarkSweep
+MBean name: java.lang:type=MemoryPool,name=PS Old Gen
+Connection closed.
+BUILD SUCCESSFUL (total time: 1 second)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>これで終了です。よくできました。</strong>
+このチュートリアルが、JMXによってエクスポートされた情報にアクセスするためのマネージャ・アプリケーションの開発方法の理解に役立っていれば幸いです。</p>
+</div>
+<div class="paragraph">
+<p><a href="/about/contact_form.html?to=3&amp;subject=Feedback:%20Developing%20a%20Java%20Management%20Extensions%20Manager">このチュートリアルに関するご意見をお寄せください</a></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_関連項目">関連項目</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>詳細は、次を参照してください:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="jmx-getstart.html">NetBeans IDEでのJMXモニタリングの開始</a></p>
+</li>
+<li>
+<p><a href="jmx-tutorial.html">JavaアプリケーションへのJava Management Extensions (JMX)インストゥルメントの追加</a></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+            
+<section class='tools'>
+    <ul class="menu align-center">
+        <li><a title="Facebook" href="https://www.facebook.com/NetBeans"><i class="fa fa-md fa-facebook"></i></a></li>
+        <li><a title="Twitter" href="https://twitter.com/netbeans"><i class="fa fa-md fa-twitter"></i></a></li>
+        <li><a title="Github" href="https://github.com/apache/incubator-netbeans"><i class="fa fa-md fa-github"></i></a></li>
+        <li><a title="YouTube" href="https://www.youtube.com/user/netbeansvideos"><i class="fa fa-md fa-youtube"></i></a></li>
+        <li><a title="Slack" href="https://tinyurl.com/netbeans-slack-signup/"><i class="fa fa-md fa-slack"></i></a></li>
+        <li><a title="JIRA" href="https://issues.apache.org/jira/projects/NETBEANS/summary"><i class="fa fa-mf fa-bug"></i></a></li>
+    </ul>
+    <ul class="menu align-center">
+        
+        <li><a href="https://github.com/apache/incubator-netbeans-website/blob/master/netbeans.apache.org/src/content/kb/docs/java/jmx-manager-tutorial_ja.asciidoc" title="See this page in github"><i class="fa fa-md fa-edit"></i> See this page in GitHub.</a></li>
+    </ul>
+</section>
+
+        </div>
+        
+
+<div class='grid-container incubator-area' style='margin-top: 64px'>
+    <div class='grid-x grid-padding-x'>
+        <div class='large-auto cell text-center'>
+            <a href="https://www.apache.org/">
+                <img style="width: 320px" title="Apache Software Foundation" src="/images/asf_logo_wide.svg" />
+            </a>
+        </div>
+        <div class='large-auto cell text-center'>
+            <a href="https://www.apache.org/events/current-event.html">
+               <img style="width:234px; height: 60px;" title="Apache Software Foundation current event" src="https://www.apache.org/events/current-event-234x60.png"/>
+            </a>
+        </div>
+    </div>
+</div>
+<footer>
+    <div class="grid-container">
+        <div class="grid-x grid-padding-x">
+            <div class="large-auto cell">
+                
+                <h1>About</h1>
+                <ul>
+                    <li><a href="https://www.apache.org/foundation/thanks.html">Thanks</a></li>
+                    <li><a href="https://www.apache.org/foundation/sponsorship.html">Sponsorship</a></li>
+                    <li><a href="https://www.apache.org/security/">Security</a></li>
+                    <li><a href="https://incubator.apache.org/projects/netbeans.html">Incubation Status</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/community/index.html">Community</a></h1>
+                <ul>
+                    <li><a href="/community/mailing-lists.html">Mailing lists</a></li>
+                    <li><a href="/community/committer.html">Becoming a committer</a></li>
+                    <li><a href="/community/events.html">NetBeans Events</a></li>
+                    <li><a href="https://www.apache.org/events/current-event.html">Apache Events</a></li>
+                    <li><a href="/community/who.html">Who is who</a></li>
+                    <li><a href="/community/nekobean.html">NekoBean</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/participate/index.html">Participate</a></h1>
+                <ul>
+                    <li><a href="/participate/submit-pr.html">Submitting Pull Requests</a></li>
+                    <li><a href="/participate/report-issue.html">Reporting Issues</a></li>
+                    <li><a href="/participate/netcat.html">NetCAT - Community Acceptance Testing</a></li>
+                    <li><a href="/participate/index.html#documentation">Improving the documentation</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/help/index.html">Get Help</a></h1>
+                <ul>
+                    <li><a href="/help/index.html#documentation">Documentation</a></li>
+                    <li><a href="/help/getting-started.html">Platform videos</a></li>
+                    <li><a href="/wiki/index.asciidoc">Wiki</a></li>
+                    <li><a href="/help/index.html#support">Community Support</a></li>
+                    <li><a href="/help/commercial-support.html">Commercial Support</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/download/nb100/nb100.html">Download</a></h1>
+                <ul>
+                    <li><a href="/download/index.html#releases">Releases</a></li>
+                    <ul>
+                        <li><a href="/download/nb100/nb100.html">Apache NetBeans 10.0</a></li>
+                        <li><a href="/download/nb90/nb90.html">Apache NetBeans 9.0</a></li>
+                    </ul>
+                    <li><a href="/plugins/index.html">Plugins</a></li>
+                    <li><a href="/download/index.html#source">Building from source</a></li>
+                    <li><a href="/download/index.html#previous">Previous releases</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</footer>
+<div class='footer-disclaimer'>
+    <div class="footer-disclaimer-content">
+        <p>Copyright &copy; 2017-2018 <a href="https://www.apache.org">The Apache Software Foundation</a>.</p>
+        <p>Licensed under the Apache <a href="https://www.apache.org/licenses/">license</a>, version 2.0</p>
+        <p><a href="https://incubator.apache.org/" alt="Apache Incubator"><img src='/images/incubator_feather_egg_logo_bw_crop.png' title='Apache Incubator'></img></a></p>
+        <div style='max-width: 40em; margin: 0 auto'>
+            <p>Apache NetBeans is an effort undergoing incubation at The Apache Software Foundation (ASF), sponsored by the Apache Incubator. Incubation is required of all newly accepted projects until a further review indicates that the infrastructure, communications, and decision making process have stabilized in a manner consistent with other successful ASF projects. While incubation status is not necessarily a reflection of the completeness or stability of the code, it does indicate that the project has yet to be fully endorsed by the ASF.</p>
+            <p>Apache Incubator, Apache, the Apache feather logo, the Apache NetBeans logo, and the Apache Incubator project logo are trademarks of <a href="https://www.apache.org">The Apache Software Foundation</a>.</p>
+            <p>Oracle and Java are registered trademarks of Oracle and/or its affiliates.</p>
+        </div>
+        
+    </div>
+</div>
+
+
+
+        <script src="/js/vendor/jquery-3.2.1.min.js"></script>
+        <script src="/js/vendor/what-input.js"></script>
+        <script src="/js/vendor/jquery.colorbox-min.js"></script>
+        <script src="/js/vendor/foundation.min.js"></script>
+        <script src="/js/netbeans.js"></script>
+        <script>
+            
+            $(function(){ $(document).foundation(); });
+        </script>
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/highlight.min.js"></script>
+        <script>
+         $(document).ready(function() { $("pre code").each(function(i, block) { hljs.highlightBlock(block); }); }); 
+        </script>
+        
+    </body>
+</html>
