@@ -26,7 +26,7 @@
     <body>
         <%include "menu.gsp"%>
         <%include "news.gsp"%>
-        <div class='grid-container main-content'>
+        <div class='grid-container main-content tutorial'>
             ${content.body}
             <%include "tools.gsp"%>
         </div>
