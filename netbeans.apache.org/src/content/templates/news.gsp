@@ -19,11 +19,11 @@
 
 */%>
 <!-- src/templates/news -->
-<section class="hero news alternate" style='margin-bottom: 2em'>
+<section class="hero news alternate">
     <div class='grid-container'>
         <div class='cell'>
             <div class="annotation">Just released!</div>
-            <h1>Apache NetBeans 10.0</h1>
+            <h1 syle='font-size: 2rem'>Apache NetBeans 10.0</h1>
             <p><a class="button success" href="/download/nb100/nb100.html">Read more</a></p>
         </div>
     </div>
