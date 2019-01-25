@@ -28,6 +28,18 @@
         <%include "news.gsp"%>
         <div class='grid-container main-content tutorial'>
             <h1 class="sect0">${content.title}</h1>
+            <% if (content.reviewed == null) { %>
+            <div class="sectionbody">
+              <div class="admonitionblock note">
+                <table>
+                  <tbody><tr>
+                  <td class="icon"><i class="fa icon-note" title="Note"></i></td>
+                  <td class="content">This tutorial needs a review. You can <a href="/kb/docs/contributing.html">help us review it.</a></td>
+                  </tr></tbody>
+                </table>
+              </div>
+            </div>
+            <% } %>
             ${content.body}
             <%include "tools.gsp"%>
         </div>
