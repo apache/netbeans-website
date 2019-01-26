@@ -56,7 +56,7 @@
             <% } else { %>
             <div class="sectionbody">
               <div class="paragraph">
-                <p class='reviewed'><i class="fa fa-check-circle"></i> Last reviewed in <%= content.reviewed %></p>
+                <p class='reviewed'><i class="fa fa-check-circle"></i> Last reviewed on <%= content.reviewed %></p>
               </div>
             </div>
             <% } %>
