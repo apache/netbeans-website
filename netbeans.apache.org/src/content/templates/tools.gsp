@@ -37,6 +37,8 @@
             if (content != null) {
                 String content_file = content.get("file");
                 int i = content_file.lastIndexOf("build/generated-bake");
+                // Adds support for Windows builds
+                i = i == -1 ? content_file.lastIndexOf("build\\generated-bake") : i;
                 file = content_file.substring(i + "build/generated-bake".length());
             }
         %>
