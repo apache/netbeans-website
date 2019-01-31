@@ -61,8 +61,6 @@
                     <li><a href="/community/committer.html">Becoming a committer</a></li>
                     <li><a href="/community/events.html">NetBeans Events</a></li>
                     <li><a href="https://www.apache.org/events/current-event.html">Apache Events</a></li>
-                    <li><a href="/community/who.html">Who is who</a></li>
-                    <li><a href="/community/nekobean.html">NekoBean</a></li>
                 </ul>
             </div>
             <div class="large-auto cell">
@@ -70,7 +68,6 @@
                 <ul>
                     <li><a href="/participate/submit-pr.html">Submitting Pull Requests</a></li>
                     <li><a href="/participate/report-issue.html">Reporting Issues</a></li>
-                    <li><a href="/participate/netcat.html">NetCAT - Community Acceptance Testing</a></li>
                     <li><a href="/participate/index.html#documentation">Improving the documentation</a></li>
                 </ul>
             </div>
@@ -78,7 +75,6 @@
                 <h1><a href="/help/index.html">Get Help</a></h1>
                 <ul>
                     <li><a href="/help/index.html#documentation">Documentation</a></li>
-                    <li><a href="/help/getting-started.html">Platform videos</a></li>
                     <li><a href="/wiki/index.asciidoc">Wiki</a></li>
                     <li><a href="/help/index.html#support">Community Support</a></li>
                     <li><a href="/help/commercial-support.html">Commercial Support</a></li>
@@ -87,11 +83,7 @@
             <div class="large-auto cell">
                 <h1><a href="/download/nb100/nb100.html">Download</a></h1>
                 <ul>
-                    <li><a href="/download/index.html#releases">Releases</a></li>
-                    <ul>
-                        <li><a href="/download/nb100/nb100.html">Apache NetBeans 10.0</a></li>
-                        <li><a href="/download/nb90/nb90.html">Apache NetBeans 9.0</a></li>
-                    </ul>
+                    <li><a href="/download/index.html">Releases</a></li>                    
                     <li><a href="/plugins/index.html">Plugins</a></li>
                     <li><a href="/download/index.html#source">Building from source</a></li>
                     <li><a href="/download/index.html#previous">Previous releases</a></li>
