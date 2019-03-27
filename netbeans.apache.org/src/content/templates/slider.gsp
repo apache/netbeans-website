@@ -46,11 +46,11 @@
               <div class='grid-container'>
                   <div class='cell'>
                       <div class='annotation'>Apache NetBeans Transition News</div>
-                      <h1>Apache NetBeans 10.0 Features</h1>
+                      <h1>Apache NetBeans 11.0 Features</h1>
                       <p>
-                        Java 11, PHP, JUnit 5, JavaScript, Groovy, and more.
+                        JDK 12, Java EE, Gradle and more!
                       </p>
-                      <p><a class='button success' href="/download/nb100/index.html">Features</a></p>
+                      <p><a class='button success' href="/download/nb110/index.html">Features</a></p>
                   </div>
               </div>
           </section>
@@ -60,11 +60,11 @@
               <div class='grid-container'>
                   <div class='cell'>
                       <div class='annotation'>Apache NetBeans Transition News</div>
-                      <h1>Apache NetBeans 10.0 Released!</h1>
+                      <h1>Apache NetBeans 11.0 Released!</h1>
                       <p>
-                        Download Apache NetBeans 10.0 from an Apache mirror near you.
+                        Download Apache NetBeans 11.0 from an Apache mirror near you.
                       </p>
-                      <p><a class='button success' href="/download/nb100/nb100.html">Download</a></p>
+                      <p><a class='button success' href="/download/nb110/nb110.html">Download</a></p>
                   </div>
               </div>
           </section>
