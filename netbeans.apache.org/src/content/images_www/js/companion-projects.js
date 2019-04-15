@@ -1,4 +1,23 @@
 /*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+/*
  * This is the rotation sript for the Companion Projects section
  *
  * we hase some limited number of static items whcih are displayed always and
@@ -84,7 +103,7 @@ function renderCompanionProjectIcons() {
 
     /* opening and closing html chunks */
     var openingHtml="<center><table><tr><td class=\"companions-left b-green-left valign-center\">Companion <br>Projects: </td><td  class=\"valign-center\">";
-    var closingHtml="<td class=\"companions-right b-green-right valign-center align-center\">&nbsp;Sponsored&nbsp;by&nbsp;<br><a href=\"http://www.oracle.com/\"><img src=\""+domain+"/images_www/v6/logo_oracle_footer.gif\" width=\"100\" height=\"29\" alt=\"Sponsored by Oracle\" title=\"Sponsored by Oracle\"></a></td></tr></table></center>";
+    var closingHtml=""
 
     /* let's stup the sttaic links */
     for (i=0; i<staticItemsContainer.items.length; i++) {
@@ -116,28 +135,6 @@ function renderCompanionProjectIcons() {
 * function which renders randomly 2 links to the Sun Support Program pane in kb/rcol
 */
 function renderRandomSupportLinks() {
-    // JSON objects holding links and urls for the rendering
-    var links={
-        "items":[
-        {
-            "link":"Oracle Development Tools Support Offering for NetBeans IDE",
-            "url":"http://www.oracle.com/us/support/development-tools-080025.html"
-        }
-        ]
-    };
-
-    // setup rand counter
-    var rand1 = Math.floor(Math.random() * links.items.length);
-    /*var rand2 = rand1;
-  do {
-    rand2 = Math.floor(Math.random() * links.items.length);
-  }
-  while(rand1 == rand2)
- */
-
-    // now render the links according to rand counters
-    document.write("<div class=\"rrrarticle\"><div class=\"rarticletitle\"><a href=\""+links.items[rand1].url+"\">"+links.items[rand1].link+"</a></div></div>");
-//document.write("<div class=\"rrrarticle\"><div class=\"rarticletitle\"><a href=\""+links.items[rand2].url+"\">"+links.items[rand2].link+"</a></div></div>");
 }
 
 
