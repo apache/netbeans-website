@@ -25,7 +25,7 @@
 </div>
 <div class="top-bar" id="responsive-menu">
     <div class='top-bar-left'>
-        <a class='title' href="/"><img src='/images/apache-netbeans.svg' style='padding: 8px; height: 48px;'></img> Apache NetBeans (incubating)</a>
+        <a class='title' href="/"><img src='/images/apache-netbeans.svg' style='padding: 8px; height: 48px;'></img> Apache NetBeans</a>
     </div>
     <div class="top-bar-right">
         <ul class="vertical medium-horizontal menu" data-responsive-menu="drilldown medium-dropdown">
