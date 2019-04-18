@@ -30,13 +30,13 @@
           <section class='hero alternate netbeans-bg'>
               <div class='grid-container'>
                   <div class='cell'>
-                      <div class='annotation'>Duke's Choice Award</div>
-                      <h1>Apache NetBeans - A 2018 Winner!</h1>
+                      <div class='annotation'>Top Level Project</div>
+                      <h1>Apache NetBeans is now a Top Level Apache Project</h1>
                       <p>
-                        In keeping with its 16-year history, the 2018 Duke's
-                        Choice Award winners were announced at the Groundbreakers Hub at Code One.
-                        Apache NetBeans is one of the winners!  </p>
-                      <p><a class='button success' href="https://blogs.oracle.com/java/announcing-2018-dukes-choice-award-winners">Read more</a></p>
+                        After two years and a half as an Apache Incubator Podling, Apache
+                        NetBeans is now a Top Level Apache Project.
+                      </p>
+                      <!-- <p><a class='button success' href="https://blogs.apache.org/netbeans/">Read more</a></p> -->
                   </div>
               </div>
           </section>
@@ -51,6 +51,21 @@
                         JDK 12, Java EE, Gradle and more!
                       </p>
                       <p><a class='button success' href="/download/nb110/index.html">Features</a></p>
+                  </div>
+              </div>
+          </section>
+      </li>
+      <li class="orbit-slide">
+          <section class='hero alternate netbeans-bg'>
+              <div class='grid-container'>
+                  <div class='cell'>
+                      <div class='annotation'>Duke's Choice Award</div>
+                      <h1>Apache NetBeans - A 2018 Winner!</h1>
+                      <p>
+                        In keeping with its 16-year history, the 2018 Duke's
+                        Choice Award winners were announced at the Groundbreakers Hub at Code One.
+                        Apache NetBeans is one of the winners!  </p>
+                      <p><a class='button success' href="https://blogs.oracle.com/java/announcing-2018-dukes-choice-award-winners">Read more</a></p>
                   </div>
               </div>
           </section>
@@ -88,5 +103,6 @@
     <button data-slide="1"><span class="show-for-sr">Second slide details.</span></button>
     <button data-slide="2"><span class="show-for-sr">Third slide details.</span></button>
     <button data-slide="3"><span class="show-for-sr">Fourth slide details.</span></button>
+    <button data-slide="4"><span class="show-for-sr">Fifth slide details.</span></button>
   </nav>
 </div>
