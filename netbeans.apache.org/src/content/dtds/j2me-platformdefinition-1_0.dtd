@@ -1,0 +1,166 @@
+<!--
+
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements.  See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership.  The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    KIND, either express or implied.  See the License for the
+    specific language governing permissions and limitations
+    under the License.
+
+-->
+<!--
+    TODO define vocabulary identification
+    PUBLIC ID: -//vendor//vocabulary//EN
+    SYSTEM ID: http://server/path/platform.dtd
+
+--><!--
+    An example how to use this DTD from your XML document:
+
+    <?xml version='1.0'?>
+
+    <!DOCTYPE platform PUBLIC '-//NetBeans//DTD J2ME PlatformDefinition 1.0//EN' 'https://netbeans.org/dtds/j2me-platformdefinition-1_0.dtd'>
+
+    <platform>
+    ...
+    </platform>
+-->
+
+<!--- 
+name - identification of the platform. The platform is always referenced by the name so the name must be unique among all installed platforms within the IDE
+home - base folder of the platform installation
+type - platform type.  Valid values are currently: UEI-1.0, UEI-1.0.1, and CUSTOM
+displayname - displayed name of the platform. When not specified name is used instead
+srcpath - optional list of folders, jars and zip files with platform sources
+docpath - optional list of folders, jars, zip files and URLs containing platform JavaDoc
+- all the paths are comma separated lists
+- ${platform.home} can be used to reference the platform home directory
+
+preverifycmd - command line used for preverification, this command line is used only when the platform type is set to CUSTOM
+runcmd - command line used for emulator execution, this command line is used only when the platform type is set to CUSTOM
+debugcmd - command line used for debugging, this command line is used only when the platform type is set to CUSTOM
+- samples of UEI-1.0 command lines:
+    preverifycmd: &quot;{platformhome}{/}bin{/}preverify&quot; {classpath|-classpath &quot;{classpath}&quot;} -d &quot;{destdir}&quot; &quot;{srcdir}&quot;
+    runcmd: &quot;{platformhome}{/}bin{/}emulator&quot; {device|-Xdevice:&quot;{device}&quot;} {jadfile|-Xdescriptor:&quot;{jadfile}&quot;} {securitydomain|-Xdomain:{securitydomain}}
+    debugcmd: &quot;{platformhome}{/}bin{/}emulator&quot; {device|-Xdevice:&quot;{device}&quot;} {jadfile|-Xdescriptor:&quot;{jadfile}&quot;} {securitydomain|-Xdomain:{securitydomain}} {debug|-Xdebug -Xrunjdwp:transport={debugtransport},server={debugserver},suspend={debugsuspend},address={debugaddress}}
+- format of the command lines (EMapFormat) is following:
+    {argument|command line part} is a condition, if argument is set to some value the command line part will be added to the command line
+    {argument} is a simple replacement, so for example {jadfile} will be replaced by the real path to the jad file
+    combination of condition and simple replacement is allowed. For example: {jadfile|-Xdescriptor:&quot;{jadfile}&quot;} means that if the jadfile argument contains /myfolder/my.jad then -Xdescriptor:"/myfolder/my.jad" will be added to the command line
+- known preverifycmd arguments:
+    platformhome - always set - value of PlatformHome attribute
+    srcdir - value of SrcDir attribute
+    destdir - value of DestDir attribute
+    classpath - classpath string composed from ClassPath, ClassPathRef, nested ClassPath
+    / - value of File.separator
+- known runcmd and debugcmd arguments:
+    platformhome - always set - value of PlatformHome attribute
+    device - value of Device attribute
+    classpath - classpath string composed from ClassPath, ClassPathRef, nested ClassPath
+    jadfile - value of JadFile attribute
+    jadurl - value of JadUrl attribute
+    securitydomain - value of SecurityDomain attribute
+    debug - value of Debug attribute, this is just a switch that indicates debugging
+    debugaddress - value of DebugAddress attribute
+    debugtransport - value of DebugTransport attribute
+    debugserver - value of DebugServer attribute. Default: true.
+    debugsuspend - value of DebugSuspend attribute. Default: true.
+    / - value of File.separator
+
+ -->
+<!ELEMENT platform (device)+>
+<!ATTLIST platform
+    name CDATA #REQUIRED
+    home CDATA #REQUIRED
+    type CDATA #REQUIRED
+    displayname CDATA #IMPLIED
+    srcpath CDATA #IMPLIED
+    docpath CDATA #IMPLIED
+    preverifycmd CDATA #IMPLIED
+    runcmd CDATA #IMPLIED
+    debugcmd CDATA #IMPLIED
+  >
+
+<!--- 
+name - device name is the unique identification of the device within the platform
+description - optional description of the device
+securitydomains - list of allowed security domains for this device
+ -->
+<!ELEMENT device (configuration+,profile+,optional*,screen?)>
+<!ATTLIST device
+    name CDATA #REQUIRED
+    description CDATA #IMPLIED
+    securitydomains CDATA #IMPLIED
+  >
+
+<!ELEMENT screen EMPTY>
+<!ATTLIST screen
+    width CDATA #IMPLIED
+    height CDATA #IMPLIED
+    bitDepth CDATA #IMPLIED
+    isColor (true|false) "true"
+    isTouch (true|false) "false"
+>
+
+<!---
+name - configuration name will usually be CLDC
+version - version number in text format. For example: 1.0
+displayname - expanded name of the configuration. For example: Connected Limited Device Configuration
+classpath - comma separated list of folders, jars and zip files that belong to the configuration
+          - don't worry about duplicate usage of the classpath elements between configuration and profile (when they are packed together) or between different devices
+default - boolean specifying if this configuration is default. Valid values are true or false. Exactly one configuration must be set as default.
+ -->
+<!ELEMENT configuration EMPTY>
+<!ATTLIST configuration
+    name CDATA #REQUIRED
+    version CDATA #REQUIRED
+    displayname CDATA #IMPLIED
+    classpath CDATA #IMPLIED
+    default CDATA #IMPLIED
+  >
+
+<!--- 
+name - profile name will usually be MIDP
+version - version number in text format. For example 1.0
+dependencies - list of configuration dependencies
+displayname - expanded name of the profile. For example: Mobile Information Device Profile
+classpath - comma separated list of folders, jars and zip files that belong to the profile
+          - don't worry about duplicate usage of the classpath elements between configuration and profile (when they are packed together) or between different devices
+default - boolean specifying if this profile is default. Valid values are true or false. Exactly one profile must be set as default.        
+ -->
+<!ELEMENT profile EMPTY>
+<!ATTLIST profile
+    name CDATA #REQUIRED
+    version CDATA #REQUIRED
+    dependencies CDATA #IMPLIED
+    displayname CDATA #IMPLIED
+    classpath CDATA #IMPLIED
+    default CDATA #IMPLIED
+  >
+
+<!--- name - optional API name, for example MMAPI
+version - version number in text format, for example 1.0
+dependencies - list of dependencies on configurations, profiles, or other optional APIs of the same device
+displayname - expanded name of the optional API. For example: Mobile Media API
+classpath - comma separated list of folders, jars and zip files that belong to the optional API
+          - class path elements of the optional APIs should not be listed on classpath of the configuration, profile or other optional API of the same device
+default - boolean identification specifying if this optional API is enabled by default. Valid values are true or false. Any number of optional APIs may be enabled by default          
+ -->
+<!ELEMENT optional EMPTY>
+<!ATTLIST optional
+    name CDATA #REQUIRED
+    version CDATA #REQUIRED
+    dependencies CDATA #IMPLIED
+    displayname CDATA #IMPLIED
+    classpath CDATA #IMPLIED
+    default CDATA #IMPLIED
+  >
