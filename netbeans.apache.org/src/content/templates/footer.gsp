@@ -22,7 +22,6 @@
 
     The Apache NetBeans site must comply with the 
     "Apache Website Navigation Links Policy" https://www.apache.org/foundation/marks/pmcs#navigation
-    "Incubator Branding Guide" http://incubator.apache.org/guides/branding.html
 
     This seems to be a good place to comply with the policy.
 
@@ -96,10 +95,8 @@
     <div class="footer-disclaimer-content">
         <p>Copyright &copy; 2017-2019 <a href="https://www.apache.org">The Apache Software Foundation</a>.</p>
         <p>Licensed under the Apache <a href="https://www.apache.org/licenses/">license</a>, version 2.0</p>
-        <p><a href="https://incubator.apache.org/" alt="Apache Incubator"><img src='/images/incubator_feather_egg_logo_bw_crop.png' title='Apache Incubator'></img></a></p>
         <div style='max-width: 40em; margin: 0 auto'>
-            <p>Apache NetBeans is an effort undergoing incubation at The Apache Software Foundation (ASF), sponsored by the Apache Incubator. Incubation is required of all newly accepted projects until a further review indicates that the infrastructure, communications, and decision making process have stabilized in a manner consistent with other successful ASF projects. While incubation status is not necessarily a reflection of the completeness or stability of the code, it does indicate that the project has yet to be fully endorsed by the ASF.</p>
-            <p>Apache Incubator, Apache, Apache NetBeans, NetBeans, the Apache feather logo, the Apache NetBeans logo, and the Apache Incubator project logo are trademarks of <a href="https://www.apache.org">The Apache Software Foundation</a>.</p>
+            <p>Apache, Apache NetBeans, NetBeans, the Apache feather logo and the Apache NetBeans logo are trademarks of <a href="https://www.apache.org">The Apache Software Foundation</a>.</p>
             <p>Oracle and Java are registered trademarks of Oracle and/or its affiliates.</p>
         </div>
         <%
