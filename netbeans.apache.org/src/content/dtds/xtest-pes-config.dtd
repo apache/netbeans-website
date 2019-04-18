@@ -1,0 +1,262 @@
+<!--
+
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements.  See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership.  The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    KIND, either express or implied.  See the License for the
+    specific language governing permissions and limitations
+    under the License.
+
+-->
+<!-- root element of PES configuration
+  
+  attributes:
+  
+    incomingDir: where PES expects results to be uploaded
+      this directory will have two subdirectories:
+        - replacement/
+          - results stored in this directory
+    	     will replace the already processed
+    		 results (if applicable)
+    	- invalid/
+    	  - here are placed results which cannot
+    		 be processes by PES (ivalid or incomplete
+    		 archive) - so they can be further 
+    		 investigated manually
+    		 
+    workDir: PES' working directory - used for processing
+       results before they are integrated to web
+       
+    loggingLevel: logging level of PES, which is used for writing out logs
+                  to standard output. Default value is WARNING
+                  usually there is no need to specify this attribute
+                  since 'WARNING' level is suitable for most users
+                  
+    databaseUploadPath: path, where resuls prepored for database upload. 
+                are stored. When this attribute is set, database upload 
+                mode is actiavated. More information on this topic will come soon.
+                
+    team:   default team of this PES instance. This attribute applies only
+            when databaseUploadPath is set, hence it is relevant only when
+            uploading results to database. Again more informatin on this 
+            will be written soon.
+	
+-->
+<!ELEMENT PESConfig (PESWeb, Mail?)>
+<!ATTLIST PESConfig
+	incomingDir         CDATA #REQUIRED
+	workDir             CDATA #REQUIRED
+        loggingLevel        (SEVERE|WARNING|INFO|FINE|FINER|FINEST) "WARNING"
+        databaseUploadPath  CDATA #IMPLIED
+        team                CDATA #IMPLIED
+>	
+
+
+<!-- element describing email settings for PES.
+  
+   This element is optional and when used, PES is able to send notification to 
+   it's administrators about exceptional states it encounters. Attributes are:
+   
+   smtpHost: host address which is running smtp daemon to send email. Unix workstation
+             are usually running this daemon. If you are not sure, please
+             ask your network administrator.
+         
+    from:    email account which is used as a sender of this message. 
+    to:      email account to which are all messages sent
+    loggingLevel: similarly as in the top element (PESConfig), but this logging 
+                level is used for sending notifications via email. Usually
+                there is no need to define this attribute, since 'SEVERE' level
+                is suitable for most users
+
+-->
+<!ELEMENT Mail EMPTY>
+<!ATTLIST Mail
+    smtpHost     CDATA #REQUIRED
+    from         CDATA #REQUIRED
+    to           CDATA #REQUIRED
+    loggingLevel (SEVERE|WARNING|INFO|FINE|FINER|FINEST) "SEVERE"
+>    
+
+<!-- element describing PES' web. Any PES instance can manage
+	  one or more websites, each is independent on each other
+	 - this functionality can be used to prepare archives
+	   for offline access or to prepare truncated results
+	   (results uploaded to netbeans.org)
+	 
+  attributes:
+
+    
+    webroot: directory in the filesystem which serve as
+    	web root for results (does not have to be 
+    	real webroot of the http server, but any
+    	subdirectory of it).
+    	
+    type: type of the web. Possible values are:
+      - main - main PES web - this is the only compulsory
+         web to be specified in the config. All other types
+         of web are created from this one. Only one main
+         web can exist in one PES instance.
+      - copy - full or partial copy of the main web. This
+         can be used when preparing subset of results to be
+         published on other network (e.g. netbeans.org)
+      - archive - web to be archived for offline access. It 
+          is actually full or partial copy of main web, but
+          results available in archive are deleted from main
+          web. If you need to keep them available on the
+          main web, use 'copy' value instead of 'archive'     
+    
+    truncate: setting this to true means, that results
+      in this web are truncated - i.e. no working
+      directories, IDE userdirs nor exception details
+      are available on this web
+      
+    includeExceptions: when set to true (default), exceptions thrown in the
+            tests are displayed with stack traces on the pages. If false, no
+            stacktraces are displayed.
+            
+    includeIDELogs: when set to true (default), ide logs are available from
+            the web pages.
+            
+    uploadToDatabase: if true (default), then results from this web will be uploaded
+        to database. This attribute depends on databaseUploadPath in PESConfig,
+        so if the databaseUploadPath is not set, then this attribute has no 
+        effect at all.            
+      
+    webURL: URL of the webroot. This attribute is required only when database
+            uploads are on (see databaseUploadPath attribute in PESConfig
+    
+-->     
+<!ELEMENT PESWeb (PESProjectGroup+)>
+<!ATTLIST PESWeb	
+	webroot  	  CDATA #REQUIRED
+	type		  (main|copy|archive) "main"
+	truncate	  (true|false) "false"
+        includeExceptions (true|false) "true"
+        includeIDELogs    (true|false) "true"
+        uploadToDatabase  (true|false) "true"
+        webURL          CDATA #IMPLIED
+>	
+
+
+
+
+<!-- this elements defines groups of projects
+	 available on the web. Each web can contain
+	 one or more projects group. Each project group
+	 can include one or more projects and is available
+	 on separate page. All group pages are connected 
+	 together via links.
+	 
+  attributes:
+  	
+  	name: name of the group - this name is displayed
+  	  in the title of the main group page as well on 
+  	  links pointing to this page
+  	  
+  	description: detailed description of this group -
+  		description is displayed on the group summary page
+  		
+  	main: if true, this group is taken as the main group
+  		on the web site (is available in index.html).
+                It also means that all results which does
+                not fit into any other group will stay in this
+                group (even though there are not defined)
+  		  		
+  	historyMatrices: if true, historyMatrices are
+  	  created for this group, if false, no history matrices
+  	  are produced
+  	  
+  	currentBuilds: defines number of builds which are
+  	  considered as current - they are available
+  	  on the first projects summary page. Any build
+  	  'older' than the number specified is available
+  	  in other page. If not defined - no older builds
+          are created
+  	
+  	detailedData: defines number of builds for which are
+  	  detailed data kept available. When a build is older then
+  	  defined number, all detailed data (workdirs, logs, IDE userdirs)
+  	  are deleted. When not defined, no detailed data are deleted.
+          
+        uploadToDatabase: this settings applied only when databaseUploadPath
+            is set in PESConfig element. Basically this let you to let the results 
+            from this group to be uploaded to database, or disables (when set to
+            false) the upload of all results from this group
+              
+	 
+ -->
+<!ELEMENT PESProjectGroup (PESProject*)>
+<!ATTLIST PESProjectGroup
+	name 			CDATA 		#REQUIRED
+	description 		CDATA 		#REQUIRED
+	main 			(true|false)	"false"	
+	historyMatrices 	CDATA   	#IMPLIED
+	currentBuilds 		CDATA 		#IMPLIED
+	detailedData		CDATA 		#IMPLIED
+        uploadToDatabase        (true|false)    "true"
+>
+
+
+
+
+<!-- PESProject defines logical project which is managed
+ 	 in this group.
+ 	 
+  attributes:
+         
+    project: real name of the project as is defined
+      in the submitted results. This attribute serves
+      as 'link' to the tested project (i.e. even
+      though on pages is displayed logical names, 
+      the shown data are from this project. Attribute
+      can contain regular expression (with syntax 
+      conforming to JDK 1.4 regex package)
+      
+    department: from which department should
+      be tests included in this project. Usually one real 
+      project can be tested by several groups  (like
+      QA, Development, RE) and results needs to be
+      kept separately. If not defined, all departments
+      are included.  Attribute can also contain
+      regular expression (with syntax conforming to
+      JDK 1.4 regex package)
+      
+    testType: which test type should be included in this
+      project. Similarly as with department - one real
+      project can be tested with several test types (e.g.
+      functional, performance, unit ...). If this attribute
+      is not defined, then all test types are included. 
+      Likewise with project and department, testType can 
+      contain regular expression.
+      
+     fromBuild: from which build should be project
+       available in this logical project. If not defined,
+       all builds from beginning to buildTo are included
+       in this logical project.
+     
+     toBuild: to which build should be project available
+       in this logical project. If not defined, all
+       builds from buildFrom are included in this
+       logical project.
+      
+-->	 
+<!ELEMENT PESProject EMPTY>
+<!ATTLIST PESProject
+	project		CDATA	#REQUIRED	
+	department	CDATA 	#IMPLIED
+	testType	CDATA	#IMPLIED
+	fromBuild	CDATA	#IMPLIED
+	toBuild 	CDATA	#IMPLIED
+>	
+	
+	
