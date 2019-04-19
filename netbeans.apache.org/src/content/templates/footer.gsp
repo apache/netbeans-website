@@ -45,7 +45,7 @@
         <div class="grid-x grid-padding-x">
             <div class="large-auto cell">
                 <% /* See https://www.apache.org/foundation/marks/pmcs#navigation */ %>
-                <h1>About</h1>
+                <h1><a href="/about/index.html">About</a></h1>
                 <ul>
                     <li><a href="https://www.apache.org/foundation/thanks.html">Thanks</a></li>
                     <li><a href="https://www.apache.org/foundation/sponsorship.html">Sponsorship</a></li>
