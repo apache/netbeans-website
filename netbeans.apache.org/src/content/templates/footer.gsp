@@ -50,7 +50,6 @@
                     <li><a href="https://www.apache.org/foundation/thanks.html">Thanks</a></li>
                     <li><a href="https://www.apache.org/foundation/sponsorship.html">Sponsorship</a></li>
                     <li><a href="https://www.apache.org/security/">Security</a></li>
-                    <li><a href="https://incubator.apache.org/projects/netbeans.html">Incubation Status</a></li>
                 </ul>
             </div>
             <div class="large-auto cell">
