@@ -30,7 +30,7 @@
             <h1 class="sect0">${content.title}</h1>
             <% if (content.reviewed == null) { 
                 /* 
-                    jbake's 'content.file' has this structure: "/home/user/directory/of/the/clone/incubator-netbeans-website/netbeans.apache.org/build/generated-bake/content/plugins/index.asciidoc"
+                    jbake's 'content.file' has this structure: "/home/user/directory/of/the/clone/netbeans-website/netbeans.apache.org/build/generated-bake/content/plugins/index.asciidoc"
                     we're interested in the part after "generated-bake"
                 */
                 String tutorial_file="/";
@@ -47,7 +47,7 @@
                   <td class="icon"><i class="fa icon-note" title="Note"></i></td>
                   <td class="content">This tutorial needs a review. 
                      You can <a href="https://issues.apache.org/jira/projects/NETBEANS/issues">open a JIRA issue</a>, 
-                     or <a href="https://github.com/apache/incubator-netbeans-website/blob/master/netbeans.apache.org/src${tutorial_file}" title="Edit this tutorial in github">edit it in GitHub </a>
+                     or <a href="https://github.com/apache/netbeans-website/blob/master/netbeans.apache.org/src${tutorial_file}" title="Edit this tutorial in github">edit it in GitHub </a>
                      following these <a href="/kb/docs/contributing.html">contribution guidelines.</a></td>
                   </tr></tbody>
                 </table>
