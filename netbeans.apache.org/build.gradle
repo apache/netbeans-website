@@ -39,21 +39,6 @@ loadGlobals(globalsFile)
 //...this means in either the content or the assets folders, and this will be the
 //generatedAssetsDir and generatedContentDir
 
-task compileContentSass(type: io.freefair.gradle.plugins.jsass.SassCompile,
-    description: "Compiles the projects SaSS files to the build directory.",
-    group: "Build") {
-    sourceDir = file("$contentDir/scss")
-    destinationDir = file("$generatedAssetDir/css")
-    // Compile netbeans.scss, which imports all requirements
-    includePaths = files(file("$contentDir/scss/netbeans.scss"))
-    // @TODO - source maps not currently working
-    omitSourceMapUrl = true
-    // Compress the generated CSS
-    outputStyle = io.bit3.jsass.OutputStyle.COMPRESSED
-    // Precission to 3 digits
-    precision = 3
-}
-
 task preprocessContentAssets(type: Copy,
     description: "Pre-processes all .css, .js (not in the minimize list), images, etc from the content directory into the generated assets directory",
     group: "Build") {
@@ -62,15 +47,14 @@ task preprocessContentAssets(type: Copy,
     filteringCharset 'UTF-8'
     includeEmptyDirs false
     
-    include "**/*.js", "**/*.css", "**/css/*.css", 
-        "dtds/**",
+    include "dtds/**",
         "**/*.png", "**/*.gif",
         "**/*.jpeg", "**/*.jpg",
         "**/*.svg", "**/*.ttf",
         "**/*.woff", "**/.htaccess",
-        "fonts/**","**/*.cgi"
+        "**/*.cgi"
     
-    exclude "/templates/**"
+    exclude "/templates/**", "/frontend/**"
 }
 
 task preprocessContentStatics(type: Copy,
@@ -80,8 +64,8 @@ task preprocessContentStatics(type: Copy,
     into generatedContentDir
     filteringCharset 'UTF-8'
     includeEmptyDirs false
-    include "**/*.html.yml", "**/*.md.yml", "**/*.html", "**/*.md", "**/*.asciidoc", "fonts/**", "**/.htaccess"
-    exclude "/templates/**", "/css/**", "fonts/**"
+    include "**/*.html.yml", "**/*.md.yml", "**/*.html", "**/*.md", "**/*.asciidoc", "**/.htaccess"
+    exclude "/templates/**", "/frontend/**"
     
     def mergeList = []
     
@@ -138,7 +122,7 @@ task preprocessContentTemplates(type: Copy,
     //we need to do both of these to make sure we are or are not up to date
     include "**/*.gsp", "**/*.gsp.yml"
     
-    exclude "/templates/**"
+    exclude "/templates/**", "/frontend/**"
     
     rename '(.*)\\.gsp', '$1'
     
@@ -175,11 +159,12 @@ task preprocessContentTemplates(type: Copy,
 
 }
 
-task preprocessContent(dependsOn: ["compileContentSass",
-"preprocessContentAssets",
-"preprocessContentStatics",
-"preprocessTemplates",
-"preprocessContentTemplates"],
+task preprocessContent(dependsOn: [
+        "preprocessContentAssets",
+        "preprocessContentStatics",
+        "preprocessTemplates",
+        "preprocessContentTemplates"
+    ],
     description: "Runs all preprocess tasks to prepare for a bake",
     group: "Build") {
 
