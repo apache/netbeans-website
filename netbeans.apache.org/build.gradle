@@ -24,7 +24,7 @@ buildscript {
 }
 apply from: file("gradle/utils.gradle")
 apply plugin: 'org.jbake.site'
-apply plugin: 'io.freefair.jsass-base'
+apply plugin: 'com.moowork.gulp'
 
 loadGlobals(globalsFile)
 
@@ -104,6 +104,7 @@ task preprocessTemplates(type: Copy,
     filteringCharset 'UTF-8'
     includeEmptyDirs false
     include "**/*"
+    exclude "/frontend/**"
 }
 
 task preprocessContentTemplates(type: Copy,
@@ -185,7 +186,20 @@ jbake {
 
 bake.mustRunAfter preprocessContent
 
-task buildSite(dependsOn: ["preprocessContent", "bake"],
+node {
+    nodeModulesDir = file("${project.frontendDir}")
+}
+
+gulp {
+    // Set the directory where gulpfile.js should be found
+    workDir = file("${project.frontendDir}")
+}
+
+gulp_build.dependsOn 'npmInstall'
+gulp_build.dependsOn 'installGulp'
+gulp_build.mustRunAfter bake
+
+task buildSite(dependsOn: ["preprocessContent", "bake", "gulp_build"],
     description: "Runs the site build: preprocessContent and bake",
     group: "Build") {
 
