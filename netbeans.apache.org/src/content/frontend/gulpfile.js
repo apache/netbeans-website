@@ -38,7 +38,7 @@ gulp.task('styles', function() {
         .pipe(cssmin())
         .pipe(rename('netbeans.css'))
 //        .pipe(rename('styles.min.css'))
-        .pipe(header('/**\n' + fs.readFileSync('LICENSE', 'utf8') + '*/\n'))
+        .pipe(header('/**\n' + fs.readFileSync('license-header', 'utf8') + '*/\n'))
         .pipe(sourcemaps.write('.'))
         .pipe(gulp.dest(buildDir + 'css'));
 });
