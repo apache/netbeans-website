@@ -24,7 +24,6 @@ buildscript {
 }
 apply from: file("gradle/utils.gradle")
 apply plugin: 'org.jbake.site'
-apply plugin: 'io.freefair.jsass-base'
 
 loadGlobals(globalsFile)
 
@@ -39,19 +38,29 @@ loadGlobals(globalsFile)
 //...this means in either the content or the assets folders, and this will be the
 //generatedAssetsDir and generatedContentDir
 
-task compileContentSass(type: io.freefair.gradle.plugins.jsass.SassCompile,
-    description: "Compiles the projects SaSS files to the build directory.",
+task compileContentSass {
+    doLast {
+
+        File cssDirectory = file("$generatedAssetDir/css")
+        cssDirectory.mkdirs()
+
+        File scss = file("$contentDir/scss/netbeans.scss")
+        File css = file("$generatedAssetDir/css/netbeans.css")
+        File map = file("$generatedAssetDir/css/netbeans.css.map")
+
+        // See buildSrc/src/main/groovy/CSSUtils.groovy
+        compileCSS(scss, css, map)
+    }
+}
+
+task copySCSSSources(type: Copy,
+    description: "Copies SCSS files for easier debugging",
     group: "Build") {
-    sourceDir = file("$contentDir/scss")
-    destinationDir = file("$generatedAssetDir/css")
-    // Compile netbeans.scss, which imports all requirements
-    includePaths = files(file("$contentDir/scss/netbeans.scss"))
-    // @TODO - source maps not currently working
-    omitSourceMapUrl = true
-    // Compress the generated CSS
-    outputStyle = io.bit3.jsass.OutputStyle.COMPRESSED
-    // Precission to 3 digits
-    precision = 3
+      from file("$contentDir/scss")
+      into file("$generatedAssetDir/css")
+      includeEmptyDirs false
+      filteringCharset 'UTF-8'
+      include "**/*.scss"
 }
 
 task preprocessContentAssets(type: Copy,
@@ -62,7 +71,7 @@ task preprocessContentAssets(type: Copy,
     filteringCharset 'UTF-8'
     includeEmptyDirs false
     
-    include "**/*.js", "**/*.css", "**/css/*.css", 
+    include "**/*.js", "**/*.css", "**/*.css.map", "**/css/*.css", 
         "dtds/**",
         "**/*.png", "**/*.gif",
         "**/*.jpeg", "**/*.jpg",
@@ -177,6 +186,7 @@ task preprocessContentTemplates(type: Copy,
 
 task preprocessContent(dependsOn: ["compileContentSass",
 "preprocessContentAssets",
+"copySCSSSources",
 "preprocessContentStatics",
 "preprocessTemplates",
 "preprocessContentTemplates"],
