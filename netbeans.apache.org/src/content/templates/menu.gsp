@@ -34,7 +34,7 @@
             <li> <a href="https://blogs.apache.org/netbeans/">Blog</a></li>
             <li> <a href="/help/index.html">Get Help</a> </li>
             <li> <a href="/plugins/index.html">Plugins</a> </li>
-            <li> <a href="/download/nb110/nb110.html">Download</a> </li>
+            <li> <a href="/download/index.html">Download</a> </li>
         </ul>
     </div>
 </div>

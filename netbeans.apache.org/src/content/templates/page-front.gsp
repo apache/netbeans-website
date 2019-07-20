@@ -20,7 +20,7 @@
 */%>
 <%/*
 
-    page-noaside.gsp: A main area with no aside.
+    page-front.gsp: Front page layout.
 
 */%>
 <!doctype html>
@@ -28,11 +28,21 @@
     <%include "head.gsp"%>
     <body>
         <%include "menu.gsp"%>
-        <div class='grid-container main-content'>
-            <h1 class="sect0">${content.title}</h1>
-            ${content.body}
-            <%include "tools.gsp"%>
+        <%include "news.gsp"%>
+        <div class='grid-container'>
+          <div style='margin: 2rem 0' class='grid-x grid-margin-x align-middle'>
+            <div class='cell large-2 medium-3 small-5'><img src='/images/apache-netbeans.svg'></img></div>
+            <div class='cell large-10 medium-9 small-7'>
+                <h1>Apache NetBeans</h1>
+                <h2 style='color: #a1c535'>Fits the Pieces Together</h2>
+                <p>Development Environment, Tooling Platform and Application Framework.</p>
+            </div>
+          </div>
         </div>
+        <div class='grid-container'>
+          ${content.body}
+        </div>
+        <%include "tools.gsp"%>
         <%include "footer.gsp"%>
 
         <script src="/js/vendor/jquery-3.2.1.min.js"></script>
