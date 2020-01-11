@@ -20,7 +20,7 @@
 */%>
 <%/*
 
-    page-front.gsp: Front page layout.
+    page_front.gsp: Front page layout.
 
 */%>
 <!doctype html>
