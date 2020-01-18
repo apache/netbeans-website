@@ -31,19 +31,22 @@
 
 _Contributed by Andy Gibson_
 
-
-=== Contexts and Dependency Injection
+== Contexts and Dependency Injection
 
 1. *Getting Started with CDI and JSF 2.0*
 * <<creating,Creating a Java Web Project with CDI Support>>
 * <<named,Accessing Beans from JSF's Expression Language>>
 * <<upgrading,Upgrading to an EJB>>
 * <<seealso,See Also>>
-2. link:cdi-inject.html[+Working with Injection and Qualifiers in CDI+]
-3. link:cdi-validate.html[+Applying @Alternative Beans and Lifecycle Annotations+]
-4. link:cdi-events.html[+Working with Events in CDI+]
 
-image::images/netbeans-stamp-80-74-73.png[title="Content on this page applies to the NetBeans IDE 7.2, 7.3, 7.4 and 8.0"]
+[start=2]
+. link:cdi-inject.html[+Working with Injection and Qualifiers in CDI+]
+
+[start=3]
+. link:cdi-validate.html[+Applying @Alternative Beans and Lifecycle Annotations+]
+
+[start=4]
+. link:cdi-events.html[+Working with Events in CDI+]
 
 Contexts and Dependency Injection (CDI), specified by link:http://jcp.org/en/jsr/detail?id=299[+JSR-299+], is an integral part of Java EE 6 and provides an architecture that allows Java EE components such as servlets, enterprise beans, and JavaBeans to exist within the lifecycle of an application with well-defined scopes. In addition, CDI services allow Java EE components such as EJB session beans and JavaServer Faces (JSF) managed beans to be injected and to interact in a loosely coupled way by firing and observing events.
 
@@ -64,24 +67,20 @@ To complete this tutorial, you need the following software and resources.
 |link:http://glassfish.dev.java.net/[+GlassFish server+] |Open Source Edition 3.x or 4.x 
 |===
 
-*Notes:*
-
-* The NetBeans IDE Java bundle also includes the GlassFish Server Open Source Edition, which is a Java EE-compliant container.
-
-
+NOTE: The NetBeans IDE Java bundle also includes the GlassFish Server Open Source Edition, which is a Java EE-compliant container.
 
 [[creating]]
 == Creating a Java Web Project with CDI Support
 
 In this exercise you create a JSF 2.x-enabled Java web project with CDI support.
 
-1. Click the New Project ( image::images/new-project-btn.png[] ) button in the IDE's main toolbar (Ctrl-Shift-N; ⌘-Shift-N on Mac).
+1. Click the New Project ( image:images/new-project-btn.png[] ) button in the IDE's main toolbar (Ctrl-Shift-N; ⌘-Shift-N on Mac).
 2. In the New Project wizard, select the Java Web category, then select Web Application. Click Next.
 3. Type `cdiDemo` for the project name and set the project location. Click Next.
 4. Set the server to GlassFish server.
 5. Set the Java EE Version to Java EE 6 Web or Java EE 7 Web.
 
-*Note.* The Java EE version that you select determines the CDI version that is enabled for your application and there are some important differences between CDI 1.0 and CDI 1.1.
+NOTE:  The Java EE version that you select determines the CDI version that is enabled for your application and there are some important differences between CDI 1.0 and CDI 1.1.
 
 * If you specify Java EE 6 Web as the Java EE version, confirm that the 'Enable Contexts and Dependency Injection' option is selected. The 'Enable Contexts and Dependency Injection' option, when selected, generates a `beans.xml` file in the project's `WEB-INF` folder when the project template is created. The `beans.xml` file is used by CDI to instruct the Java EE-compliant server that the project is a module containing CDI beans. Java EE 6 Web supports CDI 1.0 and the generated `beans.xml` file specifies CDI 1.0 as the version.
 * If you specify Java EE 7 Web as the Java EE version, CDI 1.1 is enabled by default and the  ``beans.xml``  file is not required. In Java EE 7, when no  ``beans.xml``  is present the archive that is deployed is an *implicit bean archive*. If you use the New File wizard in the IDE to manually generate a `beans.xml` file in a Java EE 7 Web application, by default the deployed archive will become an *explicit bean archive* because the `beans.xml` file specifies CDI 1.1 as the version and also sets the attribute of the  ``bean-discovery-mode``  to  ``all`` .
@@ -89,13 +88,24 @@ In this exercise you create a JSF 2.x-enabled Java web project with CDI support.
 For more details on the types of CDI archives, see link:http://docs.oracle.com/javaee/7/tutorial/doc/cdi-adv001.htm[+Packaging CDI Applications+] in the Java EE 7 Tutorial.
 
 image::images/new-web-application1.png[title="The CDI option, when selected, generates a beans.xml file for the project"]
-6. Click Next.
-7. In the Frameworks panel, select the JavaServer Faces option.
-8. Click the Configuration tab and confirm that Facelets is selected as the Preferred Page Language. Click Finish.
+
+
+[start=6]
+. Click Next.
+
+[start=7]
+. In the Frameworks panel, select the JavaServer Faces option.
+
+[start=8]
+. Click the Configuration tab and confirm that Facelets is selected as the Preferred Page Language. Click Finish.
+
 
 When you click Finish, the IDE generates the web application project and opens the `index.xhtml` welcome page in the editor.
 
-9. In the Projects window, expand the Libraries > GlassFish Server node you can see that the `weld-osgi-bundle.jar` library was automatically added. The GlassFish Server includes Weld, which is JBoss' implementation of the JSR-299 CDI specification. 
+
+[start=9]
+. In the Projects window, expand the Libraries > GlassFish Server node you can see that the `weld-osgi-bundle.jar` library was automatically added. The GlassFish Server includes Weld, which is JBoss' implementation of the JSR-299 CDI specification. 
+
 image::images/projects-window1.png[title="New project contains CDI's beans.xml file and the GlassFish library includes the Weld JAR file"]
 
 If you specified Java EE 6 Web as the Java EE version when you created the project, note that the Web Pages > WEB-INF folder includes a `beans.xml` file. This file is currently empty, but can be used to specify bean related information in XML as an alternative to annotations.
@@ -108,11 +118,14 @@ This exercise demonstrates how you can wire CDI managed beans to Facelets pages 
 
 1. In the Projects window, right-click the Source Packages node and choose New > Java Class.
 2. In the New Java Class wizard, name the class *MessageServerBean*, and type in *exercise1* as the Package. (The new package is created upon completing the wizard.) Click Finish. 
+
 image::images/new-java-class.png[title="Create new Java classes using the Java Class wizard"]
 
 The new package and class are generated, and the class opens in the editor.
 
-3. Annotate the class with the `@Named` and `@Dependent` annotations, and create a single method to return a string.
+
+[start=3]
+. Annotate the class with the `@Named` and `@Dependent` annotations, and create a single method to return a string.
 
 [source,java]
 ----
@@ -132,12 +145,16 @@ public class MessageServerBean {
 }
 ----
 
-As you type the `@Dependent` and `@Named` annotation, press Ctrl-Space to invoke the editor's code completion support, as well as Javadoc documentation. If you apply the annotation using the editor's code completion facilities (i.e., select the appropriate annotation and press Enter), the `import` statement is automatically added to the file. In the Javadoc pop-up, you can also click the 'Show documentation in external web browser' ( image::images/external-web-browser-btn.png[] ) button to display the full-sized Javadoc in a separate window.
+As you type the `@Dependent` and `@Named` annotation, press Ctrl-Space to invoke the editor's code completion support, as well as Javadoc documentation. If you apply the annotation using the editor's code completion facilities (i.e., select the appropriate annotation and press Enter), the `import` statement is automatically added to the file. In the Javadoc pop-up, you can also click the 'Show documentation in external web browser' ( image:images/external-web-browser-btn.png[] ) button to display the full-sized Javadoc in a separate window.
 
-*Note.* The  ``@Dependent``  annotation defines the scope of the managed bean. In an *implicit bean archive* a managed bean is only discoverable and can only be managed by the container when a scope is specified. The application in this tutorial will be packaged as an implicit bean archive if you specified Java EE 7 Web as the Java EE version when you created the project and you did not create  ``beans.xml`` . For details on specifying the scope of managed beans, see link:http://docs.oracle.com/javaee/7/tutorial/doc/jsf-configure001.htm[+Using Annotations to Configure Managed Beans+] in the Java EE 7 Tutorial.
+NOTE:  The  ``@Dependent``  annotation defines the scope of the managed bean. In an *implicit bean archive* a managed bean is only discoverable and can only be managed by the container when a scope is specified. The application in this tutorial will be packaged as an implicit bean archive if you specified Java EE 7 Web as the Java EE version when you created the project and you did not create  ``beans.xml`` . For details on specifying the scope of managed beans, see link:http://docs.oracle.com/javaee/7/tutorial/doc/jsf-configure001.htm[+Using Annotations to Configure Managed Beans+] in the Java EE 7 Tutorial.
 
-4. Save the file (Ctrl-S; ⌘-S on Mac). By adding the `@Named` annotation, the `MessageServerBean` class becomes a _managed bean_, as defined by CDI.
-5. Switch to the `index.xhtml` Facelets page (press Ctrl-Tab) in the editor, and add the following content to the `<h:body>` tags.
+
+[start=4]
+. Save the file (Ctrl-S; ⌘-S on Mac). By adding the `@Named` annotation, the `MessageServerBean` class becomes a _managed bean_, as defined by CDI.
+
+[start=5]
+. Switch to the `index.xhtml` Facelets page (press Ctrl-Tab) in the editor, and add the following content to the `<h:body>` tags.
 
 [source,xml]
 ----
@@ -150,11 +167,21 @@ As you type the `@Dependent` and `@Named` annotation, press Ctrl-Space to invoke
     Message Server Bean is: #{messageServerBean}*
 </h:body>
 ----
-[tips]#You can press Ctrl-Space in EL expressions to take advantage of code completion suggestions. The editor's code completion lists managed beans and their properties. Because the `@Named` annotation transforms the `MessageServerBean` class into a CDI managed bean, it becomes accessible within EL syntax, just as though it were a JSF managed bean.# 
+
+TIP: You can press Ctrl-Space in EL expressions to take advantage of code completion suggestions. The editor's code completion lists managed beans and their properties. Because the `@Named` annotation transforms the `MessageServerBean` class into a CDI managed bean, it becomes accessible within EL syntax, just as though it were a JSF managed bean.# 
+
+
 image::images/facelets-el-completion.png[title="Create new Java classes using the Java Class wizard"]
-6. Click the Run Project ( image::images/run-project-btn.png[] ) button in the IDE's main toolbar. The project is compiled and deployed to GlassFish, and the application welcome page (`index.xhtml`) opens in the browser. You can see the "Hello World!" message from the `MessageServerBean` displayed on the page. 
+
+
+[start=6]
+. Click the Run Project ( image:images/run-project-btn.png[] ) button in the IDE's main toolbar. The project is compiled and deployed to GlassFish, and the application welcome page (`index.xhtml`) opens in the browser. You can see the "Hello World!" message from the `MessageServerBean` displayed on the page. 
+
 image::images/browser-output1.png[title="Application welcome page displays MessageServerBean details"]
-7. Go back into the message bean and change the message to something else (e.g., "Hello Weld!"). Save the file (Ctrl-S; ⌘-S on Mac), then refresh the browser. The new message automatically appears. Thanks to the IDE's Deploy on Save feature, any changes you save result in automatic compilation and redeployment to the server. 
+
+
+[start=7]
+. Go back into the message bean and change the message to something else (e.g., "Hello Weld!"). Save the file (Ctrl-S; ⌘-S on Mac), then refresh the browser. The new message automatically appears. Thanks to the IDE's Deploy on Save feature, any changes you save result in automatic compilation and redeployment to the server. 
 
 From the third line in the page you can see that the class name is `exercise1.MessageServerBean`. Note that the bean is just a POJO (Plain Old Java Object). Even though you are developing in Java EE, there is no complex class hierarchy wrapped in layers of transactions, interceptors and all that "heavy" stuff you keep hearing about.
 
@@ -170,7 +197,9 @@ When the application is deployed the server looks for CDI managed beans. In a Ja
 
 As we are using a Java EE stack, we can easily deploy our bean as an EJB with some small changes thanks to EJB 3.1.
 
-1. Open the `MessageServerBean` and add the `javax.ejb.Stateless` annotation at the class level and change the string to 'Hello EJB!'.
+
+[start=1]
+. Open the `MessageServerBean` and add the `javax.ejb.Stateless` annotation at the class level and change the string to 'Hello EJB!'.
 
 [source,java]
 ----
@@ -195,8 +224,12 @@ public class MessageServerBean {
     }
 }
 ----
-2. Save the file (Ctrl-S; ⌘-S on Mac), then go to your browser and refresh. You will see output similar to the following: 
+
+[start=2]
+. Save the file (Ctrl-S; ⌘-S on Mac), then go to your browser and refresh. You will see output similar to the following: 
+
 image::images/browser-output-ejb1.png[title="Using the @Stateless annotation transforms MessageServerBean into an EJB"] 
+
 Amazingly, we turned our POJO into a fully-featured EJB with just one annotation. We saved changes then refreshed the page, and our changes appeared. In doing so it wasn't necessary to create any weird project configurations, local interfaces or arcane deployment descriptors.
 
 
