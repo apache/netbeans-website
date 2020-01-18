@@ -42,26 +42,6 @@
 :keywords: Apache NetBeans, Tutorials, Урок 4: Оптимизация кода путем добавления классов и объектов
 
 
-
-1. link:wish-list-tutorial-main-page.html[+Создание приложения на основе базы данных с помощью языка PHP – главная страница+]
-2. 
-Создание базы данных
-
-1. link:wish-list-lesson1.html[+Создание базы данных MySQL+]
-2. link:wish-list-oracle-lesson1.html[+Создание таблиц базы данных Oracle+]
-3. link:wish-list-lesson2.html[+Проектирование приложения. Чтение из базы данных+]
-4. link:wish-list-lesson3.html[+Создание нового пользователя приложения+]
-5. 
-*=> Оптимизация кода*
-
-6. link:wish-list-lesson5.html[+Добавление функций безопасности. Реализация входа пользователя в приложение+]
-7. link:wish-list-lesson6.html[+Добавление к базе данных новых желаний+]
-8. link:wish-list-lesson7.html[+Обновление и удаление записей в базе данных+]
-9. link:wish-list-lesson8.html[+Усовершенствование внешнего вида приложения с использованием технологии CSS+]
-10. link:wish-list-lesson9.html[+Развертывание приложения на удаленном веб-сервере+]
-
-image::images/netbeans-stamp-80-74-73.png[title="Содержимое этой страницы применимо к IDE NetBeans 7.2, 7.3, 7.4 и 8.0"]
-
 В этом уроке рассматриваются способы оптимизации кода, позволяющие упростить поддержку этого кода в дальнейшем. Данная процедура затрагивает файлы  ``createNewWisher.php``  и  ``wishlist.php`` . Кроме того, создается новый файл под названием  ``db.php`` .
 
 Код приложения содержит несколько похожих блоков с запросами к базе данных. Для упрощения чтения и поддержки кода в будущем можно извлечь эти блоки, реализовать их в качестве функций отдельного класса  ``WishDB``  и поместить текст  ``WishDB``  в файл  ``db.php`` . Впоследствии можно включить файл  ``db.php``  в любой файл PHP и использовать любую <<includedFunctions,функцию класса WishDB>> без дублирования кода. Такой подход гарантирует, что любые изменения в запросах или функциях будут выполнены в одном местоположении, и анализировать весь код приложения не потребуется.
@@ -75,14 +55,14 @@ image::images/netbeans-stamp-80-74-73.png[title="Содержимое этой �
 Текущий документ является частью краткого учебного курса "Создание приложения CRUD в IDE NetBeans для PHP".
 
 
-
+[[previousLessonSourceCode]]
 == Исходный код приложения из предыдущего урока
 
 Для пользователей MySQL: перейдите по link:https://netbeans.org/files/documents/4/1929/lesson3.zip[+этой ссылке+] для загрузки исходного кода, описывающего состояние проекта на момент завершения предыдущего урока.
 
 Для пользователей Oracle Database: щелкните link:https://netbeans.org/projects/www/downloads/download/php%252Foracle-lesson3.zip[+здесь+] для загрузки исходного кода, отражающего состояние проекта по завершении предыдущего урока.
 
-
+[[createDbPhpFile]]
 == Создание файла db.php
 
 Создайте новую подпапку в папке "Исходные файлы". Дайте папке имя Includes. Создайте новый файл под именем db.php и поместите его в папку Includes. Позже вы сможете добавлять в эту папку файлы, которые будут включаться в другие РНР-файлы.
@@ -95,6 +75,7 @@ image::images/netbeans-stamp-80-74-73.png[title="Содержимое этой �
 4. В поле "Имя файла" введите db. Затем нажмите кнопку "Готово".
 
 
+[[wishDBClass]]
 == Создание класса WishDB
 
 Для создания класса WishDB необходимо инициализировать переменные класса и реализовать конструктор класса. Пользователи MySQL, обратите внимание, что класс WishDB _расширяет_  ``mysqli`` . Это означает, что WishDB _наследует_ функции и другие характеристики класса PHP mysqli. Вы убедитесь в важности этого при добавлении функций  ``mysqli ``  к классу.
@@ -103,40 +84,44 @@ image::images/netbeans-stamp-80-74-73.png[title="Содержимое этой �
 
 *Для базы данных MySQL:*
 
-
-[source,java]
+[[source,php]
 ----
 
 class WishDB extends mysqli {
 
-
     // single instance of self shared among all instances
     private static $instance = null;
-
 
     // db connection config vars
     private $user = "phpuser";
     private $pass = "phpuserpw";
     private $dbName = "wishlist";
     private $dbHost = "localhost";
+
 }
+
 ----
 
 *Для базы данных Oracle:*
 
-
-[source,java]
+[source,php]
 ----
 
-class WishDB {// single instance of self shared among all instances
-private static $instance = null;// db connection config vars
-private $user = "phpuser";
-private $pass = "phpuserpw";
-private $dbName = "wishlist";
-private $dbHost = "localhost/XE";
-private $con = null;}        
-----
+class WishDB {
 
+    // single instance of self shared among all instances
+    private static $instance = null;
+
+    // db connection config vars
+    private $user = "phpuser";
+    private $pass = "phpuserpw";
+    private $dbName = "wishlist";
+    private $dbHost = "localhost/XE";
+    private $con = null;
+
+}
+
+----
 
 [[instantiate-wishdb]]
 == Создание экземпляров класса WishDB
@@ -146,26 +131,32 @@ private $con = null;}
 Внутри класса WishDB введите или вставьте следующий код:
 
 
-[source,java]
+[source,php]
 ----
 
- //This method must be static, and must return an instance of the object if the object
- //does not already exist.
- public static function getInstance() {
-   if (!self::$instance instanceof self) {
-     self::$instance = new self;
-   }
-   return self::$instance;
- }
+// This method must be static, and must return an instance of the object if the object
+// does not already exist.
 
- // The clone and wakeup methods prevents external instantiation of copies of the Singleton class,
- // thus eliminating the possibility of duplicate objects.
- public function __clone() {
-   trigger_error('Clone is not allowed.', E_USER_ERROR);
- }
- public function __wakeup() {
-   trigger_error('Deserializing is not allowed.', E_USER_ERROR);
- }
+public static function getInstance() {
+
+  if (!self::$instance instanceof self) {
+    self::$instance = new self;
+  }
+
+  return self::$instance;
+}
+
+// The clone and wakeup methods prevents external instantiation of copies of the Singleton class,
+// thus eliminating the possibility of duplicate objects.
+ 
+public function __clone() {
+  trigger_error('Clone is not allowed.', E_USER_ERROR);
+}
+
+public function __wakeup() {
+  trigger_error('Deserializing is not allowed.', E_USER_ERROR);
+}
+
 ----
 
 Функция  ``getInstance``  является общедоступной и статической. Общедоступность означает возможность свободного доступа извне класса. Статическая функция доступна даже в том случае, если для класса не было создано экземпляров. Поскольку функция  ``getInstance``  вызывается для создания экземпляров класса, она является статической. Обратите внимание, что эта функция имеет доступ к статической переменной ``$instance``  и устанавливает ее значение как экземпляр класса.
@@ -183,32 +174,47 @@ private $con = null;}
 *Для базы данных MySQL*
 
 
-[source,java]
+[source,php]
 ----
 
-// private constructorprivate function __construct() {parent::__construct($this->dbHost, $this->user, $this->pass, $this->dbName);if (mysqli_connect_error()) {exit('Connect Error (' . mysqli_connect_errno() . ') '. mysqli_connect_error());}parent::set_charset('utf-8');}
+// private constructor
+private function __construct() {
+
+  parent::__construct($this->dbHost, $this->user, $this->pass, $this->dbName);
+  
+  if (mysqli_connect_error()) {
+    exit('Connect Error (' . mysqli_connect_errno() . ') '. mysqli_connect_error());
+  }
+
+  parent::set_charset('utf-8');
+}
+
 ----
 
 *Для базы данных Oracle*
 
 
-[source,java]
+[source,php]
 ----
 
 // private constructor
 private function __construct() {
+
     $this->con = oci_connect($this->user, $this->pass, $this->dbHost);
+
     if (!$this->con) {
         $m = oci_error();
         echo $m['message'], "\n";
         exit;
     }
 }
+
 ----
 
 Следует учитывать, что вместо переменных  ``$con`` ,  ``$dbHost`` ,  ``$user``  или  ``$pass``  используется псевдопеременная  ``$this`` . Псевдопеременная  ``$this``  используется при вызове метода внутри контекста объекта. Она ссылается на значение переменной внутри этого объекта.
 
 
+[[includedFunctions]]
 == Функции класса WishDB
 
 В этом уроке рассматривается реализация следующих функций класса WishDB:
@@ -227,34 +233,55 @@ private function __construct() {
 *Для базы данных MySQL*
 
 
-[source,java]
+[[source,php]
 ----
 
-public function get_wisher_id_by_name($name) {$name = $this->real_escape_string($name);$wisher = $this->query("SELECT id FROM wishers WHERE name = '". $name . "'");
-    if ($wisher->num_rows > 0){$row = $wisher->fetch_row();return $row[0];} elsereturn null;
+public function get_wisher_id_by_name($name) {
+  
+  $name = $this->real_escape_string($name);
+  $wisher = $this->query("SELECT id FROM wishers WHERE name = '" . $name . "'");
+
+  if ($wisher->num_rows > 0){
+    $row = $wisher->fetch_row();
+    return $row[0];
+  } else {
+    return null;
+  }
 }
+
 ----
 
 *Для базы данных Oracle*
 
 
-[source,java]
+[source,php]
 ----
 
 public function get_wisher_id_by_name($name) {
+    
     $query = "SELECT id FROM wishers WHERE name = :user_bv";
     $stid = oci_parse($this->con, $query);
+    
     oci_bind_by_name($stid, ':user_bv', $name);
     oci_execute($stid);
-//Because user is a unique value I only expect one row
-    $row = oci_fetch_array($stid, OCI_ASSOC);if ($row) return $row["ID"];elsereturn null;
+    
+    //Because user is a unique value I only expect one row
+    $row = oci_fetch_array($stid, OCI_ASSOC);
+
+    if ($row) {
+      return $row["ID"];
+    } else {
+      return null;
+    }
 }
+
 ----
+
 Блок кода выполняет запрос  ``SELECT ID FROM wishers WHERE name = [переменная для имени пожелания]`` . Результат запроса - массив идентификаторов из записей, соответствующих запросу. Если массив не пустой, это по умолчанию означает, что он содержит один элемент, поскольку при создании таблицы имя поля было определено как UNIQUE. В этом случае функция возвращает первый элемент массива  ``$result``  (элемент под номером ноль). Если массив пуст, функция возвращает значение "null".
 
 *Примечание к безопасности.* Для базы данных MySQL строка  ``$name ``  используется с с escape-символом для предотвращения атак SQL-инъекций. См. link:http://en.wikipedia.org/wiki/SQL_injection[+статью энциклопедии Wikipedia о введении SQL +] и link:http://us3.php.net/mysql_real_escape_string[+документацию mysql_real_escape_string+]. Несмотря на то, что в контексте этого руководства риск возникновения опасных атак внедрения SQL маловероятен, рекомендуется исключить из участия в запросах MySQL такие строки, которые могли бы быть подвержены подобной атаке. База данных Oracle избегает данной проблемы, используя связанные переменные.
 
-
+[[getWishesByID]]
 === Функция get_wishes_by_wisher_id
 
 Эта функция возвращает зарегистрированные пожелания пользователя, и для ее выполнения в качестве входного параметра требуется идентификатор пользователя.
@@ -264,25 +291,32 @@ public function get_wisher_id_by_name($name) {
 *Для базы данных MySQL*
 
 
-[source,java]
+[[source,php]
 ----
 
-public function get_wishes_by_wisher_id($wisherID) {return $this->query("SELECT id, description, due_date FROM wishes WHERE wisher_id=" . $wisherID);}
+public function get_wishes_by_wisher_id($wisherID) {
+  return $this->query("SELECT id, description, due_date FROM wishes WHERE wisher_id=" . $wisherID);
+}
+
 ----
 
 *Для базы данных Oracle*
 
 
-[source,java]
+[source,php]
 ----
 
 public function get_wishes_by_wisher_id($wisherID) {
-    $query = "SELECT id, description, due_date FROM wishes WHERE wisher_id = :id_bv";
-    $stid = oci_parse($this->con, $query);
-    oci_bind_by_name($stid, ":id_bv", $wisherID);
-    oci_execute($stid);
-    return $stid;
+  
+  $query = "SELECT id, description, due_date FROM wishes WHERE wisher_id = :id_bv";
+  $stid = oci_parse($this->con, $query);
+  
+  oci_bind_by_name($stid, ":id_bv", $wisherID);
+  oci_execute($stid);
+
+  return $stid;
 }
+
 ----
 
 Блок кода выполняет запрос  ``"SELECT id, description, due_date FROM wishes WHERE wisherID=" . $wisherID``  и возвращает набор результатов, который является массивом записей, соответствующих запросу. (База данных Oracle использует связанную переменную для повышения производительности базы данных и уровня безопасности). Выделение выполняется с помощью wisherID, который является внешним ключом для таблицы  ``wishes`` .
@@ -290,6 +324,7 @@ public function get_wishes_by_wisher_id($wisherID) {
 *Примечание.* Значение  ``идентификатора``  не требуется до занятия 7.
 
 
+[[createWisher]]
 === Функция create_wisher
 
 Функция создает новую запись в таблице "Wishers". Эта функция не возвращает каких-либо данных, и в качестве входных параметров для ее выполнения требуется имя и пароль нового пользователя.
@@ -299,55 +334,74 @@ public function get_wishes_by_wisher_id($wisherID) {
 *Для базы данных MySQL*
 
 
-[source,java]
+[source,php]
 ----
 
-public function create_wisher ($name, $password){
-    $name = $this->real_escape_string($name);$password = $this->real_escape_string($password);$this->query("INSERT INTO wishers (name, password) VALUES ('" . $name . "', '" . $password . "')");
+public function create_wisher ($name, $password) {
+
+  $name = $this->real_escape_string($name);
+  $password = $this->real_escape_string($password);
+
+  return $this->query("INSERT INTO wishers (name, password) VALUES ('" . $name . "', '" . $password . "')");
 }
+
 ----
 
 *Для базы данных Oracle*
 
 
-[source,java]
+[source,php]
 ----
 
 public function create_wisher($name, $password) {
-    $query = "INSERT INTO wishers (name, password) VALUES (:user_bv, :pwd_bv)";
-    $stid = oci_parse($this->con, $query);
-    oci_bind_by_name($stid, ':user_bv', $name);
-    oci_bind_by_name($stid, ':pwd_bv', $password);
-    oci_execute($stid);
+
+  $query = "INSERT INTO wishers (name, password) VALUES (:user_bv, :pwd_bv)";
+  $stid = oci_parse($this->con, $query);
+
+  oci_bind_by_name($stid, ':user_bv', $name);
+  oci_bind_by_name($stid, ':pwd_bv', $password);
+  oci_execute($stid);
+
+  return $stid;
 }
+
 ----
+
 Блок кода выполняет запрос  ``"INSERT wishers (Name, Password) VALUES ([переменные представляющие имя и пароль нового пожелания])`` . При выполнении запроса добавляется новая запись в таблицу "Wishers" с полями "name" и "password", заполненными значениями  ``$name``  и  ``$password``  соответственно.
 
 
+[[refactoring]]
 == Реорганизация кода приложения
 
 Теперь при наличии отдельного класса для работы с базой данных дублированные блоки можно заменить вызовами соответствующих функций из этого класса. Это помогает в дальнейшем избежать ошибок и противоречий в написании кода. Усовершенствование кода, не оказывающее влияния на функциональные возможности, называется "реорганизацией".
 
-
+[[refactoringWishlistFile]]
 === Реорганизация файла wishlist.php
 
 Начнем с файла wishlist.php, поскольку он небольшой и дает возможность представить оптимизацию более иллюстративно.
 
 1. В верхней части блока <? php? > введите следующую строку, делающую возможным использование файла  ``db.php`` :
 
-[source,java]
+[source,php]
 ----
 
 require_once("Includes/db.php");
+
 ----
+
 2. Замените код, который подключается к базе данных и получает идентификатор пожелания, вызовом функции  ``get_wisher_id_by_name`` .
 
-Для *базы данных MySQL * вы заменяете следующий код:
+Для *базы данных MySQL* вы заменяете следующий код:
 
-[.line-through]#$con = mysqli_connect("localhost", "phpuser", "phpuserpw");
+[source,php]
+----
+
+// to remove
+
+ $con = mysqli_connect("localhost", "phpuser", "phpuserpw");
 if (!$con) {
-    exit('Connect Error (' . mysqli_connect_errno() . ') '
-            . mysqli_connect_error());
+  exit('Connect Error (' . mysqli_connect_errno() . ') '
+          . mysqli_connect_error());
 }
 //set the default client character set 
 mysqli_set_charset($con, 'utf-8');
@@ -356,43 +410,58 @@ mysqli_select_db($con, "wishlist");
 $user = mysqli_real_escape_string($con, $_GET['user']);
 $wisher = mysqli_query($con, "SELECT id FROM wishers WHERE name='" . $user . "'");
 if (mysqli_num_rows($wisher) < 1) {
-    exit("The person " . $_GET['user'] . " is not found. Please check the spelling and try again");
+  exit("The person " . $_GET['user'] . " is not found. Please check the spelling and try again");
 }
-$row = mysqli_fetch_row($wisher);$wisherID = $row[0];
-mysqli_free_result($wisher);#
+$row = mysqli_fetch_row($wisher);
+$wisherID = $row[0];
+mysqli_free_result($wisher);
 
-*$wisherID = WishDB::getInstance()->get_wisher_id_by_name($_GET["user"]);
+// to replace
+
+$wisherID = WishDB::getInstance()->get_wisher_id_by_name($_GET["user"]);
+
 if (!$wisherID) {
-    exit("The person " .$_GET["user"]. " is not found. Please check the spelling and try again" );
-}*
+  exit("The person " .$_GET["user"]. " is not found. Please check the spelling and try again" );
+}
+
+----
 
 Для *базы данных Oracle * вы заменяете следующий код:
 
-[.line-through]#$con = oci_connect("phpuser", "phpuserpw", "localhost/XE", "AL32UTF8");
+[source,php]
+----
+
+// to remove
+
+$con = oci_connect("phpuser", "phpuserpw", "localhost/XE");
 if (!$con) {
-   $m = oci_error();
-   echo $m['message'], "\n";
-   exit;
-}
-$query = "SELECT id FROM wishers WHERE name = :user_bv";
+  $m = oci_error();
+  echo $m['message'], "\n";
+  exit;
+}        
+$query = "SELECT ID FROM wishers WHERE name = :user_bv";
 $stid = oci_parse($con, $query);
-$user = $_GET["user"];
+$user = $_GET['user'];
 
 oci_bind_by_name($stid, ':user_bv', $user);
 oci_execute($stid);
 
-//Because user is a unique value I only expect one row$row = oci_fetch_array($stid, OCI_ASSOC);
+//Because user is a unique value I only expect one row
+$row = oci_fetch_array($stid, OCI_ASSOC);
 if (!$row) {
-    echo("The person " . $user . " is not found. Please check the spelling and try again" );exit;}
-$wisherID = $row["ID"]; #
+  echo("The person " . $user . " is not found. Please check the spelling and try again" );
+  exit;
+}
+$wisherID = $row['ID']; 
 
-[source,java]
-----
+// to replace
 
-*$wisherID = WishDB::getInstance()->get_wisher_id_by_name($_GET["user"]);
+$wisherID = WishDB::getInstance()->get_wisher_id_by_name($_GET["user"]);
+
 if (!$wisherID) {
-    exit("The person " .$_GET["user"]. " is not found. Please check the spelling and try again" );
-}*
+  exit("The person " .$_GET["user"]. " is not found. Please check the spelling and try again" );
+}
+
 ----
 
 Новый код сначала вызывает функцию  ``getInstance``  в WishDB. Функция  ``getInstance``  возвращает экземпляр WishDB, а код вызывает функцию  ``get_wisher_id_by_name``  в пределах данного экземпляра. Если требуемое пожелание в базе данных не найдено, код завершает процесс и отображает сообщение об ошибке.
@@ -403,65 +472,84 @@ if (!$wisherID) {
 
 Для *базы данных MySQL * вы заменяете следующий код:
 
-[.line-through]#$result = mysqli_query($con, "SELECT description, due_date FROM wishes WHERE wisher_id=". $wisherID);#
-
-[source,java]
+[source,php]
 ----
 
-                
-*$result = WishDB::getInstance()->get_wishes_by_wisher_id($wisherID);*
+// to remove
+
+$result = mysqli_query($con, "SELECT description, due_date FROM wishes WHERE wisher_id=" . $wisherID);
+
+// to replace      
+ 
+$result = WishDB::getInstance()->get_wishes_by_wisher_id($wisherID);
+
 ----
 
 Для *базы данных Oracle * вы заменяете следующий код:
 
-[.line-through]#$query = "select * from wishes where wisher_id = :id_bv";$stid = oci_parse($con, $query);oci_bind_by_name($stid, ":id_bv", $wisherID);oci_execute($stid);#
-
-[source,java]
+[source,php]
 ----
 
-                
-*$stid = WishDB::getInstance()->get_wishes_by_wisher_id($wisherID);*
+// to remove
+
+$query = "SELECT description, due_date FROM wishes WHERE wisher_id = :id_bv";
+$stid = oci_parse($con, $query);
+oci_bind_by_name($stid, ":id_bv", $wisherID);
+oci_execute($stid);
+
+// to replace
+
+$stid = WishDB::getInstance()->get_wishes_by_wisher_id($wisherID);
+
 ----
+
 4. Удалите строку, которая закрывает подключение к базе данных.
 
-[source,java]
+[source,php]
 ----
 
- [.line-through]#mysqli_close($con);#
-                    or
- [.line-through]#oci_close($con);#                
+// For MYSQL database
+mysqli_close($con);
+
+// For Oracle database
+oci_close($con);
+
 ----
+
 Код не нужен, потому что подключение к базе данных автоматически закрывается при уничтожении объекта WishDB. Однако рекомендуем сохранять код, освобождающий ресурс. Вам необходимо освободить все ресурсы, которые используют подключение, чтобы убедиться в том, что оно закрыто, даже при вызове функции  ``close``  или уничтожении экземпляра с подключением к базе данных.
 
 
-===  
-
-
+[[refactoringCreateNewWisher]]
 === Реорганизация файла createNewWisher.php
 
 Реорганизация не оказывает воздействия на форму ввода HTML или код для вывода на экран соответствующих сообщений об ошибках.
 
 1. В верхней части блока <? php? > введите следующий код, делающий возможным использование файла  ``db.php`` :
 
-[source,java]
+[source,php]
 ----
 
 require_once("Includes/db.php");
+
 ----
+
 2. Удалите подтверждения подключения к базе данных ( ``$dbHost``  и пр.). Теперь они находятся в ``db.php`` .
 3. Замените код, который подключается к базе данных и получает идентификатор пожелания, вызовом функции  ``get_wisher_id_by_name`` .
 
 Для *базы данных MySQL * вы заменяете следующий код:
 
-[.line-through]#
+[source,php]
+----
+
+// to remove
+
 $con = mysqli_connect("localhost", "phpuser", "phpuserpw");
 if (!$con) {
-    exit('Connect Error (' . mysqli_connect_errno() . ') '
-            . mysqli_connect_error());
+  exit('Connect Error (' . mysqli_connect_errno() . ') '
+          . mysqli_connect_error());
 }
 //set the default client character set 
 mysqli_set_charset($con, 'utf-8');
-
 
 /** Check whether a user whose name matches the "user" field already exists */
 mysqli_select_db($con, "wishlist");
@@ -469,93 +557,118 @@ $user = mysqli_real_escape_string($con, $_POST['user']);
 $wisher = mysqli_query($con, "SELECT id FROM wishers WHERE name='".$user."'");
 $wisherIDnum=mysqli_num_rows($wisher);
 if ($wisherIDnum) {
-   $userNameIsUnique = false;
-}#
+  $userNameIsUnique = false;
+}
 
-[source,java]
-----
+// to replace
 
-*$wisherID = WishDB::getInstance()->get_wisher_id_by_name($_POST["user"]);
+$wisherID = WishDB::getInstance()->get_wisher_id_by_name($_POST["user"]);
+
 if ($wisherID) {
-$userNameIsUnique = false;
-}*
+  $userNameIsUnique = false;
+}
+
 ----
 
 Для *базы данных Oracle * вы заменяете следующий код:
 
-[.line-through]#
-$con = oci_connect("phpuser", "phpuserpw", "localhost");
+[source,php]
+----
+
+// to remove
+
+$con = oci_connect("phpuser", "phpuserpw", "localhost/XE", "AL32UTF8");
 if (!$con) {
-    $m = oci_error();
-    echo $m['message'], "\n";
-    exit;
+  $m = oci_error();
+  exit('Connect Error ' . $m['message']);
 }
-$query = "select ID from wishers where name = :user_bv";
+$query = "SELECT id FROM wishers WHERE name = :user_bv";
 $stid = oci_parse($con, $query);
 $user = $_POST['user'];
-$wisherID = null;
+
 oci_bind_by_name($stid, ':user_bv', $user);
 oci_execute($stid);
 
 //Each user name should be unique. Check if the submitted user already exists.
-$row = oci_fetch_array($stid, OCI_ASSOC);if ($row) {$wisherID = $row["ID"]; }if ($wisherID != null) {$userNameIsUnique = false;}#
+$row = oci_fetch_array($stid, OCI_ASSOC);
+if ($row) {
+  $userNameIsUnique = false;
+}
 
-[source,java]
-----
+// to replace
 
-
-*$wisherID = WishDB::getInstance()->get_wisher_id_by_name($_POST["user"]);
+$wisherID = WishDB::getInstance()->get_wisher_id_by_name($_POST["user"]);
 if ($wisherID) {
-$userNameIsUnique = false;
-}*
+  $userNameIsUnique = false;
+}
+
 ----
 Объект  ``WishDB``  существует до тех пор, пока обрабатывается текущая страница. Если обработка завершена или прервана, этот объект уничтожается. Код для открытия подключения к базе данных не является необходимым, поскольку подключение выполняется посредством функции WishDB. Код для закрытия подключения также не является необходимым, поскольку подключение будет закрыто сразу же после уничтожения объекта  ``WishDB`` .
 4. Замените код, который вставляет новых авторов пожеланий в базу данных, кодом, который вызывает функцию  ``create_wisher`` .
 
 Для *базы данных MySQL * вы заменяете следующий код:
 
-[.line-through]#if (!$userIsEmpty &amp;&amp; $userNameIsUnique &amp;&amp; !$passwordIsEmpty &amp;&amp; !$password2IsEmpty &amp;&amp; $passwordIsValid) {
-    $password = mysqli_real_escape_string($con, $_POST["password"]);mysqli_select_db($con, "wishlist");mysqli_query($con, "INSERT wishers (name, password) VALUES ('" . $user . "', '" . $password . "')");mysqli_free_result($wisher);mysqli_close($con);header('Location: editWishList.php');exit;}
-                    #
-
-[source,java]
+[source,php]
 ----
 
-                *if (!$userIsEmpty &amp;&amp; $userNameIsUnique &amp;&amp; !$passwordIsEmpty &amp;&amp; !$password2IsEmpty &amp;&amp; $passwordIsValid) {
-WishDB::getInstance()->create_wisher($_POST["user"], $_POST["password"]);
-header('Location: editWishList.php' );
-exit;
-}*
+// to remove
+
+if (!$userIsEmpty && $userNameIsUnique && !$passwordIsEmpty && !$password2IsEmpty && $passwordIsValid) {
+  $password = mysqli_real_escape_string($con, $_POST['password']);
+  mysqli_select_db($con, "wishlist");
+  mysqli_query($con, "INSERT wishers (name, password) VALUES ('" . $user . "', '" . $password . "')");
+  mysqli_free_result($wisher);
+  mysqli_close($con);
+  header('Location: editWishList.php');
+  exit;
+}
+
+// to replace
+
+if (!$userIsEmpty && $userNameIsUnique && !$passwordIsEmpty && !$password2IsEmpty && $passwordIsValid) {
+
+  WishDB::getInstance()->create_wisher($_POST["user"], $_POST["password"]);
+
+  header('Location: editWishList.php' );
+  exit;
+}
+
 ----
 
 Для *базы данных Oracle * вы заменяете следующий код:
 
-[.line-through]#
-if (!$userIsEmpty &amp;&amp; $userNameIsUnique &amp;&amp; !$passwordIsEmpty &amp;&amp; !$password2IsEmpty &amp;&amp; $passwordIsValid) {
-    $query = "INSERT INTO wishers (name, password) VALUES (:user_bv, :pwd_bv)";
-    $stid = oci_parse($con, $query);
-    $pwd = $_POST['password'];
-    oci_bind_by_name($stid, ':user_bv', $user);
-    oci_bind_by_name($stid, ':pwd_bv', $pwd);
-    oci_execute($stid);
-    oci_close($con);
-    header('Location: editWishList.php');
-    exit;
-}#
-
-[source,java]
+[source,php]
 ----
 
+// to remove
 
+if (!$userIsEmpty && $userNameIsUnique && !$passwordIsEmpty && !$password2IsEmpty && $passwordIsValid) {
 
-*if (!$userIsEmpty &amp;&amp; $userNameIsUnique &amp;&amp; !$passwordIsEmpty &amp;&amp; !$password2IsEmpty &amp;&amp; $passwordIsValid) {
-WishDB::getInstance()->create_wisher($_POST["user"], $_POST["password"]);
-header('Location: editWishList.php' );
-exit;
-}*
+  $query = "INSERT INTO wishers (name, password) VALUES (:user_bv, :pwd_bv)";
+  $stid = oci_parse($con, $query);
+  $pwd = $_POST['password'];
+  oci_bind_by_name($stid, ':user_bv', $user);
+  oci_bind_by_name($stid, ':pwd_bv', $pwd);
+  oci_execute($stid);
+  oci_free_statement($stid);
+  oci_close($con);
+  header('Location: editWishList.php');
+  exit;
+}
+
+// to replace
+
+if (!$userIsEmpty && $userNameIsUnique && !$passwordIsEmpty && !$password2IsEmpty && $passwordIsValid) {
+
+  WishDB::getInstance()->create_wisher($_POST["user"], $_POST["password"]);
+
+  header('Location: editWishList.php' );
+  exit;
+}
+
 ----
 
-
+[[lessonResultSourceCode]]
 == Исходный код приложения на момент завершения текущего урока
 
 Для пользователей MySQL: щелкните link:https://netbeans.org/projects/www/downloads/download/php%252Flesson4.zip[+сюда+] для загрузки исходного кода, отражающего состояние проекта по завершении данного урока.
