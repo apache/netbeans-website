@@ -32,7 +32,7 @@
 _執筆: Andy Gibson_
 
 
-=== コンテキストと依存性の注入
+== コンテキストと依存性の注入
 
 1. link:cdi-intro.html[+CDIおよびJSF 2.0の開始+]
 2. link:cdi-inject.html[+CDIの注入および修飾子の操作+]
@@ -41,8 +41,6 @@ _執筆: Andy Gibson_
 * <<event,イベントの利用>>
 * <<scopes,スコープの処理>>
 * <<seealso,関連項目>>
-
-image::images/netbeans-stamp-80-74-73.png[title="このページの内容は、NetBeans IDE 7.2、7.3、7.4および8.0に適用されます"]
 
 link:http://jcp.org/en/jsr/detail?id=299[+JSR-299+]で指定されているコンテキストと依存性の注入(CDI: Contexts and Dependency Injection)はJava EE 6の不可欠な部分であり、サーブレット、エンタープライズBean、JavaBeansなどのJava EEコンポーネントが、アプリケーションのライフサイクル内で明確なスコープを持って存在できるようにするためのアーキテクチャを提供します。また、CDIサービスによって、EJBセッションBeanやJSF (JavaServer Faces)管理対象BeanなどのJava EEコンポーネントが注入可能になり、イベントの起動や監視による疎結合方式の対話が可能になります。
 
@@ -65,10 +63,11 @@ NetBeans IDEは、コンテキストと依存性の注入のサポートを組�
 |link:https://netbeans.org/projects/samples/downloads/download/Samples%252FJavaEE%252FcdiDemo3.zip[+cdiDemo3.zip+] |n/a 
 |===
 
-*注意: *
-
+[NOTE]
+====
 * NetBeans IDEのJava EEバンドル版には、Java EE準拠のコンテナであるGlassFish Server Open Source Editionも含まれています。
 * このチュートリアルのサンプル・ソリューション・プロジェクトをダウンロードできます: link:https://netbeans.org/projects/samples/downloads/download/Samples%252FJavaEE%252FcdiDemoComplete.zip[+cdiDemoComplete.zip+]
+====
 
 
 
@@ -82,7 +81,7 @@ NetBeans IDEは、コンテキストと依存性の注入のサポートを組�
 image::images/cdi-diagram-events.png[title="アプリケーションの疎結合クラスへのCDI注入の使用"]
 
 1. まず、`cdiDemo3.zip`ファイル(上記の<<requiredSoftware,必要なリソースの一覧表>>を参照)からサンプルのスタート・プロジェクトを抽出します。「ファイル」>「プロジェクトを開く」([Ctrl]-[Shift]-[O]、Macの場合は[⌘]-[Shift]-[O])を選択してから、コンピュータ上のこのプロジェクトの場所を選択することで、IDEでプロジェクトを開きます。
-2. `EventItemHandler`という名前のクラスを作成します。「新規ファイル」(image::images/new-file-btn.png[])ボタンをクリックするか、[Ctrl]-[N] (Macの場合は[⌘]-[N])を押してファイル・ウィザードを開きます。
+2. `EventItemHandler`という名前のクラスを作成します。「新規ファイル」(image:images/new-file-btn.png[])ボタンをクリックするか、[Ctrl]-[N] (Macの場合は[⌘]-[N])を押してファイル・ウィザードを開きます。
 3. 「Java」カテゴリから「Javaクラス」を選択します。「次」をクリックします。
 4. クラス名として「*EventItemHandler*」、パッケージとして「*exercise4*」と入力します。
 5. 「終了」をクリックします。新しいクラスおよびパッケージが生成され、エディタでクラスが開きます。
@@ -104,16 +103,31 @@ public class EventItemHandler *implements ItemErrorHandler* {
 }
 ----
 イベント・ペイロードが`Item`になる`Event`のインスタンスを注入します。イベント・ペイロードとはイベント・プロデューサからイベント・オブザーバに渡される状態データのことで、この場合は却下されたItemが渡されます。無効な項目が処理されたら、イベントを起動して、受け取った無効な項目を渡します。このイベント・ベースの項目ハンドラは、他の項目ハンドラと同じように注入されるため、いつでも必要なときに交換したり、テスト中に取り換えたりできます。
-7. すべてのインポートを修正します。エディタを右クリックして「インポートを修正」を選択するか、[Ctrl]-[Shift]-[I] (Macの場合は[⌘]-[Shift]-[I])を押します。必ず`Event`クラスの完全修飾名として`javax.enterprise.event.Event`を選択するようにしてください。
+
+[start=7]
+. すべてのインポートを修正します。エディタを右クリックして「インポートを修正」を選択するか、[Ctrl]-[Shift]-[I] (Macの場合は[⌘]-[Shift]-[I])を押します。必ず`Event`クラスの完全修飾名として`javax.enterprise.event.Event`を選択するようにしてください。
+
 image::images/fix-all-imports.png[title="エディタで右クリックして「インポートを修正」を選択し、「インポートを修正」ダイアログを呼び出す"]
 
 [tips]#`Event`の上で[Ctrl]-[Space]を押して、クラスのJavadoc定義を表示します。上記で使用した`fire()`メソッドも定義されています。#
-image::images/event-javadoc.png[title="[Ctrl]-[Space]を押して、APIのクラスのJavadocドキュメントを表示する"]
-8. `Notify`という名前の修飾子を作成します。(修飾子についてはlink:cdi-inject.html[+CDIの注入および修飾子の操作+]に記載。)
-9. 「新規ファイル」(image::images/new-file-btn.png[])ボタンをクリックするか、[Ctrl]-[N] (Macの場合は[⌘]-[N])を押してファイル・ウィザードを開きます。
-10. 「コンテキストと依存性の注入」カテゴリから「修飾子タイプ」を選択します。「次」をクリックします。
-11. クラス名として「*Notify*」、パッケージとして「*exercise4*」と入力します。
-12. 「終了」をクリックします。新しい`Notify`修飾子がエディタで開きます。
+
+image::images/event-javadoc.png[title="Ctrl-Space を押して、APIのクラスのJavadocドキュメントを表示する"]
+
+
+[start=8]
+. `Notify`という名前の修飾子を作成します。(修飾子についてはlink:cdi-inject.html[+CDIの注入および修飾子の操作+]に記載。)
+
+[start=9]
+. 「新規ファイル」(image:images/new-file-btn.png[])ボタンをクリックするか、[Ctrl]-[N] (Macの場合は[⌘]-[N])を押してファイル・ウィザードを開きます。
+
+[start=10]
+. 「コンテキストと依存性の注入」カテゴリから「修飾子タイプ」を選択します。「次」をクリックします。
+
+[start=11]
+. クラス名として「*Notify*」、パッケージとして「*exercise4*」と入力します。
+
+[start=12]
+. 「終了」をクリックします。新しい`Notify`修飾子がエディタで開きます。
 
 [source,java]
 ----
@@ -124,7 +138,9 @@ image::images/event-javadoc.png[title="[Ctrl]-[Space]を押して、APIのクラ
 public @interface Notify {
 }
 ----
-13. `EventItemHandler`に`@Notify`注釈を追加します。
+
+[start=13]
+. `EventItemHandler`に`@Notify`注釈を追加します。
 
 [source,java]
 ----
@@ -136,7 +152,9 @@ public class EventItemHandler implements ItemErrorHandler {
 }
 ----
 このエラー・ハンドラを注入のために識別し、`ItemProcessor`で注入ポイントに追加して使用できる`@Notify`修飾子注釈を作成しました。
-14. `exercise2.ItemProcessor`で、`EventItemHandler`の注入ポイントに`@Notify`注釈を追加します。
+
+[start=14]
+. `exercise2.ItemProcessor`で、`EventItemHandler`の注入ポイントに`@Notify`注釈を追加します。
 
 [source,java]
 ----
@@ -165,11 +183,19 @@ public class ItemProcessor {
 }
 ----
 (エディタのヒントを使用して`exercise4.Notify`のインポート文を追加します。)
-15. 「プロジェクトの実行」(image::images/run-project-btn.png[])ボタンをクリックして、プロジェクトを実行します。
-16. ブラウザで「`Execute`」ボタンをクリックしてからIDEに戻り、「出力」ウィンドウ([Ctrl]-[4]、Macの場合は[⌘]-[4])でサーバー・ログを調べます。ビルドしてきたアプリケーションは、現時点で`DefaultItemDao`を使用して4つの`Item`を設定してから`Item`に`RelaxedItemValidator`を適用するため、`itemErrorHandler`が2度起動するのが確認できるはずです。
+
+[start=15]
+. 「プロジェクトの実行」(image:images/run-project-btn.png[])ボタンをクリックして、プロジェクトを実行します。
+
+[start=16]
+. ブラウザで「`Execute`」ボタンをクリックしてからIDEに戻り、「出力」ウィンドウ([Ctrl]-[4]、Macの場合は[⌘]-[4])でサーバー・ログを調べます。ビルドしてきたアプリケーションは、現時点で`DefaultItemDao`を使用して4つの`Item`を設定してから`Item`に`RelaxedItemValidator`を適用するため、`itemErrorHandler`が2度起動するのが確認できるはずです。
+
 image::images/output-window.png[title="「出力」ウィンドウに表示されたGlassFishサーバー・ログの確認"]
+
 しかし、現時点ではイベントを監視しているものはありません。これは、`@Observes`注釈を使用して_オブザーバ_・メソッドを作成すれば修正できます。イベントを監視するために必要な手順はこれのみです。これを示すため、`FileErrorReporter` (link:cdi-validate.html[+前のチュートリアル+]で作成)にこの`handleItem()`メソッドをコールするオブザーバ・メソッドを追加して、起動されたイベントに応答するように変更できます。
-17. `FileErrorReporter`がイベントに応答するようにするには、クラスに次のメソッドを追加します。
+
+[start=17]
+. `FileErrorReporter`がイベントに応答するようにするには、クラスに次のメソッドを追加します。
 
 [source,java]
 ----
@@ -184,8 +210,12 @@ public class FileErrorReporter implements ItemErrorHandler {
 }
 ----
 (エディタのヒントを使用して`javax.enterprise.event.Observes`のインポート文を追加します。)
-18. 再びプロジェクトを実行([F6]、Macの場合は[fn]-[F6])し、「`Execute`」ボタンをクリックしてからIDEに戻り、「出力」ウィンドウでサーバー・ログを調べます。
+
+[start=18]
+. 再びプロジェクトを実行([F6]、Macの場合は[fn]-[F6])し、「`Execute`」ボタンをクリックしてからIDEに戻り、「出力」ウィンドウでサーバー・ログを調べます。
+
 image::images/output-window2.png[title="「出力」ウィンドウに表示されたGlassFishサーバー・ログの確認"]
+
 先ほどと同じく無効なオブジェクトでイベントが起動されますが、今度は各イベントの起動時に項目の情報が保存されるようになったのが確認できます。また、起動されたイベントごとに`FileErrorReporter` Beanが作成されて閉じられているため、ライフサイクル・イベントが監視されていることもわかります。(`@PostConstruct`や`@PreDestroy`などのライフサイクル注釈については、link:cdi-validate.html[+@Alternative Beanおよびライフサイクル注釈の適用+]を参照。)
 
 上記の手順で示したように、`@Observes`注釈はイベントを監視するための簡単な方法を提供します。
@@ -213,9 +243,15 @@ image::images/output-window2.png[title="「出力」ウィンドウに表示さ�
 public class FileErrorReporter implements ItemErrorHandler { ... }
 ----
 [tips]#入力中に[Ctrl]-[Space]を押すと、エディタのコード補完サポートを呼び出せます。コード補完で項目を選択すると、関連付けられたすべてのインポート文が自動的にクラスに追加されます。#
+
 image::images/code-completion.png[title="入力中に [Ctrl]-[Space]を押してコード補完の候補を呼び出す"]
-2. 再びプロジェクトを実行([F6]、Macの場合は[fn]-[F6])し、「`Execute`」ボタンをクリックしてからIDEに戻り、「出力」ウィンドウでサーバー・ログを調べます。
+
+
+[start=2]
+. 再びプロジェクトを実行([F6]、Macの場合は[fn]-[F6])し、「`Execute`」ボタンをクリックしてからIDEに戻り、「出力」ウィンドウでサーバー・ログを調べます。
+
 image::images/output-window3.png[title="「出力」ウィンドウに表示されたGlassFishサーバー・ログの確認"]
+
 `FileErrorReporter` Beanが最初のイベントの起動時にのみ作成され、最後のイベントの起動後に閉じられます。
 
 [source,java]
