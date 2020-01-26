@@ -118,49 +118,6 @@
 </ul>
 </div>
 <h1 id="_レッスン7_データベース内のエントリの更新および削除" class="sect0">レッスン7: データベース内のエントリの更新および削除</h1>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p><a href="wish-list-tutorial-main-page.html">PHPを使用するデータベース駆動型アプリケーションの作成 - メイン・ページ</a>
-2.
-データベースの作成</p>
-</li>
-<li>
-<p><a href="wish-list-lesson1.html">MySQLデータベースの作成</a></p>
-</li>
-<li>
-<p><a href="wish-list-oracle-lesson1.html">Oracleデータベース表の作成</a>
-3.
-<a href="wish-list-lesson2.html">アプリケーションの設計。データベースからの読取り</a></p>
-</li>
-<li>
-<p><a href="wish-list-lesson3.html">新規アプリケーション・ユーザーの作成</a></p>
-</li>
-<li>
-<p><a href="wish-list-lesson4.html">コードの最適化</a></p>
-</li>
-<li>
-<p><a href="wish-list-lesson5.html">セキュリティの追加。アプリケーション・ユーザー・ログオンの実装</a></p>
-</li>
-<li>
-<p><a href="wish-list-lesson6.html">データベースへの新しいウィッシュの追加</a>
-8.
-<strong>&#8658; データベース内のエントリの更新および削除</strong></p>
-</li>
-<li>
-<p><a href="wish-list-lesson8.html">CSSテクノロジを使用したアプリケーションの外観の改良</a></p>
-</li>
-<li>
-<p><a href="wish-list-lesson9.html">リモートWebサーバーへのアプリケーションのデプロイ</a></p>
-</li>
-</ol>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="images/netbeans-stamp-80-74-73.png" alt="netbeans stamp 80 74 73">
-</div>
-<div class="title">Figure 1. このページの内容は、NetBeans IDE 7.2、7.3、7.4および8.0に適用されます</div>
-</div>
 <div class="paragraph">
 <p>このレッスンでは、次の2つの機能を使用してアプリケーションの機能を拡張します。</p>
 </div>
@@ -214,16 +171,16 @@
 <div class="ulist">
 <ul>
 <li>
-<p><a href="#addEditButton">editWishListページに「Edit」ボタンを追加する</a></p>
+<p><a href="#_implementing_the_edit_button">editWishListページに「Edit」ボタンを追加する</a></p>
 </li>
 <li>
-<p><a href="#wishArrayUpdate">editWish.phpページで、ウィッシュのデータを格納する配列$wishを更新する</a></p>
+<p><a href="#_expanding_the_code_wish_code_array">editWish.phpページで、ウィッシュのデータを格納する配列$wishを更新する</a></p>
 </li>
 <li>
-<p><a href="#updateInputForm">editWish.phpページの入力フォームを更新する</a></p>
+<p><a href="#_updating_the_html_input_form">editWish.phpページの入力フォームを更新する</a></p>
 </li>
 <li>
-<p><a href="#updateWishRecord">送信されたデータを検証し、データベース内のウィッシュを更新する</a></p>
+<p><a href="#_updating_the_wish_in_the_database">送信されたデータを検証し、データベース内のウィッシュを更新する</a></p>
 </li>
 </ul>
 </div>
@@ -231,7 +188,7 @@
 <h3 id="_edit_ボタンの実装">「Edit」ボタンの実装</h3>
 <div class="literalblock">
 <div class="content">
-<pre>``editWishList.php`` では、ウィッシャのウィッシュを含む表は、ウィッシュがデータベースから選択されるときに、ウィッシュを含む行を表示するループ( ``while`` 文)によって実装されています。行の一番右のセルとして「Edit」ボタンを追加します。</pre>
+<pre>`editWishList.php` では、ウィッシャのウィッシュを含む表は、ウィッシュがデータベースから選択されるときに、ウィッシュを含む行を表示するループ( `while` 文)によって実装されています。行の一番右のセルとして「Edit」ボタンを追加します。</pre>
 </div>
 </div>
 <div class="olist arabic">
@@ -243,8 +200,13 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">while ($row = ...) {echo ...echo ...*$wishID = $row["id"];*}
-?&gt;</code></pre>
+<pre class="prettyprint highlight"><code class="language-php" data-lang="php">while ($row = mysqli_fetch_array($result)):
+    echo "&lt;tr&gt;&lt;td&gt;" . htmlentities($row['description']) . "&lt;/td&gt;";
+    echo "&lt;td&gt;" . htmlentities($row['due_date']) . "&lt;/td&gt;";
+    $wishID = $row['id'];
+    echo "&lt;td&gt;WishID=" . $wishID . "&lt;/td&gt;";
+    //The loop is left open
+    ?&gt;</code></pre>
 </div>
 </div>
 <div class="olist arabic">
@@ -256,13 +218,26 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-php" data-lang="php">   Hello &lt;?php echo $_SESSION["user"]; ?&gt;&lt;br/&gt;&lt;table border="black"&gt;&lt;tr&gt;&lt;th&gt;Item&lt;/th&gt;&lt;th&gt;Due Date&lt;/th&gt;&lt;/tr&gt;&lt;?phprequire_once("Includes/db.php");$wisherID = WishDB::getInstance()-&gt;get_wisher_id_by_name($_SESSION["user"]);$result = WishDB::getInstance()-&gt;get_wishes_by_wisher_id($wisherID);while ($row = mysqli_fetch_array($result)) {echo "&lt;tr&gt;&lt;td&gt;" . htmlentities($row["description"]) . "&lt;/td&gt;";echo "&lt;td&gt;" . htmlentities($row["due_date"]) . "&lt;/td&gt;&lt;/tr&gt;\n";}mysqli_free_result($result);?&gt;
-            *&lt;td&gt;
-                &lt;form name="editWish" action="editWish.php" method="GET"&gt;
-                    &lt;input type="hidden" name="wishID" value="&lt;?php echo  ``$wish`` ID; ?&gt;"&gt;
-                    &lt;input type="submit" name="editWish" value="Edit"&gt;
-                    &lt;/form&gt;
-            &lt;/td&gt;*&lt;/table&gt;</code></pre>
+<pre class="prettyprint highlight"><code class="language-php" data-lang="php">Hello &lt;?php echo $_SESSION["user"]; ?&gt;&lt;br/&gt;
+&lt;table border="black"&gt;
+    &lt;tr&gt;&lt;th&gt;Item&lt;/th&gt;&lt;th&gt;Due Date&lt;/th&gt;&lt;/tr&gt;
+    &lt;?php
+    require_once("Includes/db.php");
+    $wisherID = WishDB::getInstance()-&gt;get_wisher_id_by_name($_SESSION["user"]);
+    $result = WishDB::getInstance()-&gt;get_wishes_by_wisher_id($wisherID);
+    while ($row = mysqli_fetch_array($result)) {
+        echo "&lt;tr&gt;&lt;td&gt;" . htmlentities($row["description"]) . "&lt;/td&gt;";
+        echo "&lt;td&gt;" . htmlentities($row["due_date"]) . "&lt;/td&gt;&lt;/tr&gt;\n";
+    }
+    mysqli_free_result($result);
+    ?&gt;
+    &lt;td&gt;
+        &lt;form name="editWish" action="editWish.php" method="GET"&gt;
+            &lt;input type="hidden" name="wishID" value="&lt;?php echo $wishID; ?&gt;"&gt;
+            &lt;input type="submit" name="editWish" value="Edit"&gt;
+        &lt;/form&gt;
+    &lt;/td&gt;
+&lt;/table&gt;</code></pre>
 </div>
 </div>
 <div class="olist arabic">
@@ -274,17 +249,22 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-php" data-lang="php">    while ($row = mysqli_fetch_array($result))[.line-through]#{#*:*echo "&lt;tr&gt;&lt;td&gt;" . htmlentities($row["description"]) . "&lt;/td&gt;";echo "&lt;td&gt;" . htmlentities($row["due_date"]) . "&lt;/td&gt;&lt;/tr&gt;\n";[.line-through]#    }mysqli_free_result($result);#?&gt;
+<pre class="prettyprint highlight"><code class="language-php" data-lang="php">   while ($row = mysqli_fetch_array($result)){:
+        echo "&lt;tr&gt;&lt;td&gt;" . htmlentities($row["description"]) . "&lt;/td&gt;";
+        echo "&lt;td&gt;" . htmlentities($row["due_date"]) . "&lt;/td&gt;&lt;/tr&gt;\n";
+    }
+    mysqli_free_result($result);
+    ?&gt;
     &lt;td&gt;
         &lt;form name="editWish" action="editWish.php" method="GET"&gt;
-           &lt;input type="hidden" name="wishID" value="&lt;?php echo  ``$wish`` ID; ?&gt;"&gt;
+           &lt;input type="hidden" name="wishID" value="&lt;?php echo $wishID; ?&gt;"&gt;
            &lt;input type="submit" name="editWish" value="Edit"&gt;
         &lt;/form&gt;
     &lt;/td&gt;
-*    &lt;?php
+    &lt;?php
     endwhile;
     mysqli_free_result($result);
-    ?&gt;*
+    ?&gt;
 &lt;/table&gt;</code></pre>
 </div>
 </div>
@@ -294,15 +274,18 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-php" data-lang="php">    while ($row = mysqli_fetch_array($result))*:*echo "&lt;tr&gt;&lt;td&gt;" . htmlentities($row["description"]) . "&lt;/td&gt;";echo "&lt;td&gt;" . htmlentities($row["due_date"]) . "&lt;/td&gt;[.line-through]#&lt;/tr&gt;\n#";?&gt;
+<pre class="prettyprint highlight"><code class="language-php" data-lang="php">    while ($row = mysqli_fetch_array($result)):
+        echo "&lt;tr&gt;&lt;td&gt;" . htmlentities($row["description"]) . "&lt;/td&gt;";
+        echo "&lt;td&gt;" . htmlentities($row["due_date"]) . "&lt;/td&gt;&lt;/tr&gt;\n";
+    ?&gt;
     &lt;td&gt;
         &lt;form name="editWish" action="editWish.php" method="GET"&gt;
-           &lt;input type="hidden" name="wishID" value="&lt;?php echo  ``$wish`` ID; ?&gt;"&gt;
+           &lt;input type="hidden" name="wishID" value="&lt;?php echo $wishID; ?&gt;"&gt;
            &lt;input type="submit" name="editWish" value="Edit"&gt;
         &lt;/form&gt;
     &lt;/td&gt;
     &lt;?php
-    *echo "&lt;/tr&gt;\n";*
+    echo "&lt;/tr&gt;\n";
     endwhile;
     mysqli_free_result($result);
     ?&gt;
@@ -384,7 +367,7 @@
 <h3 id="_code_wish_code_配列の拡張"><code>$wish</code> 配列の拡張</h3>
 <div class="literalblock">
 <div class="content">
-<pre>``editWishList.php`` ページで「Edit」ボタンを押すと、選択したウィッシュのIDがサーバー・リクエスト・メソッドGETを介して ``editWish.php`` ページに転送されます。ウィッシュのIDを格納するには、 ``$wish`` 配列に新しい要素を追加する必要があります。</pre>
+<pre>`editWishList.php` ページで「Edit」ボタンを押すと、選択したウィッシュのIDがサーバー・リクエスト・メソッドGETを介して `editWish.php` ページに転送されます。ウィッシュのIDを格納するには、 `$wish` 配列に新しい要素を追加する必要があります。</pre>
 </div>
 </div>
 <div class="paragraph">
@@ -392,7 +375,7 @@
 </div>
 <div class="literalblock">
 <div class="content">
-<pre>``editWish.php`` 内で、HTML &lt;body&gt;内の ``EditWish`` 入力フォームの上にあるPHPブロックを、 ``$wish`` 配列の拡張されたコードで置き換えます。</pre>
+<pre>`editWish.php` 内で、HTML &lt;body&gt;内の `EditWish` 入力フォームの上にあるPHPブロックを、 `$wish` 配列の拡張されたコードで置き換えます。</pre>
 </div>
 </div>
 <div class="paragraph">
@@ -400,8 +383,15 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-php" data-lang="php">&lt;?phpif ($_SERVER["REQUEST_METHOD"] == "POST")$wish = array("id" =&gt; $_POST["wishID"], "description" =&gt;
-        $_POST["wish"], "due_date" =&gt; $_POST["dueDate"]);else if (array_key_exists("wishID", $_GET))$wish = mysqli_fetch_array(WishDB::getInstance()-&gt;get_wish_by_wish_id($_GET["wishID"]));else$wish = array("id" =&gt; "", "description" =&gt; "", "due_date" =&gt; "");?&gt;</code></pre>
+<pre class="prettyprint highlight"><code class="language-php" data-lang="php">&lt;?php
+if ($_SERVER["REQUEST_METHOD"] == "POST")
+    $wish = array("id" =&gt; $_POST["wishID"], "description" =&gt;
+            $_POST["wish"], "due_date" =&gt; $_POST["dueDate"]);
+else if (array_key_exists("wishID", $_GET))
+    $wish = mysqli_fetch_array(WishDB::getInstance()-&gt;get_wish_by_wish_id($_GET["wishID"]));
+else
+    $wish = array("id" =&gt; "", "description" =&gt; "", "due_date" =&gt; "");
+?&gt;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -412,7 +402,7 @@
 <pre class="prettyprint highlight"><code class="language-php" data-lang="php">&lt;?php
 if ($_SERVER["REQUEST_METHOD"] == "POST")
     $wish = array("id" =&gt; $_POST["wishID"], "description" =&gt;
-            $_POST["wish"], "due_date" =&gt; $_POST["dueDate"]);
+                $_POST["wish"], "due_date" =&gt; $_POST["dueDate"]);
 else if (array_key_exists("wishID", $_GET)) {
     $stid = WishDB::getInstance()-&gt;get_wish_by_wish_id($_GET["wishID"]);
     $row = oci_fetch_array($stid, OCI_ASSOC);
@@ -420,7 +410,7 @@ else if (array_key_exists("wishID", $_GET)) {
                 $row["DESCRIPTION"], "due_date" =&gt; $row["DUE_DATE"]);
     oci_free_statement($stid);
 } else
-$wish = array("id" =&gt; "", "description" =&gt; "", "due_date" =&gt; "");
+    $wish = array("id" =&gt; "", "description" =&gt; "", "due_date" =&gt; "");
 ?&gt;</code></pre>
 </div>
 </div>
@@ -438,7 +428,7 @@ $wish = array("id" =&gt; "", "description" =&gt; "", "due_date" =&gt; "");
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-php" data-lang="php">&lt;input type="hidden" name="wishID" value="&lt;?php echo  ``$wish`` ["id"];?&gt;" /&gt;</code></pre>
+<pre class="prettyprint highlight"><code class="language-php" data-lang="php">&lt;input type="hidden" name="wishID" value="&lt;?php echo  `$wish` ["id"];?&gt;" /&gt;</code></pre>
 </div>
 </div>
 </div>
@@ -475,8 +465,16 @@ $wish = array("id" =&gt; "", "description" =&gt; "", "due_date" =&gt; "");
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public function update_wish($wishID, $description, $duedate){
-    $description = $this-&gt;real_escape_string($description);if ($duedate==''){$this-&gt;query("UPDATE wishes SET description = '" . $description . "',due_date = NULL WHERE id = " . $wishID);} else$this-&gt;query("UPDATE wishes SET description = '" . $description ."', due_date = " . $this-&gt;format_date_for_sql($duedate). " WHERE id = " . $wishID);}</code></pre>
+<pre class="prettyprint highlight"><code class="language-php" data-lang="php">public function update_wish($wishID, $description, $duedate) {
+    $description = $this-&gt;real_escape_string($description);
+    if ($duedate==''){
+        $this-&gt;query("UPDATE wishes SET description = '" . $description . "',
+            due_date = NULL WHERE id = " . $wishID);
+    } else
+        $this-&gt;query("UPDATE wishes SET description = '" . $description .
+            "', due_date = " . $this-&gt;format_date_for_sql($duedate)
+            . " WHERE id = " . $wishID);
+}</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -484,9 +482,9 @@ $wish = array("id" =&gt; "", "description" =&gt; "", "due_date" =&gt; "");
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public function update_wish($wishID, $description, $duedate) {
-    $query = "UPDATE wishes SET description = :desc_bv, due_date = to_date(:due_date_bv,
-              'YYYY-MM-DD')  WHERE id = :wish_id_bv";
+<pre class="prettyprint highlight"><code class="language-php" data-lang="php">public function update_wish($wishID, $description, $duedate) {
+    $query = "UPDATE wishes SET description = :desc_bv, due_date = to_date(:due_date_bv, 'YYYY-MM-DD')
+                WHERE id = :wish_id_bv";
     $stid = oci_parse($this-&gt;con, $query);
     oci_bind_by_name($stid, ':wish_id_bv', $wishID);
     oci_bind_by_name($stid, ':desc_bv', $description);
@@ -505,7 +503,9 @@ $wish = array("id" =&gt; "", "description" =&gt; "", "due_date" =&gt; "");
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public function get_wish_by_wish_id ($wishID) {return $this-&gt;query("SELECT id, description, due_date FROM wishes WHERE id = " . $wishID);}</code></pre>
+<pre class="prettyprint highlight"><code class="language-php" data-lang="php">public function get_wish_by_wish_id ($wishID) {
+    return $this-&gt;query("SELECT id, description, due_date FROM wishes WHERE id = " . $wishID);
+}</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -513,7 +513,7 @@ $wish = array("id" =&gt; "", "description" =&gt; "", "due_date" =&gt; "");
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public function get_wish_by_wish_id($wishID) {
+<pre class="prettyprint highlight"><code class="language-php" data-lang="php">public function get_wish_by_wish_id($wishID) {
     $query = "SELECT id, description, due_date FROM wishes WHERE id = :wish_id_bv";
     $stid = oci_parse($this-&gt;con, $query);
     oci_bind_by_name($stid, ':wish_id_bv', $wishID);
@@ -531,7 +531,11 @@ $wish = array("id" =&gt; "", "description" =&gt; "", "due_date" =&gt; "");
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">else if ($_POST["wishID"]=="") {WishDB::getInstance()-&gt;insert_wish($wisherID, $_POST["wish"], $_POST["dueDate"]);header('Location:  ``editWishList.php`` ' );exit;}</code></pre>
+<pre class="prettyprint highlight"><code class="language-php" data-lang="php">else if ($_POST["wishID"]=="") {
+    WishDB::getInstance()-&gt;insert_wish($wisherID, $_POST["wish"], $_POST["dueDate"]);
+    header('Location: editWishList.php' );
+    exit;
+}</code></pre>
 </div>
 </div>
 <div class="olist arabic">
@@ -543,7 +547,10 @@ $wish = array("id" =&gt; "", "description" =&gt; "", "due_date" =&gt; "");
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">else if ($_POST["wishID"]!="") {WishDB::getInstance()-&gt;update_wish($_POST["wishID"], $_POST["wish"], $_POST["dueDate"]);header('Location:  ``editWishList.php`` ' );exit;
+<pre class="prettyprint highlight"><code class="language-php" data-lang="php">else if ($_POST["wishID"]!="") {
+    WishDB::getInstance()-&gt;update_wish($_POST["wishID"], $_POST["wish"], $_POST["dueDate"]);
+    header('Location: editWishList.php' );
+    exit;
 }</code></pre>
 </div>
 </div>
@@ -559,29 +566,65 @@ $wish = array("id" =&gt; "", "description" =&gt; "", "due_date" =&gt; "");
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>アプリケーションを実行します。index.phpページで、「Username」フィールドに「Tom」、「Password」フィールドに「tomcat」と入力します。
-image::images/user-logon-to-edit-wish-list.png[]</p>
+<p>アプリケーションを実行します。index.phpページで、「Username」フィールドに「Tom」、「Password」フィールドに「tomcat」と入力します。</p>
 </li>
+</ol>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/user-logon-to-edit-wish-list.png" alt="user logon to edit wish list">
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
 <li>
-<p>「Edit My Wish List」ボタンを押します。 <code>editWishList.php</code> ページが開きます。
-image::images/edit-wish-list-edit-wish.png[]</p>
+<p>「Edit My Wish List」ボタンを押します。 <code>editWishList.php</code> ページが開きます。</p>
 </li>
+</ol>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/edit-wish-list-edit-wish.png" alt="edit wish list edit wish">
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
 <li>
-<p>「Icecream」の横の「Edit」をクリックします。 <code>editWish.php</code> ページが開きます。
-image::images/edit-wish.png[]</p>
+<p>「Icecream」の横の「Edit」をクリックします。 <code>editWish.php</code> ページが開きます。</p>
 </li>
+</ol>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/edit-wish.png" alt="edit wish">
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
 <li>
 <p>フィールドを編集して「Back to the List」を押します。 <code>editWishList.php</code> ページが開きますが、変更は保存されていません。</p>
 </li>
 <li>
-<p>「Icecream」の横の「Edit」を押します。「Describe your wish」フィールドをクリアして「Save Changes」を押します。エラー・メッセージが表示されます。
-image::images/editWishEmptyDescription.png[]</p>
-</li>
-<li>
-<p>「Describe your wish」フィールドに「Chocolate icecream」と入力し、「Save Changes」を押します。 <code>editWishList.php</code> ページが開き、更新されたリストが表示されます。
-image::images/editWishListWishAdded.png[]</p>
+<p>「Icecream」の横の「Edit」を押します。「Describe your wish」フィールドをクリアして「Save Changes」を押します。エラー・メッセージが表示されます。</p>
 </li>
 </ol>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/editWishEmptyDescription.png" alt="editWishEmptyDescription">
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>「Describe your wish」フィールドに「Chocolate icecream」と入力し、「Save Changes」を押します。 <code>editWishList.php</code> ページが開き、更新されたリストが表示されます。</p>
+</li>
+</ol>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/editWishListWishAdded.png" alt="editWishListWishAdded">
+</div>
 </div>
 </div>
 </div>
@@ -606,7 +649,9 @@ image::images/editWishListWishAdded.png[]</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">function delete_wish ($wishID){$this-&gt;query("DELETE FROM wishes WHERE id = " . $wishID);}</code></pre>
+<pre class="prettyprint highlight"><code class="language-php" data-lang="php">function delete_wish ($wishID){
+    $this-&gt;query("DELETE FROM wishes WHERE id = " . $wishID);
+}</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -614,7 +659,7 @@ image::images/editWishListWishAdded.png[]</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public function delete_wish($wishID) {
+<pre class="prettyprint highlight"><code class="language-php" data-lang="php">public function delete_wish($wishID) {
     $query = "DELETE FROM wishes WHERE id = :wish_id_bv";
     $stid = oci_parse($this-&gt;con, $query);
     oci_bind_by_name($stid, ':wish_id_bv', $wishID);
@@ -631,7 +676,9 @@ image::images/editWishListWishAdded.png[]</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">require_once("Includes/db.php");WishDB::getInstance()-&gt;delete_wish ($_POST["wishID"]);header('Location:  ``editWishList.php`` ' );</code></pre>
+<pre class="prettyprint highlight"><code class="language-php" data-lang="php">require_once("Includes/db.php");
+WishDB::getInstance()-&gt;delete_wish ($_POST["wishID"]);
+header('Location: editWishList.php' );</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -640,19 +687,22 @@ image::images/editWishListWishAdded.png[]</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-php" data-lang="php">    while ($row = mysqli_fetch_array($result))*:*echo "&lt;tr&gt;&lt;td&gt;" . htmlentities($row["description"]) . "&lt;/td&gt;";echo "&lt;td&gt;" . htmlentities($row["due_date"]) . "&lt;/td&gt;[.line-through]#&lt;/tr&gt;\n#";?&gt;
+<pre class="prettyprint highlight"><code class="language-php" data-lang="php">    while ($row = mysqli_fetch_array($result)):
+        echo "&lt;tr&gt;&lt;td&gt;" . htmlentities($row["description"]) . "&lt;/td&gt;";
+        echo "&lt;td&gt;" . htmlentities($row["due_date"]) . "&lt;/td&gt;&lt;/tr&gt;\n";
+    ?&gt;
     &lt;td&gt;
         &lt;form name="editWish" action="editWish.php" method="GET"&gt;
-           &lt;input type="hidden" name="wishID" value="&lt;?php echo  ``$wish`` ID; ?&gt;"&gt;
+           &lt;input type="hidden" name="wishID" value="&lt;?php echo $wishID; ?&gt;"&gt;
            &lt;input type="submit" name="editWish" value="Edit"&gt;
         &lt;/form&gt;
     &lt;/td&gt;
-    *&lt;td&gt;
+    &lt;td&gt;
         &lt;form name="deleteWish" action="deleteWish.php" method="POST"&gt;
             &lt;input type="hidden" name="wishID" value="&lt;?php echo $wishID; ?&gt;"/&gt;
             &lt;input type="submit" name="deleteWish" value="Delete"/&gt;
         &lt;/form&gt;
-    &lt;/td&gt;*
+    &lt;/td&gt;
     &lt;?php
     echo "&lt;/tr&gt;\n";
     endwhile;
@@ -663,7 +713,7 @@ image::images/editWishListWishAdded.png[]</p>
 </div>
 <div class="literalblock">
 <div class="content">
-<pre>``while`` ループ内に「Edit」ボタンを持つフォームを含む表の全体は、次のようになります。</pre>
+<pre>`while` ループ内に「Edit」ボタンを持つフォームを含む表の全体は、次のようになります。</pre>
 </div>
 </div>
 <div class="paragraph">
@@ -678,7 +728,7 @@ image::images/editWishListWishAdded.png[]</p>
     $wisherID = WishDB::getInstance()-&gt;get_wisher_id_by_name($_SESSION["user"]);
     $result = WishDB::getInstance()-&gt;get_wishes_by_wisher_id($wisherID);
     while($row = mysqli_fetch_array($result)):
-        echo "&lt;tr&gt;&lt;td&gt;" . htmlentities($row['description") . "&lt;/td&gt;";
+        echo "&lt;tr&gt;&lt;td&gt;" . htmlentities($row['description']) . "&lt;/td&gt;";
         echo "&lt;td&gt;" . htmlentities($row['due_date']) . "&lt;/td&gt;";
         $wishID = $row["id"];
     ?&gt;
