@@ -40,112 +40,78 @@
 :description: Lesson 5: Adding Security. Implementing Application User Logon - Apache NetBeans
 :keywords: Apache NetBeans, Tutorials, Lesson 5: Adding Security. Implementing Application User Logon
 
-
-Tutorial contents:
-
-1. link:wish-list-tutorial-main-page.html[+Creating a Database Driven Application With PHP - Main page+]
-2. 
-Creating the Database
-
-1. link:wish-list-lesson1.html[+Creating a MySQL Database+]
-2. link:wish-list-oracle-lesson1.html[+Creating Oracle Database Tables+]
-3. link:wish-list-lesson2.html[+Designing the Application. Reading from the Database +]
-4. link:wish-list-lesson3.html[+Creating a New Application User+]
-5. link:wish-list-lesson4.html[+ Optimizing the Code+]
-6. 
-*=> Adding Security. Implementing Application User Logon*
-
-* <<previousLessonSourceCode,Application Source Code from the Previous Lesson>>
-* <<savingWisherIDInSessionUponCreation,Saving the Wisher's ID in the Session Upon Creation>>
-* <<validateWisherLogon,Validating User Logon>>
-* <<retrievingUserNameFromSession,Retrieving the wisher's name from the Session>>
-* <<redirectingNotLoggedInUserToIndexPage,Redirecting a User Who Is Not Logged In>>
-* <<logonFromIndexPage,Logging In from the index.php Page>>
-* <<logonForm,HTML Form for Logon on index.php>>
-* <<logonValidation,Logon Validation>>
-* <<verifyWisherCredentials,Function verify_wisher_credentials>>
-* <<displayErrorMessage,Displaying Error Messages>>
-* <<testingLogonFromIndexPage,Testing the Logon from the index.php Page>>
-* <<lessonResultSourceCode,Application Source Code after the Current Lesson Is Completed>>
-7. link:wish-list-lesson6.html[+Adding a New Wish to the Database+]
-8. link:wish-list-lesson7.html[+Updating and Deleting Entries in the Database+]
-9. link:wish-list-lesson8.html[+Making the Application Look Better Using the CSS Technology+]
-10. link:wish-list-lesson9.html[+Deploying the Application on a Remote Web Server+]
-
-image::images/netbeans-stamp-80-74-73.png[title="Content on this page applies to the NetBeans IDE 7.2, 7.3, 7.4 and 8.0"]
-
 In this lesson you implement the logon functionality for a wisher. This affects the following files:
 
-*  ``index.php`` 
-*  ``createNewWisher.php`` 
-*  ``editWishlist.php`` 
-*  ``db.php`` 
+*  `index.php` 
+*  `createNewWisher.php` 
+*  `editWishlist.php` 
+*  `db.php` 
 
 Implementing the logon functionality consists of the following steps:
 
-1. <<savingWisherIDInSessionUponCreation,Saving the wisher's ID in the Session upon the creation of a wisher>>
-2. <<validateWisherLogon,Validating that the user who attempts to edit a wish list is logged in>>
-3. <<logonFromIndexPage,Logging on wisher from the index.php page>>
+1. <<_saving_the_wisher_s_id_in_the_session_upon_creation,Saving the wisher's ID in the Session upon the creation of a wisher>>
+2. <<_validating_user_logon,Validating that the user who attempts to edit a wish list is logged in>>
+3. <<_html_form_for_logon_on_index_php,Logging on wisher from the index.php page>>
 
 The current document is a part of the Creating a CRUD Application in the NetBeans IDE for PHP tutorial.
 
 
-
+[[_application_source_code_from_the_previous_lesson]]
 == Application Source Code from the Previous Lesson
 
 MySQL users: Click link:https://netbeans.org/files/documents/4/1930/lesson4.zip[+here+] to download the source code that reflects the project state after the previous lesson is completed.
 
-Oracle Database users: Click link:https://netbeans.org/projects/www/downloads/download/php%252Foracle-lesson4.zip[+ here+] to download the source code that reflects the project state after the previous lesson is completed.
+Oracle Database users: Click link:https://netbeans.org/projects/www/downloads/download/php%252Foracle-lesson4.zip[+here+] to download the source code that reflects the project state after the previous lesson is completed.
 
-
+[[_saving_the_wisher_s_id_in_the_session_upon_creation]]
 == Saving the Wisher's ID in the Session Upon Creation
 
-A link:http://us2.php.net/manual/en/ref.session.php[+Session+] is persistent storage for transferring information from one page to another without using an link:wish-list-lesson5.html#htmlForm[+HTML input form+]. This functionality is supported through the predefined PHP array  ``$_SESSION`` .
+A link:http://us2.php.net/manual/en/ref.session.php[+Session+] is persistent storage for transferring information from one page to another without using an link:wish-list-lesson5.html#_html_form_for_logon_on_index_php[+HTML input form+]. This functionality is supported through the predefined PHP array  `$_SESSION` .
 
-For the sake of security, after a new wisher is created he should be logged on automatically without filling in a form. Therefore you need to modify the  ``createNewWisher.php``  file to implement the following functionality:
+For the sake of security, after a new wisher is created he should be logged on automatically without filling in a form. Therefore you need to modify the  `createNewWisher.php`  file to implement the following functionality:
 
 * Add a new wisher to the database.
 * Open a session.
 * Store the wisher's name in the session.
-* Transfer the wisher's name in the session when the wisher is redirected to the  ``editWishList.php``  page.
+* Transfer the wisher's name in the session when the wisher is redirected to the  `editWishList.php`  page.
 
-In the  ``createNewWisher.php``  file, locate the line:
+In the  `createNewWisher.php`  file, locate the line:
 
 
-[source,java]
+[source,php]
 ----
 
-WishDB::getInstance()->create_wisher($_POST["user"], $_POST["password"]);
+WishDB::getInstance()->create_wisher($_POST['user'], $_POST['password']);
 ----
 
 and enter the following code block right below:
 
 
-[source,java]
+[source,php]
 ----
 
 session_start();
 $_SESSION['user'] = $_POST['user'];
 ----
 
-The code block starts a session, which means opening the  ``$_SESSION``  array for entering or retrieving data. Then the code adds an element to the  ``$_SESSION``  array. The added element contains a value and an identifier (key). The value is the name of the newly created wishers and the identifier is "user". Then the program redirects the wisher to the  ``editWishList.php``  page.
+The code block starts a session, which means opening the  `$_SESSION`  array for entering or retrieving data. Then the code adds an element to the  `$_SESSION`  array. The added element contains a value and an identifier (key). The value is the name of the newly created wishers and the identifier is "user". Then the program redirects the wisher to the  `editWishList.php`  page.
 
-
+[[_validating_user_logon]]
 == Validating User Logon
 
-When a user reaches the  ``editWishList.php``  page the application should confirm that the page is accessed by the same person who was just registered on the  ``createNewWisher.php``  page.
+When a user reaches the  `editWishList.php`  page the application should confirm that the page is accessed by the same person who was just registered on the  `createNewWisher.php`  page.
 
 Implementing this functionality consists of two steps:
 
-* <<retrievingUserNameFromSession,Retrieving the wisher's name from the Session>>
-* <<redirectingNotLoggedInUserToIndexPage,Redirecting the user to the index.php if retrieving the wisher's name from the Session failed>>
+* <<_retrieving_the_wisher_s_name_from_the_session,Retrieving the wisher's name from the Session>>
+* <<_logging_in_from_the_index_php_page,Redirecting the user to the index.php if retrieving the wisher's name from the Session failed>>
 
-
+[[_retrieving_the_wisher_s_name_from_the_session]]
 === Retrieving the Wisher's Name from the Session
 
-Replace the default code in the PHP block of  ``editWishList.php``  with the following:
+Replace the default code in the PHP block of  `editWishList.php`  with the following:
 
-[source,java]
+[source,php]
 ----
 
 session_start();
@@ -154,21 +120,21 @@ if (array_key_exists("user", $_SESSION)) {
 }
 ----
 
-The code block opens the  ``$_SESSION``  array for retrieving data and verifies that  ``$_SESSION``  contains an element with the identifier "user". If the check is successful, the code prints a welcome message.
+The code block opens the  `$_SESSION`  array for retrieving data and verifies that  `$_SESSION`  contains an element with the identifier "user". If the check is successful, the code prints a welcome message.
 
 To check that the session is implemented correctly:
 
-1. Run the  ``createNewWisher.php``  file and create a new wisher, for example Jack.
-The  ``editWishList.php``  opens with Hello Jack.
-2. Clear session cookies in your browser or end the session and run  ``editWishList.php``  from the IDE.
-The  ``editWishList.php``  file opens with Hello because no user has been transferred through a session. This is not correct because it enables someone who is not logged in and not registered to create or edit a wish list. In order to avoid this, the user needs to be redirected to the  ``index.php``  page.
+1. Run the  `createNewWisher.php`  file and create a new wisher, for example Jack.
+The  `editWishList.php`  opens with Hello Jack.
+2. Clear session cookies in your browser or end the session and run  `editWishList.php`  from the IDE.
+The  `editWishList.php`  file opens with Hello because no user has been transferred through a session. This is not correct because it enables someone who is not logged in and not registered to create or edit a wish list. In order to avoid this, the user needs to be redirected to the  `index.php`  page.
 
-
+[[_logging_in_from_the_index_php_page]]
 === Redirecting a User Who Is Not Logged In
 
-Add the following code block to  ``editWishList.php`` , below the  ``if``  clause:
+Add the following code block to  `editWishList.php` , below the  `if`  clause:
 
-[source,java]
+[source,php]
 ----
 
 else {
@@ -179,47 +145,47 @@ else {
 
 The code redirects the user to the index.php page and cancels PHP code execution.
 
-To check that the functionality is implemented correctly, run the  ``editWishList.php``  file. The expected result is that the  ``index.php``  page opens.
+To check that the functionality is implemented correctly, run the  `editWishList.php`  file. The expected result is that the  `index.php`  page opens.
 
-
+[[_html_form_for_logon_on_index_php]]
 == Logging In from the index.php Page
 
 The logon from the index.php page consists of two steps:
 
-* <<logonForm,Entering the user's name and password in an HTML input form and submitting the data for validation to the index.php page.>>
-* <<logonValidation,Validating the logon>>
+* <<_html_form_for_logon_on_index_php,Entering the user's name and password in an HTML input form and submitting the data for validation to the index.php page.>>
+* <<_logon_validation,Validating the logon>>
 
-
+[[_html_form_for_logon_on_index_php]]
 === HTML Form for Logon on index.php
 
-In the  ``index.php``  file, enter the following code before the closing  ``</body>``  tag:
+In the  `index.php`  file, enter the following code before the closing  `</body>`  tag:
 
 [source,xml]
 ----
 
 <form name="logon" action="index.php" method="POST" >
-    Username: <input type="text" name="user">
-    Password  <input type="password" name="userpassword">
-    <input type="submit" value="Edit My Wish List">
+  Username: <input type="text" name="user">
+  Password  <input type="password" name="userpassword">
+  <input type="submit" value="Edit My Wish List">
 </form>
 ----
 
-*Note: *You can ignore warnings from the HTML validator.
+*Note:* You can ignore warnings from the HTML validator.
 
 The code presents an link:wish-list-lesson3.html#htmlForm[+HTML form+] that enables entering the name and password of the user in the text fields. When the user clicks Edit My Wish List, the data is transferred to the same page, index.php.
 
-
+[[_logon_validation]]
 === Logon Validation
 
 Logon validation involves:
 
-* <<checkWhereUserCameFrom,Checking where the user was redirected from>>.
-* <<verifyCredentials,Verifying the user's name and password>>.
-* Saving the user name to the Session and redirecting the user to the editWishList.php page or <<displayErrorMessage,Displaying an error message.>>
+* <<_logon_validation,Checking where the user was redirected from>>.
+* <<_logon_validation,Verifying the user's name and password>>.
+* Saving the user name to the Session and redirecting the user to the editWishList.php page or <<_logon_validation,Displaying an error message.>>
 
-A user may access the  ``index.php``  page on starting the application, or from the<<validateWisherLogon, editWishList.php>> page, or when redirected from the  ``index.php``  page after entering name and password.
+A user may access the  `index.php`  page on starting the application, or from the <<_function_verify_wisher_credentials, editWishList.php>> page, or when redirected from the  `index.php`  page after entering name and password.
 
-Because only in the last case is the link:http://www.htmlcodetutorial.com/forms/_FORM_METHOD.html[+HTML request method+] POST used, you can always learn where the user was located when they accessed  ``index.php`` .
+Because only in the last case is the link:http://www.htmlcodetutorial.com/forms/_FORM_METHOD.html[+HTML request method+] POST used, you can always learn where the user was located when they accessed  `index.php` .
 
 In the index.php file, create a <?php ?> block above the HTML block, with the following code:
 
@@ -227,107 +193,115 @@ In the index.php file, create a <?php ?> block above the HTML block, with the fo
 ----
 
 <?php
-
 require_once("Includes/db.php");
-$logonSuccess = false;// verify user's credentials
+$logonSuccess = false;
+
+// verify user's credentials
 if ($_SERVER['REQUEST_METHOD'] == "POST") {
     $logonSuccess = (WishDB::getInstance()->verify_wisher_credentials($_POST['user'], $_POST['userpassword']));
     if ($logonSuccess == true) {
-        session_start();
-        $_SESSION['user'] = $_POST['user'];
-        header('Location: editWishList.php');
-        exit;
+      session_start();
+      $_SESSION['user'] = $_POST['user'];
+      header('Location: editWishList.php');
+      exit;
     }
 }
 ?>
-
 ----
 
-The top of the code block enables the use of the  ``db.php``  file and initializes the  ``$logonSuccess``  variable with the value  ``false`` . If validation succeeds, this value will change to  ``true`` .
+The top of the code block enables the use of the  `db.php`  file and initializes the  `$logonSuccess`  variable with the value  `false` . If validation succeeds, this value will change to  `true` .
 
-The code that verifies the user's credentials first checks if the request method is POST. If the request method is POST, the user was redirected after submitting the <<logonForm,logon form>>. In this case, the code block calls the  ``verify_wisher_credentials``  function with the name and password entered in the logon form.
+The code that verifies the user's credentials first checks if the request method is POST. If the request method is POST, the user was redirected after submitting the <<_html_form_for_logon_on_index_php,logon form>>. In this case, the code block calls the  `verify_wisher_credentials`  function with the name and password entered in the logon form.
 
-The  ``verify_wisher_credentials``  function, which you write in <<verifyWisherCredentials,the next section>>, checks whether there is a record in the  ``wishers``  table where the user and password match the values submitted in the <<logonForm,logon form>>. If the  ``verify_wisher_credentials``  function returns  ``true`` , a wisher with the specified combination of name and password is registered in the database. This means that validation succeeds, and  ``$logonSuccess``  changes value to  ``true`` . In this case, a session starts, and the  ``$_SESSION``  array opens. The code adds a new element to the  ``$_SESSION``  array. The element contains a value and an identifier (key). The value is the name of the wisher and the identifier is "user". Then the code redirects the user to the  ``editWishList.php``  page in order to edit the wish list.
+The  `verify_wisher_credentials`  function, which you write in <<_function_verify_wisher_credentials,the next section>>, checks whether there is a record in the  `wishers`  table where the user and password match the values submitted in the <<_html_form_for_logon_on_index_php,logon form>>. If the  `verify_wisher_credentials`  function returns  `true` , a wisher with the specified combination of name and password is registered in the database. This means that validation succeeds, and  `$logonSuccess`  changes value to  `true` . In this case, a session starts, and the  `$_SESSION`  array opens. The code adds a new element to the  `$_SESSION`  array. The element contains a value and an identifier (key). The value is the name of the wisher and the identifier is "user". Then the code redirects the user to the  `editWishList.php`  page in order to edit the wish list.
 
-If the  ``verify_wisher_credentials``  function returns  ``false`` , the value of the  ``$logonSuccess``  variable remains false. The value of the variable is used in <<displayErrorMessage,displaying an error message>>.
+If the  `verify_wisher_credentials`  function returns  `false` , the value of the  `$logonSuccess`  variable remains false. The value of the variable is used in <<_displaying_error_messages,displaying an error message>>.
 
-
+[[_function_verify_wisher_credentials]]
 === Function verify_wisher_credentials
 
-In order to implement verification of the wisher's credentials, you need to add a new function to the  ``WishDB``  class in the  ``db.php``  file. The function requires a name and a password as the input parameters and returns 0 or 1.
+In order to implement verification of the wisher's credentials, you need to add a new function to the  `WishDB`  class in the  `db.php`  file. The function requires a name and a password as the input parameters and returns 0 or 1.
 
 *For the MySQL database*, enter the following code block:
 
-[source,java]
-----
-
-public function verify_wisher_credentials ($name, $password){$name = $this->real_escape_string($name);$password = $this->real_escape_string($password);$result = $this->query("SELECT 1 FROM wishers
- 	           WHERE name = '" . $name . "' AND password = '" . $password . "'");
-   return $result->data_seek(0);
-}
-----
-
-*For the Oracle Database*, enter the following code block (Because OCI8 has no equivalent to  ``mysql_num_rows`` , this code is a modified form of  ``get_wisher_id_by_name`` ):
-
-
-[source,java]
+[source,php]
 ----
 
 public function verify_wisher_credentials($name, $password) {
-    $query = "SELECT 1 FROM wishers WHERE name = :name_bv AND password = :pwd_bv";
-    $stid = oci_parse($this->con, $query);
-    oci_bind_by_name($stid, ':name_bv', $name);
-    oci_bind_by_name($stid, ':pwd_bv', $password);
-    oci_execute($stid);
-//Because name is a unique value I only expect one row
-    $row = oci_fetch_array($stid, OCI_ASSOC);
-    if ($row) 
-        return true;
-    else
-        return false;
+  $name = $this->real_escape_string($name);
+  $password = $this->real_escape_string($password);
+  $result = $this->query("SELECT 1 FROM wishers WHERE name = '"
+                  . $name . "' AND password = '" . $password . "'");
+  return $result->data_seek(0);
 }
 ----
 
-The code block executes the query  `` "SELECT 1 FROM wishers WHERE Name = '" . $name . "' AND Password = '" . $password . "'"``  and returns the number of records that meet the specified query. If such record is found, the function returns  ``true`` . If there is no such record in the database, the function returns  ``false`` .
+*For the Oracle Database*, enter the following code block (Because OCI8 has no equivalent to  `mysql_num_rows` , this code is a modified form of  `get_wisher_id_by_name` ):
 
 
+[source,php]
+----
+
+public function verify_wisher_credentials($name, $password) {
+  $query = "SELECT 1 FROM wishers WHERE name = :name_bv AND password = :pwd_bv";
+  $stid = oci_parse($this->con, $query);
+  oci_bind_by_name($stid, ':name_bv', $name);
+  oci_bind_by_name($stid, ':pwd_bv', $password);
+  oci_execute($stid);
+
+//Because name is a unique value I only expect one row
+  $row = oci_fetch_array($stid, OCI_ASSOC);
+  if ($row)
+    return true;
+  else
+    return false;
+}
+----
+
+The code block executes the query  ` "SELECT 1 FROM wishers WHERE Name = '" . $name . "' AND Password = '" . $password . "'"`  and returns the number of records that meet the specified query. If such record is found, the function returns  `true` . If there is no such record in the database, the function returns  `false` .
+
+[[_displaying_error_messages]]
 === Displaying Error Messages
 
-In order to enable the application to display error messages, enter the following <? php ?> code block into the logon form in  ``index.php`` , below the input fields but above the button:
+In order to enable the application to display error messages, enter the following <? php ?> code block into the logon form in  `index.php` , below the input fields but above the button:
 
 [source,php]
 ----
 
 <?php
-  if ($_SERVER["REQUEST_METHOD"] == "POST") { 
-      if (!$logonSuccess)
-          echo "Invalid name and/or password";
-  }
+if ($_SERVER['REQUEST_METHOD'] == "POST") {
+  if (!$logonSuccess)
+    echo "Invalid name and/or password";
+}
 ?>
 ----
+
 The code block checks the value of the $logonSuccess variable and if it is false, displays an error message.
 
-
+[[_testing_the_logon_from_the_index_php_page]]
 == Testing the Logon from the index.php Page
 
-To check that the logon functionality works correctly on the  ``index.php``  front page:
+To check that the logon functionality works correctly on the  `index.php`  front page:
 
 1. Run the application.
-2. On the  ``index.php``  page, enter Tom in the Username edit box and Tim in the Password edit box.
+2. On the  `index.php`  page, enter Tom in the Username edit box and Tim in the Password edit box.
 3. Press Edit My Wish List. An error message is displayed (Note that browser window below is reduced to 600px width, which adds some line breaks): 
+
 image::images/incorrectNamePasswordIndex.png[]
+
 4. Enter Tom in the Username edit box and tomcat in the Password edit box.
 5. Press Edit My Wish list. The editWishList.php page is displayed: 
+
 image::images/SuccessfulLogonOnIndexRedirectToEditWishList.png[]
 
-
+[[application_source_code_after_the_current_lesson_is_completed]]
 == Application Source Code after the Current Lesson Is Completed
 
-MySQL users: Click link:https://netbeans.org/files/documents/4/1931/lesson5.zip[+ here+] to download the source code that reflects the project state after the lesson is completed.
+MySQL users: Click link:https://netbeans.org/files/documents/4/1931/lesson5.zip[+here+] to download the source code that reflects the project state after the lesson is completed.
 
-Oracle Database users: Click link:https://netbeans.org/projects/www/downloads/download/php%252Foracle-lesson5.zip[+ here+] to download the source code that reflects the project state after the lesson is completed.
+Oracle Database users: Click link:https://netbeans.org/projects/www/downloads/download/php%252Foracle-lesson5.zip[+here+] to download the source code that reflects the project state after the lesson is completed.
 
-
+[[_next_steps]]
 == Next Steps
 
 link:wish-list-lesson4.html[+<< Previous lesson+]

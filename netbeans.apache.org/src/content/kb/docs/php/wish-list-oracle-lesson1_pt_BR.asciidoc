@@ -42,26 +42,6 @@
 :keywords: Apache NetBeans, Tutorials, Lição 1b: Criando Tabelas do Banco de Dados Oracle
 
 
-
-1. link:wish-list-tutorial-main-page.html[+Criando uma Aplicação CRUD com PHP - Página Principal+]
-2. 
-Criando o Banco de Dados
-
-1. link:wish-list-lesson1.html[+Criando um Banco de Dados MySQL+]
-2. 
-*=> Criando Tabelas do Banco de Dados Oracle*
-
-3. link:wish-list-lesson2.html[+Projetando a Aplicação. Lendo do Banco de Dados+]
-4. link:wish-list-lesson3.html[+Criando um Novo Usuário da Aplicação+]
-5. link:wish-list-lesson4.html[+Otimizando o Código+]
-6. link:wish-list-lesson5.html[+Adicionando Segurança. Implementando o Log-in de Usuário da Aplicação+]
-7. link:wish-list-lesson6.html[+Adicionando um Novo Desejo ao Banco de Dados+]
-8. link:wish-list-lesson7.html[+Atualizando e Deletando Entradas no Banco de Dados+]
-9. link:wish-list-lesson8.html[+Melhorando a Aparência da Aplicação Usando a Tecnologia CSS+]
-10. link:wish-list-lesson9.html[+Implantando a Aplicação em um Servidor Web Remoto+]
-
-image::images/netbeans-stamp-80-74-73.png[title="O conteúdo desta página se aplica ao NetBeans IDE 7.2, 7.3, 7.4 e 8.0"]
-
 Esta lição descreve a última etapa preliminar no desenvolvimento da aplicação da Lista de Desejos: a criação de um banco de dados de amostra com dados de teste. Para concluir as etapas deste tutorial, você precisará de um banco de dados para armazenar os dados dos wishers. Com o NetBeans IDE, você pode realizar todas essas atividades usando a interface do IDE. 
 Antes de começar, veja os requisitos do tutorial descritos em link:wish-list-tutorial-main-page.html[+Criando uma Aplicação CRUD com PHP - Página Principal+].
 
@@ -98,10 +78,13 @@ Usando a ferramenta de sua preferência, crie o seguinte usuário:
 Segue um exemplo de conjunto de comandos SQL para criar esst usuário. Esses comandos presumem que o banco de dados tem os espaços de tabela USERS e TEMP.
 
 
-[source,java]
+[source,sql]
 ----
 
-drop user phpuser cascade;create user phpuser identified by phpuserpw;grant connect, resource to phpuser;alter user phpuser default tablespace users temporary tablespace temp account unlock; 
+drop user phpuser cascade;
+create user phpuser identified by phpuserpw;
+grant connect, resource to phpuser;
+alter user phpuser default tablespace users temporary tablespace temp account unlock;
 ----
 
 
@@ -138,19 +121,20 @@ Se estiver se conectando por meio do NetBeans IDE, crie uma conexão com o nome 
 
 2. Para criar a tabela wishers, execute a seguinte consulta SQL:
 
-[source,java]
+[source,sql]
 ----
 
-create table wishers (id number not null,name varchar2(50) unique not null,password varchar2(50) not null,constraint wishers_pk primary key(id));
+create table wishers (id number not null,name varchar2(50) unique not null, password varchar2(50) not null, constraint wishers_pk primary key(id));
 ----
 3. Para criar a tabela wishes, execute a consulta SQL a seguir. Observe que você cria uma chave estrangeira que associa wishes com um wisher.
 
-[source,java]
+source,sql]
 ----
 
-create table wishes (id number not null,wisher_id number not null,description varchar2(255) not null,due_date date,constraint wishes_pk primary key(id),constraint wishes_fk1 foreign key(wisher_id) references wishers(id));
+create table wishes (id number not null, wisher_id number not null,description varchar2(255) not null, due_date date, constraint wishes_pk primary key(id), constraint wishes_fk1 foreign key(wisher_id) references wishers(id));
 ----
 4. Verifique se as novas tabelas são adicionadas no banco de dados. Se você estiver usando o NetBeans IDE para se conetar ao banco de dados, acesse a janela Serviços do nó de conexão jdbc:oracle:thin:@localhost:1521:XE [phpuser on PHPUSER]. As novas tabelas serão listadas no nó Tabelas. (Se elas não aparecerem, clique com o botão direito do mouse na conexão e selecione Atualizar.) 
+
 image::images/tables-in-services-window.png[]
 
 Observação: Você pode fazer download de um conjunto de comandos SQL para criar as tabelas do Banco de Dados Oracle link:https://netbeans.org/projects/www/downloads/download/php%252FSQL-files-for-Oracle.zip[+aqui+].
@@ -162,31 +146,47 @@ Com o Banco de Dados Oracle, você deve especificar uma sequência para incremen
 
 1. Para adicionar uma sequência na tabela wishers, execute o seguinte comando SQL:
 
-[source,java]
+[source,sql]
 ----
 
 create sequence wishers_id_seq start with 1 increment by 1;
 ----
 2. Para acionar a sequência na coluna ID da tabela wishers quando você adiciona um novo wisher, execute o seguinte comando SQL:
 
-[source,java]
+[source,sql]
 ----
 
-create or replace trigger wishers_insertbefore insert on wishersfor each rowbeginselect wishers_id_seq.nextval into :new.id from dual;end;/
+create or replace trigger wishers_insert
+before insert on wishers
+for each row
+begin
+    select wishers_id_seq.nextval into :new.id from dual;
+end;
+/
 ----
 3. Adicione uma sequência à tabela wishes.
 
-[source,java]
+[source,sql]
 ----
 
 create sequence wishes_id_seq start with 1 increment by 1;
 ----
+4. Add a trigger to run the sequence on the ID column of the wishes table when you add a new wish.
+
+[source,sql]
+----
 4. Adicione um trigger para executar a sequência na coluna ID da tabela wishes quando você adiciona um novo wish.
 
-[source,java]
+[source,sql]
 ----
 
-create or replace trigger wishes_insertbefore insert on wishesfor each rowbeginselect wishes_id_seq.nextval into :new.id from dual;end;/
+create or replace trigger wishes_insert
+before insert on wishes
+for each row
+begin
+    select wishes_id_seq.nextval into :new.id from dual;
+end;
+/
 ----
 
 Observação: Você pode fazer download de um conjunto de comandos SQL para criar as tabelas do Banco de Dados Oracle, incluindo sequências e triggers, link:https://netbeans.org/projects/www/downloads/download/php%252FSQL-files-for-Oracle.zip[+aqui+].
@@ -198,26 +198,30 @@ Para testar a aplicação, você precisará de alguns dados no banco de dados. O
 
 1. Adicione um wisher chamado Tom com a senha "tomcat".
 
-[source,java]
+[source,sql]
 ----
 
 insert into wishers (name, password) values ('Tom','tomcat');
 ----
 2. Adicione um wisher chamado Jerry com a senha "jerrymouse".
 
-[source,java]
+[source,sql]
 ----
 
 insert into wishers (name, password) values ('Jerry', 'jerrymouse');commit;
 ----
 3. Adicione os wishes.
 
-[source,java]
+[source,sql]
 ----
 
-insert into wishes (wisher_id, description, due_date) values (1, 'Sausage', to_date('2008-04-01', 'YYYY-MM-DD'));insert into wishes (wisher_id, description) values (1, 'Icecream');insert into wishes (wisher_id, description, due_date) values (2, 'Cheese', to_date('2008-05-01', 'YYYY-MM-DD'));insert into wishes (wisher_id, description)values (2, 'Candle');commit;
+insert into wishes (wisher_id, description, due_date) values (1, 'Sausage', to_date('2008-04-01', 'YYYY-MM-DD'));
+insert into wishes (wisher_id, description) values (1, 'Icecream');insert into wishes (wisher_id, description, due_date) values (2, 'Cheese', to_date('2008-05-01', 'YYYY-MM-DD'));
+insert into wishes (wisher_id, description)values (2, 'Candle');
+commit;
 ----
 4. Verifique se você adicionou dados de teste. Se você estiver usando o NetBeans IDE para exibir os dados de teste, clique com o botão direito do mouse na tabela relevante e, no menu de contexto, selecione Exibir Dados. 
+
 image::images/view-test-data.png[]
 
 Para obter um entendimento geral dos princípios de bancos de dados e padrões de design, consulte o tutorial: link:http://www.tekstenuitleg.net/en/articles/database_design_tutorial/1[+http://www.tekstenuitleg.net/en/articles/database_design_tutorial/1+].

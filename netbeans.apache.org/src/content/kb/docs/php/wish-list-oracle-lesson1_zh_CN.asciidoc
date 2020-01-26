@@ -42,26 +42,6 @@
 :keywords: Apache NetBeans, Tutorials, 第 1b 课：创建 Oracle 数据库表
 
 
-
-1. link:wish-list-tutorial-main-page.html[+使用 PHP 创建 CRUD 应用程序 - 主页+]
-2. 
-创建数据库
-
-1. link:wish-list-lesson1.html[+创建 MySQL 数据库+]
-2. 
-*=> 创建 Oracle 数据库表*
-
-3. link:wish-list-lesson2.html[+设计应用程序。从数据库读取数据+]
-4. link:wish-list-lesson3.html[+创建新的应用程序用户+]
-5. link:wish-list-lesson4.html[+优化代码+]
-6. link:wish-list-lesson5.html[+添加安全功能。实现应用程序用户登录+]
-7. link:wish-list-lesson6.html[+在数据库中添加新的愿望+]
-8. link:wish-list-lesson7.html[+更新和删除数据库中的条目+]
-9. link:wish-list-lesson8.html[+使用 CSS 技术改进应用程序的外观+]
-10. link:wish-list-lesson9.html[+将应用程序部署到远程 Web 服务器+]
-
-image::images/netbeans-stamp-80-74-73.png[title="此页上的内容适用于 NetBeans IDE 7.2、7.3、7.4 和 8.0"]
-
 本课程介绍在开发愿望列表应用程序时的最后一个预备步骤，即，使用测试数据创建样例数据库。要完成本教程中的步骤，您需要创建一个数据库以存储许愿者的数据。使用 NetBeans IDE，您可以通过 IDE 界面执行所有这些活动。
 开始之前，请参见link:wish-list-tutorial-main-page.html[+使用 PHP 创建 CRUD 应用程序 - 主页+]中介绍的教程要求。
 
@@ -98,10 +78,13 @@ image::images/netbeans-stamp-80-74-73.png[title="此页上的内容适用于 Net
 下面是一组用于创建该用户的示例 SQL 命令。这些命令假定数据库具有 USERS 和 TEMP 表空间。
 
 
-[source,java]
+[source,sql]
 ----
 
-drop user phpuser cascade;create user phpuser identified by phpuserpw;grant connect, resource to phpuser;alter user phpuser default tablespace users temporary tablespace temp account unlock; 
+drop user phpuser cascade;
+create user phpuser identified by phpuserpw;
+grant connect, resource to phpuser;
+alter user phpuser default tablespace users temporary tablespace temp account unlock;
 ----
 
 
@@ -138,19 +121,20 @@ wishes 表包含四个字段：
 
 2. 要创建 wishers 表，请运行以下 SQL 查询：
 
-[source,java]
+[source,sql]
 ----
 
-create table wishers (id number not null,name varchar2(50) unique not null,password varchar2(50) not null,constraint wishers_pk primary key(id));
+create table wishers (id number not null,name varchar2(50) unique not null, password varchar2(50) not null, constraint wishers_pk primary key(id));
 ----
 3. 要创建 wishes 表，请运行以下 SQL 查询。请注意，将创建一个外键，使愿望与许愿者相关联。
 
-[source,java]
+[source,sql]
 ----
 
-create table wishes (id number not null,wisher_id number not null,description varchar2(255) not null,due_date date,constraint wishes_pk primary key(id),constraint wishes_fk1 foreign key(wisher_id) references wishers(id));
+create table wishes (id number not null, wisher_id number not null,description varchar2(255) not null, due_date date, constraint wishes_pk primary key(id), constraint wishes_fk1 foreign key(wisher_id) references wishers(id));
 ----
 4. 验证是否将新表添加到数据库中。如果使用 NetBeans IDE 连接到数据库，请转至 "Services"（服务）窗口中的 jdbc:oracle:thin:@localhost:1521:XE [PHPUSER 上的 phpuser] 连接节点。将在 "Tables"（表）节点中列出新表。（如果未显示这些表，请右键单击连接，然后选择 "Refresh"（刷新）。） 
+
 image::images/tables-in-services-window.png[]
 
 注：您可以在link:https://netbeans.org/projects/www/downloads/download/php%252FSQL-files-for-Oracle.zip[+此处+]下载一组 SQL 命令以创建 Oracle 数据库表。
@@ -162,31 +146,43 @@ image::images/tables-in-services-window.png[]
 
 1. 要为 wishers 表添加序列，请运行以下 SQL 命令：
 
-[source,java]
+[source,sql]
 ----
 
 create sequence wishers_id_seq start with 1 increment by 1;
 ----
 2. 要在添加新的许愿者时在 wishers 表的 ID 列上触发序列，请运行以下 SQL 命令：
 
-[source,java]
+[source,sql]
 ----
 
-create or replace trigger wishers_insertbefore insert on wishersfor each rowbeginselect wishers_id_seq.nextval into :new.id from dual;end;/
+create or replace trigger wishers_insert
+before insert on wishers
+for each row
+begin
+    select wishers_id_seq.nextval into :new.id from dual;
+end;
+/
 ----
 3. 为 wishes 表添加一个序列。
 
-[source,java]
+[source,sql]
 ----
 
 create sequence wishes_id_seq start with 1 increment by 1;
 ----
 4. 添加一个触发器，以便在添加新的愿望时在 wishes 表的 ID 列上运行序列。
 
-[source,java]
+[source,sql]
 ----
 
-create or replace trigger wishes_insertbefore insert on wishesfor each rowbeginselect wishes_id_seq.nextval into :new.id from dual;end;/
+create or replace trigger wishes_insert
+before insert on wishes
+for each row
+begin
+    select wishes_id_seq.nextval into :new.id from dual;
+end;
+/
 ----
 
 注：您可以在link:https://netbeans.org/projects/www/downloads/download/php%252FSQL-files-for-Oracle.zip[+此处+]下载一组 SQL 命令以创建 Oracle 数据库表。
@@ -198,26 +194,30 @@ create or replace trigger wishes_insertbefore insert on wishesfor each rowbegins
 
 1. 添加一个名为 Tom 且口令为 tomcat 的许愿者。
 
-[source,java]
+[source,sql]
 ----
 
 insert into wishers (name, password) values ('Tom','tomcat');
 ----
 2. 添加一个名为 Jerry 且口令为 jerrymouse 的许愿者。
 
-[source,java]
+[source,sql]
 ----
 
 insert into wishers (name, password) values ('Jerry', 'jerrymouse');commit;
 ----
 3. 添加愿望。
 
-[source,java]
+[source,sql]
 ----
 
-insert into wishes (wisher_id, description, due_date) values (1, 'Sausage', to_date('2008-04-01', 'YYYY-MM-DD'));insert into wishes (wisher_id, description) values (1, 'Icecream');insert into wishes (wisher_id, description, due_date) values (2, 'Cheese', to_date('2008-05-01', 'YYYY-MM-DD'));insert into wishes (wisher_id, description)values (2, 'Candle');commit;
+insert into wishes (wisher_id, description, due_date) values (1, 'Sausage', to_date('2008-04-01', 'YYYY-MM-DD'));
+insert into wishes (wisher_id, description) values (1, 'Icecream');insert into wishes (wisher_id, description, due_date) values (2, 'Cheese', to_date('2008-05-01', 'YYYY-MM-DD'));
+insert into wishes (wisher_id, description)values (2, 'Candle');
+commit;
 ----
 4. 验证是否添加了测试数据。如果使用 NetBeans IDE 查看测试数据，请在相关表上单击鼠标右键，然后从上下文菜单中选择 "View Data"（查看数据）。 
+
 image::images/view-test-data.png[]
 
 要大致了解数据库原理和设计模式，请查阅以下教程：link:http://www.tekstenuitleg.net/en/articles/database_design_tutorial/1[+http://www.tekstenuitleg.net/en/articles/database_design_tutorial/1+]。

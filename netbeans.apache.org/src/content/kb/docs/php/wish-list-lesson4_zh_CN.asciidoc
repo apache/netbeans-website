@@ -42,26 +42,6 @@
 :keywords: Apache NetBeans, Tutorials, 第 4 课：使用类和对象优化代码
 
 
-
-1. link:wish-list-tutorial-main-page.html[+使用 PHP 创建数据库驱动的应用程序 - 主页+]
-2. 
-创建数据库
-
-1. link:wish-list-lesson1.html[+创建 MySQL 数据库+]
-2. link:wish-list-oracle-lesson1.html[+创建 Oracle 数据库表+]
-3. link:wish-list-lesson2.html[+设计应用程序。从数据库读取数据+]
-4. link:wish-list-lesson3.html[+创建新的应用程序用户+]
-5. 
-*=> 优化代码*
-
-6. link:wish-list-lesson5.html[+添加安全功能。实现应用程序用户登录+]
-7. link:wish-list-lesson6.html[+在数据库中添加新的愿望+]
-8. link:wish-list-lesson7.html[+更新和删除数据库中的条目+]
-9. link:wish-list-lesson8.html[+使用 CSS 技术改进应用程序的外观+]
-10. link:wish-list-lesson9.html[+将应用程序部署到远程 Web 服务器+]
-
-image::images/netbeans-stamp-80-74-73.png[title="此页上的内容适用于 NetBeans IDE 7.2、7.3、7.4 和 8.0"]
-
 在本课中，将优化代码以便于将来进行维护。这会影响  ``createNewWisher.php``  和  ``wishlist.php``  文件。此外，还会创建一个名为  ``db.php``  的新文件。
 
 应用程序代码包含几个类似的块，其中提供了一些数据库查询。为了便于将来阅读和维护代码，您可以提取这些块，将这些块作为名为  ``WishDB``  的单独类的函数进行实现，然后将  ``WishDB``  放在  ``db.php``  中。接下来，您可以将  ``db.php``  文件包含在任何 PHP 文件中，然后使用 <<includedFunctions,WishDB 中的任何函数>>而无需复制代码。这种方法确保了对查询或函数进行的任何更改是在一个地方完成的，您不必解析整个应用程序代码。
@@ -75,7 +55,7 @@ image::images/netbeans-stamp-80-74-73.png[title="此页上的内容适用于 Net
 当前文档是“在适用于 PHP 的 NetBeans IDE 中创建 CRUD 应用程序”教程的一部分。
 
 
-
+[[previousLessonSourceCode]]
 == 来自上一课的应用程序源代码
 
 MySQL 用户：单击link:https://netbeans.org/files/documents/4/1929/lesson3.zip[+此处+]以下载源代码，该代码反映了在完成上一课之后的项目状态。
@@ -83,6 +63,7 @@ MySQL 用户：单击link:https://netbeans.org/files/documents/4/1929/lesson3.zi
 Oracle 数据库用户：单击link:https://netbeans.org/projects/www/downloads/download/php%252Foracle-lesson3.zip[+此处+]以下载源代码，该代码反映了在完成上一课之后的项目状态。
 
 
+[[createDbPhpFile]]
 == 创建 db.php 文件
 
 在 "Source Files"（源文件）文件夹中创建一个新子文件夹。将该文件夹命名为 Includes。创建一个名为 db.php 的新文件，并将其放在 Includes 中。然后，您可以在该文件夹中添加更多文件，这些文件将包含在其他 PHP 文件中。
@@ -95,6 +76,7 @@ Oracle 数据库用户：单击link:https://netbeans.org/projects/www/downloads/
 4. 在 "File Name"（文件名）字段中，键入 db。然后，单击 "Finish"（完成）。
 
 
+[[wishDBClass]]
 == 创建 WishDB 类
 
 要创建 WishDB 类，您需要初始化该类的变量，并实现该类的构造函数。MySQL 用户请注意，WishDB 类_扩展_了  ``mysqli`` 。这意味着 WishDB _继承_ PHP mysqli 类的函数和其他特性。在类中添加  ``mysqli `` 函数时，您会看到这种继承的重要性。
@@ -104,39 +86,45 @@ Oracle 数据库用户：单击link:https://netbeans.org/projects/www/downloads/
 *对于 MySQL 数据库：*
 
 
-[source,java]
+[source,php]
 ----
 
 class WishDB extends mysqli {
 
-
     // single instance of self shared among all instances
     private static $instance = null;
-
 
     // db connection config vars
     private $user = "phpuser";
     private $pass = "phpuserpw";
     private $dbName = "wishlist";
     private $dbHost = "localhost";
+
 }
+
 ----
 
 *对于 Oracle 数据库：*
 
 
-[source,java]
+[source,php]
 ----
 
-class WishDB {// single instance of self shared among all instances
-private static $instance = null;// db connection config vars
-private $user = "phpuser";
-private $pass = "phpuserpw";
-private $dbName = "wishlist";
-private $dbHost = "localhost/XE";
-private $con = null;}        
-----
+class WishDB {
 
+    // single instance of self shared among all instances
+    private static $instance = null;
+
+    // db connection config vars
+    private $user = "phpuser";
+    private $pass = "phpuserpw";
+    private $dbName = "wishlist";
+    private $dbHost = "localhost/XE";
+    private $con = null;
+
+}
+
+----
 
 [[instantiate-wishdb]]
 == 实例化 WishDB 类
@@ -146,26 +134,32 @@ private $con = null;}
 在 WishDB 类中，键入或粘贴以下代码：
 
 
-[source,java]
+[source,php]
 ----
 
- //This method must be static, and must return an instance of the object if the object
- //does not already exist.
- public static function getInstance() {
-   if (!self::$instance instanceof self) {
-     self::$instance = new self;
-   }
-   return self::$instance;
- }
+// This method must be static, and must return an instance of the object if the object
+// does not already exist.
 
- // The clone and wakeup methods prevents external instantiation of copies of the Singleton class,
- // thus eliminating the possibility of duplicate objects.
- public function __clone() {
-   trigger_error('Clone is not allowed.', E_USER_ERROR);
- }
- public function __wakeup() {
-   trigger_error('Deserializing is not allowed.', E_USER_ERROR);
- }
+public static function getInstance() {
+
+  if (!self::$instance instanceof self) {
+    self::$instance = new self;
+  }
+
+  return self::$instance;
+}
+
+// The clone and wakeup methods prevents external instantiation of copies of the Singleton class,
+// thus eliminating the possibility of duplicate objects.
+ 
+public function __clone() {
+  trigger_error('Clone is not allowed.', E_USER_ERROR);
+}
+
+public function __wakeup() {
+  trigger_error('Deserializing is not allowed.', E_USER_ERROR);
+}
+
 ----
 
  ``getInstance``  函数为 "public" 和 "static"。"Public" 表示可以从类外部任意访问该函数。"Static" 表示即使未实例化类，也可以使用该函数。在调用  ``getInstance``  函数以实例化类时，该函数必须是静态的。请注意，该函数访问静态  ``$instance``  变量，并将其值设置为类实例。
@@ -183,32 +177,48 @@ private $con = null;}
 *对于 MySQL 数据库：*
 
 
-[source,java]
+[source,php]
 ----
 
-// private constructorprivate function __construct() {parent::__construct($this->dbHost, $this->user, $this->pass, $this->dbName);if (mysqli_connect_error()) {exit('Connect Error (' . mysqli_connect_errno() . ') '. mysqli_connect_error());}parent::set_charset('utf-8');}
+// private constructor
+private function __construct() {
+
+  parent::__construct($this->dbHost, $this->user, $this->pass, $this->dbName);
+  
+  if (mysqli_connect_error()) {
+    exit('Connect Error (' . mysqli_connect_errno() . ') '. mysqli_connect_error());
+  }
+
+  parent::set_charset('utf-8');
+}
+
 ----
 
 *对于 Oracle 数据库：*
 
 
-[source,java]
+*For the Oracle database:*
+
+[source,php]
 ----
 
 // private constructor
 private function __construct() {
+
     $this->con = oci_connect($this->user, $this->pass, $this->dbHost);
+
     if (!$this->con) {
         $m = oci_error();
         echo $m['message'], "\n";
         exit;
     }
 }
+
 ----
 
 请注意，使用了伪变量  ``$this`` ，而不是使用  ``$con`` 、 ``$dbHost`` 、 ``$user``  或  ``$pass``  变量。从对象上下文中调用方法时，将使用伪变量  ``$this`` 。它引用该对象中的变量值。
 
-
+[[includedFunctions]]
 == WishDB 类中的函数
 
 在本课中，将实现 WishDB 类的以下函数：
@@ -217,7 +227,7 @@ private function __construct() {
 * <<getWishesByID,get_wishes_by_wisher_id>> - 使用特定 ID 检索许愿者的愿望列表
 * <<createWisher,create_wisher>> - 将新许愿者记录添加到 wishers 表中
 
-
+[[getIDByName]]
 === 函数 get_wisher_id_by_name
 
 该函数要求将许愿者名字作为输入参数，并返回许愿者的 ID。 
@@ -227,34 +237,55 @@ private function __construct() {
 *对于 MySQL 数据库：*
 
 
-[source,java]
+[[source,php]
 ----
 
-public function get_wisher_id_by_name($name) {$name = $this->real_escape_string($name);$wisher = $this->query("SELECT id FROM wishers WHERE name = '". $name . "'");
-    if ($wisher->num_rows > 0){$row = $wisher->fetch_row();return $row[0];} elsereturn null;
+public function get_wisher_id_by_name($name) {
+  
+  $name = $this->real_escape_string($name);
+  $wisher = $this->query("SELECT id FROM wishers WHERE name = '" . $name . "'");
+
+  if ($wisher->num_rows > 0){
+    $row = $wisher->fetch_row();
+    return $row[0];
+  } else {
+    return null;
+  }
 }
+
 ----
 
 *对于 Oracle 数据库：*
 
 
-[source,java]
+[source,php]
 ----
 
 public function get_wisher_id_by_name($name) {
+    
     $query = "SELECT id FROM wishers WHERE name = :user_bv";
     $stid = oci_parse($this->con, $query);
+    
     oci_bind_by_name($stid, ':user_bv', $name);
     oci_execute($stid);
-//Because user is a unique value I only expect one row
-    $row = oci_fetch_array($stid, OCI_ASSOC);if ($row) return $row["ID"];elsereturn null;
+    
+    //Because user is a unique value I only expect one row
+    $row = oci_fetch_array($stid, OCI_ASSOC);
+
+    if ($row) {
+      return $row["ID"];
+    } else {
+      return null;
+    }
 }
+
 ----
+
 该代码块执行  ``SELECT ID FROM wishers WHERE name = [variable for name of the wisher]``  查询。查询结果是一个数组，其中包含符合查询条件的记录中的 ID。如果该数组不为空，则自动表示它包含一个元素，这是因为在创建表期间将字段名称指定为 UNIQUE。在本示例中，该函数返回  ``$result``  数组的第一个元素（编号为零的元素）。如果数组为空，该函数将返回空值。
 
 *安全注意事项：*对于 MySQL 数据库，将转义  ``$name``  字符串以防止 SQL 注入攻击。请参见link:http://en.wikipedia.org/wiki/SQL_injection[+有关 SQL 注入的维基百科+]和 link:http://us3.php.net/mysql_real_escape_string[+mysql_real_escape_string 文档+]。虽然在本教程的上下文中，您不会遇到有害 SQL 注入的风险，但最佳做法是转义存在此类攻击风险的 MySQL 查询中的字符串。Oracle 数据库通过使用绑定变量来避免该问题。
 
-
+[[getWishesByID]]
 === 函数 get_wishes_by_wisher_id
 
 该函数要求将许愿者 ID 作为输入参数，并返回为许愿者注册的愿望。
@@ -264,32 +295,39 @@ public function get_wisher_id_by_name($name) {
 *对于 MySQL 数据库：*
 
 
-[source,java]
+[source,php]
 ----
 
-public function get_wishes_by_wisher_id($wisherID) {return $this->query("SELECT id, description, due_date FROM wishes WHERE wisher_id=" . $wisherID);}
+public function get_wishes_by_wisher_id($wisherID) {
+  return $this->query("SELECT id, description, due_date FROM wishes WHERE wisher_id=" . $wisherID);
+}
+
 ----
 
 *对于 Oracle 数据库：*
 
 
-[source,java]
+[source,php]
 ----
 
 public function get_wishes_by_wisher_id($wisherID) {
-    $query = "SELECT id, description, due_date FROM wishes WHERE wisher_id = :id_bv";
-    $stid = oci_parse($this->con, $query);
-    oci_bind_by_name($stid, ":id_bv", $wisherID);
-    oci_execute($stid);
-    return $stid;
+  
+  $query = "SELECT id, description, due_date FROM wishes WHERE wisher_id = :id_bv";
+  $stid = oci_parse($this->con, $query);
+  
+  oci_bind_by_name($stid, ":id_bv", $wisherID);
+  oci_execute($stid);
+
+  return $stid;
 }
+
 ----
 
 该代码块执行  ``"SELECT id, description, due_date FROM wishes WHERE wisherID=" . $wisherID``  查询并返回一个结果集，这是一个符合查询条件的记录数组。（出于数据库性能和安全考虑，Oracle 数据库使用绑定变量。）数据选择是按 wisherID 执行的，这是  ``wishes``  表的外键。
 
 *注：*在第 7 课之前，您不需要使用  ``id``  值。
 
-
+[[createWisher]]
 === 函数 create_wisher
 
 该函数在 wishers 表中创建一个新记录。该函数要求将新许愿者的名字和口令作为输入参数，并且不返回任何数据。
@@ -299,55 +337,72 @@ public function get_wishes_by_wisher_id($wisherID) {
 *对于 MySQL 数据库：*
 
 
-[source,java]
+[source,php]
 ----
 
-public function create_wisher ($name, $password){
-    $name = $this->real_escape_string($name);$password = $this->real_escape_string($password);$this->query("INSERT INTO wishers (name, password) VALUES ('" . $name . "', '" . $password . "')");
+public function create_wisher ($name, $password) {
+
+  $name = $this->real_escape_string($name);
+  $password = $this->real_escape_string($password);
+
+  return $this->query("INSERT INTO wishers (name, password) VALUES ('" . $name . "', '" . $password . "')");
 }
+
 ----
 
 *对于 Oracle 数据库：*
 
-
-[source,java]
+[source,php]
 ----
 
 public function create_wisher($name, $password) {
-    $query = "INSERT INTO wishers (name, password) VALUES (:user_bv, :pwd_bv)";
-    $stid = oci_parse($this->con, $query);
-    oci_bind_by_name($stid, ':user_bv', $name);
-    oci_bind_by_name($stid, ':pwd_bv', $password);
-    oci_execute($stid);
+
+  $query = "INSERT INTO wishers (name, password) VALUES (:user_bv, :pwd_bv)";
+  $stid = oci_parse($this->con, $query);
+
+  oci_bind_by_name($stid, ':user_bv', $name);
+  oci_bind_by_name($stid, ':pwd_bv', $password);
+  oci_execute($stid);
+
+  return $stid;
 }
+
 ----
+
 该代码块执行  ``"INSERT wishers (Name, Password) VALUES ([variables representing name and password of new wisher])``  查询。该查询在 "wishers" 表中添加一个新记录，并分别使用  ``$name``  和  ``$password``  值填充 "name" 和 "password" 字段。
 
-
+[[refactoring]]
 == 重构应用程序代码
 
 现在，您已创建了一个单独的类以使用数据库，接下来便可将重复的块替换为对该类中的相关函数的调用。这有助于避免将来出现拼写错误和不一致的情况。不影响功能的代码优化称为“重构”。
 
-
+[[refactoringWishlistFile]]
 === 重构 wishlist.php 文件
 
 请从 wishlist.php 文件入手，因为该文件很短，改进更能说明问题。
 
 1. 在 <?php ?> 块的顶部，输入以下行以允许使用  ``db.php``  文件：
 
-[source,java]
+[source,php]
 ----
 
 require_once("Includes/db.php");
+
 ----
+
 2. 将连接到数据库并获取许愿者 ID 的代码替换为  ``get_wisher_id_by_name``  函数调用。
 
 对于 *MySQL 数据库*，替换的代码为：
 
-[.line-through]#$con = mysqli_connect("localhost", "phpuser", "phpuserpw");
+[source,php]
+----
+
+// to remove
+
+ $con = mysqli_connect("localhost", "phpuser", "phpuserpw");
 if (!$con) {
-    exit('Connect Error (' . mysqli_connect_errno() . ') '
-            . mysqli_connect_error());
+  exit('Connect Error (' . mysqli_connect_errno() . ') '
+          . mysqli_connect_error());
 }
 //set the default client character set 
 mysqli_set_charset($con, 'utf-8');
@@ -356,43 +411,58 @@ mysqli_select_db($con, "wishlist");
 $user = mysqli_real_escape_string($con, $_GET['user']);
 $wisher = mysqli_query($con, "SELECT id FROM wishers WHERE name='" . $user . "'");
 if (mysqli_num_rows($wisher) < 1) {
-    exit("The person " . $_GET['user'] . " is not found. Please check the spelling and try again");
+  exit("The person " . $_GET['user'] . " is not found. Please check the spelling and try again");
 }
-$row = mysqli_fetch_row($wisher);$wisherID = $row[0];
-mysqli_free_result($wisher);#
+$row = mysqli_fetch_row($wisher);
+$wisherID = $row[0];
+mysqli_free_result($wisher);
 
-*$wisherID = WishDB::getInstance()->get_wisher_id_by_name($_GET["user"]);
+// to replace
+
+$wisherID = WishDB::getInstance()->get_wisher_id_by_name($_GET["user"]);
+
 if (!$wisherID) {
-    exit("The person " .$_GET["user"]. " is not found. Please check the spelling and try again" );
-}*
+  exit("The person " .$_GET["user"]. " is not found. Please check the spelling and try again" );
+}
+
+----
 
 对于 *Oracle 数据库*，替换的代码为：
 
-[.line-through]#$con = oci_connect("phpuser", "phpuserpw", "localhost/XE", "AL32UTF8");
+[source,php]
+----
+
+// to remove
+
+$con = oci_connect("phpuser", "phpuserpw", "localhost/XE");
 if (!$con) {
-   $m = oci_error();
-   echo $m['message'], "\n";
-   exit;
-}
-$query = "SELECT id FROM wishers WHERE name = :user_bv";
+  $m = oci_error();
+  echo $m['message'], "\n";
+  exit;
+}        
+$query = "SELECT ID FROM wishers WHERE name = :user_bv";
 $stid = oci_parse($con, $query);
-$user = $_GET["user"];
+$user = $_GET['user'];
 
 oci_bind_by_name($stid, ':user_bv', $user);
 oci_execute($stid);
 
-//Because user is a unique value I only expect one row$row = oci_fetch_array($stid, OCI_ASSOC);
+//Because user is a unique value I only expect one row
+$row = oci_fetch_array($stid, OCI_ASSOC);
 if (!$row) {
-    echo("The person " . $user . " is not found. Please check the spelling and try again" );exit;}
-$wisherID = $row["ID"]; #
+  echo("The person " . $user . " is not found. Please check the spelling and try again" );
+  exit;
+}
+$wisherID = $row['ID']; 
 
-[source,java]
-----
+// to replace
 
-*$wisherID = WishDB::getInstance()->get_wisher_id_by_name($_GET["user"]);
+$wisherID = WishDB::getInstance()->get_wisher_id_by_name($_GET["user"]);
+
 if (!$wisherID) {
-    exit("The person " .$_GET["user"]. " is not found. Please check the spelling and try again" );
-}*
+  exit("The person " .$_GET["user"]. " is not found. Please check the spelling and try again" );
+}
+
 ----
 
 新代码先调用 WishDB 中的  ``getInstance``  函数。 ``getInstance``  函数返回一个 WishDB 实例，然后代码在该实例中调用  ``get_wisher_id_by_name``  函数。如果在数据库中找不到请求的许愿者，代码将终止该进程，然后显示一条错误消息。
@@ -403,65 +473,84 @@ if (!$wisherID) {
 
 对于 *MySQL 数据库*，替换的代码为：
 
-[.line-through]#$result = mysqli_query($con, "SELECT description, due_date FROM wishes WHERE wisher_id=". $wisherID);#
-
-[source,java]
+[[source,php]
 ----
 
-                
-*$result = WishDB::getInstance()->get_wishes_by_wisher_id($wisherID);*
+// to remove
+
+$result = mysqli_query($con, "SELECT description, due_date FROM wishes WHERE wisher_id=" . $wisherID);
+
+// to replace      
+ 
+$result = WishDB::getInstance()->get_wishes_by_wisher_id($wisherID);
+
 ----
 
 对于 *Oracle 数据库*，替换的代码为：
 
-[.line-through]#$query = "select * from wishes where wisher_id = :id_bv";$stid = oci_parse($con, $query);oci_bind_by_name($stid, ":id_bv", $wisherID);oci_execute($stid);#
-
-[source,java]
+[source,php]
 ----
 
-                
-*$stid = WishDB::getInstance()->get_wishes_by_wisher_id($wisherID);*
+// to remove
+
+$query = "SELECT description, due_date FROM wishes WHERE wisher_id = :id_bv";
+$stid = oci_parse($con, $query);
+oci_bind_by_name($stid, ":id_bv", $wisherID);
+oci_execute($stid);
+
+// to replace
+
+$stid = WishDB::getInstance()->get_wishes_by_wisher_id($wisherID);
+
 ----
+
 4. 删除关闭数据库连接的行。
 
-[source,java]
+[source,php]
 ----
 
- [.line-through]#mysqli_close($con);#
-                    or
- [.line-through]#oci_close($con);#                
+// For MYSQL database
+mysqli_close($con);
+
+// For Oracle database
+oci_close($con);
+
 ----
+
 不需要该代码，因为在销毁 WishDB 对象时自动关闭数据库连接。不过，保留了释放资源的代码。即使您调用了  ``close``  函数或销毁了使用数据库连接的实例，也需要释放使用连接的所有资源以确保正确关闭连接。
 
 
-===  
-
-
+[[refactoringCreateNewWisher]]
 === 重构 createNewWisher.php 文件
 
 重构不影响 HTML 输入窗体或显示相关错误消息的代码。
 
 1. 在 <?php?> 块的顶部，输入以下代码以允许使用  ``db.php``  文件：
 
-[source,java]
+[source,php]
 ----
 
 require_once("Includes/db.php");
+
 ----
+
 2. 删除数据库连接凭证（ ``$dbHost``  等）。这些凭证现在包含在  ``db.php``  中。
 3. 将连接到数据库并获取许愿者 ID 的代码替换为  ``get_wisher_id_by_name``  函数调用。
 
 对于 *MySQL 数据库*，替换的代码为：
 
-[.line-through]#
+[source,php]
+----
+
+// to remove
+
 $con = mysqli_connect("localhost", "phpuser", "phpuserpw");
 if (!$con) {
-    exit('Connect Error (' . mysqli_connect_errno() . ') '
-            . mysqli_connect_error());
+  exit('Connect Error (' . mysqli_connect_errno() . ') '
+          . mysqli_connect_error());
 }
 //set the default client character set 
 mysqli_set_charset($con, 'utf-8');
-
 
 /** Check whether a user whose name matches the "user" field already exists */
 mysqli_select_db($con, "wishlist");
@@ -469,93 +558,119 @@ $user = mysqli_real_escape_string($con, $_POST['user']);
 $wisher = mysqli_query($con, "SELECT id FROM wishers WHERE name='".$user."'");
 $wisherIDnum=mysqli_num_rows($wisher);
 if ($wisherIDnum) {
-   $userNameIsUnique = false;
-}#
+  $userNameIsUnique = false;
+}
 
-[source,java]
-----
+// to replace
 
-*$wisherID = WishDB::getInstance()->get_wisher_id_by_name($_POST["user"]);
+$wisherID = WishDB::getInstance()->get_wisher_id_by_name($_POST["user"]);
+
 if ($wisherID) {
-$userNameIsUnique = false;
-}*
+  $userNameIsUnique = false;
+}
+
 ----
 
 对于 *Oracle 数据库*，替换的代码为：
 
-[.line-through]#
-$con = oci_connect("phpuser", "phpuserpw", "localhost");
+[source,php]
+----
+
+// to remove
+
+$con = oci_connect("phpuser", "phpuserpw", "localhost/XE", "AL32UTF8");
 if (!$con) {
-    $m = oci_error();
-    echo $m['message'], "\n";
-    exit;
+  $m = oci_error();
+  exit('Connect Error ' . $m['message']);
 }
-$query = "select ID from wishers where name = :user_bv";
+$query = "SELECT id FROM wishers WHERE name = :user_bv";
 $stid = oci_parse($con, $query);
 $user = $_POST['user'];
-$wisherID = null;
+
 oci_bind_by_name($stid, ':user_bv', $user);
 oci_execute($stid);
 
 //Each user name should be unique. Check if the submitted user already exists.
-$row = oci_fetch_array($stid, OCI_ASSOC);if ($row) {$wisherID = $row["ID"]; }if ($wisherID != null) {$userNameIsUnique = false;}#
+$row = oci_fetch_array($stid, OCI_ASSOC);
+if ($row) {
+  $userNameIsUnique = false;
+}
 
-[source,java]
-----
+// to replace
 
-
-*$wisherID = WishDB::getInstance()->get_wisher_id_by_name($_POST["user"]);
+$wisherID = WishDB::getInstance()->get_wisher_id_by_name($_POST["user"]);
 if ($wisherID) {
-$userNameIsUnique = false;
-}*
+  $userNameIsUnique = false;
+}
+
 ----
+
 只要处理当前页面， ``WishDB``  对象就会存在。在处理完成或中断后，将销毁该对象。不需要用于打开数据库连接的代码，因为该操作是由 WishDB 函数完成的。不需要用于关闭连接的代码，因为在销毁  ``WishDB``  对象后，将立即关闭连接。
 4. 将在数据库中插入新许愿者的代码替换为调用  ``create_wisher``  函数的代码。
 
 对于 *MySQL 数据库*，替换的代码为：
 
-[.line-through]#if (!$userIsEmpty &amp;&amp; $userNameIsUnique &amp;&amp; !$passwordIsEmpty &amp;&amp; !$password2IsEmpty &amp;&amp; $passwordIsValid) {
-    $password = mysqli_real_escape_string($con, $_POST["password"]);mysqli_select_db($con, "wishlist");mysqli_query($con, "INSERT wishers (name, password) VALUES ('" . $user . "', '" . $password . "')");mysqli_free_result($wisher);mysqli_close($con);header('Location: editWishList.php');exit;}
-                    #
-
-[source,java]
+[source,php]
 ----
 
-                *if (!$userIsEmpty &amp;&amp; $userNameIsUnique &amp;&amp; !$passwordIsEmpty &amp;&amp; !$password2IsEmpty &amp;&amp; $passwordIsValid) {
-WishDB::getInstance()->create_wisher($_POST["user"], $_POST["password"]);
-header('Location: editWishList.php' );
-exit;
-}*
+// to remove
+
+if (!$userIsEmpty && $userNameIsUnique && !$passwordIsEmpty && !$password2IsEmpty && $passwordIsValid) {
+  $password = mysqli_real_escape_string($con, $_POST['password']);
+  mysqli_select_db($con, "wishlist");
+  mysqli_query($con, "INSERT wishers (name, password) VALUES ('" . $user . "', '" . $password . "')");
+  mysqli_free_result($wisher);
+  mysqli_close($con);
+  header('Location: editWishList.php');
+  exit;
+}
+
+// to replace
+
+if (!$userIsEmpty && $userNameIsUnique && !$passwordIsEmpty && !$password2IsEmpty && $passwordIsValid) {
+
+  WishDB::getInstance()->create_wisher($_POST["user"], $_POST["password"]);
+
+  header('Location: editWishList.php' );
+  exit;
+}
+
 ----
 
 对于 *Oracle 数据库*，替换的代码为：
 
-[.line-through]#
-if (!$userIsEmpty &amp;&amp; $userNameIsUnique &amp;&amp; !$passwordIsEmpty &amp;&amp; !$password2IsEmpty &amp;&amp; $passwordIsValid) {
-    $query = "INSERT INTO wishers (name, password) VALUES (:user_bv, :pwd_bv)";
-    $stid = oci_parse($con, $query);
-    $pwd = $_POST['password'];
-    oci_bind_by_name($stid, ':user_bv', $user);
-    oci_bind_by_name($stid, ':pwd_bv', $pwd);
-    oci_execute($stid);
-    oci_close($con);
-    header('Location: editWishList.php');
-    exit;
-}#
-
-[source,java]
+[source,php]
 ----
 
+// to remove
 
+if (!$userIsEmpty && $userNameIsUnique && !$passwordIsEmpty && !$password2IsEmpty && $passwordIsValid) {
 
-*if (!$userIsEmpty &amp;&amp; $userNameIsUnique &amp;&amp; !$passwordIsEmpty &amp;&amp; !$password2IsEmpty &amp;&amp; $passwordIsValid) {
-WishDB::getInstance()->create_wisher($_POST["user"], $_POST["password"]);
-header('Location: editWishList.php' );
-exit;
-}*
+  $query = "INSERT INTO wishers (name, password) VALUES (:user_bv, :pwd_bv)";
+  $stid = oci_parse($con, $query);
+  $pwd = $_POST['password'];
+  oci_bind_by_name($stid, ':user_bv', $user);
+  oci_bind_by_name($stid, ':pwd_bv', $pwd);
+  oci_execute($stid);
+  oci_free_statement($stid);
+  oci_close($con);
+  header('Location: editWishList.php');
+  exit;
+}
+
+// to replace
+
+if (!$userIsEmpty && $userNameIsUnique && !$passwordIsEmpty && !$password2IsEmpty && $passwordIsValid) {
+
+  WishDB::getInstance()->create_wisher($_POST["user"], $_POST["password"]);
+
+  header('Location: editWishList.php' );
+  exit;
+}
+
 ----
 
-
+[[lessonResultSourceCode]]
 == 完成当前课程后的应用程序源代码
 
 MySQL 用户：单击link:https://netbeans.org/projects/www/downloads/download/php%252Flesson4.zip[+此处+]以下载源代码，该代码反映了在完成课程后的项目状态。
