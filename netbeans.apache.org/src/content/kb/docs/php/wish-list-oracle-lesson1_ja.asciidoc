@@ -42,26 +42,6 @@
 :keywords: Apache NetBeans, Tutorials, レッスン1b: Oracleデータベース表の作成
 
 
-
-1. link:wish-list-tutorial-main-page.html[+PHPを使用するCRUDアプリケーションの作成 - メイン・ページ+]
-2. 
-データベースの作成
-
-1. link:wish-list-lesson1.html[+MySQLデータベースの作成+]
-2. 
-*=> Oracleデータベース表の作成*
-
-3. link:wish-list-lesson2.html[+アプリケーションの設計。データベースからの読取り+]
-4. link:wish-list-lesson3.html[+新規アプリケーション・ユーザーの作成+]
-5. link:wish-list-lesson4.html[+コードの最適化+]
-6. link:wish-list-lesson5.html[+セキュリティの追加。アプリケーション・ユーザー・ログオンの実装+]
-7. link:wish-list-lesson6.html[+データベースへの新しいウィッシュの追加+]
-8. link:wish-list-lesson7.html[+データベース内のエントリの更新および削除+]
-9. link:wish-list-lesson8.html[+CSSテクノロジを使用したアプリケーションの外観の改良+]
-10. link:wish-list-lesson9.html[+リモートWebサーバーへのアプリケーションのデプロイ+]
-
-image::images/netbeans-stamp-80-74-73.png[title="このページの内容は、NetBeans IDE 7.2、7.3、7.4および8.0に適用されます"]
-
 このレッスンでは、ウィッシュ・リスト・アプリケーションの開発での最後の準備手順である、テスト・データを持つサンプルのデータベースの作成を示します。このチュートリアルの手順を完了するには、ウィッシャのデータを格納するデータベースが必要です。NetBeans IDEでは、IDEのインタフェースを使用して、これらのアクティビティをすべて実行できます。
 始める前に、link:wish-list-tutorial-main-page.html[+PHPを使用するCRUDアプリケーションの作成 - メイン・ページ+]にあるチュートリアルの要件を確認してください。
 
@@ -98,10 +78,13 @@ image::images/netbeans-stamp-80-74-73.png[title="このページの内容は、N
 このユーザーを作成するためのSQLコマンド・セットの例を次に示します。これらのコマンドでは、データベースに表領域USERSおよびTEMPが存在することが前提になります。
 
 
-[source,java]
+[source,sql]
 ----
 
-drop user phpuser cascade;create user phpuser identified by phpuserpw;grant connect, resource to phpuser;alter user phpuser default tablespace users temporary tablespace temp account unlock; 
+drop user phpuser cascade;
+create user phpuser identified by phpuserpw;
+grant connect, resource to phpuser;
+alter user phpuser default tablespace users temporary tablespace temp account unlock;
 ----
 
 
@@ -138,19 +121,20 @@ NetBeans IDE経由で接続する場合、新しいユーザーの名前とパ�
 
 2. wishers表を作成するには、次のSQL問合せを実行します。
 
-[source,java]
+[source,sql]
 ----
 
-create table wishers (id number not null,name varchar2(50) unique not null,password varchar2(50) not null,constraint wishers_pk primary key(id));
+create table wishers (id number not null,name varchar2(50) unique not null, password varchar2(50) not null, constraint wishers_pk primary key(id));
 ----
 3. wishes表を作成するには、次のSQL問合せを実行します。wishesとwisherを関連付けるために、外部キーを作成します。
 
-[source,java]
+[source,sql]
 ----
 
-create table wishes (id number not null,wisher_id number not null,description varchar2(255) not null,due_date date,constraint wishes_pk primary key(id),constraint wishes_fk1 foreign key(wisher_id) references wishers(id));
+create table wishes (id number not null, wisher_id number not null,description varchar2(255) not null, due_date date, constraint wishes_pk primary key(id), constraint wishes_fk1 foreign key(wisher_id) references wishers(id));
 ----
 4. 新しい表がデータベースに追加されたことを確認します。NetBeans IDEを使用してデータベースに接続している場合、「サービス」ウィンドウのjdbc:oracle:thin:@localhost:1521:XE [PHPUSERのphpuser]接続ノードに移動します。新しい表が「表」ノードに一覧表示されます。(それらが表示されない場合、接続を右クリックして「リフレッシュ」を選択します。)
+
 image::images/tables-in-services-window.png[]
 
 注意: Oracleデータベース表を作成するための一連のSQLコマンドは、link:https://netbeans.org/projects/www/downloads/download/php%252FSQL-files-for-Oracle.zip[+ここ+]からダウンロードできます。
@@ -162,17 +146,23 @@ Oracleデータベースでは、値を増分するために順序を指定す�
 
 1. wishers表の順序を追加するには、次のSQLコマンドを実行します。
 
-[source,java]
+[source,sql]
 ----
 
 create sequence wishers_id_seq start with 1 increment by 1;
 ----
 2. 新しいウィッシャを追加したときにwishers表のID列で順序をトリガーするには、次のSQLコマンドを実行します。
 
-[source,java]
+[source,sql]
 ----
 
-create or replace trigger wishers_insertbefore insert on wishersfor each rowbeginselect wishers_id_seq.nextval into :new.id from dual;end;/
+create or replace trigger wishers_insert
+before insert on wishers
+for each row
+begin
+    select wishers_id_seq.nextval into :new.id from dual;
+end;
+/
 ----
 3. wishes表の順序を追加します。
 
@@ -183,10 +173,16 @@ create sequence wishes_id_seq start with 1 increment by 1;
 ----
 4. 新しいウィッシュを追加したときにwishes表のID列で順序を実行するためのトリガーを追加します。
 
-[source,java]
+[source,sql]
 ----
 
-create or replace trigger wishes_insertbefore insert on wishesfor each rowbeginselect wishes_id_seq.nextval into :new.id from dual;end;/
+create or replace trigger wishes_insert
+before insert on wishes
+for each row
+begin
+    select wishes_id_seq.nextval into :new.id from dual;
+end;
+/
 ----
 
 注意: 順序およびトリガーを含む、Oracleデータベース表を作成するための一連のSQLコマンドは、link:https://netbeans.org/projects/www/downloads/download/php%252FSQL-files-for-Oracle.zip[+ここ+]からダウンロードできます。
@@ -198,26 +194,31 @@ create or replace trigger wishes_insertbefore insert on wishesfor each rowbegins
 
 1. Tomという名前でパスワードが「tomcat」のウィッシャを追加します。
 
-[source,java]
+[source,sql]
 ----
 
 insert into wishers (name, password) values ('Tom','tomcat');
 ----
 2. Jerryという名前でパスワードが「jerrymouse」のウィッシャを追加します。
 
-[source,java]
+
+[source,sql]
 ----
 
 insert into wishers (name, password) values ('Jerry', 'jerrymouse');commit;
 ----
 3. ウィッシュを追加します。
 
-[source,java]
+[source,sql]
 ----
 
-insert into wishes (wisher_id, description, due_date) values (1, 'Sausage', to_date('2008-04-01', 'YYYY-MM-DD'));insert into wishes (wisher_id, description) values (1, 'Icecream');insert into wishes (wisher_id, description, due_date) values (2, 'Cheese', to_date('2008-05-01', 'YYYY-MM-DD'));insert into wishes (wisher_id, description)values (2, 'Candle');commit;
+insert into wishes (wisher_id, description, due_date) values (1, 'Sausage', to_date('2008-04-01', 'YYYY-MM-DD'));
+insert into wishes (wisher_id, description) values (1, 'Icecream');insert into wishes (wisher_id, description, due_date) values (2, 'Cheese', to_date('2008-05-01', 'YYYY-MM-DD'));
+insert into wishes (wisher_id, description)values (2, 'Candle');
+commit;
 ----
 4. テスト・データを追加したことを確認します。NetBeans IDEを使用してテスト・データを表示する場合、関連する表でマウスの右ボタンをクリックし、コンテキスト・メニューから「データを表示」を選択します。
+
 image::images/view-test-data.png[]
 
 データベースの原則とデザイン・パターンの一般的な知識については、チュートリアルlink:http://www.tekstenuitleg.net/en/articles/database_design_tutorial/1[+http://www.tekstenuitleg.net/en/articles/database_design_tutorial/1+]を確認してください。

@@ -42,153 +42,132 @@
 :keywords: Apache NetBeans, Tutorials, 第 5 课：添加安全功能。实现应用程序用户登录
 
 
-
-1. link:wish-list-tutorial-main-page.html[+使用 PHP 创建数据库驱动的应用程序 - 主页+]
-2. 
-创建数据库
-
-1. link:wish-list-lesson1.html[+创建 MySQL 数据库+]
-2. link:wish-list-oracle-lesson1.html[+创建 Oracle 数据库表+]
-3. link:wish-list-lesson2.html[+设计应用程序。从数据库读取数据+]
-4. link:wish-list-lesson3.html[+创建新的应用程序用户+]
-5. link:wish-list-lesson4.html[+优化代码+]
-6. 
-*=> 添加安全功能。实现应用程序用户登录*
-
-7. link:wish-list-lesson6.html[+在数据库中添加新的愿望+]
-8. link:wish-list-lesson7.html[+更新和删除数据库中的条目+]
-9. link:wish-list-lesson8.html[+使用 CSS 技术改进应用程序的外观+]
-10. link:wish-list-lesson9.html[+将应用程序部署到远程 Web 服务器+]
-
-image::images/netbeans-stamp-80-74-73.png[title="此页上的内容适用于 NetBeans IDE 7.2、7.3、7.4 和 8.0"]
-
 在本课中，将为许愿者实现登录功能。这会影响以下文件：
 
-*  ``index.php`` 
-*  ``createNewWisher.php`` 
-*  ``editWishlist.php`` 
-*  ``db.php`` 
+*  `index.php` 
+*  `createNewWisher.php` 
+*  `editWishlist.php` 
+*  `db.php` 
 
 实现登录功能包括以下步骤：
 
-1. <<savingWisherIDInSessionUponCreation,在创建许愿者后，在会话中保存许愿者 ID>>
-2. <<validateWisherLogon,验证尝试编辑愿望列表的用户是否登录>>
-3. <<logonFromIndexPage,许愿者从 index.php 页中登录>>
+1. <<_saving_the_wisher_s_id_in_the_session_upon_creation,在创建许愿者后，在会话中保存许愿者 ID>>
+2. <<_validating_user_logon,验证尝试编辑愿望列表的用户是否登录>>
+3. <<_html_form_for_logon_on_index_php,许愿者从 index.php 页中登录>>
 
 当前文档是“在适用于 PHP 的 NetBeans IDE 中创建 CRUD 应用程序”教程的一部分。
 
-
-
+[[_application_source_code_from_the_previous_lesson]]
 == 来自上一课的应用程序源代码
 
 MySQL 用户：单击link:https://netbeans.org/files/documents/4/1930/lesson4.zip[+此处+]以下载源代码，该代码反映了在完成上一课之后的项目状态。
 
 Oracle 数据库用户：单击link:https://netbeans.org/projects/www/downloads/download/php%252Foracle-lesson4.zip[+此处+]以下载源代码，该代码反映了在完成上一课之后的项目状态。
 
-
+[[_saving_the_wisher_s_id_in_the_session_upon_creation]]
 == 创建后在会话中保存许愿者 ID
 
-link:http://us2.php.net/manual/en/ref.session.php[+会话+]是持久性存储，可用于将信息从一个页面传输到另一个页面，而无需使用 link:wish-list-lesson5.html#htmlForm[+HTML 输入窗体+]。可通过预定义的 PHP 数组  ``$_SESSION``  支持该功能。
+link:http://us2.php.net/manual/en/ref.session.php[+会话+]是持久性存储，可用于将信息从一个页面传输到另一个页面，而无需使用 link:wish-list-lesson5.html#htmlForm[+HTML 输入窗体+]。可通过预定义的 PHP 数组  `$_SESSION`  支持该功能。
 
-为安全起见，在创建新的许愿者后，该许愿者将自动登录而无需填写窗体。因此，您需要修改  ``createNewWisher.php``  文件以实现以下功能：
+为安全起见，在创建新的许愿者后，该许愿者将自动登录而无需填写窗体。因此，您需要修改  `createNewWisher.php`  文件以实现以下功能：
 
 * 将新许愿者添加到数据库中。
 * 打开会话。
 * 在会话中存储许愿者的名字。
-* 在将许愿者重定向到  ``editWishList.php``  页时，传输会话中的许愿者名字。
+* 在将许愿者重定向到  `editWishList.php`  页时，传输会话中的许愿者名字。
 
-在  ``createNewWisher.php``  文件中，找到以下行：
+在  `createNewWisher.php`  文件中，找到以下行：
 
 
-[source,java]
+[source,php]
 ----
 
-WishDB::getInstance()->create_wisher($_POST["user"], $_POST["password"]);
+WishDB::getInstance()->create_wisher($_POST['user'], $_POST['password']);
 ----
 
 然后，在其下输入以下代码块：
 
 
-[source,java]
+[source,php]
 ----
 
 session_start();
 $_SESSION['user'] = $_POST['user'];
 ----
 
-该代码块启动一个会话，这意味着打开  ``$_SESSION``  数组以输入或检索数据。然后，该代码在  ``$_SESSION``  数组中添加一个元素。添加的元素包含一个值和标识符（键）。该值是新创建的许愿者名字，标识符是 "user"。然后，程序将许愿者重定向到  ``editWishList.php``  页。
+该代码块启动一个会话，这意味着打开  `$_SESSION`  数组以输入或检索数据。然后，该代码在  `$_SESSION`  数组中添加一个元素。添加的元素包含一个值和标识符（键）。该值是新创建的许愿者名字，标识符是 "user"。然后，程序将许愿者重定向到  `editWishList.php`  页。
 
-
+[[_validating_user_logon]]
 == 验证用户登录
 
-当用户访问  ``editWishList.php``  页时，应用程序应确认刚才在  ``createNewWisher.php``  页上注册的同一个人访问了该页。
+当用户访问  `editWishList.php`  页时，应用程序应确认刚才在  `createNewWisher.php`  页上注册的同一个人访问了该页。
 
 实现该功能包括两个步骤：
 
-* <<retrievingUserNameFromSession,从会话中检索许愿者的名字>>
-* <<redirectingNotLoggedInUserToIndexPage,如果从会话中检索许愿者名字失败，将用户重定向到 index.php>>
+* <<_retrieving_the_wisher_s_name_from_the_session,从会话中检索许愿者的名字>>
+* <<_logging_in_from_the_index_php_page,如果从会话中检索许愿者名字失败，将用户重定向到 index.php>>
 
-
+[[_retrieving_the_wisher_s_name_from_the_session]]
 === 从会话中检索许愿者的名字
 
-将  ``editWishList.php``  的 PHP 块中的默认代码替换为以下内容：
+将  `editWishList.php`  的 PHP 块中的默认代码替换为以下内容：
 
-[source,java]
+[source,php]
 ----
 
 session_start();
 if (array_key_exists("user", $_SESSION)) {
-    echo "Hello " . $_SESSION['user'];
+  echo "Hello " . $_SESSION['user'];
 }
 ----
 
-该代码块打开  ``$_SESSION``  数组以检索数据，并验证  ``$_SESSION``  是否包含具有 "user" 标识符的元素。如果检查成功，该代码将输出欢迎消息。
+该代码块打开  `$_SESSION`  数组以检索数据，并验证  `$_SESSION`  是否包含具有 "user" 标识符的元素。如果检查成功，该代码将输出欢迎消息。
 
 检查是否正确实现会话：
 
-1. 运行  ``createNewWisher.php``  文件，然后创建一个新的许愿者，例如，Jack。
- ``editWishList.php``  打开，并显示 Hello Jack。
-2. 在浏览器中清除会话 Cookie，或者结束会话并从 IDE 中运行  ``editWishList.php`` 。
- ``editWishList.php``  文件打开并显示 Hello，因为没有通过会话传输任何用户。这是不正确的，因为它允许未登录和未注册的人创建或编辑愿望列表。为了避免出现该问题，需要将用户重定向到  ``index.php``  页。
+1. 运行  `createNewWisher.php`  文件，然后创建一个新的许愿者，例如，Jack。
+ `editWishList.php`  打开，并显示 Hello Jack。
+2. 在浏览器中清除会话 Cookie，或者结束会话并从 IDE 中运行  `editWishList.php` 。
+ `editWishList.php`  文件打开并显示 Hello，因为没有通过会话传输任何用户。这是不正确的，因为它允许未登录和未注册的人创建或编辑愿望列表。为了避免出现该问题，需要将用户重定向到  `index.php`  页。
 
-
+[[_logging_in_from_the_index_php_page]]
 === 重定向未登录的用户
 
-将以下代码块添加到  ``editWishList.php``  中的  ``if``  子句之下：
+将以下代码块添加到  `editWishList.php`  中的  `if`  子句之下：
 
-[source,java]
+[source,php]
 ----
 
 else {
-   header('Location: index.php');
-   exit;
+  header('Location: index.php');
+  exit;
 }
 ----
 
 该代码将用户重定向到 index.php 页并取消 PHP 代码执行。
 
-要检查是否正确实现了该功能，请运行  ``editWishList.php``  文件。预期的结果是打开  ``index.php``  页。
+要检查是否正确实现了该功能，请运行  `editWishList.php`  文件。预期的结果是打开  `index.php`  页。
 
-
+[[_html_form_for_logon_on_index_php]]
 == 从 index.php 页中登录
 
 从 index.php 页中登录包括两个步骤：
 
-* <<logonForm,在 HTML 输入窗体中输入用户的名字和口令，并将用于验证的数据提交到 index.php 页。>>
-* <<logonValidation,验证登录>>
+* <<_html_form_for_logon_on_index_php,在 HTML 输入窗体中输入用户的名字和口令，并将用于验证的数据提交到 index.php 页。>>
+* <<_logon_validation,验证登录>>
 
-
+[[_html_form_for_logon_on_index_php]]
 === 用于在 index.php 上登录的 HTML 窗体
 
-在  ``index.php``  文件中，在结束  ``</body>``  标记前输入以下代码：
+在  `index.php`  文件中，在结束  `</body>`  标记前输入以下代码：
 
 [source,xml]
 ----
 
 <form name="logon" action="index.php" method="POST" >
-    Username: <input type="text" name="user">
-    Password  <input type="password" name="userpassword">
-    <input type="submit" value="Edit My Wish List">
+  Username: <input type="text" name="user">
+  Password  <input type="password" name="userpassword">
+  <input type="submit" value="Edit My Wish List">
 </form>
 ----
 
@@ -196,18 +175,18 @@ else {
 
 该代码显示一个 link:wish-list-lesson3.html#htmlForm[+HTML 窗体+]，用于在文本字段中输入用户的名字和口令。当用户单击 "Edit My Wish List" 时，数据将传输到同一页，即 index.php。
 
-
+[[_logon_validation]]
 === 登录验证
 
 登录验证包括：
 
-* <<checkWhereUserCameFrom,检查从中重定向用户的位置>>。
-* <<verifyCredentials,验证用户的名字和口令>>。
-* 将用户名保存到会话中并将用户重定向到 editWishList.php 页或<<displayErrorMessage,显示一条错误消息。>>
+* <<_logon_validation,检查从中重定向用户的位置>>。
+* <<_logon_validation,验证用户的名字和口令>>。
+* 将用户名保存到会话中并将用户重定向到 editWishList.php 页或<<_logon_validation,显示一条错误消息。>>
 
-用户可以在启动应用程序时访问  ``index.php``  页，从 <<validateWisherLogon,editWishList.php>> 页中进行访问，或者在输入名字和口令后从  ``index.php``  页中重定向时访问该页。
+用户可以在启动应用程序时访问  `index.php`  页，从 <<_function_verify_wisher_credentials,editWishList.php>> 页中进行访问，或者在输入名字和口令后从  `index.php`  页中重定向时访问该页。
 
-由于仅在最后一种情况下使用 link:http://www.htmlcodetutorial.com/forms/_FORM_METHOD.html[+HTML 请求方法+] POST，因此，您始终可以了解用户访问  ``index.php``  时所在的位置。
+由于仅在最后一种情况下使用 link:http://www.htmlcodetutorial.com/forms/_FORM_METHOD.html[+HTML 请求方法+] POST，因此，您始终可以了解用户访问  `index.php`  时所在的位置。
 
 在 index.php 文件中，使用以下代码在 HTML 块上面创建一个 <?php ?> 块：
 
@@ -215,107 +194,115 @@ else {
 ----
 
 <?php
-
 require_once("Includes/db.php");
-$logonSuccess = false;// verify user's credentials
+$logonSuccess = false;
+
+// verify user's credentials
 if ($_SERVER['REQUEST_METHOD'] == "POST") {
     $logonSuccess = (WishDB::getInstance()->verify_wisher_credentials($_POST['user'], $_POST['userpassword']));
     if ($logonSuccess == true) {
-        session_start();
-        $_SESSION['user'] = $_POST['user'];
-        header('Location: editWishList.php');
-        exit;
+      session_start();
+      $_SESSION['user'] = $_POST['user'];
+      header('Location: editWishList.php');
+      exit;
     }
 }
 ?>
-
 ----
 
-代码块顶部允许使用  ``db.php``  文件，并使用  ``false``  值初始化  ``$logonSuccess``  变量。如果验证成功，该值将变为  ``true`` 。
+代码块顶部允许使用  `db.php`  文件，并使用  `false`  值初始化  `$logonSuccess`  变量。如果验证成功，该值将变为  `true` 。
 
-验证用户凭证的代码先检查请求方法是否为 POST。如果请求方法是 POST，则在提交<<logonForm,登录窗体>>后重定向用户。在这种情况下，代码块使用在登录窗体中输入的名字和口令调用  ``verify_wisher_credentials``  函数。
+验证用户凭证的代码先检查请求方法是否为 POST。如果请求方法是 POST，则在提交<<_html_form_for_logon_on_index_php,登录窗体>>后重定向用户。在这种情况下，代码块使用在登录窗体中输入的名字和口令调用  `verify_wisher_credentials`  函数。
 
- ``verify_wisher_credentials``  函数（在<<verifyWisherCredentials,下一节>>中编写）检查  ``wishers``  表中是否存在用户和口令与<<logonForm,登录窗体>>中提交的值相匹配的记录。如果  ``verify_wisher_credentials``  函数返回  ``true`` ，则在数据库中注册一个具有指定名字和口令组合的许愿者。这表示验证成功，并且  ``$logonSuccess``  将值更改为  ``true`` 。在这种情况下，将启动一个会话并打开  ``$_SESSION``  数组。该代码在  ``$_SESSION``  数组中添加一个新元素。该元素包含一个值和标识符（键）。该值是许愿者的名字，标识符是 "user"。然后，该代码将用户重定向到  ``editWishList.php``  页以编辑愿望列表。
+ `verify_wisher_credentials`  函数（在<<_html_form_for_logon_on_index_php,下一节>>中编写）检查  `wishers`  表中是否存在用户和口令与<<_function_verify_wisher_credentials,登录窗体>>中提交的值相匹配的记录。如果  `verify_wisher_credentials`  函数返回  `true` ，则在数据库中注册一个具有指定名字和口令组合的许愿者。这表示验证成功，并且  `$logonSuccess`  将值更改为  `true` 。在这种情况下，将启动一个会话并打开  `$_SESSION`  数组。该代码在  `$_SESSION`  数组中添加一个新元素。该元素包含一个值和标识符（键）。该值是许愿者的名字，标识符是 "user"。然后，该代码将用户重定向到  `editWishList.php`  页以编辑愿望列表。
 
-如果  ``verify_wisher_credentials``  函数返回  ``false`` ，则  ``$logonSuccess``  变量值保持为 false。将使用该变量值<<displayErrorMessage,显示错误消息>>。
+如果  `verify_wisher_credentials`  函数返回  `false` ，则  `$logonSuccess`  变量值保持为 false。将使用该变量值<<_displaying_error_messages,显示错误消息>>。
 
-
+[[_function_verify_wisher_credentials]]
 === verify_wisher_credentials 函数
 
-要实现验证许愿者凭证的功能，您需要在  ``db.php``  文件的  ``WishDB``  类中添加一个新函数。该函数要求将名字和口令作为输入参数，并返回 0 或 1。
+要实现验证许愿者凭证的功能，您需要在  `db.php`  文件的  `WishDB`  类中添加一个新函数。该函数要求将名字和口令作为输入参数，并返回 0 或 1。
 
 *对于 MySQL 数据库*，请输入以下代码块：
 
-[source,java]
-----
-
-public function verify_wisher_credentials ($name, $password){$name = $this->real_escape_string($name);$password = $this->real_escape_string($password);$result = $this->query("SELECT 1 FROM wishers
- 	           WHERE name = '" . $name . "' AND password = '" . $password . "'");
-   return $result->data_seek(0);
-}
-----
-
-*对于 Oracle 数据库*，请输入以下代码块（由于 OCI8 没有等效的  ``mysql_num_rows`` ，该代码是  ``get_wisher_id_by_name``  的修改形式）：
-
-
-[source,java]
+[source,php]
 ----
 
 public function verify_wisher_credentials($name, $password) {
-    $query = "SELECT 1 FROM wishers WHERE name = :name_bv AND password = :pwd_bv";
-    $stid = oci_parse($this->con, $query);
-    oci_bind_by_name($stid, ':name_bv', $name);
-    oci_bind_by_name($stid, ':pwd_bv', $password);
-    oci_execute($stid);
-//Because name is a unique value I only expect one row
-    $row = oci_fetch_array($stid, OCI_ASSOC);
-    if ($row) 
-        return true;
-    else
-        return false;
+  $name = $this->real_escape_string($name);
+  $password = $this->real_escape_string($password);
+  $result = $this->query("SELECT 1 FROM wishers WHERE name = '"
+                  . $name . "' AND password = '" . $password . "'");
+  return $result->data_seek(0);
 }
 ----
 
-该代码块执行查询  ``"SELECT 1 FROM wishers WHERE Name = '" . $name . "'AND Password = '" . $password . "'"``  并返回满足指定查询的记录数。如果找到此类记录，该函数将返回  ``true`` 。如果在数据库中找不到此类记录，该函数将返回  ``false`` 。
+*对于 Oracle 数据库*，请输入以下代码块（由于 OCI8 没有等效的  `mysql_num_rows` ，该代码是  `get_wisher_id_by_name`  的修改形式）：
 
 
+[source,php]
+----
+
+public function verify_wisher_credentials($name, $password) {
+  $query = "SELECT 1 FROM wishers WHERE name = :name_bv AND password = :pwd_bv";
+  $stid = oci_parse($this->con, $query);
+  oci_bind_by_name($stid, ':name_bv', $name);
+  oci_bind_by_name($stid, ':pwd_bv', $password);
+  oci_execute($stid);
+
+//Because name is a unique value I only expect one row
+  $row = oci_fetch_array($stid, OCI_ASSOC);
+  if ($row)
+    return true;
+  else
+    return false;
+}
+----
+
+该代码块执行查询  `"SELECT 1 FROM wishers WHERE Name = '" . $name . "'AND Password = '" . $password . "'"`  并返回满足指定查询的记录数。如果找到此类记录，该函数将返回  `true` 。如果在数据库中找不到此类记录，该函数将返回  `false` 。
+
+[[_displaying_error_messages]]
 === 显示错误消息
 
-要允许应用程序显示错误消息，请输入以下 <? php ?> 代码块（在  ``index.php``  的登录窗体中的输入字段之下、按钮之上）：
+要允许应用程序显示错误消息，请输入以下 <? php ?> 代码块（在  `index.php`  的登录窗体中的输入字段之下、按钮之上）：
 
 [source,php]
 ----
 
 <?php
-  if ($_SERVER["REQUEST_METHOD"] == "POST") { 
-      if (!$logonSuccess)
-          echo "Invalid name and/or password";
-  }
+if ($_SERVER['REQUEST_METHOD'] == "POST") {
+  if (!$logonSuccess)
+    echo "Invalid name and/or password";
+}
 ?>
 ----
+
 该代码块检查 $logonSuccess 变量值；如果该值为 false，则显示一条错误消息。
 
-
+[[_testing_the_logon_from_the_index_php_page]]
 == 测试从 index.php 页中登录
 
-检查登录功能在主页  ``index.php``  上是否正常工作：
+检查登录功能在主页  `index.php`  上是否正常工作：
 
 1. 运行应用程序。
-2. 在  ``index.php``  页上，在 "Username" 编辑框中输入 Tom，在 "Password" 编辑框中输入 Tim。
+2. 在  `index.php`  页上，在 "Username" 编辑框中输入 Tom，在 "Password" 编辑框中输入 Tim。
 3. 按 "Edit My Wish List"。将显示一条错误消息（请注意，下面的浏览器窗口宽度减小为 600px，其中添加了一些换行符）： 
+
 image::images/incorrectNamePasswordIndex.png[]
+
 4. 在 "Username" 编辑框中输入 Tom，在 "Password" 编辑框中输入 tomcat。
 5. 按 "Edit My Wish list"。将显示 editWishList.php 页： 
+
 image::images/SuccessfulLogonOnIndexRedirectToEditWishList.png[]
 
-
+[[application_source_code_after_the_current_lesson_is_completed]]
 == 完成当前课程后的应用程序源代码
 
 MySQL 用户：单击link:https://netbeans.org/files/documents/4/1931/lesson5.zip[+此处+]以下载源代码，该代码反映了在完成课程后的项目状态。
 
 Oracle 数据库用户：单击link:https://netbeans.org/projects/www/downloads/download/php%252Foracle-lesson5.zip[+此处+]以下载源代码，该代码反映了在完成课程后的项目状态。
 
-
+[[_next_steps]]
 == 后续步骤
 
 link:wish-list-lesson4.html[+<< 上一课+]
