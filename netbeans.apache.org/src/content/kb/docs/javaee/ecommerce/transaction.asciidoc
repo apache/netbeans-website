@@ -110,6 +110,7 @@ We'll implement this by creating a `placeOrder` method which performs the three 
 
 * link:http://java.sun.com/javaee/6/docs/api/javax/ejb/TransactionManagement.html[+`@TransactionManagement`+]`(`link:http://java.sun.com/javaee/6/docs/api/javax/ejb/TransactionManagementType.html[+`TransactionManagementType`+].`_CONTAINER_)`: Used to specify that any transactions occurring in the class are container-managed.
 * link:http://java.sun.com/javaee/6/docs/api/javax/ejb/TransactionAttribute.html[+`@TransactionAttribute`+]`(`link:http://java.sun.com/javaee/6/docs/api/javax/ejb/TransactionAttributeType.html[+`TransactionAttributeType`+].`_REQUIRED_)`: Used on the method that invokes the transaction to specify that a new transaction should be created (if one does not already exist).
+
 image::images/transaction-diagram.png[title="Several write actions are performed within a single transaction"]
 
 Because we are implementing the transaction within a larger context, we'll approach this exercise by dividing it into several easily-digestible tasks.
@@ -129,19 +130,21 @@ Because we are implementing the transaction within a larger context, we'll appro
 
 Begin by examining the project snapshot associated with this tutorial unit.
 
-1. Open the link:https://netbeans.org/projects/samples/downloads/download/Samples%252FJavaEE%252Fecommerce%252FAffableBean_snapshot7.zip[+project snapshot+] for this tutorial unit in the IDE. Click the Open Project ( image::images/open-project-btn.png[] ) button and use the wizard to navigate to the location on your computer where you downloaded the project. If you are proceeding from the link:manage-sessions.html[+previous tutorial unit+], note that this project snapshot is identical to the state of the project after completing the previous unit, but with the following exceptions:
+1. Open the link:https://netbeans.org/projects/samples/downloads/download/Samples%252FJavaEE%252Fecommerce%252FAffableBean_snapshot7.zip[+project snapshot+] for this tutorial unit in the IDE. Click the Open Project ( image:images/open-project-btn.png[] ) button and use the wizard to navigate to the location on your computer where you downloaded the project. If you are proceeding from the link:manage-sessions.html[+previous tutorial unit+], note that this project snapshot is identical to the state of the project after completing the previous unit, but with the following exceptions:
 * The `confirmation.jsp` page is fully implemented.
 * The `affablebean.css` stylesheet includes rules specific to the `confirmation.jsp` page implementation.
 
 [start=2]
-. Run the project ( image::images/run-project-btn.png[] ) to ensure that it is properly configured with your database and application server. 
+. Run the project ( image:images/run-project-btn.png[] ) to ensure that it is properly configured with your database and application server. 
 
 If you receive an error when running the project, revisit the link:setup.html[+setup instructions+], which describe how to prepare the database and establish connectivity between the IDE, GlassFish, and MySQL.
 
 
 [start=3]
 . Test the application's functionality in your browser. In particular, step through the entire link:design.html#business[+business process flow+]. When you click the submit an order from the checkout page, the confirmation page currently displays as follows: 
+
 image::images/confirmation-page-start.png[title="Confirmation page displays without any data relating to the processed order"] 
+
 No data related to the order is displayed on the confirmation page. In fact, in its current state the application doesn't do anything with the data from the checkout form. By the end of this tutorial unit, the application will gather customer data and use it to process an order. In its final state, the application will display a summary of the processed order on the confirmation page, remove the user's `ShoppingCart` and terminate the user session. (link:https://netbeans.org/projects/samples/downloads/download/Samples%252FJavaEE%252Fecommerce%252FAffableBean_snapshot8.zip[+Snapshot 8+] completes the request-response cycle when a checkout form is submitted.)
 
 
@@ -149,8 +152,9 @@ No data related to the order is displayed on the confirmation page. In fact, in 
 [[orderManager]]
 == Creating the OrderManager EJB
 
-1. Click the New File ( image::images/new-file-btn.png[] ) button in the IDE's toolbar. (Alternatively, press Ctrl-N; ⌘-N on Mac.) In the New File wizard, select the Java EE category, then select Session Bean.
+1. Click the New File ( image:images/new-file-btn.png[] ) button in the IDE's toolbar. (Alternatively, press Ctrl-N; ⌘-N on Mac.) In the New File wizard, select the Java EE category, then select Session Bean.
 2. Click Next. Name the EJB '`OrderManager`', place the EJB in the `session` package, and accept other default settings. (Create a stateless session bean, and do not have the wizard generate an interface for the bean.) 
+
 image::images/ejb-wizard.png[title="Create a stateless EJB session bean using the Session Bean wizard"]
 
 [start=3]
@@ -247,7 +251,9 @@ public class ControllerServlet extends HttpServlet {
 Note that we haven't created the `placeOrder` method yet. This is why the editor flags an error. You can use the tip that displays in the left margin, which allows you to generate the method signature in the appropriate class. 
 [.feature]
 --
+
 image::images/tool-tip-create-method.png[role="left", link="images/tool-tip-create-method.png"]
+
 --
 
 [start=4]
@@ -419,6 +425,7 @@ private void addOrderedItems(CustomerOrder order, ShoppingCart cart) {
 
 [start=10]
 . Press Ctrl-Shift-I (⌘-Shift-I on Mac) to fix imports. A dialog opens to display all classes that will be imported. Note that the dialog correctly guesses for `java.util.List`. 
+
 image::images/fix-all-imports.png[title="Press Ctrl-Shift-I to fix imports in a file"]
 
 [start=11]
@@ -580,6 +587,7 @@ In the coming steps, you are going to examine the server log in the IDE's Output
 
 [start=3]
 . Click the 'submit purchase' button. The server responds with an HTTP status 500 message. 
+
 image::images/gf-error-report.png[title="Server responds with an HTTP status 500 message"]
 
 [start=4]
@@ -603,7 +611,9 @@ The underlines displayed in the server log form links allowing you to navigate d
 
 [start=5]
 . Click the link to `session.OrderManager.addOrderedItems`. The editor displays the line that is causing the exception. 
+
 image::images/null-pointer-exception.png[title="Click links in server output window to navigate directly to offending lines in source files"] 
+
 To understand why `order.getId` method returns `null`, consider what the code is actually trying to accomplish. The `getId` method attempts to get the ID of an order which is currently in the process of being created. Since the ID is an auto-incrementing primary key, the database automatically generates the value only when the record is added. One way to overcome this is to manually synchronize the persistence context with the database. This can be accomplished using the `EntityManager`'s link:http://java.sun.com/javaee/6/docs/api/javax/persistence/EntityManager.html#flush%28%29[+`flush`+] method.
 
 [start=6]
@@ -643,11 +653,13 @@ private void addOrderedItems(CustomerOrder order, ShoppingCart cart) {
 . Rerun the project and step through the business process flow. This time, when you submit the checkout form the confirmation page displays.
 
 [start=8]
-. To confirm that the details have been recorded in the database, open the IDE's Services window (Ctrl-5; ⌘-5 on Mac). Locate the `affablebean` connection node. If the node appears broken ( image::images/connection-broken.png[] ), right-click the node and choose Connect.
+. To confirm that the details have been recorded in the database, open the IDE's Services window (Ctrl-5; ⌘-5 on Mac). Locate the `affablebean` connection node. If the node appears broken ( image:images/connection-broken.png[] ), right-click the node and choose Connect.
 
 [start=9]
 . Drill into the connection and locate the `affablebean` database's `customer` table. Right-click the table and choose View Data. A graphical display of the `customer` table appears in the editor. The customer details that you added in the checkout form display as a record in the table. 
+
 image::images/customer-record.png[title="View Data menu option performs a 'select *' query on the selected table"] 
+
 In this manner, you can also examine the `customer_order` and `ordered_product` tables to determine whether data has been recorded.
 
 
@@ -785,7 +797,9 @@ To overcome this, you explicitly set the transaction for rollback in the `catch`
 . Run the project and step through the business process flow. When you submit an order, return to the IDE and examine the server log. You'll see output similar to the following: 
 [.feature]
 --
+
 image::images/transaction-output.png[role="left", link="images/transaction-output.png"]
+
 --
 
 Press Shift-Esc on the Output window to maximize it.
