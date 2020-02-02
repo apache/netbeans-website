@@ -30,28 +30,6 @@
 :keywords: Apache NetBeans, Tutorials, The NetBeans E-commerce Tutorial - Adding Language Support
 
 
-==== Tutorial Contents
-
-1. link:intro.html[+Introduction+]
-2. link:design.html[+Designing the Application+]
-3. link:setup-dev-environ.html[+Setting up the Development Environment+]
-4. link:data-model.html[+Designing the Data Model+]
-5. link:page-views-controller.html[+Preparing the Page Views and Controller Servlet+]
-6. link:connect-db.html[+Connecting the Application to the Database+]
-7. link:entity-session.html[+Adding Entity Classes and Session Beans+]
-8. link:manage-sessions.html[+Managing Sessions+]
-9. link:transaction.html[+Integrating Transactional Business Logic+]
-10. *Adding Language Support*
-* <<resourceBundles,Understanding Resource Bundles>>
-* <<multilingual,Making Pages Multilingual>>
-* <<toggle,Implementing a Language Toggle>>
-* <<seeAlso,See Also>>
-11. link:security.html[+Securing the Application+]
-12. link:test-profile.html[+Testing and Profiling+]
-13. link:conclusion.html[+Conclusion+]
-
-image::../../../../images_www/articles/68/netbeans-stamp-68-69.png[title="Content on this page applies to NetBeans IDE, versions 6.8 and 6.9"]
-
 The goal of this tutorial unit is to demonstrate how to enable language support for a web application. "Language support" here refers to the ability to display page views according to the customer-specified languages. Within the context of the `AffableBean` application, we have agreed to provide support for both English and Czech, as per the previously outlined link:design.html#requirements[+customer requirements+].
 
 In order to accomplish this, you rely on Java's support for internationalization. You create a _resource bundle_ for each language and let the Java runtime environment determine the appropriate language for incoming client requests. You also implement a 'language toggle' to enable users to switch the languages manually.
@@ -92,8 +70,8 @@ You can view a live demo of the application that you build in this tutorial: lin
 
 In Java, a resource bundle is a representation of the link:http://download.oracle.com/docs/cd/E17409_01/javase/6/docs/api/java/util/ResourceBundle.html[+`java.util.ResourceBundle`+] class. As stated in the Javadoc,
 
-[quote]
-----
+[NOTE]
+====
 _Resource bundles contain locale-specific objects. When your program needs a locale-specific resource, a String for example, your program can load it from the resource bundle that is appropriate for the current user's locale. In this way, you can write program code that is largely independent of the user's locale isolating most, if not all, of the locale-specific information in resource bundles. 
 
 This allows you to write programs that can:_
@@ -101,8 +79,7 @@ This allows you to write programs that can:_
 * _be easily localized, or translated, into different languages_
 * _handle multiple locales at once_
 * _be easily modified later to support even more locales_
-
-----
+====
 
 From the Javadoc, you can also note that the `ResourceBundle` is parent to both link:http://download.oracle.com/docs/cd/E17409_01/javase/6/docs/api/java/util/ListResourceBundle.html[+`ListResourceBundle`+] and link:http://download.oracle.com/docs/cd/E17409_01/javase/6/docs/api/java/util/PropertyResourceBundle.html[+`PropertyResourceBundle`+]. In this tutorial we utilize the `PropertyResourceBundle`, which manages resources as text files that use the `.properties` extension and contain locale-specific information in the form of key-value pairs. With new each translation, a new version of the resource bundle is created by appending the locale identifier to the base name using an underscore ('`_`'). For example, snippets from two of the resource bundles you create in this tutorial look as follows:
 
@@ -165,26 +142,39 @@ The following exercise demonstrates how to integrate English and Czech language 
 
 If you receive an error when running the project, revisit the link:setup.html[+setup instructions+], which describe how to prepare the database and establish connectivity between the IDE, GlassFish, and MySQL.
 
-3. Begin by creating a default resource bundle to contain text used in page views. Click the New File ( image::images/new-file-btn.png[] ) button in the IDE's toolbar. (Alternatively, press Ctrl-N; ⌘-N on Mac.)
-4. Under Categories select Other, then under File Types select Properties File. 
+
+[start=3]
+. Begin by creating a default resource bundle to contain text used in page views. Click the New File ( image::images/new-file-btn.png[] ) button in the IDE's toolbar. (Alternatively, press Ctrl-N; ⌘-N on Mac.)
+
+[start=4]
+. Under Categories select Other, then under File Types select Properties File. 
 image::images/new-file-wzd.png[title="Create a new resource bundle using the File wizard"] 
 Note that the wizard provides a description for the selected file type:
-[quote]
-----
+
+[NOTE]
+====
 _Creates a resource bundle (`.properties`) file suitable for internationalizing applications by separating out all human-visible text strings from your code. Resource bundle files can also be used to collect other types of strings, such as properties for Ant scripts. The created resource bundle contains only one locale, but you can add additional locales from the created file's contextual menu. The bundle can be edited in a text file (property-file format) for a specific locale or in a table that displays information for all locales._
-----
-5. Click Next. In the Name and Location step, name the file `messages` and type in `src/java/resources` in the Folder field. This will instruct the wizard to place the resource bundle in a new package named `resources`. 
+====
+
+[start=5]
+. Click Next. In the Name and Location step, name the file `messages` and type in `src/java/resources` in the Folder field. This will instruct the wizard to place the resource bundle in a new package named `resources`. 
 image::images/new-properties-file-wzd.png[title="Specify the name and location of the resource bundle"]
-6. Click Finish. The `messages.properties` resource bundle is generated and opens in the editor. 
+
+[start=6]
+. Click Finish. The `messages.properties` resource bundle is generated and opens in the editor. 
 
 Note that the new `messages.properties` file name does not have a language code appended to it, as was previously described. This is because this file will be used as the _default_ resource bundle. The default resource bundle is applied when the Java runtime environment does not find a direct match for the requested locale.
-7. Open the project's `index.jsp` file in the editor and note that the following text is currently used:
+
+[start=7]
+. Open the project's `index.jsp` file in the editor and note that the following text is currently used:
 * *Greeting:* `Welcome to the online home of the Affable Bean Green Grocer.`
 * *Introductory Message:* `Enjoy browsing and learning more about our unique home delivery service bringing you fresh organic produce, dairy, meats, breads and other delicious and healthy items to your doorstep.`
 Also, note that we'll need language-specific names for the four categories that display when `index.jsp` renders in the browser. Since these names are currently taken from the database, we can use them as keys in the resource bundle. 
 
 Recall that one of the <<impDeets,implementation details>> outlined above states that "_if the browser's preferred language is neither English nor Czech, the site displays text in English._" Therefore, the values that we apply to the `messages.properties` file will be in English.
-8. In the `messages.properties` file, begin adding key-value pairs for the text used in the welcome page. Add the following content.
+
+[start=8]
+. In the `messages.properties` file, begin adding key-value pairs for the text used in the welcome page. Add the following content.
 
 [source,java]
 ----
@@ -202,17 +192,27 @@ fruit\ &amp;\ veg=fruit &amp; veg
 Comments are added using a number sign ('`#`'). Also, because the `fruit &amp; veg` category name contains spaces, it is necessary to escape the space characters using a backslash ('`\`') in order to apply the name as a resource bundle key. 
 
 We are now finished with the default resource bundle for the application's welcome page. Let's continue by creating resource bundles for the customer-specified languages.
-9. In the Projects window, expand the Source Packages node, then right-click the `resources` > `messages.properties` file node and choose Customize. The Customizer dialog opens.
-10. In the Customizer dialog, click the Add Locale button. In the New Locale dialog that displays, enter '`en`' in the Language Code combo box, then click OK. 
+
+[start=9]
+. In the Projects window, expand the Source Packages node, then right-click the `resources` > `messages.properties` file node and choose Customize. The Customizer dialog opens.
+
+[start=10]
+. In the Customizer dialog, click the Add Locale button. In the New Locale dialog that displays, enter '`en`' in the Language Code combo box, then click OK. 
 image::images/new-locale-dialog.png[title="The New Locale dialog enables you to add a new locale to an existing resource bundle base name"] 
 
 A _locale_ can be defined by both a language and a geographic region. The optional country code which can be used to specify the region can be applied to define formatting for dates, time, numbers, and currency. For more information, see the technical article, link:http://java.sun.com/developer/technicalArticles/J2SE/locale/[+Understanding Locale in the Java Platform+].
 
-11. Click the Add Locale button again, then enter '`cs`' in the Language Code combo box and click OK. The Customizer dialog displays as follows. 
+
+[start=11]
+. Click the Add Locale button again, then enter '`cs`' in the Language Code combo box and click OK. The Customizer dialog displays as follows. 
 image::images/customizer-dialog.png[title="The New Locale dialog enables you to add a new locale to an existing resource bundle base name"]
-12. Click Close. In the Projects window, note that your resource bundles look as follows. You can expand a resource bundle to view the keys it contains. 
+
+[start=12]
+. Click Close. In the Projects window, note that your resource bundles look as follows. You can expand a resource bundle to view the keys it contains. 
 image::images/projects-window.png[title="View resource bundles and the keys they contain in the Projects window"]
-13. Right-click any of the three resource bundles and choose Open. The Properties editor opens, enabling you to view and edit key-value pairs for all locales in a table layout. 
+
+[start=13]
+. Right-click any of the three resource bundles and choose Open. The Properties editor opens, enabling you to view and edit key-value pairs for all locales in a table layout. 
 [.feature]
 --
 image::images/properties-editor.png[role="left", link="images/properties-editor.png"]
@@ -221,7 +221,9 @@ image::images/properties-editor.png[role="left", link="images/properties-editor.
 Press Shift-Esc to maximize the window in the IDE.
 
 Note that when you add a new locale using the Customizer dialog, as you did for English and Czech in the previous steps, the keys and values of the default resource bundle are copied to the new locale.
-14. Modify the values for the Czech resource bundle. You can do this by _either_ clicking into the table cells for each row and typing your entries directly _or_ selecting the cell you want to edit and typing into the *Value* field located at the bottom of the Properties editor.
+
+[start=14]
+. Modify the values for the Czech resource bundle. You can do this by _either_ clicking into the table cells for each row and typing your entries directly _or_ selecting the cell you want to edit and typing into the *Value* field located at the bottom of the Properties editor.
 * *greeting:* `Vítejte v našem domácím on-line obchodě Affable Bean Green Grocer.`
 * *introText:* `Naše jedinečná dodávková služba Vám zajistí dopravu čerstvých organických produktů, mléčných výrobků, uzenin, pečiva a dalších delikates a zdravých výroků až ke dveřím.`
 * *dairy:* `mléčné výrobky`
@@ -231,7 +233,9 @@ Note that when you add a new locale using the Customizer dialog, as you did for 
 
 You can also add a comment to each key-value pair. Any text you enter into the *Comment* field in the Properties editor is added to the resource bundle text file above the key-value pair as a comment (i.e., following a '`#`' sign).
 
-15. Double-click the `messages_cs.properties` file node in the Projects window. Note that the text file has been updated according to your changes in the Properties editor.
+
+[start=15]
+. Double-click the `messages_cs.properties` file node in the Projects window. Note that the text file has been updated according to your changes in the Properties editor.
 
 [source,java]
 ----
@@ -272,8 +276,12 @@ image::images/add-context-parameter.png[title="Add context parameters under the 
 
 The `LocalizationContext` class belongs to the `javax.servlet.jsp.jstl.fmt` package. You can verify this by viewing the link:http://java.sun.com/products/jsp/jstl/1.1/docs/api/index.html[+JSTL 1.1 API Reference+] online.
 
-4. Click OK. The new context parameter is added to the table of existing context parameters under the General tab.
-5. Click the deployment descriptor's XML tab. Note that the following entry has been added to the file:
+
+[start=4]
+. Click OK. The new context parameter is added to the table of existing context parameters under the General tab.
+
+[start=5]
+. Click the deployment descriptor's XML tab. Note that the following entry has been added to the file:
 
 [source,xml]
 ----
@@ -304,7 +312,9 @@ In order to apply the localized text of resource bundles to your web pages, you 
     </div>
 </div>
 ----
-3. Add `<fmt:message>` tags for the four category names, but use the `${category.name}` expression as the value for the `key` attribute. Since the category name is also used as the value for the `<img>` tag's `alt` attribute, follow the same procedure. The page's right column will look as follows.
+
+[start=3]
+. Add `<fmt:message>` tags for the four category names, but use the `${category.name}` expression as the value for the `key` attribute. Since the category name is also used as the value for the `<img>` tag's `alt` attribute, follow the same procedure. The page's right column will look as follows.
 
 [source,html]
 ----
@@ -323,7 +333,9 @@ In order to apply the localized text of resource bundles to your web pages, you 
     </c:forEach>
 </div>
 ----
-4. Finally, ensure that you have the `fmt` tag library declared in the web page. Enter the following at the top of the file:
+
+[start=4]
+. Finally, ensure that you have the `fmt` tag library declared in the web page. Enter the following at the top of the file:
 
 [source,java]
 ----
@@ -381,12 +393,22 @@ Rather than stepping through all 16 scenarios, we'll demonstrate how to examine 
 
 1. In Firefox, choose Tools > Options (Firefox > Preferences on Mac). In the window that displays, click the Content tab. 
 image::images/firefox-content.png[title="Examine your browser's preferred languages"]
-2. Under the Languages heading, click Choose.
-3. Select any language that is currently listed in the provided text area, then click Remove. (You should remember your language list and reinstate languages after completing this tutorial.)
-4. Click the 'Select Language to Add' drop-down and select `Czech [cs]`. Then click the Add button. The Czech language is added to the text area. 
+
+[start=2]
+. Under the Languages heading, click Choose.
+
+[start=3]
+. Select any language that is currently listed in the provided text area, then click Remove. (You should remember your language list and reinstate languages after completing this tutorial.)
+
+[start=4]
+. Click the 'Select Language to Add' drop-down and select `Czech [cs]`. Then click the Add button. The Czech language is added to the text area. 
 image::images/firefox-languages.png[title="Specify your browser's preferred languages"]
-5. Click OK, then press Esc to close Firefox' Options window.
-6. Run the project ( image::images/run-project-btn.png[] ). When the welcome page opens in your browser, note that text is displayed in Czech. 
+
+[start=5]
+. Click OK, then press Esc to close Firefox' Options window.
+
+[start=6]
+. Run the project ( image::images/run-project-btn.png[] ). When the welcome page opens in your browser, note that text is displayed in Czech. 
 image::images/czech-text.png[title="The displayed language is determined by your browser's language preferences"]
 
 
@@ -406,7 +428,9 @@ Now that basic Czech-English language support is in place, continue by implement
 
 1. Use the Go to File dialog to open the `header` JSP fragment in the editor. Press Alt-Shift-O (Ctrl-Shift-O on Mac), then type '`h`' in the dialog and click OK. 
 image::images/go-to-file-dialog.png[title="Use the Go to File dialog to quickly open project resources in the editor"]
-2. In the `header.jspf` file, locate the first `<div class="headerWidget">` tag (line 56), and replace the `[ language toggle ]` placeholder text with the following HTML markup.
+
+[start=2]
+. In the `header.jspf` file, locate the first `<div class="headerWidget">` tag (line 56), and replace the `[ language toggle ]` placeholder text with the following HTML markup.
 
 [source,html]
 ----
@@ -423,10 +447,14 @@ This markup implements the language toggle's appearance when English is the disp
 
 Snapshot 8 includes the link:http://jquery.com/[+jQuery+] JavaScript library and takes advantage of various UI effects to enhance the appearance and behavior of the website. Aside from a link:http://plugins.jquery.com/project/validate[+jQuery plugin for client-side validation+] (discussed in the link:transaction.html#client[+previous tutorial unit+]), the snapshot implements an easing effect for category headings in the welcome page, as well as for category buttons in the category page. Configuration is included in `header.jspf` of the project snapshot. Rounded corners are implemented using CSS3's link:http://www.w3.org/TR/css3-background/#corners[+border-radius+] property (applied in `affablebean.css`).
 
-3. Run the project ( image::images/run-project-btn.png[] ) to see what the toggle looks like in the browser. 
+
+[start=3]
+. Run the project ( image::images/run-project-btn.png[] ) to see what the toggle looks like in the browser. 
 image::images/language-toggle.png[title="Run the project to view the language toggle"] 
 Currently, the language toggle appears as in the above image regardless of what language the page displays in. In the next step, you integrate JSTL logic into the toggle so that it renders according to the language displayed on the page.
-4. Modify the toggle implementation as follows.
+
+[start=4]
+. Modify the toggle implementation as follows.
 
 [source,html]
 ----
@@ -489,7 +517,9 @@ ${pageContext.request.locale.language}
 
 *Note:* The above implementation uses `<c:url>` tags to set up the toggle link. This is done in order to properly encode the request URL in the event that URL rewriting is used as a means for session tracking. Unit 8, link:manage-sessions.html#encodeUrl[+Managing Sessions+] provides a brief explanation of how the `<c:url>` tags can be used.
 
-5. Add a basic language test to the `header.jspf` file. This will enable us to check whether the toggle is properly rendering according to the client request's preferred language. Enter the following after the page's `<body>` tag.
+
+[start=5]
+. Add a basic language test to the `header.jspf` file. This will enable us to check whether the toggle is properly rendering according to the client request's preferred language. Enter the following after the page's `<body>` tag.
 
 [source,html]
 ----
@@ -504,8 +534,12 @@ ${pageContext.request.locale.language}
 
     <div id="main">
 ----
-6. Ensure that you have set Czech as your browser's preferred language. (If you are following this tutorial unit sequentially, you've already done this. If not, refer to the steps outlined above in <<test,Test Supported Languages>>.)
-7. Run the project ( image::images/run-project-btn.png[] ) and examine the application welcome page in the browser. 
+
+[start=6]
+. Ensure that you have set Czech as your browser's preferred language. (If you are following this tutorial unit sequentially, you've already done this. If not, refer to the steps outlined above in <<test,Test Supported Languages>>.)
+
+[start=7]
+. Run the project ( image::images/run-project-btn.png[] ) and examine the application welcome page in the browser. 
 image::images/language-test.png[title="Language toggle displays according to request's preferred language"] 
 If your browser's preferred language is set to Czech, you can note the following:
 * The test that we introduced in the previous step indicates that '`cs`' is the preferred language.
@@ -538,7 +572,9 @@ Our goal is to register the language choice, and then display both the page view
     String language = request.getParameter("language");*
 }
 ----
-3. Place the `language` parameter in the request scope. Add the following.
+
+[start=3]
+. Place the `language` parameter in the request scope. Add the following.
 
 [source,java]
 ----
@@ -553,7 +589,9 @@ Our goal is to register the language choice, and then display both the page view
     request.setAttribute("language", language);*
 }
 ----
-4. As a temporary measure, have the application forward the response to the `index.jsp` welcome page when the language toggle link is clicked. Add the following code.
+
+[start=4]
+. As a temporary measure, have the application forward the response to the `index.jsp` welcome page when the language toggle link is clicked. Add the following code.
 
 [source,java]
 ----
@@ -577,7 +615,9 @@ Our goal is to register the language choice, and then display both the page view
 }
 ----
 Naturally, forwarding the user to the welcome page regardless of what page he or she is on is not an ideal way to handle the language toggle's behavior. We'll return to this matter in the next sub-section, <<keepTrack,Enable the Application to Keep Track of the Originating Page View>>. For the meantime however, this will allow us to examine the results of the current language toggle implementation when running the project.
-5. Switch to the `header.jspf` fragment (If the file is already opened in the editor, press Ctrl-Tab and choose the file.) and apply the link:http://download-llnw.oracle.com/javaee/5/jstl/1.1/docs/tlddocs/fmt/setLocale.html[+`<fmt:setLocale>`+] tag to set the page language based on the new `language` variable. Add the following.
+
+[start=5]
+. Switch to the `header.jspf` fragment (If the file is already opened in the editor, press Ctrl-Tab and choose the file.) and apply the link:http://download-llnw.oracle.com/javaee/5/jstl/1.1/docs/tlddocs/fmt/setLocale.html[+`<fmt:setLocale>`+] tag to set the page language based on the new `language` variable. Add the following.
 
 [source,xml]
 ----
@@ -600,7 +640,9 @@ Since the `language` variable is only created when the user clicks the link in t
 
 You can read the EL expression `${!empty language}` as, "False if the `language` variable is null or an empty string." See the link:http://download-llnw.oracle.com/javaee/5/tutorial/doc/bnahq.html#bnaim[+Java EE 5 Tutorial: Examples of EL Expressions+] for other available examples.
 
-6. Modify the language toggle implementation so that if a value has been set by the `<fmt:setLocale>` tag, the toggle displays according to the language specified by that value. (You can determine this value using the `${sessionScope['javax.servlet.jsp.jstl.fmt.locale.session']}` expression.) 
+
+[start=6]
+. Modify the language toggle implementation so that if a value has been set by the `<fmt:setLocale>` tag, the toggle displays according to the language specified by that value. (You can determine this value using the `${sessionScope['javax.servlet.jsp.jstl.fmt.locale.session']}` expression.) 
 
 Enclose the current implementation within `<c:choose>` tags, and create logic similar to the current implementation in the event that the locale has been manually set. (Changes are displayed in *bold*.)
 
@@ -669,7 +711,9 @@ Enclose the current implementation within `<c:choose>` tags, and create logic si
 
 </div>
 ----
-7. Before examining the project in a browser, add another test that displays the value set by the `<fmt:setLocale>` tag. Add the following code beneath the test you created earlier.
+
+[start=7]
+. Before examining the project in a browser, add another test that displays the value set by the `<fmt:setLocale>` tag. Add the following code beneath the test you created earlier.
 
 [source,xml]
 ----
@@ -701,16 +745,24 @@ Numerous EL resolver classes exist for the purpose of resolving expressions. For
 
 For more information, refer to the Java EE 5 Tutorial: link:http://download-llnw.oracle.com/javaee/5/tutorial/doc/bnahq.html#bnaif[+Unified Expression Language: Resolving Expressions+].
 
-8. Run the project ( image::images/run-project-btn.png[] ) and examine the application welcome page in the browser. 
+
+[start=8]
+. Run the project ( image::images/run-project-btn.png[] ) and examine the application welcome page in the browser. 
 image::images/toggle-page1.png[title="Welcome page displays according to browser's preferred language"] 
 In the above image, the server identifies Czech (`cs`) as the browser's preferred language from the `Accept-Language` HTTP header. This is indicated from the first test. The page displays in Czech, and the language toggle enables the user to choose English. The second test remains blank as the `<fmt:setLocale>` tag has not yet been called.
-9. Click the toggle link for English. 
+
+[start=9]
+. Click the toggle link for English. 
 image::images/toggle-page2.png[title="Welcome page displays in English, according to toggle selection"] 
 When clicking the toggle link, the default Czech language is overridden by means of the `<fmt:setLocale>` tag implemented in the `header.jspf` file. Although the browser's preferred language remains Czech, you see that the page now displays according to the new language made available by the language toggle.
-10. Click the toggle link for Czech. 
+
+[start=10]
+. Click the toggle link for Czech. 
 image::images/toggle-page3.png[title="Welcome page displays in Czech, according to toggle selection"] 
 Changing the language back to the browser's preferred language works as expected, however note that the deciding factor is no longer the language detected from the `Accept-Language` HTTP header, but is the language specified from the `<fmt:setLocale>` tag.
-11. Before continuing, remove the tests you added to the `header.jspf` file. (Deleted code in *[.line-through]#strike-through#* text.)
+
+[start=11]
+. Before continuing, remove the tests you added to the `header.jspf` file. (Deleted code in *[.line-through]#strike-through#* text.)
 
 [source,html]
 ----
@@ -743,7 +795,9 @@ Begin this exercise with link:https://netbeans.org/projects/samples/downloads/do
 
 If you receive an error when running the project, revisit the link:setup.html[+setup instructions+], which describe how to prepare the database and establish connectivity between the IDE, GlassFish, and MySQL.
 
-3. Use link:http://download.oracle.com/docs/cd/E17802_01/products/products/jsp/jstl/1.1/docs/tlddocs/c/set.html[+`<c:set>`+] tags to set a session-scoped `view` attribute for each of the page views. Open each of the page views in the editor and add the following code to the top of each file.
+
+[start=3]
+. Use link:http://download.oracle.com/docs/cd/E17802_01/products/products/jsp/jstl/1.1/docs/tlddocs/c/set.html[+`<c:set>`+] tags to set a session-scoped `view` attribute for each of the page views. Open each of the page views in the editor and add the following code to the top of each file.
 
 
 ==== index.jsp
@@ -799,7 +853,9 @@ If you receive an error when running the project, revisit the link:setup.html[+s
 Based on customer-agreed <<impDeets,implementation details>>, we do not need to provide a means of switching languages on the confirmation page view. From a usability perspective, a user will have already selected his or her preferred language prior to checkout. From an implementation perspective, recall that we destroy the user session upon a successfully completed order. (Refer back to the final paragraph in link:manage-sessions.html[+Managing Sessions+], which describes how to apply the `invalidate` method to explicitly terminate a user session.) If the Affable Bean staff were to insist on allowing customers to view their orders bilingually, you would need to consider the following scenarios, dependent on whether you destroy the user session upon displaying the confirmation page:
 1. *Session destroyed:* Would be necessary to take extra measures to ensure that a `chooseLanguage` request from the confirmation page refers to the appropriate order, and can display customer-sensitive details in a secure fashion.
 2. *Session maintained:* Would risk enabling users to mistakenly place double orders on their shopping cart. Also, by not terminating user sessions when they are no longer needed, an unnecessary load may be placed on the server.
-4. Open the `ControllerServlet` in the editor. (If already opened, press Ctrl-Tab and choose the file.) In the opened file, locate the portion of the `doGet` method that handles the `chooseLanguage` request (line 126). 
+
+[start=4]
+. Open the `ControllerServlet` in the editor. (If already opened, press Ctrl-Tab and choose the file.) In the opened file, locate the portion of the `doGet` method that handles the `chooseLanguage` request (line 126). 
 
 Note that currently `chooseLanguage` requests are forwarded to the `index.jsp` welcome page.
 
@@ -824,7 +880,9 @@ Note that currently `chooseLanguage` requests are forwarded to the `index.jsp` w
     return;*
 }
 ----
-5. Use the `view` session attribute to forward the request back to the originating page view. Make the following changes (in *bold*).
+
+[start=5]
+. Use the `view` session attribute to forward the request back to the originating page view. Make the following changes (in *bold*).
 
 [source,java]
 ----
@@ -873,8 +931,12 @@ try {
     ex.printStackTrace();
 }
 ----
-6. Run the project ( image::images/run-project-btn.png[] ) to test it in the browser. When you navigate to the category, cart or checkout pages, switch languages using the language toggle. When you do so, you now remain within the same page view.
-7. In the browser, complete an order so that the application forwards you to the confirmation page. When you click the language toggle from the confirmation page, note that you are sent back to the website's welcome page. 
+
+[start=6]
+. Run the project ( image::images/run-project-btn.png[] ) to test it in the browser. When you navigate to the category, cart or checkout pages, switch languages using the language toggle. When you do so, you now remain within the same page view.
+
+[start=7]
+. In the browser, complete an order so that the application forwards you to the confirmation page. When you click the language toggle from the confirmation page, note that you are sent back to the website's welcome page. 
 
 Implementation-wise, you may consider this to be sufficient. However, the Affable Bean staff have explicitly asked you to remove the language toggle from this page view. One way to accomplish this is to perform a test to determine whether the request _servlet path_ contains '`/confirmation`'. 
 
@@ -914,15 +976,21 @@ Examine the above code snippet and note the following points:
 
 <%@taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 ----
-8. Run the project again and step through to the confirmation page. Note that the page no longer displays the language toggle. 
+
+[start=8]
+. Run the project again and step through to the confirmation page. Note that the page no longer displays the language toggle. 
 image::images/confirmation-page.png[title="Language toggle no longer displays in confirmation page"]
-9. In the browser, step through to the confirmation page but switch languages once along the way using the language toggle. Note that when you complete an order, the confirmation page inadvertently switches back to the originally displayed language. You may rightly identify the cause: upon a successfully completed order, the `ControllerServlet` destroys the user session and consequently the session-scoped locale that was set using the `<fmt:setLocale>` tag is also lost. 
+
+[start=9]
+. In the browser, step through to the confirmation page but switch languages once along the way using the language toggle. Note that when you complete an order, the confirmation page inadvertently switches back to the originally displayed language. You may rightly identify the cause: upon a successfully completed order, the `ControllerServlet` destroys the user session and consequently the session-scoped locale that was set using the `<fmt:setLocale>` tag is also lost. 
 
 To remedy this, open the `ControllerServlet` and locate the `invalidate()` method which is used to destroy user sessions (approximately line 259). 
 
 Use the editor's quick search facility: press Ctrl-F (⌘-F on Mac) and type in '`invalidate`'.
 
-10. Add code that extracts the session-scoped locale value prior to destroying the user session and resets the request-scoped `language` attribute to the locale value after the session has been destroyed. (Changes in *bold*.)
+
+[start=10]
+. Add code that extracts the session-scoped locale value prior to destroying the user session and resets the request-scoped `language` attribute to the locale value after the session has been destroyed. (Changes in *bold*.)
 
 [source,java]
 ----
@@ -957,7 +1025,9 @@ if (orderId != 0) {
     userPath = "/confirmation";
 }
 ----
-11. Run the project and again, step through to the confirmation page but switch languages once along the way using the language toggle. Note that when you complete an order, the confirmation page now displays in the language you selected.
+
+[start=11]
+. Run the project and again, step through to the confirmation page but switch languages once along the way using the language toggle. Note that when you complete an order, the confirmation page now displays in the language you selected.
 
 You have now successfully integrated language support into the `AffableBean` application according to customer specification. You've factored out all text from page views, placed it into resource bundles, and have applied JSTL's `fmt` tag library to use resource bundle content based on the user's preferred language. You also implemented a language toggle that enables users to switch between English and Czech, and override their browser's default language choice. Download and examine link:https://netbeans.org/projects/samples/downloads/download/Samples%252FJavaEE%252Fecommerce%252FAffableBean_snapshot10.zip[+snapshot 10+] to compare your work with the state of the project at the end of this tutorial unit.
 

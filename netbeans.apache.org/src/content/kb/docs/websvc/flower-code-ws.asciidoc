@@ -42,16 +42,15 @@ image::images/netbeans-stamp-80-74-73.png[title="Content on this page applies to
 3. => Coding and Testing the Web Service
 4. link:./flower_wsdl_schema.html[+ Modifying the Schema and WSDL Files to Pass Binary Data+]
 5. link:./flower_swing.html[+ Creating the Swing Client+]
+6. <<coding-ws,Coding the Web Service>>
+7. <<retrieve-jpeg-as-bytes,Get a JPEG File as an Array of Bytes>>
+8. <<read-bytes-as-image,Read an Array of Bytes as an Image>>
+9. <<implement-getflower,Implement getFlower>>
+10. <<create-byte-array-list,Create a List of Byte Arrays for All JPEG Files>>
+11. <<implement-getthumbnails,Implement getThumbnails>>
 
-
-1. <<coding-ws,Coding the Web Service>>
-
-1. <<retrieve-jpeg-as-bytes,Get a JPEG File as an Array of Bytes>>
-2. <<read-bytes-as-image,Read an Array of Bytes as an Image>>
-3. <<implement-getflower,Implement getFlower>>
-4. <<create-byte-array-list,Create a List of Byte Arrays for All JPEG Files>>
-5. <<implement-getthumbnails,Implement getThumbnails>>
-2. <<test-ws,Testing the Web Service>>
+[start=2]
+. <<test-ws,Testing the Web Service>>
 
 
 [[coding-ws]]
@@ -75,10 +74,16 @@ private byte[] getFlowerBytes(String name) throws IOException {
     return getBytes(resource);
 }
 ----
-2. A warning appears that the IDE cannot find the class  ``URL`` . Add an import statement for  ``link:http://download.oracle.com/javase/6/docs/api/java/net/URL.html[+java.net.URL+]`` , either manually or by pressing Ctrl-Shift-I (⌘-Shift-I on Mac).
-3. A new warning appears. The warning states that the IDE cannot find the  ``getBytes``  method. Left-click the warning icon and click the tip to create the  ``getBytes``  method.
+
+[start=2]
+. A warning appears that the IDE cannot find the class  ``URL`` . Add an import statement for  ``link:http://download.oracle.com/javase/6/docs/api/java/net/URL.html[+java.net.URL+]`` , either manually or by pressing Ctrl-Shift-I (⌘-Shift-I on Mac).
+
+[start=3]
+. A new warning appears. The warning states that the IDE cannot find the  ``getBytes``  method. Left-click the warning icon and click the tip to create the  ``getBytes``  method.
 image::images/create-method-tip.png[]
-4. The editor focuses on the  ``getBytes``  method you just created. Add the following code to the method. This code link:http://download.oracle.com/javase/6/docs/api/java/net/URL.html#openStream%28%29[+opens a connection to the URL+] you passed from the  ``getFlowerBytes``  method and returns an  ``link:http://download.oracle.com/javase/6/docs/api/java/io/InputStream.html[+InputStream+]`` . The code then reads the input stream 1024 bytes at a time, stores the bytes in a byte array buffer, and writes from the buffer to a  ``link:http://download.oracle.com/javase/6/docs/api/java/io/ByteArrayOutputStream.html[+ByteArrayOutputStream+]`` .
+
+[start=4]
+. The editor focuses on the  ``getBytes``  method you just created. Add the following code to the method. This code link:http://download.oracle.com/javase/6/docs/api/java/net/URL.html#openStream%28%29[+opens a connection to the URL+] you passed from the  ``getFlowerBytes``  method and returns an  ``link:http://download.oracle.com/javase/6/docs/api/java/io/InputStream.html[+InputStream+]`` . The code then reads the input stream 1024 bytes at a time, stores the bytes in a byte array buffer, and writes from the buffer to a  ``link:http://download.oracle.com/javase/6/docs/api/java/io/ByteArrayOutputStream.html[+ByteArrayOutputStream+]`` .
 
 [source,java]
 ----
@@ -93,7 +98,9 @@ private byte[] getBytes(URL resource) throws IOException {
     return bos.toByteArray();
 }
 ----
-5. Add import statements for  ``java.io.InputStream``  and  ``java.io.ByteArrayOutputStream`` .
+
+[start=5]
+. Add import statements for  ``java.io.InputStream``  and  ``java.io.ByteArrayOutputStream`` .
 
 
 [[read-bytes-as-image]]
@@ -109,42 +116,54 @@ In this section, you add a private method to the  ``FlowerService``  class body.
 private Image getImage(byte[] bytes, boolean isThumbnail) throws IOException {
     }
 ----
-2. In the  ``getImage``  method body, add a line that creates a  ``link:http://download.oracle.com/javase/6/docs/api/java/io/ByteArrayInputStream.html[+ByteArrayInputStream+]``  from the byte array that the method takes as a parameter.
+
+[start=2]
+. In the  ``getImage``  method body, add a line that creates a  ``link:http://download.oracle.com/javase/6/docs/api/java/io/ByteArrayInputStream.html[+ByteArrayInputStream+]``  from the byte array that the method takes as a parameter.
 
 [source,java]
 ----
 
 ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
 ----
-3. Add a line that creates an  ``Object``  from the  ``ByteArrayInputStream`` .
+
+[start=3]
+. Add a line that creates an  ``Object``  from the  ``ByteArrayInputStream`` .
 
 [source,java]
 ----
 
 Object source = bis;
 ----
-4. Add a line that creates an  ``link:http://download.oracle.com/javase/6/docs/api/javax/imageio/stream/ImageInputStream.html[+ImageInputStream+]``  from the generic  ``Object`` .
+
+[start=4]
+. Add a line that creates an  ``link:http://download.oracle.com/javase/6/docs/api/javax/imageio/stream/ImageInputStream.html[+ImageInputStream+]``  from the generic  ``Object`` .
 
 [source,java]
 ----
 
 ImageInputStream iis = ImageIO.createImageInputStream(source);
 ----
-5. Add a line that creates an  ``link:http://download.oracle.com/javase/6/docs/api/java/util/Iterator.html[+Iterator+]``  of all currently registered  ``link:http://download.oracle.com/javase/6/docs/api/javax/imageio/ImageReader.html[+ImageReader+]`` s that can decode JPEG files.
+
+[start=5]
+. Add a line that creates an  ``link:http://download.oracle.com/javase/6/docs/api/java/util/Iterator.html[+Iterator+]``  of all currently registered  ``link:http://download.oracle.com/javase/6/docs/api/javax/imageio/ImageReader.html[+ImageReader+]`` s that can decode JPEG files.
 
 [source,java]
 ----
 
 Iterator readers = ImageIO.getImageReadersByFormatName("jpeg");
 ----
-6. Add a line that creates an  ``ImageReader``  from the next element in the  ``Iterator`` .
+
+[start=6]
+. Add a line that creates an  ``ImageReader``  from the next element in the  ``Iterator`` .
 
 [source,java]
 ----
 
 ImageReader reader = (ImageReader) readers.next();
 ----
-7. Add lines that create default link:http://download.oracle.com/javase/6/docs/api/javax/imageio/IIOParam.html[+image read parameters+] but add 1-in-4 link:http://download.oracle.com/javase/6/docs/api/javax/imageio/IIOParam.html#setSourceSubsampling%28int,%20int,%20int,%20int%29[+subsampling+] to the image read parameters  if the  ``Image``  represents a thumbnail.
+
+[start=7]
+. Add lines that create default link:http://download.oracle.com/javase/6/docs/api/javax/imageio/IIOParam.html[+image read parameters+] but add 1-in-4 link:http://download.oracle.com/javase/6/docs/api/javax/imageio/IIOParam.html#setSourceSubsampling%28int,%20int,%20int,%20int%29[+subsampling+] to the image read parameters  if the  ``Image``  represents a thumbnail.
 
 [source,java]
 ----
@@ -154,7 +173,9 @@ if (isThumbnail) {
     param.setSourceSubsampling(4, 4, 0, 0);
 }
 ----
-8. Lastly, add code that uses the  ``ImageReader``  object to read the  ``ImageInputStream``  object and to return an  ``Image``  based on that object and the image read parameters.
+
+[start=8]
+. Lastly, add code that uses the  ``ImageReader``  object to read the  ``ImageInputStream``  object and to return an  ``Image``  based on that object and the image read parameters.
 
 [source,java]
 ----
@@ -162,7 +183,9 @@ if (isThumbnail) {
 reader.setInput(iis, true);
 return reader.read(0, param);
 ----
-9. Press Ctrl-Shift-I (⌘-Shift-I on MacOS). The Fix All Imports dialog opens. Accept the default suggestions of the Fix All Imports dialog and click OK. 
+
+[start=9]
+. Press Ctrl-Shift-I (⌘-Shift-I on MacOS). The Fix All Imports dialog opens. Accept the default suggestions of the Fix All Imports dialog and click OK. 
 image::images/fix-getimage-imports.png[]
 
 The  ``getImage``  method is now complete.
@@ -214,7 +237,9 @@ public Image getFlower(@WebParam(name = "name") String name) throws IOException 
 
 private static final String[] FLOWERS = {"aster", "honeysuckle", "rose", "sunflower"};
 ----
-2. Add a method that creates an  ``link:http://download.oracle.com/javase/6/docs/api/java/util/ArrayList.html[+ArrayList+]``  and adds a byte array for every flower to the  ``List`` .
+
+[start=2]
+. Add a method that creates an  ``link:http://download.oracle.com/javase/6/docs/api/java/util/ArrayList.html[+ArrayList+]``  and adds a byte array for every flower to the  ``List`` .
 
 [source,java]
 ----
@@ -228,7 +253,9 @@ private List allFlowers() throws IOException {
     return flowers;
 }
 ----
-3. Add import statements for  ``java.util.ArrayList``  and  ``java.util.List`` .
+
+[start=3]
+. Add import statements for  ``java.util.ArrayList``  and  ``java.util.List`` .
 
 
 [[implement-getthumbnails]]
@@ -334,13 +361,21 @@ Now that the web service is complete, you can deploy and test it.
 *Important:* The GlassFish Server Open Source Edition must be Version 3.1 or later.
 
 image::images/deployed-service.png[]
-2. Expand the project's Web Services node. Right-click the FlowerService and select Test Web Service. 
+
+[start=2]
+. Expand the project's Web Services node. Right-click the FlowerService and select Test Web Service. 
 image::images/test-ws-node.png[]
-3. The web service tester opens in your browser. Type "rose" in the  ``getFlower``  parameter field.
+
+[start=3]
+. The web service tester opens in your browser. Type "rose" in the  ``getFlower``  parameter field.
 image::images/ws-tester.png[]
-4. Press the  ``getFlower``  button. The IDE shows you information about the invocation in the browser. When you look at the "Method Returned", you see that it is garbled. You want to see an image, not a series of symbols. However, since  ``java.awt.Image``  is not a valid schema type, you need to manually configure the schema file to return binary image/jpeg data. You will do this in the next tutorial. 
+
+[start=4]
+. Press the  ``getFlower``  button. The IDE shows you information about the invocation in the browser. When you look at the "Method Returned", you see that it is garbled. You want to see an image, not a series of symbols. However, since  ``java.awt.Image``  is not a valid schema type, you need to manually configure the schema file to return binary image/jpeg data. You will do this in the next tutorial. 
 image::images/ws-tester-badschema.png[]
-5. 
+
+[start=5]
+. 
 
 == Next step:
 
