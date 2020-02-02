@@ -102,7 +102,9 @@
 <li><a href="#_Добавление_операции_getregionchart_zillow_к_сервлету">Добавление операции GetRegionChart Zillow к сервлету</a></li>
 <li><a href="#_Добавление_ключа_интерфейса_api_к_проекту">Добавление ключа интерфейса API к проекту</a></li>
 <li><a href="#_Модификация_сервлета_для_возвращения_графического_представления_диаграммы">Модификация сервлета для возвращения графического представления диаграммы</a></li>
-<li><a href="#_get">GET</a></li>
+<li><a href="#_Запуск_сервлета_региональной_диаграммы_zillow">Запуск сервлета региональной диаграммы Zillow</a></li>
+<li><a href="#_Дополнительные_упражнения">Дополнительные упражнения</a></li>
+<li><a href="#_Дополнительные_сведения">Дополнительные сведения</a></li>
 </ul>
 </div>
 <div id="preamble">
@@ -193,6 +195,10 @@
 <p>Щелкните правой кнопкой мыши узел проекта и выберите в меню "Создать" пункт "Сервлет". Откроется мастер создания сервлетов.
 image::images/new-zillow-servlet.png[title="Мастер создания сервлетов с ZillowRegionChartServlet"]</p>
 </li>
+</ol>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="6">
 <li>
 <p>Назовите сервлет ZillowRegionChartServlet. Создайте для него произвольный пакет, скажем zillow.regionchart. Сохраните все прочие параметры по умолчанию и нажмите кнопку Finish ("Готово").</p>
 </li>
@@ -224,9 +230,17 @@ image::images/new-zillow-servlet.png[title="Мастер создания сер
 <p>Откройте вкладку Services ("Службы") в среде IDE. Разверните узел Web Services ("Веб-службы"). Перейдите к операции Zillow GetRegionChart.
 image::images/z-llow-getregionchart.png[title="Вкладка 'Службы' с развернутыми узлами 'Веб-службы' и Zillow"]</p>
 </li>
+</ol>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="2">
 <li>
 <p>В редакторе, найдите метод processRequest в ZillowRegionChartServlet.java. Добавьте пустую строку в начале блока try. Перетащите операцию getRegionChart в блок try processRequest().</p>
 </li>
+</ol>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="3">
 <li>
 <p>Откроется диалоговое окно Customize GET SaaS ("Настройка GET для ПО как услуги"). Можно ввести реальные значения города, штата США и почтового индекса, либо оставить их значения неопределенными. (При оставлении неопределенных значений будет выдана диаграмма цен на дома для всей страны). Нажмите кнопку "ОК".</p>
 </li>
@@ -282,7 +296,7 @@ image::images/z-llow-getregionchart.png[title="Вкладка 'Службы' с 
 </div>
 </div>
 <div class="olist arabic">
-<ol class="arabic">
+<ol class="arabic" start="2">
 <li>
 <p>Переместите выдаваемую строку внутрь блока  <code>if</code>  в конце. Блок  <code>if</code>  теперь выглядит следующим образом:</p>
 </li>
@@ -298,11 +312,15 @@ image::images/z-llow-getregionchart.png[title="Вкладка 'Службы' с 
 </div>
 </div>
 <div class="olist arabic">
-<ol class="arabic">
+<ol class="arabic" start="3">
 <li>
 <p>Замените метод  <code>result.getDataAsString()</code>  в выводе на  <code>resultObj.getResponse().getUrl()</code> . С помощью автозавершения кода  <code>getResponse()</code>  можно выбирать из различных методов  <code>resultObj</code> , после чего использовать автозавершение кода для выбора  <code>getUrl()</code>  из методов  <code>getResponse</code> .
 image::images/zillow-getresponse-cc.png[title="В редакторе отображается завершение кода для методов resultObj"]</p>
 </li>
+</ol>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="4">
 <li>
 <p>Измените блок catch, чтобы он перехватывал  <code>JAXBException</code>  вместо  <code>Exception</code> . Также можно использовать метод  <code>Logger.getLogger(&#8230;&#8203;)</code>  вместо распечатки трассировки стека. Соответствующие классы нужно будет импортировать. Посмотрим, можно ли использовать автозавершение кода и действие контекстного меню Fix Imports ("Исправить импортированные") для воспроизведения следующего блока catch:</p>
 </li>
@@ -316,7 +334,7 @@ image::images/zillow-getresponse-cc.png[title="В редакторе отобр�
 </div>
 </div>
 <div class="olist arabic">
-<ol class="arabic">
+<ol class="arabic" start="5">
 <li>
 <p>Удалите закомментированный раздел вывода из родительского блока try в коде servlet.</p>
 </li>
@@ -348,121 +366,127 @@ import org.netbeans.saas.RestResponse;
 public class ZillowRegionChartServlet extends HttpServlet {
 
     /**
-     * Processes requests for both HTTP
+     * Processes requests for both HTTP GET and POST methods.
+     * @param request servlet request
+     * @param response servlet response
+     * @throws ServletException if a servlet-specific error occurs
+     * @throws IOException if an I/O error occurs
+     */
+    protected void processRequest(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        response.setContentType("text/html;charset=UTF-8");
+        PrintWriter out = response.getWriter();
+        try {
 
-[source,java]</code></pre>
+            try {
+                String unittype = "dollar";
+                String city = null;
+                String state = null;
+                String zIP = null;
+                String width = null;
+                String height = null;
+                String chartduration = null;
+
+                RestResponse result = ZillowRealEstateService.getRegionChart(
+                        unittype, city, state, zIP, width, height, chartduration);
+                if (result.getDataAsObject(
+                        zillow.realestateservice.regionchart.Regionchart.class) instanceof zillow.realestateservice.regionchart.Regionchart) {
+                    zillow.realestateservice.regionchart.Regionchart resultObj =
+                            result.getDataAsObject(
+                            zillow.realestateservice.regionchart.Regionchart.class);
+                    out.println("&lt;img src=\"" + resultObj.getResponse().getUrl() + "\" /&gt;");
+
+                }
+                //TODO - Uncomment the print Statement below to print result.
+
+            } catch (JAXBException ex) {
+                Logger.getLogger(ZillowRegionChartServlet.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        } finally {
+            out.close();
+        }
+    }</code></pre>
 </div>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_get">GET</h2>
+<h2 id="_Запуск_сервлета_региональной_диаграммы_zillow">Запуск сервлета региональной диаграммы Zillow</h2>
 <div class="sectionbody">
-<div class="literalblock">
+<div class="paragraph">
+<p>Простейший способ запуска сервлета – щелкнуть его правой кнопкой мыши в представлении Projects ("Проекты") и выбрать Run File ("Запустить файл"). Либо же щелкните правой кнопкой мыши узел Project ("Проект") и выберите Properties ("Свойства"). В дереве Properties ("Свойства") выберите Run. В поле Relative URL ("Относительный URL-адрес") введите /ZillowRegionChartServlet, как показано ниже. Нажмите кнопку OK и запустите проект.</p>
+</div>
+<div class="imageblock">
 <div class="content">
-<pre>and</pre>
+<img src="images/zillow-run-properties.png" alt="zillow run properties">
 </div>
+<div class="title">Figure 5. Диалоговое окно свойств для проекта ZillowRegionChart</div>
 </div>
-<div class="listingblock">
+<div class="paragraph">
+<p>При успешном запуске проекта откроется окно браузера с региональной диаграммой.</p>
+</div>
+<div class="imageblock">
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">POST</code></pre>
+<img src="images/zillow-chart.png" alt="zillow chart">
+</div>
+<div class="title">Figure 6. Диаграмма области Zillow</div>
 </div>
 </div>
-<div class="literalblock">
-<div class="content">
-<pre>methods.
-    * @param request servlet request
-    * @param response servlet response
-    * @throws ServletException if a servlet-specific error occurs
-    * @throws IOException if an I/O error occurs
-    */
-   protected void processRequest(HttpServletRequest request, HttpServletResponse response)
-           throws ServletException, IOException {
-       response.setContentType("text/html;charset=UTF-8");
-       PrintWriter out = response.getWriter();
-       try {</pre>
+</div>
+<div class="sect1">
+<h2 id="_Дополнительные_упражнения">Дополнительные упражнения</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Ниже приведены дополнительные мысли для исследования:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Испробуйте различные реальные значения городов, штатов и почтовых индексов. Запустите сервлет снова.</p>
+</li>
+<li>
+<p>Напишите клиент, позволяющий передать город, штат и почтовый индекс службе и получить соответствующую им региональную диаграмму.</p>
+</li>
+<li>
+<p>Используйте страницу JSP вместо объекта JAXB для возвращения диаграммы, как показано в этой <a href="http://netbeans.dzone.com/news/consuming-zillow-web-services-">статье на сайте NetBeans Zone</a>.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><a href="/about/contact_form.html?to=3&amp;subject=Feedback:%20Using%20SaaS%20Zillow">Отправить отзыв по этому учебному курсу</a></p>
 </div>
 </div>
-<div class="literalblock">
-<div class="content">
-<pre>try {
-    String unittype = "dollar";
-    String city = null;
-    String state = null;
-    String zIP = null;
-    String width = null;
-    String height = null;
-    String chartduration = null;</pre>
 </div>
+<div class="sect1">
+<h2 id="_Дополнительные_сведения">Дополнительные сведения</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Дополнительные сведения об использовании IDE NetBeans для разработки веб-служб RESTful, приложений модели "программное обеспечение как услуга" и других приложений Java EE см. следующие ресурсы:</p>
 </div>
-<div class="literalblock">
-<div class="content">
-<pre>RestResponse result = ZillowRealEstateService.getRegionChart(
-        unittype, city, state, zIP, width, height, chartduration);
-if (result.getDataAsObject(
-        zillow.realestateservice.regionchart.Regionchart.class) instanceof zillow.realestateservice.regionchart.Regionchart) {
-    zillow.realestateservice.regionchart.Regionchart resultObj =
-            result.getDataAsObject(
-            zillow.realestateservice.regionchart.Regionchart.class);
-    out.println("&lt;img src=\"" + resultObj.getResponse().getUrl() + "\" /&gt;");</pre>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="./rest.html">Начало работы с веб-службами RESTful</a>;</p>
+</li>
+<li>
+<p><a href="http://wiki.netbeans.org/JavaClientForDeliciousUsingNetBeans">Создание клиента Java для веб-служб RESTful del.icio.us</a>, Амит Камар Саха (Amit Kumar Saha)</p>
+</li>
+<li>
+<p><a href="http://wiki.netbeans.org/RESTRemoting">Вики-страница NetBeans: заглушка клиента веб-службы RESTful</a></p>
+</li>
+<li>
+<p><a href="../../trails/web.html">Учебная карта по веб-службам</a></p>
+</li>
+<li>
+<p>Youtube: <a href="http://www.youtube.com/watch?v=cDdfVMro99s">Веб-службы RESTful, сборка и развертывание (Часть 1)</a></p>
+</li>
+<li>
+<p>Youtube: <a href="http://www.youtube.com/watch?v=_c-CCVy4_Eo">Тестирование RESTful NetBeans и вызов ресурсов RESTful (Часть 2)</a></p>
+</li>
+</ul>
 </div>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>}
-//TODO - Uncomment the print Statement below to print result.</pre>
-</div>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>        } catch (JAXBException ex) {
-            Logger.getLogger(ZillowRegionChartServlet.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    } finally {
-        out.close();
-    }
-}</pre>
-</div>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>== Запуск сервлета региональной диаграммы Zillow
-
-Простейший способ запуска сервлета – щелкнуть его правой кнопкой мыши в представлении Projects ("Проекты") и выбрать Run File ("Запустить файл"). Либо же щелкните правой кнопкой мыши узел Project ("Проект") и выберите Properties ("Свойства"). В дереве Properties ("Свойства") выберите Run. В поле Relative URL ("Относительный URL-адрес") введите /ZillowRegionChartServlet, как показано ниже. Нажмите кнопку OK и запустите проект.
-
-image::images/zillow-run-properties.png[title="Диалоговое окно свойств для проекта ZillowRegionChart"]
-
-При успешном запуске проекта откроется окно браузера с региональной диаграммой.
-
-image::images/zillow-chart.png[title="Диаграмма области Zillow"]
-
-
-== Дополнительные упражнения
-
-Ниже приведены дополнительные мысли для исследования:
-
-* Испробуйте различные реальные значения городов, штатов и почтовых индексов. Запустите сервлет снова.
-* Напишите клиент, позволяющий передать город, штат и почтовый индекс службе и получить соответствующую им региональную диаграмму.
-* Используйте страницу JSP вместо объекта JAXB для возвращения диаграммы, как показано в этой link:http://netbeans.dzone.com/news/consuming-zillow-web-services-[+статье на сайте NetBeans Zone+].
-
-
-link:/about/contact_form.html?to=3&amp;subject=Feedback:%20Using%20SaaS%20Zillow[+Отправить отзыв по этому учебному курсу+]
-
-
-
-== Дополнительные сведения
-
-Дополнительные сведения об использовании IDE NetBeans для разработки веб-служб RESTful, приложений модели "программное обеспечение как услуга" и других приложений Java EE см. следующие ресурсы:
-
-* link:./rest.html[+Начало работы с веб-службами RESTful+];
-* link:http://wiki.netbeans.org/JavaClientForDeliciousUsingNetBeans[+Создание клиента Java для веб-служб RESTful del.icio.us+], Амит Камар Саха (Amit Kumar Saha)
-* link:http://wiki.netbeans.org/RESTRemoting[+Вики-страница NetBeans: заглушка клиента веб-службы RESTful+]
-* link:../../trails/web.html[+Учебная карта по веб-службам+]
-* Youtube: link:http://www.youtube.com/watch?v=cDdfVMro99s[+Веб-службы RESTful, сборка и развертывание (Часть 1)+]
-* Youtube: link:http://www.youtube.com/watch?v=_c-CCVy4_Eo[+Тестирование RESTful NetBeans и вызов ресурсов RESTful (Часть 2)+]
-
-Для отправки комментариев и предложений, получения поддержки и новостей о последних разработках, связанных с Java EE IDE NetBeans link:../../../community/lists/top.html[+присоединяйтесь к списку рассылки nbj2ee@netbeans.org+].</pre>
-</div>
+<div class="paragraph">
+<p>Для отправки комментариев и предложений, получения поддержки и новостей о последних разработках, связанных с Java EE IDE NetBeans <a href="../../../community/lists/top.html">присоединяйтесь к списку рассылки nbj2ee@netbeans.org</a>.</p>
 </div>
 </div>
 </div>

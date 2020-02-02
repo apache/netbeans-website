@@ -102,7 +102,9 @@
 <li><a href="#_zillow_getregionchart操作のサーブレットへの追加">Zillow GetRegionChart操作のサーブレットへの追加</a></li>
 <li><a href="#_apiキーのプロジェクトへの追加">APIキーのプロジェクトへの追加</a></li>
 <li><a href="#_チャート画像を返すためのサーブレットの変更">チャート画像を返すためのサーブレットの変更</a></li>
-<li><a href="#_get">GET</a></li>
+<li><a href="#_zillow地域チャート_サーブレットの実行">Zillow地域チャート・サーブレットの実行</a></li>
+<li><a href="#_その他の課題">その他の課題</a></li>
+<li><a href="#_関連項目">関連項目</a></li>
 </ul>
 </div>
 <div id="preamble">
@@ -193,6 +195,10 @@
 <p>プロジェクト・ノードを右クリックし、「新規」&gt;「サーブレット」を選択します。新規サーブレット・ウィザードが開きます。
 image::images/new-zillow-servlet.png[title="ZillowRegionChartServletに関する新規サーブレット・ウィザード"]</p>
 </li>
+</ol>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="6">
 <li>
 <p>サーブレットにZillowRegionChartServletという名前を付けます。これにzillow.regionchartなどの任意のパッケージを作成します。他はすべてデフォルト値のままにし、「終了」をクリックします。</p>
 </li>
@@ -224,9 +230,17 @@ image::images/new-zillow-servlet.png[title="ZillowRegionChartServletに関する
 <p>IDEで「サービス」タブを開きます。「Webサービス」ノードを展開します。Zillow GetRegionChart操作に移動します。
 image::images/z-llow-getregionchart.png[title="展開された「Webサービスノードと「Zillow」ノードが表示された「サービス」タブ"]</p>
 </li>
+</ol>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="2">
 <li>
 <p>このエディタでZillowRegionChartServlet.javaにprocessRequestメソッドを配置します。tryブロックの始めに空の行を追加します。getRegionChart操作をprocessRequest()のtryブロックにドラッグ・アンド・ドロップします。</p>
 </li>
+</ol>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="3">
 <li>
 <p>「GET SaaSをカスタマイズ」ダイアログ・ボックスが開きます。実在の米国の市、州および郵便番号の値を入力するか、これらをnullのままにします。値をnullのままにした場合、国全体の平均住宅価格のチャートになります。「OK」をクリックします。</p>
 </li>
@@ -282,7 +296,7 @@ image::images/z-llow-getregionchart.png[title="展開された「Webサービス
 </div>
 </div>
 <div class="olist arabic">
-<ol class="arabic">
+<ol class="arabic" start="2">
 <li>
 <p>出力行を末尾の <code>if</code> ブロックの内部に移動します。これで、 <code>if</code> ブロックは次のようになります。</p>
 </li>
@@ -298,11 +312,15 @@ image::images/z-llow-getregionchart.png[title="展開された「Webサービス
 </div>
 </div>
 <div class="olist arabic">
-<ol class="arabic">
+<ol class="arabic" start="3">
 <li>
 <p>この出力の <code>result.getDataAsString()</code> メソッドを <code>resultObj.getResponse().getUrl()</code> に置き換えます。次に示すように、コード補完を使用して <code>getResponse()</code> を別の <code>resultObj</code> メソッドから選択し、コード補完を使用して <code>getUrl()</code> を <code>getResponse</code> メソッドから選択します。
 image::images/zillow-getresponse-cc.png[title="resultObjメソッドのコード補完が表示されているエディタ"]</p>
 </li>
+</ol>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="4">
 <li>
 <p>catchブロックを <code>Exception</code> から <code>JAXBException</code> に変更します。スタック・トレースを出力するかわりに、 <code>Logger.getLogger(&#8230;&#8203;)</code> メソッドを使用することもできます。関連クラスをインポートします。コード補完と「インポートを修正」コンテキスト・メニュー・アクションを使用し、次のcatchブロックを再生成できるかどうかを確認します。</p>
 </li>
@@ -316,7 +334,7 @@ image::images/zillow-getresponse-cc.png[title="resultObjメソッドのコード
 </div>
 </div>
 <div class="olist arabic">
-<ol class="arabic">
+<ol class="arabic" start="5">
 <li>
 <p>サーブレット・コードの親tryブロックから、出力セクションのコメントを解除します。</p>
 </li>
@@ -348,121 +366,127 @@ import org.netbeans.saas.RestResponse;
 public class ZillowRegionChartServlet extends HttpServlet {
 
     /**
-     * Processes requests for both HTTP
+     * Processes requests for both HTTP GET and POST methods.
+     * @param request servlet request
+     * @param response servlet response
+     * @throws ServletException if a servlet-specific error occurs
+     * @throws IOException if an I/O error occurs
+     */
+    protected void processRequest(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        response.setContentType("text/html;charset=UTF-8");
+        PrintWriter out = response.getWriter();
+        try {
 
-[source,java]</code></pre>
+            try {
+                String unittype = "dollar";
+                String city = null;
+                String state = null;
+                String zIP = null;
+                String width = null;
+                String height = null;
+                String chartduration = null;
+
+                RestResponse result = ZillowRealEstateService.getRegionChart(
+                        unittype, city, state, zIP, width, height, chartduration);
+                if (result.getDataAsObject(
+                        zillow.realestateservice.regionchart.Regionchart.class) instanceof zillow.realestateservice.regionchart.Regionchart) {
+                    zillow.realestateservice.regionchart.Regionchart resultObj =
+                            result.getDataAsObject(
+                            zillow.realestateservice.regionchart.Regionchart.class);
+                    out.println("&lt;img src=\"" + resultObj.getResponse().getUrl() + "\" /&gt;");
+
+                }
+                //TODO - Uncomment the print Statement below to print result.
+
+            } catch (JAXBException ex) {
+                Logger.getLogger(ZillowRegionChartServlet.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        } finally {
+            out.close();
+        }
+    }</code></pre>
 </div>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_get">GET</h2>
+<h2 id="_zillow地域チャート_サーブレットの実行">Zillow地域チャート・サーブレットの実行</h2>
 <div class="sectionbody">
-<div class="literalblock">
+<div class="paragraph">
+<p>サーブレットを実行する最も簡易な方法は、サーブレットを「プロジェクト」ビューで右クリックし、「ファイルを実行」を選択することです。または、プロジェクト・ノードを右クリックし、「プロパティ」を選択します。「プロパティ」ツリーで「実行」を選択します。次に示すように、「相対URL」フィールドに「/ZillowRegionChartServlet」と入力します。「OK」をクリックし、プロジェクトを実行します。</p>
+</div>
+<div class="imageblock">
 <div class="content">
-<pre>and</pre>
+<img src="images/zillow-run-properties.png" alt="zillow run properties">
 </div>
+<div class="title">Figure 5. ZillowRegionChartプロジェクトの「プロジェクト」ダイアログ</div>
 </div>
-<div class="listingblock">
+<div class="paragraph">
+<p>プロジェクトの実行に成功すると、地域チャートが表示されたブラウザ・ウィンドウが開きます。</p>
+</div>
+<div class="imageblock">
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">POST</code></pre>
+<img src="images/zillow-chart.png" alt="zillow chart">
+</div>
+<div class="title">Figure 6. Zillow地域チャート</div>
 </div>
 </div>
-<div class="literalblock">
-<div class="content">
-<pre>methods.
-    * @param request servlet request
-    * @param response servlet response
-    * @throws ServletException if a servlet-specific error occurs
-    * @throws IOException if an I/O error occurs
-    */
-   protected void processRequest(HttpServletRequest request, HttpServletResponse response)
-           throws ServletException, IOException {
-       response.setContentType("text/html;charset=UTF-8");
-       PrintWriter out = response.getWriter();
-       try {</pre>
+</div>
+<div class="sect1">
+<h2 id="_その他の課題">その他の課題</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>有益なアイデアをいくつか紹介します。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>実在する別の市、州および郵便番号の値を試します。サーブレットを再実行します。</p>
+</li>
+<li>
+<p>市、州および郵便番号をサービスに渡し、一致する地域のチャートを返すクライアントを記述します。</p>
+</li>
+<li>
+<p>この<a href="http://netbeans.dzone.com/news/consuming-zillow-web-services-">NetBeans Zoneの記事</a>に示すように、JAXBオブジェクトのかわりにJSPページを使用してチャートを返します。</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><a href="/about/contact_form.html?to=3&amp;subject=Feedback:%20Using%20SaaS%20Zillow">このチュートリアルに関するご意見をお寄せください</a></p>
 </div>
 </div>
-<div class="literalblock">
-<div class="content">
-<pre>try {
-    String unittype = "dollar";
-    String city = null;
-    String state = null;
-    String zIP = null;
-    String width = null;
-    String height = null;
-    String chartduration = null;</pre>
 </div>
+<div class="sect1">
+<h2 id="_関連項目">関連項目</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>NetBeans IDEを使用してRESTful Webサービス、SaaS、およびその他のJava EEアプリケーションを開発する方法の詳細は、次のリソースを参照してください。</p>
 </div>
-<div class="literalblock">
-<div class="content">
-<pre>RestResponse result = ZillowRealEstateService.getRegionChart(
-        unittype, city, state, zIP, width, height, chartduration);
-if (result.getDataAsObject(
-        zillow.realestateservice.regionchart.Regionchart.class) instanceof zillow.realestateservice.regionchart.Regionchart) {
-    zillow.realestateservice.regionchart.Regionchart resultObj =
-            result.getDataAsObject(
-            zillow.realestateservice.regionchart.Regionchart.class);
-    out.println("&lt;img src=\"" + resultObj.getResponse().getUrl() + "\" /&gt;");</pre>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="./rest.html">RESTful Webサービスについて</a></p>
+</li>
+<li>
+<p><a href="http://wiki.netbeans.org/JavaClientForDeliciousUsingNetBeans">Creating a Java Client for del.icio.us RESTful Web Services</a>、Amit Kumar Saha著</p>
+</li>
+<li>
+<p><a href="http://wiki.netbeans.org/RESTRemoting">NetBeans Wiki: RESTful Webサービス・クライアント・スタブ</a></p>
+</li>
+<li>
+<p><a href="../../trails/web.html">Webサービスの学習</a></p>
+</li>
+<li>
+<p>YouTube: <a href="http://www.youtube.com/watch?v=cDdfVMro99s">RESTful Web Services, Building and Deploying (Part 1)</a></p>
+</li>
+<li>
+<p>YouTube: <a href="http://www.youtube.com/watch?v=_c-CCVy4_Eo">NetBeans RESTful Testing and Invoking RESTful Resources (Part 2)</a></p>
+</li>
+</ul>
 </div>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>}
-//TODO - Uncomment the print Statement below to print result.</pre>
-</div>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>        } catch (JAXBException ex) {
-            Logger.getLogger(ZillowRegionChartServlet.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    } finally {
-        out.close();
-    }
-}</pre>
-</div>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>== Zillow地域チャート・サーブレットの実行
-
-サーブレットを実行する最も簡易な方法は、サーブレットを「プロジェクト」ビューで右クリックし、「ファイルを実行」を選択することです。または、プロジェクト・ノードを右クリックし、「プロパティ」を選択します。「プロパティ」ツリーで「実行」を選択します。次に示すように、「相対URL」フィールドに「/ZillowRegionChartServlet」と入力します。「OK」をクリックし、プロジェクトを実行します。
-
-image::images/zillow-run-properties.png[title="ZillowRegionChartプロジェクトの「プロジェクト」ダイアログ"]
-
-プロジェクトの実行に成功すると、地域チャートが表示されたブラウザ・ウィンドウが開きます。
-
-image::images/zillow-chart.png[title="Zillow地域チャート"]
-
-
-== その他の課題
-
-有益なアイデアをいくつか紹介します。
-
-* 実在する別の市、州および郵便番号の値を試します。サーブレットを再実行します。
-* 市、州および郵便番号をサービスに渡し、一致する地域のチャートを返すクライアントを記述します。
-* このlink:http://netbeans.dzone.com/news/consuming-zillow-web-services-[+NetBeans Zoneの記事+]に示すように、JAXBオブジェクトのかわりにJSPページを使用してチャートを返します。
-
-
-link:/about/contact_form.html?to=3&amp;subject=Feedback:%20Using%20SaaS%20Zillow[+このチュートリアルに関するご意見をお寄せください+]
-
-
-
-== 関連項目
-
-NetBeans IDEを使用してRESTful Webサービス、SaaS、およびその他のJava EEアプリケーションを開発する方法の詳細は、次のリソースを参照してください。
-
-* link:./rest.html[+RESTful Webサービスについて+]
-* link:http://wiki.netbeans.org/JavaClientForDeliciousUsingNetBeans[+Creating a Java Client for del.icio.us RESTful Web Services+]、Amit Kumar Saha著
-* link:http://wiki.netbeans.org/RESTRemoting[+NetBeans Wiki: RESTful Webサービス・クライアント・スタブ+]
-* link:../../trails/web.html[+Webサービスの学習+]
-* YouTube: link:http://www.youtube.com/watch?v=cDdfVMro99s[+RESTful Web Services, Building and Deploying (Part 1)+]
-* YouTube: link:http://www.youtube.com/watch?v=_c-CCVy4_Eo[+NetBeans RESTful Testing and Invoking RESTful Resources (Part 2)+]
-
-link:../../../community/lists/top.html[+nbj2ee@netbeans.orgメーリング・リスト+]に登録することによって、NetBeans IDE Java EE開発機能に関するご意見やご提案を送信したり、サポートを受けたり、最新の開発情報を入手したりできます。</pre>
-</div>
+<div class="paragraph">
+<p><a href="../../../community/lists/top.html">nbj2ee@netbeans.orgメーリング・リスト</a>に登録することによって、NetBeans IDE Java EE開発機能に関するご意見やご提案を送信したり、サポートを受けたり、最新の開発情報を入手したりできます。</p>
 </div>
 </div>
 </div>

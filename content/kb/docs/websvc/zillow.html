@@ -102,7 +102,9 @@
 <li><a href="#_adding_the_zillow_getregionchart_operation_to_the_servlet">Adding the Zillow GetRegionChart Operation to the Servlet</a></li>
 <li><a href="#_adding_the_api_key_to_the_project">Adding the API Key to the Project</a></li>
 <li><a href="#_modifying_the_servlet_to_return_the_chart_graphic">Modifying the Servlet to Return the Chart Graphic</a></li>
-<li><a href="#_get">GET</a></li>
+<li><a href="#_running_the_zillow_region_chart_servlet">Running the Zillow Region Chart Servlet</a></li>
+<li><a href="#_more_exercises">More Exercises</a></li>
+<li><a href="#_see_also">See Also</a></li>
 </ul>
 </div>
 <div id="preamble">
@@ -193,6 +195,10 @@
 <p>Right-click the project node and choose New &gt; Servlet. The New Servlet wizard opens.
 image::images/new-zillow-servlet.png[title="New Servlet wizard with ZillowRegionChartServlet"]</p>
 </li>
+</ol>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="6">
 <li>
 <p>Name the servlet ZillowRegionChartServlet. Create an arbitrary package for it, such as zillow.regionchart. Keep all other defaults and click Finish.</p>
 </li>
@@ -224,9 +230,17 @@ image::images/new-zillow-servlet.png[title="New Servlet wizard with ZillowRegion
 <p>Open the Services tab in the IDE. Expand the Web Services node. Navigate to the Zillow GetRegionChart operation.
 image::images/z-llow-getregionchart.png[title="Services tab with expanded Web Services and Zillow nodes"]</p>
 </li>
+</ol>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="2">
 <li>
 <p>In the editor, locate the processRequest method in ZillowRegionChartServlet.java. Add an empty line at the beginning of the try block. Drag and drop the getRegionChart operation into the try block of processRequest().</p>
 </li>
+</ol>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="3">
 <li>
 <p>The Customize GET SaaS dialog box opens. You can enter real US city, state and zip code values or leave them null. (If you leave null values, you will get a chart of average house prices for the entire country.) Click OK.</p>
 </li>
@@ -282,7 +296,7 @@ image::images/z-llow-getregionchart.png[title="Services tab with expanded Web Se
 </div>
 </div>
 <div class="olist arabic">
-<ol class="arabic">
+<ol class="arabic" start="2">
 <li>
 <p>Move the output line to inside the  <code>if</code>  block, at the end. The  <code>if</code>  block now looks like this:</p>
 </li>
@@ -298,11 +312,15 @@ image::images/z-llow-getregionchart.png[title="Services tab with expanded Web Se
 </div>
 </div>
 <div class="olist arabic">
-<ol class="arabic">
+<ol class="arabic" start="3">
 <li>
 <p>Replace the  <code>result.getDataAsString()</code>  method in the output with  <code>resultObj.getResponse().getUrl()</code> . You can use code completion to select  <code>getResponse()</code>  from the different  <code>resultObj</code>  methods, as shown below, and then use code completion to select  <code>getUrl()</code>  from the  <code>getResponse</code>  methods.
 image::images/zillow-getresponse-cc.png[title="Editor showing code completion for resultObj methods"]</p>
 </li>
+</ol>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="4">
 <li>
 <p>Change the catch block to catch  <code>JAXBException</code>  instead of  <code>Exception</code> . You can also use a  <code>Logger.getLogger(&#8230;&#8203;)</code>  method instead of printing a stack trace. You will have to import the relevant classes. See if you can use code completion and the Fix Imports context menu action to reproduce the following catch block:</p>
 </li>
@@ -316,7 +334,7 @@ image::images/zillow-getresponse-cc.png[title="Editor showing code completion fo
 </div>
 </div>
 <div class="olist arabic">
-<ol class="arabic">
+<ol class="arabic" start="5">
 <li>
 <p>Remove the commented-out output section from the parent try block in the servlet code.</p>
 </li>
@@ -348,121 +366,127 @@ import org.netbeans.saas.RestResponse;
 public class ZillowRegionChartServlet extends HttpServlet {
 
     /**
-     * Processes requests for both HTTP
+     * Processes requests for both HTTP GET and POST methods.
+     * @param request servlet request
+     * @param response servlet response
+     * @throws ServletException if a servlet-specific error occurs
+     * @throws IOException if an I/O error occurs
+     */
+    protected void processRequest(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        response.setContentType("text/html;charset=UTF-8");
+        PrintWriter out = response.getWriter();
+        try {
 
-[source,java]</code></pre>
+            try {
+                String unittype = "dollar";
+                String city = null;
+                String state = null;
+                String zIP = null;
+                String width = null;
+                String height = null;
+                String chartduration = null;
+
+                RestResponse result = ZillowRealEstateService.getRegionChart(
+                        unittype, city, state, zIP, width, height, chartduration);
+                if (result.getDataAsObject(
+                        zillow.realestateservice.regionchart.Regionchart.class) instanceof zillow.realestateservice.regionchart.Regionchart) {
+                    zillow.realestateservice.regionchart.Regionchart resultObj =
+                            result.getDataAsObject(
+                            zillow.realestateservice.regionchart.Regionchart.class);
+                    out.println("&lt;img src=\"" + resultObj.getResponse().getUrl() + "\" /&gt;");
+
+                }
+                //TODO - Uncomment the print Statement below to print result.
+
+            } catch (JAXBException ex) {
+                Logger.getLogger(ZillowRegionChartServlet.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        } finally {
+            out.close();
+        }
+    }</code></pre>
 </div>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_get">GET</h2>
+<h2 id="_running_the_zillow_region_chart_servlet">Running the Zillow Region Chart Servlet</h2>
 <div class="sectionbody">
-<div class="literalblock">
+<div class="paragraph">
+<p>The simplest way to run the servlet is to right-click the servlet in the Projects view and select Run File. Alternatively, right-click the Project node and select Properties. In the Properties tree, select Run. In the Relative URL field, type /ZillowRegionChartServlet, as shown below. Click OK, and then run the project.</p>
+</div>
+<div class="imageblock">
 <div class="content">
-<pre>and</pre>
+<img src="images/zillow-run-properties.png" alt="zillow run properties">
 </div>
+<div class="title">Figure 5. Properties dialog for ZillowRegionChart project</div>
 </div>
-<div class="listingblock">
+<div class="paragraph">
+<p>When you successfully run the project, a browser window opens showing the Region Chart.</p>
+</div>
+<div class="imageblock">
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">POST</code></pre>
+<img src="images/zillow-chart.png" alt="zillow chart">
+</div>
+<div class="title">Figure 6. Zillow region chart</div>
 </div>
 </div>
-<div class="literalblock">
-<div class="content">
-<pre>methods.
-    * @param request servlet request
-    * @param response servlet response
-    * @throws ServletException if a servlet-specific error occurs
-    * @throws IOException if an I/O error occurs
-    */
-   protected void processRequest(HttpServletRequest request, HttpServletResponse response)
-           throws ServletException, IOException {
-       response.setContentType("text/html;charset=UTF-8");
-       PrintWriter out = response.getWriter();
-       try {</pre>
+</div>
+<div class="sect1">
+<h2 id="_more_exercises">More Exercises</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Here are a few more ideas for you to explore:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Try different real values for city, state and ZIP code. Run the servlet again.</p>
+</li>
+<li>
+<p>Write a client that would let you pass city, state and ZIP to the service and would return the matching Region Chart.</p>
+</li>
+<li>
+<p>Use a JSP page instead of JAXB Object to return the chart, as shown in this <a href="http://netbeans.dzone.com/news/consuming-zillow-web-services-">NetBeans Zone article</a>.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><a href="/about/contact_form.html?to=3&amp;subject=Feedback:%20Using%20SaaS%20Zillow">Send Feedback on This Tutorial</a></p>
 </div>
 </div>
-<div class="literalblock">
-<div class="content">
-<pre>try {
-    String unittype = "dollar";
-    String city = null;
-    String state = null;
-    String zIP = null;
-    String width = null;
-    String height = null;
-    String chartduration = null;</pre>
 </div>
+<div class="sect1">
+<h2 id="_see_also">See Also</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>For more information about using NetBeans IDE to develop RESTful web services, SaaS, and other Java EE applications, see the following resources:</p>
 </div>
-<div class="literalblock">
-<div class="content">
-<pre>RestResponse result = ZillowRealEstateService.getRegionChart(
-        unittype, city, state, zIP, width, height, chartduration);
-if (result.getDataAsObject(
-        zillow.realestateservice.regionchart.Regionchart.class) instanceof zillow.realestateservice.regionchart.Regionchart) {
-    zillow.realestateservice.regionchart.Regionchart resultObj =
-            result.getDataAsObject(
-            zillow.realestateservice.regionchart.Regionchart.class);
-    out.println("&lt;img src=\"" + resultObj.getResponse().getUrl() + "\" /&gt;");</pre>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="./rest.html">Getting Started with RESTful Web Sevices</a></p>
+</li>
+<li>
+<p><a href="http://wiki.netbeans.org/JavaClientForDeliciousUsingNetBeans">Creating a Java Client for del.icio.us RESTful Web Services</a>, by Amit Kumar Saha</p>
+</li>
+<li>
+<p><a href="http://wiki.netbeans.org/RESTRemoting">NetBeans Wiki: RESTful Web Service Client Stub</a></p>
+</li>
+<li>
+<p><a href="../../trails/web.html">Web Services Learning Trail</a></p>
+</li>
+<li>
+<p>YouTube: <a href="http://www.youtube.com/watch?v=cDdfVMro99s">RESTful Web Services, Building and Deploying (Part 1)</a></p>
+</li>
+<li>
+<p>YouTube: <a href="http://www.youtube.com/watch?v=_c-CCVy4_Eo">NetBeans RESTful Testing and Invoking RESTful Resources (Part 2)</a></p>
+</li>
+</ul>
 </div>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>}
-//TODO - Uncomment the print Statement below to print result.</pre>
-</div>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>        } catch (JAXBException ex) {
-            Logger.getLogger(ZillowRegionChartServlet.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    } finally {
-        out.close();
-    }
-}</pre>
-</div>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>== Running the Zillow Region Chart Servlet
-
-The simplest way to run the servlet is to right-click the servlet in the Projects view and select Run File. Alternatively, right-click the Project node and select Properties. In the Properties tree, select Run. In the Relative URL field, type /ZillowRegionChartServlet, as shown below. Click OK, and then run the project.
-
-image::images/zillow-run-properties.png[title="Properties dialog for ZillowRegionChart project"]
-
-When you successfully run the project, a browser window opens showing the Region Chart.
-
-image::images/zillow-chart.png[title="Zillow region chart"]
-
-
-== More Exercises
-
-Here are a few more ideas for you to explore:
-
-* Try different real values for city, state and ZIP code. Run the servlet again.
-* Write a client that would let you pass city, state and ZIP to the service and would return the matching Region Chart.
-* Use a JSP page instead of JAXB Object to return the chart, as shown in this link:http://netbeans.dzone.com/news/consuming-zillow-web-services-[+NetBeans Zone article+].
-
-
-link:/about/contact_form.html?to=3&amp;subject=Feedback:%20Using%20SaaS%20Zillow[+Send Feedback on This Tutorial+]
-
-
-
-== See Also
-
-For more information about using NetBeans IDE to develop RESTful web services, SaaS, and other Java EE applications, see the following resources:
-
-* link:./rest.html[+Getting Started with RESTful Web Sevices+]
-* link:http://wiki.netbeans.org/JavaClientForDeliciousUsingNetBeans[+Creating a Java Client for del.icio.us RESTful Web Services+], by Amit Kumar Saha
-* link:http://wiki.netbeans.org/RESTRemoting[+NetBeans Wiki: RESTful Web Service Client Stub+]
-* link:../../trails/web.html[+Web Services Learning Trail+]
-* YouTube: link:http://www.youtube.com/watch?v=cDdfVMro99s[+RESTful Web Services, Building and Deploying (Part 1)+]
-* YouTube: link:http://www.youtube.com/watch?v=_c-CCVy4_Eo[+NetBeans RESTful Testing and Invoking RESTful Resources (Part 2)+]
-
-To send comments and suggestions, get support, and keep informed about the latest developments on the NetBeans IDE Java EE development features, link:../../../community/lists/top.html[+join the nbj2ee@netbeans.org mailing list+].</pre>
-</div>
+<div class="paragraph">
+<p>To send comments and suggestions, get support, and keep informed about the latest developments on the NetBeans IDE Java EE development features, <a href="../../../community/lists/top.html">join the nbj2ee@netbeans.org mailing list</a>.</p>
 </div>
 </div>
 </div>
