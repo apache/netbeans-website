@@ -1,0 +1,434 @@
+////
+     Licensed to the Apache Software Foundation (ASF) under one
+     or more contributor license agreements.  See the NOTICE file
+     distributed with this work for additional information
+     regarding copyright ownership.  The ASF licenses this file
+     to you under the Apache License, Version 2.0 (the
+     "License"); you may not use this file except in compliance
+     with the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing,
+     software distributed under the License is distributed on an
+     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+     KIND, either express or implied.  See the License for the
+     specific language governing permissions and limitations
+     under the License.
+////
+
+= Java Declarative Hints Language
+:jbake-type: page
+:jbake-tags: main
+:jbake-status: published
+:keywords: Apache NetBeans, Jackpot
+:icons: font
+:description: Java Declarative Hints Language
+:source-highlighter: pygments
+
+== Basic Structure
+
+The rules file consists of any number of transformation rules.
+The rule is defined as follows:
+[source,java]
+----
+     <pattern>
+ => <fix-pattern>
+ => <fix-pattern>
+ ;;
+----
+
+Each occurrence of `<pattern>` in the source code can be rewritten to one of the `<fix-pattern>` s. For example, the following transformation rule:
+[source,java]
+----
+    $1 == null
+ => null == $1
+ ;;
+----
+
+will rewrite the following code:
+[source,java]
+----
+ if (a == null) {
+    System.err.println("a is null");
+ }
+----
+to:
+[source,java]
+----
+ if (null == a) {
+     System.err.println("a is null");
+ }
+----
+
+Note: `$1` is a variable, explained in the <<variables>> section.
+
+Note: batch refactoring will typically use only the first applicable fix patterns of each applicable rule.
+
+== Patterns
+
+The pattern is a Java expression, statement or several statements.
+All references to classes in the pattern need to be resolvable, i.e. either fully qualified names need to be used, or the custom import section must be used (see <<custom-imports>>).
+
+TODO: equivalence - static elements are checked only against themselves, blocks with
+one statement considered equivalent to single statement.
+
+Note: variable declaration is a Java statement.
+
+[[variables]]
+== Variables
+
+Variables start with the dollar sign (`$`). In the pattern, first occurrences of a variable is bound to the actual sub-tree that appears in the code. Second and following occurrences of the variable the actual sub-tree is verified against the subtree bound to the variable. The pattern occurs in the text only if the actual sub-tree matches the sub-tree bound to the variable. In the fix pattern, all occurrences of the variables are replaced with the tree(s) bound to the respective variables.
+
+The forms of the variables are:
+
+`$[a-zA-Z0-1_]+`::
+any expression
+`$[a-zA-Z0-1_]+;`::
+any statement
+`$[a-zA-Z0-1_]+$`::
+any number of sub-trees (except statements - see next definition)
+`$[a-zA-Z0-1_]+$;`::
+any number of statements
+`$_`::
+for patterns undefined, for fixes and conditions automatically bound to the current matched region
+`$$[a-zA-Z0-1_]+`::
+reserved -- do not use
+
+=== Repeating Variables
+
+The same variable can appear multiple times in the pattern. The pattern will match if and only if all parts of the subject tree that correspond to the variable occurrences are "the same". Two trees are "the same", if they have the same structure and each of the two corresponding tree node refers to the same element. Exceptions:
+* single statement and a block with single statement are equivalent provided the statements are equivalent
+* implicit "this." may be omitted
+
+So, for example, the following pattern will match all assignments that read and write to the same variable:
+[source,java]
+----
+ $var = $var
+----
+
+So for example:
+[source,java]
+----
+ public class Test {
+     private int i;
+
+     public void t(Test other) {
+         i = i; //will match the pattern
+         this.i = i; //will match the pattern
+         i = this.i; //will match the pattern
+         i = other.i; //will NOT match the pattern
+     }
+ }
+----
+
+=== Multi Variables
+
+==== Expressions
+
+`$&lt;name>$` will match any number of expressions, e.g.
+[source,java]
+----
+ new java.lang.String($args$)
+----
+will match any of the String's constructor. Can be be mixed with the single-expression variables, e.g.:
+[source,java]
+----
+ new java.lang.String($charArray, $rest$) :: $charArray instanceof char[]
+----
+will match both the `String(char[])` and `String(char[], int, int)` constructors.
+
+==== Statements and Members
+
+`$&lt;name>$;` will match any number of statements or class members. The semicolon is needed so that the pattern is not ambiguous. The pattern parser might sometimes recover from the missing semicolon, but omitting it is strongly discouraged for statement/members.
+
+==== Caveats
+
+In general, a given code may match pattern with multi variables multiple times with different assignments of subtrees to the multi variables. For example, consider pattern:
+[source,java]
+----
+ $preceding$;
+ $lock.lock();
+ $intervening$;
+ $lock.unlock();
+ $trailing$;
+----
+and code:
+[source,java]
+----
+ lock.lock();
+ System.err.println("1");
+ lock.unlock();
+ lock.lock();
+ System.err.println("2");
+ lock.unlock();
+----
+
+There are two possible matches, one with empty `$preceding$;` and one with empty `$trailing$;` multi variables. But the current engine cannot currently report both of these matches, only the first one.
+
+=== Modifiers
+
+A special form to express any modifiers is `$mods$`. Annotations generally belong into the modifiers. E.g.:
+[source,java]
+----
+ $mods$ $type $name;
+----
+will match any of:
+[source,java]
+----
+ private int I;
+ private static int I;
+ @Deprecated private static int I;
+----
+
+There are many caveats to the modifiers, one cannot currently express that the modifiers must contain a specific annotation, specific modifier (can be expressed using conditions), etc. Only "any modifiers" is supported.
+
+=== Patterns with Multiple Statements
+
+It is possible to express a pattern that consists of several consecutive statements, e.g.:
+[source,java]
+----
+    java.lang.System.err.print($whatever$);
+    java.lang.System.err.println();
+ => java.lang.System.err.println($whatever$);
+ ;;
+----
+
+will convert:
+[source,java]
+----
+ private void t() {
+     System.err.println("This is an example:");
+     System.err.print("Hello, world!");
+     System.err.println();
+     System.err.println("All done.");
+ }
+----
+to
+[source,java]
+----
+ private void t() {
+     System.err.println("This is an example:");
+     System.err.println("Hello, world!");
+     System.err.println("All done.");
+ }
+----
+
+Note that if intervening statements are allowed, they need to be specified explicitly using `$&lt;name>`. For example, the above pattern won't match this:
+[source,java]
+----
+ private void t() {
+     System.err.println("This is an example:");
+     System.err.print("Hello, world!");
+     printHelp();
+     System.err.println();
+     System.err.println("All done.");
+ }
+----
+
+To allow intervening statements:
+[source,java]
+----
+ $document.readLock();
+ $statementsUnderLock$;
+ $document.readUnlock(); :: $document instanceof javax.swing.text.AbstractDocument
+ =>
+ $document.readLock();
+ try {
+     $statementsUnderLock$;
+ } finally {
+     $document.readUnlock();
+ }
+ ;;
+----
+which will match and rewrite:
+[source,java]
+----
+ private void t(AbstractDocument doc) {
+     doc.readLock();
+     System.err.println("Under the lock!");
+     doc.readUnlock();
+ }
+----
+
+=== Zero-or-one
+
+If some part of the tree is optional, the multi-expression or multi statement variable can be used to express that the pattern should match whether or not that optional part is present. For example:
+[source,java]
+----
+ if ($cond) $then;
+ else $else$;
+----
+will match both:
+[source,java]
+----
+ if (true) {
+     System.err.println("foo bar");
+ }
+----
+and
+[source,java]
+----
+ if (true) {
+     System.err.println("foo bar");
+ } else {
+     System.err.println("bar foo");
+ }
+----
+
+Can be also used to express an optional variable initializer:
+[source,java]
+----
+ $modifiers$ $variableType $name = $init$;
+----
+
+== Conditions
+
+Conditions are specified after `::`, their result can be negated using `!` and result of multiple conditions can be and-ed using `&&`. Conditions can appear both on the whole rule, in which case the rule will only match if the expression will evaluate to true, or on fixes, in which case the fix will noly be shown if the expression will evaluate to true. There is no "or" currently. Specifying multiple fixes or multiple rules works as an implicit "or".
+
+=== Language Conditions
+
+The conditions defined directly by the language are:
+* `instanceof`: which allows to specify a type of an expression variable. Only expressions assignable to the given type will be bound to the specified variable.
+* `otherwise`: valid only on the "fixes". Will evaluate to true if no fix above was used. E.g. (note the constant matching - will match only if the string literal in the subject code will match the literal given in the pattern):
+[source,java]
+----
+    $str.equals("")
+ => $str.isEmpty() :: sourceVersionGE(SourceVersion.RELEASE_6)
+ => $str.length() == 0 :: otherwise
+ ;;
+----
+will rewrite `var.equals("")` to `var.isEmpty()` for source levels >= 1.6, but to `var.length() == 0` in all other cases.
+
+=== Standard Conditions
+
+Other standard conditions are defined in link:https://github.com/apache/netbeans/blob/master/java/java.hints.declarative/src/org/netbeans/modules/java/hints/declarative/conditionapi/DefaultRuleUtilities.java[DefaultRuleUtilities]. The notable ones are:
+
+* `matchesAny(variable, one-or-more-patterns)` true if and only if at least one of the given patterns matches the tree bound to the given variable
+* `containsAny(variable, one-or-more-patterns)` true if and only if at least one of the given patterns matches the tree bound to the given variable, or any of its subtrees
+* `matchesWithBind(variable, one-patterns)` similar to `matchesAny`, but if the pattern matches, any free variables inside it will be bound as if it was specified as a normal pattern/rule.
+* `matches(one-patterns)` do not use - semi-deprecated. Use `matchesAny($_, the-pattern)` instead.
+
+Note: Special variable `$_` represents the whole matching region.
+
+=== Custom Conditions
+
+TBD
+
+== Display Names and Localization
+
+TBD
+
+[[custom-imports]]
+== Custom Imports
+
+== Notable Patterns
+
+=== Catch Pattern
+
+This:
+[source,java]
+----
+ try {
+     $statements$;
+ } catch $catches$
+   finally {
+   $finally$;
+ }
+----
+will match any resource-less try statement with finally block, with or without catch clauses. To find a specific catch clause:
+[source,java]
+----
+ try {
+     $statements$;
+ } catch $precedingCatches$
+   catch (NullPointerException ex) {
+   $code$;
+ } catch $trailingCatches$
+   finally {
+   $finally$;
+ }
+----
+
+There is currently no form to express optional finally section (i.e. two patterns are required, one with and one without finally).
+
+=== Full Variable
+
+[source,java]
+----
+ $modifiers$ $type $name = $init$;
+----
+
+=== Full Method
+
+For methods with or without type parameters and with body:
+[source,java]
+----
+ $modifiers$ <$typeParams$> $returnType $name($args$) throws $thrown$ {
+     $bodyStatements$;
+ }
+----
+
+For methods with or without type parameters and without body and without default value:
+[source,java]
+----
+ $modifiers$ <$typeParams$> $returnType $name($args$) throws $thrown$;
+----
+
+Note 1: this should work for annotation attribute methods with and without default value, but it does not work currently:
+[source,java]
+----
+$modifiers$ $returnType $name() default $def$;
+----
+
+=== Full Class
+
+For classes without type parameters:
+[source,java]
+----
+ $modifiers$ class $name extends $superClass$ implements $superInterfaces$ {
+     $members$;
+ }
+----
+
+== Options
+
+Various options can be specified inside `&lt;!...>` block. The currently recognized options are:
+
+* `error` (on fixes): report the given error through the standard refactoring means to the user (e.g. in Inspect and Transform). Example:
+[source,java]
+----
+    System.err.println("Hello, world!");
+ => <!error='Cannot convert'>
+ ;;
+----
+* `warning` (on fixes): as `error` but produces refactoring's warning instead of an error
+* `hint` (on hints): define a explicit ID for the hint. If missing, an ID will be inferred from the file name
+* `description` (on hints): a longer description of the hint. Will appear in the Tools/Options.
+* `hint-category` (on hints): the hint category into which the hint should be assigned in Tools/Options and Inspect&Transform. Most hints should not specify this.
+* `suppress-warnings` (on hints): keys for @SuppressWarnings, which will automatically suppress the given hint. Can specify more keys, separated with ','. An empty key has a special meaning: the keys before the empty key will be offered to the user for inclusion in the source code, while the after the empty key will not. All the keys (except the empty one) will suppress the warning.
+* `ensure-dependency` (on hints or files): will ensure that the current module/project will have the specified dependency. Format for specifying the dependency is currently not specified. Do not use unless you know what you are doing.
+
+== Known Bugs
+
+Multi statement pattern involving modifiers variable do not currently work properly. For example:
+[source,java]
+----
+ $mods$ $type $name;
+ $name = $init;
+----
+does not work.
+
+There is a bug that this:
+[source,java]
+----
+ if ($cond) $then;
+ else $else$;
+=>
+ if (!$cond) $then;
+ else $else$;
+;;
+----
+does not work properly.
+
+`otherwise` condition cannot be negated.
