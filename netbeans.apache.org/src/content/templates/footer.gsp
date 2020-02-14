@@ -47,6 +47,7 @@
                 <% /* See https://www.apache.org/foundation/marks/pmcs#navigation */ %>
                 <h1><a href="/about/index.html">About</a></h1>
                 <ul>
+                    <li><a href="https://netbeans.apache.org/community/who.html">Who's Who</a></li>
                     <li><a href="https://www.apache.org/foundation/thanks.html">Thanks</a></li>
                     <li><a href="https://www.apache.org/foundation/sponsorship.html">Sponsorship</a></li>
                     <li><a href="https://www.apache.org/security/">Security</a></li>
