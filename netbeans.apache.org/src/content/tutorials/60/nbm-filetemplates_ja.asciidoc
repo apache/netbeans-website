@@ -1,0 +1,502 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= NetBeans ファイルテンプレートモジュールのチュートリアル
+:jbake-type: platform-tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:icons: font
+:experimental:
+:description: NetBeans ファイルテンプレートモジュールのチュートリアル - Apache NetBeans
+:keywords: Apache NetBeans Platform, Platform Tutorials, NetBeans ファイルテンプレートモジュールのチュートリアル
+
+このチュートリアルでは、ファイルテンプレートを含むモジュールの作成方法について学習します。ユーザーが IDE にモジュールをインストールすると、「新規ファイル」ウィザードでファイルテンプレートを使用できるようになります。テンプレートを含むモジュールがあれば、テンプレートの共有が容易になります。IDE でバイナリを作成してほかのユーザーが利用できるようにすると、ほかのユーザーはプラグインマネージャーを通じてそれをインストールできます。
+
+ファイルテンプレートは、テンプレートファイル、HTML の説明ファイル、およびアイコンで構成されます。HTML の説明ファイルは、「新規ファイル」ウィザードでテンプレートに関する情報を表示します。アイコンは、テンプレートを識別するもので、「新規ファイル」ウィザードのほかのテンプレートと区別するためのものです。このチュートリアルでは、既存のファイルテンプレートの内容を空のファイルにコピーすることによって新しいファイルテンプレートを作成します。そのあとで、「新規ファイル」ウィザード用の説明ファイルと識別用アイコンを設定したら、テンプレート、HTML の説明ファイル、およびアイコンを NetBeans 構成ファイルに登録します。構成ファイルは、 ``layer.xml``  ファイルです。
+
+
+
+image::images/netbeans-stamp60-61.gif[title="このページの内容は NetBeans IDE 6.1 が対象です"]
+
+
+*このチュートリアルを行うには、次の表に示すソフトウェアおよびリソースが必要です。*
+
+|===
+|ソフトウェアまたはリソース |必須バージョン 
+
+|NetBeans IDE | link:https://netbeans.apache.org/download/index.html[version 6.1] または
+version 6.0 
+
+|Java Developer Kit (JDK) | link:https://www.oracle.com/technetwork/java/javase/downloads/index.html[version 6] または
+version 5 
+|===
+
+トラブルシューティングのために、 link:http://plugins.netbeans.org/PluginPortal/faces/PluginDetailPage.jsp?pluginid=3755[完了したサンプルをダウンロード]してソースを調べることもできます (任意)。
+
+
+== FreeMarker について
+
+NetBeans IDE 6.0 以降では、ファイルテンプレートの定義に、任意に  link:http://freemarker.org/[FreeMarker] テンプレート言語を使用できます。IDE にバンドルされているテンプレートのいくつかは、この方法で定義されています。たとえば、Java クラステンプレートは次のように定義されています。
+
+
+[source,xml]
+----
+
+<#assign licenseFirst = "/*">
+<#assign licensePrefix = " * ">
+<#assign licenseLast = " */">
+<#include "../Licenses/license-${project.license}.txt">
+
+<#if package?? &amp;&amp; package != "">
+package ${package};
+
+</#if>
+/**
+ *
+ * @author ${user}
+ */
+public class ${name} {
+
+}
+----
+
+FreeMarker を使用する利点は、このテンプレートに見られるように、if、elseif、else やループコンストラクトのような_指令_を使用して、テンプレートに_論理_を追加できることです。FreeMarker テンプレート言語についての詳細は、『 link:http://freemarker.org/docs/index.html[FreeMarker Manual]』、特に「 link:http://freemarker.org/docs/dgui_template_directives.html[Directives]」の章を参照してください。このチュートリアルでは、特に、ファイルテンプレートに FreeMarker を取り入れるために必要な手順について学習します。
+
+
+==  モジュールプロジェクトの作成
+
+はじめに、「新規モジュールプロジェクト」ウィザードで、新規モジュール用にすべて最小要件でソースの構造を作成します。
+
+
+[start=1]
+1. 「ファイル」>「新規プロジェクト」(Ctrl-Shift-N) を選択します。「カテゴリ」で「NetBeans モジュール」を選択します。「プロジェクト」で「モジュールプロジェクト」を選択し、「次へ」をクリックします。
+
+
+[start=2]
+1. 「名前と場所」パネルで、「プロジェクト名」に「 ``AdditionalFileTemplates`` 」と入力します。「プロジェクトの場所」を使用コンピュータ上の任意のディレクトリに変更します。「スタンドアロンモジュール」ラジオボタンと「主プロジェクトとして設定」チェックボックスは選択されたままにします。「次へ」をクリックします。
+
+
+[start=3]
+1. 「基本モジュール構成」パネルで、「コード名ベース」の  ``yourorghere``  を  ``myorg``  に置き換え、コード名ベース全体を  ``org.myorg.additionalfiletemplates``  にします。デフォルトのモジュール表示名に空白文字を追加し、 ``Additional File Templates``  に変更します。「ローカライズ版バンドル」と「XML レイヤー」の場所はそのままにしておきます。これらは  ``org/myorg/additionalfiletemplates``  という名前のパッケージに格納されます。「完了」をクリックします。
+
+IDE によって  ``Additional File Templates``  プロジェクトが作成されます。このプロジェクトには、ソースや、プロジェクトの Ant 構築スクリプトなどのプロジェクトメタデータがすべて含まれます。IDE でプロジェクトが開きます。「プロジェクト」ウィンドウ (Ctrl-1) で、プロジェクトの論理構造を表示できます。また、「ファイル」ウィンドウ (Ctrl-2) で、プロジェクトのファイル構造を表示できます。たとえば、「プロジェクト」ウィンドウは次のように表示されます。
+
+
+image::images/initial-projects-window-60.png[] 
+
+
+== ファイルテンプレートの作成
+
+ファイルテンプレートは、テンプレートファイル、HTML の説明ファイル、およびアイコンで構成されます。新しくファイルテンプレートを作成する簡単な方法は、既存のファイルテンプレートの内容を空のファイルにコピーする方法です。そのあと「新規ファイル」ウィザードの説明ファイルおよび識別用アイコンを設定したら、 ``layer.xml``  ファイルにテンプレートを登録する準備ができます。
+
+
+=== テンプレートファイルの作成
+
+
+[start=1]
+1.  ``Additional File Templates``  ノードを右クリックし、「新規」>「その他」を選択します。「新規ファイル」ウィザードの「カテゴリ」で「その他」を、「ファイルの種類」で「HTML」を選択します。「次へ」をクリックします。
+
+
+[start=2]
+1. 「ファイル名」に「 ``Description`` 」と入力します。「参照」をクリックし、 ``src/org/myorg/additionalfiletemplates``  を参照します。「フォルダを選択」をクリックします。「完了」をクリックします。
+
+ソースエディタに  ``HTML.html``  という新しい HTML ファイルが開きます。このファイルには、次に示すような標準的な HTML ファイルの内容が含まれています。
+
+
+[source,html]
+----
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <title></title>
+  </head>
+  <body>
+  
+  </body>
+</html>
+----
+
+
+[start=3]
+1. 必要に応じて HTML ファイルに変更を加えます。必要な場合は、次の事前定義された変数を追加できます。
+
+* ${date} は現在の日付を挿入します。形式は、「Feb 16, 2008」のようになります。
+* ${encoding} は UTF-8 のようなデフォルトのエンコーディングを挿入します。
+* ${name} はファイルの名前を挿入します。
+* ${nameAndExt} はファイルの名前を拡張子付きで挿入します。
+* ${package} はファイルが作成されたパッケージの名前を挿入します。
+* ${time} は現在の時刻を挿入します。形式は、「7:37:58 PM」のようになります。
+* ${user} はユーザー名を挿入します。
+
+NOTE: ユーザーは「ツール」メニューの「テンプレートマネージャー」で、これらの変数の値を設定できるようになります。ユーザーは、最後の「ユーザー構成プロパティー」までスクロールします。そのノードの中にある  ``user.properties``  ファイルに、前述の値を設定すると、システムが提供する値に対してオーバーライドできます。ただし、前述の変数のデフォルト値はうまく機能するため、一般的にはそのようにすることはありません。
+
+事前定義の変数のほかに、モジュールを使用して、ユーザーに追加の変数を提供することができます。これについては、このチュートリアルのあとのほうで説明します。次に示すのは FreeMarker 指令の全リストですが、これらもテンプレートに論理を追加するために使用できます。
+
+* #assign
+* #else
+* #elseif
+* #end
+* #foreach
+* #if
+* #include
+* #list
+* #macro
+* #parse
+* #set
+* #stop
+
+一例として、Java クラステンプレートの定義を次に示します。
+
+
+[source,xml]
+----
+
+<#assign licenseFirst = "/*">
+<#assign licensePrefix = " * ">
+<#assign licenseLast = " */">
+<#include "../Licenses/license-${project.license}.txt">
+
+<#if package?? &amp;&amp; package != "">
+package ${package};
+
+</#if>
+/**
+ *
+ * @author ${user}
+ */
+public class ${name} {
+
+}
+----
+
+#assign 指令についての詳細は、「<<license,プロジェクトライセンスの供与>>」を参照してください。FreeMarker テンプレート言語についての詳細は、『 link:http://freemarker.org/docs/index.html[FreeMarker Manual]』、特に「 link:http://freemarker.org/docs/dgui_template_directives.html[Directives]」の章を参照してください。
+
+
+=== 説明ファイルの作成
+
+
+[start=1]
+1.  ``org.myorg.additionalfiletemplates``  ノードを右クリックし、「新規」>「その他」を選択します。「カテゴリ」で「その他」を選択します。「ファイルの種類」で「HTML ファイル」を選択します。「次へ」をクリックします。「ファイル名」に「 ``HTML`` 」と入力します。「参照」をクリックし、 ``src/org/myorg/additionalfiletemplates``  を参照します。「フォルダを選択」をクリックします。「完了」をクリックします。
+
+ソースエディタに空の HTML ファイルが開き、「プロジェクト」ウィンドウにそのノードが表示されます。
+
+
+[start=2]
+1. 次のように  ``<body>``  タグの間に「 ``Creates new HTML file`` 」と入力します
+
+[source,html]
+----
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+   <head>
+      <title></title>
+   </head>
+   <body>
+      Creates new HTML file.
+   </body>
+</html>
+----
+
+
+=== アイコンの取得
+
+アイコンは、「新規ファイル」ウィザードでファイルテンプレートと同時に表示されます。ファイルテンプレートを識別し、ほかのファイルテンプレートと区別します。アイコンの大きさは、16×16 ピクセルにします。
+
+アイコンに  ``icon.png``  と名前を付け、 ``org.myorg.additionalfiletemplates``  パッケージに追加します。
+
+「プロジェクト」ウィンドウは次のようになります。
+
+
+image::images/final-projects-window-60.png[]
+
+
+
+== ファイルテンプレートの登録
+
+ファイルテンプレートを作成したら、NetBeans システムのファイルシステムに登録してください。 ``layer.xml``  ファイルはこの目的のために作成されます。
+
+
+[start=1]
+1.  ``layer.xml``  ファイルの  ``<filesystem>``  タグの間に、次のエントリを追加します。
+
+[source,xml]
+----
+
+<folder name="Templates">
+        
+        <folder name="Other">
+            
+            <attr name="SystemFileSystem.localizingBundle" stringvalue="org.myorg.additionalfiletemplates.Bundle"/>
+            <file name="MyHTML.html" url="HTML.html">
+                <attr name="template" boolvalue="true"/>
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="org.myorg.additionalfiletemplates.Bundle"/>
+                <attr name="SystemFileSystem.icon" urlvalue="nbresloc:/org/myorg/additionalfiletemplates/icon.png"/>
+                <attr name="templateWizardURL" urlvalue="nbresloc:/org/myorg/additionalfiletemplates/Description.html"/>
+                *<!--FreeMarker テンプレート言語を利用する場合のみこの行を使用:-->*
+                <attr name="javax.script.ScriptEngine" stringvalue="freemarker"/>
+            </file>
+            
+        </folder>
+        
+</folder>
+----
+
+
+[start=2]
+1.  ``Bundle.properties``  ファイルに表示名を追加します。
+
+
+[source,java]
+----
+
+Templates/Other/MyHTML.html=My HTML File
+----
+
+
+
+== モジュールの構築とインストール
+
+IDE は、Ant 構築スクリプトを使用してモジュールを構築およびインストールします。構築スクリプトは、モジュールプロジェクトを作成するときに作成されます。
+
+
+=== NetBeans モジュールのインストール
+
+「プロジェクト」ウィンドウで、 ``Additional File Templates``  プロジェクトを右クリックし、「ターゲットプラットフォームでのインストール/再読み込み」を選択します。
+
+モジュールが構築され、ターゲットの IDE またはプラットフォームにインストールされます。ターゲットの IDE またはプラットフォームが開き、新しいモジュールを使ってみることができます。デフォルトのターゲット IDE またはプラットフォームは、開発用の IDE の現在のインスタンスが使用しているインストールです。
+
+NOTE: モジュールを実行するときには、開発用の IDE のユーザーディレクトリではなく、テスト用の一時的なユーザーディレクトリを使用します。
+
+
+=== NetBeans モジュールの使用
+
+
+[start=1]
+1. 「ファイル」>「新規プロジェクト」(Ctrl-Shift-N) を選択し、新しいプロジェクトを作成します。
+
+
+[start=2]
+1. プロジェクトを右クリックし、「新規」>「その他」を選択します。「新規ファイル」ウィザードが開き、新しいファイルの種類が表示された新しいカテゴリが表示されます。アイコンが異なる可能性がありますが、画面は次のようなものです。
+
+
+image::images/new-file-wizard-60.png[]
+
+
+[start=3]
+1. 新しいファイルの種類を選択して「次へ」をクリックし、新規ファイルを作成します。「完了」をクリックすると、ソースエディタに新しく作成されたテンプレートが表示されます。
+
+
+=== 共有可能なモジュールバイナリの作成
+
+
+[start=1]
+1. 「プロジェクト」ウィンドウで、 ``Additional File Templates``  プロジェクトを右クリックし、「NBM を作成」を選択します。
+
+NBM ファイルが作成されます。これは「ファイル」ウィンドウ (Ctrl-2) で確認できます。
+
+
+image::images/shareable-nbm-60.png[]
+
+
+[start=2]
+1. これを、たとえば電子メールなどを通じて、ほかで使用できるようにします。
+
+
+== 追加の変数の提供
+
+前に説明したように、${user} や ${time} のような事前定義された変数を、独自に追加できます。たとえば、渡す変数を名前のリストで指定する場合は、テンプレートを次のように定義できます。
+
+
+[source,html]
+----
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <title></title>
+  </head>
+  <body>
+  
+        <#list names as oneName>
+            <b&amp;gt${oneName}</b&amp;gt
+        </#list>
+
+  </body>
+</html>
+----
+
+先に示した FreeMarker の #list 指令では、「names」と呼ばれる変数を通じて逐次代入します。それぞれのインスタンスは「oneName」と呼ばれます。代入されたそれぞれの値は、ファイルに出力され、bold タグで囲まれます。「names」の値はさまざまな場所から代入されることが考えられますが、一般的にはウィザードパネルからです。この場合ユーザーは、リストから名前のセットを選択します。
+
+この新しい変数を通じて行う逐次代入を可能にするには、『 link:http://netbeans.dzone.com/news/freemarker-netbeans-ide-60-first-scenario[FreeMarker in NetBeans IDE 6.0: First Scenario]』を参照し、そのあとで link:http://blogs.oracle.com/geertjan/entry/freemarker_baked_into_netbeans_ide1[このブログのエントリ]の  ``DataObject.createFromTemplate(df, targetName, hashMap)``  に関する記述を参照してください。 
+
+
+== プロジェクトライセンスの供与
+
+FreeMarker の #assign 指令に関連することで、まだここでは触れていないことがあります。これは、ファイルが作成されたときに、ユーザーがプロジェクトライセンスを生成することを可能にする場合のみ関係があります。ユーザーのライセンスへのニーズを満たすために、ファイルテンプレートにライセンスに関する指令を提供できます。こうすると、ユーザーのプロジェクト内に作成されるすべてのファイルは、提供したライセンスに関する指令を含むことになります。
+
+これを行うには、次の手順を実行します。
+
+
+[start=1]
+1. 「ツール」メニューに移動します。「テンプレート」を選択します。エディタで、Java の Java クラステンプレートを開きます。
+
+
+image::http://blogs.oracle.com/geertjan/resource/freemarker-in-nb-2.png[]
+
+
+[start=2]
+1. 前に示したテンプレート、および FreeMaker で定義することについては前に説明しました。しかしここでは、次に示す最初の 4 行に特に注目します。
+
+
+[source,java]
+----
+
+<#assign licenseFirst = "/*">
+<#assign licensePrefix = " * ">
+<#assign licenseLast = " */">
+<#include "../Licenses/license-${project.license}.txt">
+----
+
+これらの 4 行には_ライセンス_に関することが含まれています。最後の行では、プロジェクトごとに、使用するライセンスが決められています。最初の 3 行には、ライセンスの各行の前後の文字が決められています。この 4 行は、Java ソースファイル用のものです。次に示すのは、プロパティーファイルのテンプレートの最初にある、同様の定義です。
+
+
+[source,java]
+----
+
+<#assign licensePrefix = "# ">
+<#include "../Licenses/license-${project.license}.txt">
+----
+
+最初の行は、ライセンスの各行が、「*」ではなく「#」が接頭辞として使用されることを示しています。「*」は、Java ソースファイル用の接頭辞です (最初の行が「/*」で最後の行が「*/」)。これを確認するために Java ソースファイルを作成してからプロパティーファイルを作成します。いずれの場合もライセンスが表示されます。ただし、さきほどの定義のため、各行の接頭辞の文字と接尾辞の文字が異なっています。
+
+
+[start=3]
+1. 次に、ライセンスそのものを見てみましょう。先ほど示したテンプレートの次の行を見ます。
+
+
+[source,java]
+----
+
+<#include "../Licenses/license-${project.license}.txt">
+----
+
+特に次の部分に注目します。
+
+
+[source,java]
+----
+
+${project.license}
+----
+
+アプリケーションの  ``nbproject/project.properties``  ファイルに、キーとしてそれを置きます。値を追加してみましょう。例:
+
+
+[source,java]
+----
+
+project.license=apache
+----
+
+テンプレートマネージャーの「ライセンス」フォルダをふたたび参照します。そこにはいくつかのテンプレートがあります。ここで、新たに  ``license-apache.txt``  という名前のテンプレートを作成します。今のところは、既存のテンプレートをコピーし、テンプレートマネージャーの同じカテゴリにペーストするだけです。次に、この行を含む FreeMarker テンプレートで定義されるファイルを作成します。
+
+
+[source,java]
+----
+
+<#include "../Licenses/license-${project.license}.txt">
+----
+
+新たに作成されたファイルには、指定したライセンスが組み込まれます。
+
+簡単に言うと、NetBeans IDE 6.0 では、プロジェクトごとに、各ファイルに表示されるべきライセンスを定義します。さらに、別のライセンスを使用して新しいプロジェクトを作成する必要がある場合を考えてみます。テンプレートマネージャーに新しくライセンスを定義することは、 ``nbproject/project.properties``  ファイルに、キーと値のペアを 1 つ追加するのと同じように簡単です。これは以前は不可能でしたが、NetBeans IDE 6.0 への FreeMarker のサポートによって可能になりました。ライセンスに関する参考情報については、 link:http://blogs.oracle.com/geertjan/date/20071126[このブログのエントリ]を参照してください。特に記事のあとにあるコメントも参考になります。
+
+
+
+link:http://netbeans.apache.org/community/mailing-lists.html[ご意見をお寄せください]
+
+
+
+== 次の手順
+
+NetBeans モジュールの作成と開発の詳細については、次のリソースを参照してください。
+
+*  link:https://netbeans.apache.org/kb/docs/platform.html[その他の関連チュートリアル]
+
+*  link:https://bits.netbeans.org/dev/javadoc/[NetBeans API Javadoc]
+
+
+== 変更履歴
+
+|===
+|*バージョン* |*年月日* |*変更内容* 
+
+|1 |2005 年 6 月 26 日 |最初のバージョン 
+
+|2 |2005 年 6 月 28 日 |
+
+* 記述子ファイルに bold タグを付け加え、「説明」ボックスに HTML タグが表示されることを示すよう変更
+* 順序の属性を追加
+* 表示名を Bundle.properties に変更
+* 「NetBeans プラグインの使用」のスクリーンショットを変更
+*  ``layer.xml``  が BrandedJavaClass.template と呼ばれるファイルを検索するため、BrandedJavaClass ファイルに拡張子「.template」を追加。また、この拡張子「.template」の変更を反映するために、「ファイルテンプレートの作成」の項の最後にある「プロジェクト」ウィンドウのスクリーンショットを変更。
+ 
+
+|3 |2005 年 10 月 2 日 |
+
+* 最新のビルドに合わせて全体を変更。主にテンプレート用の「オプション」ウィンドウを「テンプレート」に置き換えに関して複数個所を変更。
+* 冒頭部分に 2 番目と 3 番目の段落を新たに追加し、新しいファイルの種類を作成している場合は、このチュートリアルは必須でないことを説明。
+ 
+
+|4 |2005 年 10 月 3 日 |
+
+* layer.xml の templateWizard[Iterator|URL] は廃止予定となったため、例示を [Iterator|WizardURL] に変更。
+ 
+
+|5 |2006 年 3 月 16 日 |
+
+* 全体的に見直したが、特に問題はなく行間を多少修正。
+* アイコンが若干異なるためスクリーンショットの置き換えが必要。
+* アイコンを追加する必要あり。
+* 「新規ファイル」ウィザードで同時に複数のテンプレートを作成する方法について説明する必要あり。
+ 
+
+|6 |2006 年 9 月 12 日 |
+
+* NetBeans IDE 5.5 Beta 2 でチュートリアルの内容を確認。
+* 記述どおりに動作することを確認。
+* スクリーンショットの一部を更新。
+* コードのインデントを修正。
+ 
+
+|7 |2007 年 6 月 9 日 |NetBeans 6 に更新を開始。 
+
+|8 |2008 年 2 月 16 日 | link:http://blogs.oracle.com/geertjan/entry/freemarker_baked_into_netbeans_ide1[このブログのエントリ]、 link:http://blogs.oracle.com/geertjan/entry/freemarker_baked_into_netbeans_ide2[このブログのエントリ]、 link:http://blogs.oracle.com/geertjan/date/20071126[このブログのエントリ]、および link:http://netbeans.dzone.com/news/freemarker-netbeans-ide-60-first-scenario[この記事]からの情報の移行を開始。 
+
+|9 |2008 年 4 月 15 日 |バッジ、目次、必須ソフトウェア表の形式を新しいフォーマットに変更。 
+|===
+

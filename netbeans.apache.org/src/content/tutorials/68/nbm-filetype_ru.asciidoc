@@ -1,0 +1,644 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= Учебный кур�? по интеграции типов файлов
+:jbake-type: platform-tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:icons: font
+:experimental:
+:description: Учебный кур�? по интеграции типов файлов - Apache NetBeans
+:keywords: Apache NetBeans Platform, Platform Tutorials, Учебный кур�? по интеграции типов файлов
+
+В �?том учебном кур�?е показано напи�?ание модул�?, позвол�?ющего �?реде IDE, а также любому другому приложению, о�?нованному на платформе NetBeans, ра�?позначать новый тип файлов.
+
+NOTE:  В �?том документе и�?пользует�?�? �?реда IDE NetBeans вер�?ии 6.5. Е�?ли у�?тановлена �?реда IDE NetBeans 6.x, �?м  link:60/nbm-filetype.html[вер�?ию 6.1 �?того документа].
+
+
+
+image::images/netbeans-stamp-65-67-68.gif[title="Содержимое на �?той �?транице отно�?ит�?�? к �?реде IDE NetBeans 6.5, 6.7, 6.8"]
+
+
+
+*Дл�? работы �? �?тим руковод�?твом требует�?�? программное обе�?печение и ре�?ур�?ы, перечи�?ленные в �?ледующей таблице.*
+
+|===
+|Программное обе�?печение или ре�?ур�? |Требуема�? вер�?и�? 
+
+| link:https://netbeans.apache.org/download/index.html[Среда IDE NetBeans] |вер�?и�? 6.5 или выше 
+
+| link:https://www.oracle.com/technetwork/java/javase/downloads/index.html[Комплект дл�? разработчика на �?зыке Java (JDK)] |вер�?и�? 6 или
+вер�?и�? 5 
+|===
+
+
+== Введение в интеграцию типов файлов
+
+Типам файлов, ра�?познаваемых �?редой IDE, �?опо�?тавлены �?оответ�?твующие значки, пункты меню и режимы поведени�?. Показаные ниже "файлы" пред�?тавл�?ют �?обой объекты  ``FileObject`` , т.е. обертки вокруг  ``java.io.File``  или, в �?лучае файлов на�?тройки, обычно обертки вокруг данных, �?охран�?емых другим �?по�?обом, например внутри файлов XML в модул�?х. Фактиче�?ки _видны_  ``узлы (Node)`` , предо�?тавл�?ющие функциональные возможно�?ти, такие как дей�?тви�? и локализованные имена дл�? объектов, подобных файлам. Между узлами  ``Node``  и объектами  ``FileObject``  ра�?полагают�?�? объекты  ``DataObject`` . Объект  ``DataObject``  во в�?ем подобен объекту  ``FileObject`` , однако �?одержит информацию о типе отображаемого файла, и дл�? файлов �? разными ра�?ширени�?ми (или файлов XML �? разными про�?тран�?твами имен) и�?пользуют�?�? разные типы  ``DataObject`` . Каждый из объектов  ``DataObject``  предо�?тавл�?ет�?�? отдельным модулем, причем в каждом из них реализована поддержка одного или более типов файлов – например, в модуль Image предо�?тавл�?ет возможно�?ть ра�?познавани�? и открыти�? файлов  ``.gif``  и  ``.png`` .
+
+Модуль, ра�?познающий тип файла, у�?танавливает объект  ``DataLoader``  – фабрику дл�?  ``DataObject``  дл�? конкретного типа файла. При развертывании папки �?реда IDE опрашивает каждый изве�?тный объект  ``DataLoader``  в цел�?х опознани�? типа файлов. Первый объект, ответивший "да" на запро�?, �?оздает объект  ``DataObject``  дл�? �?того файла. Дл�? фактиче�?кого отображени�? �?одержимого файла вызывает�?�? функци�?  ``DataObject.getNodeDelegate()``  дл�? каждого объекта  ``DataObject`` , и в �?реде IDE на �?амом деле отображают�?�? узлы  ``Node`` .
+
+�?иже и �?лева показана �?хема данных, предо�?тавл�?емых каждым из �?лементов, опи�?анных выше.
+
+
+image::images/diagram-dataobject2.png[]
+
+Это руковод�?тво по�?в�?щено �?озданию модул�?, у�?танавливающего объект  ``DataLoader``  дл�? вымышленного типа файлов "Abc" (ра�?ширение файлов  ``.abc`` ). По умолчанию файл �? ра�?ширением "abc" обрабатывает�?�? аналогично любому другому неопознанному файлу – как тек�?товый файл, и в результате дл�? файлов Abc предо�?тавл�?ют�?�? те же функциональные возможно�?ти �?реды IDE, что и дл�? тек�?товых файлов. По�?ле �?оздани�? модул�? будет показан �?по�?об ра�?ширени�? �?тих функциональных возможно�?тей, уникальных дл�? файлов Abc. По завершении цикла разработки дргуим разработчикам не�?ложно предо�?тавить возможно�?ть и�?пользовани�? �?озданного модул�? – в �?реде IDE предо�?тавл�?ет�?�? возможно�?ть �?оздани�? двоичного файла, который можно передать другим разработчикам, которые затем �?могут у�?тановить его по�?ред�?твом центра обновлений.
+
+
+== Создание проекта модул�?
+
+В �?том разделе и�?пользует�?�? ма�?тер дл�? �?оздани�? �?труктуры и�?ходного кода, требуемого любым модулем NetBeans. Эта �?труктура и�?ходного кода �?о�?тоит из р�?да папок в о�?обых ме�?тах и набора файлов, которые требуют�?�? в любом �?лучае. �?апример, дл�? каждого модул�? NetBeans требует�?�? папка  ``nbproject`` , в которой хран�?т�?�? метаданные проекта, а также файл  ``layer.xml`` , в котором объ�?вл�?ет�?�? реги�?траци�? таких �?лементов как кнопки панелей управлени�? и окна.
+
+
+[start=1]
+1. Выберите "File" > "New Project" (Ctrl+Shift+N). В разделе "Категории" выберите параметр "Модули NetBeans". В обла�?ти "Проекты" выберите "Модуль" и нажмите кнопку "Далее".
+
+[start=2]
+1. �?а панели "Им�? и ра�?положение" в поле "Им�? проекта" введите  ``AbcFileType`` . В поле "Ра�?положение проекта" укажите любой каталог на компьютере, например  ``c:\mymodules`` . О�?тавьте переключатель "Отдельный модуль" выбранным. Панель должна выгл�?деть �?ледующим образом:
+
+
+image::images/65-projectwizard1.png[]
+
+�?ажмите кнопку "Далее".
+
+
+[start=3]
+1. �?а панели "О�?новные на�?тройки модул�?" введите  ``org.myorg.abcfiletype``  в поле "О�?нова кодового имени". Добавьте пробелы к предложенному отображаемому имени модул�?, и измените его на  ``Abc File Type`` . У�?тановите флажок "Создать �?лой XML" и о�?тавьте ме�?тоположение локализуемого файла ре�?ур�?ов и �?ло�? XML по умолчанию; при �?том они будут хранить�?�? в пакете �? именем  ``org/myorg/abcfiletype`` . Панель должна выгл�?деть �?ледующим образом:
+
+
+image::images/65-projectwizard2.png[]
+
+
+[start=4]
+1. �?ажмите кнопку "Готово".
+
+В �?реде IDE �?оздает�?�? проект  ``Abc File Type`` . Проект �?одержит в�?е и�?ходные файлы и метаданные проекта, например, �?ценарий �?борки проекта Ant. Проект откроет�?�? в �?реде IDE. Логиче�?кую �?труктуру проекта можно про�?мотреть в окне "Проекты" (Ctrl+1), а его файловую �?труктуру – в окне "Файлы" (Ctrl+2). �?апример, окно "Проекты" должно выгл�?деть �?ледующим образом:
+
+
+image::images/65-projectswindow1.png[] 
+
+
+== Ра�?познавание файлов Abc
+
+В �?том разделе �? помощью ма�?тера �?оздают�?�? кла�?�?ы, необходимые дл�? ра�?познавани�? файлов Abc как отличных от файлов в�?ех других видов. Как уже указывало�?ь в начале учебного кур�?а, дл�? �?того потребует�?�? объект данных и загрузчик данных, а также �?ред�?тво разрешени�? типа MIME и �?ущно�?ти реги�?трации в файле  ``layer.xml`` . В�?е �?ти �?лементы �?оздают�?�? автоматиче�?ки �? помощью ма�?тера �?оздани�? файла.
+
+
+[start=1]
+1. Щелкните узел проекта правой кнопкой мыши и выберите команду "Создать > Тип файлов".
+
+[start=2]
+1. У�?тановите �?ледующие значени�? на панели "Ра�?познавание файлов":
+
+* Введите  ``text/x-abc``  в поле "Тип MIME".
+* Введите  ``.abc .ABC``  в поле "Ра�?ширение файла".
+
+Панель "Ра�?познавание файлов" должна выгл�?деть �?ледующим образом:
+
+
+image::images/60-filewizard1.png[]
+
+Обратите внимание на �?ледующие �?ведени�? о пол�?х на панели "Ра�?познавание файлов":
+
+* *Тип MIME.* Указывает�?�? уникальный тип MIME объекта данных.
+* по
+* *Ра�?ширение файла.* Указывает�?�? одно или более ра�?ширений файлов, по которым �?редой IDE ра�?познает�?�? принадлежно�?ть файла к указанному типу MIME. Ра�?ширение файла можно в факультативном пор�?дке предвар�?ть точкой. В каче�?тве разделителей и�?пользуют�?�? зап�?тые, пробелы, или зап�?тые вме�?те �? пробелами. Следовательно, дей�?твительными �?вл�?ют�?�? в�?е �?ледующие варианты запи�?и:
+
+*  ``.abc,.def`` 
+*  ``.abc .def`` 
+*  ``abc def`` 
+*  ``abc,.def ghi, .wow`` 
+
+Пред�?тавим, что дл�? файлов Abc учитывает�?�? реги�?тр. По�?тому в �?том учебном кур�?е указывает�?�? _два_ типа MIME:  ``.abc``  и  ``.ABC`` .
+
+* *Корневой �?лемент XML.* Указывает�?�? уникальное про�?тран�?тво имен, отличающее тип файла XML от в�?ех о�?тальных типов файлов XML. По�?кольку многие файлы XML обладают одинаковым ра�?ширением ( ``xml`` ), различие между файлами XML проводит�?�? в �?реде IDE по их корневым �?лементам XML. Точнее, в �?реде IDE возможно различие между про�?тран�?твами имен и первым �?лементом XML в файлах XML. Это, например, можно и�?пользовать дл�? различи�? между опи�?ателем развертывани�? JBoss и опи�?ателем развертывани�? WebLogic. Е�?ли �?то различие �?делано, можно обе�?печить недо�?тупно�?ть пунктов меню, добавленных к контек�?тному меню опи�?ател�? развертывани�? JBoss, дл�? опи�?ател�? развертывани�? WebLogic. См., например,  link:nbm-palette-api2.html[Руковод�?тво по модулю палитры компонентов NetBeans].
+
+�?ажмите кнопку "Далее".
+
+
+[start=3]
+1. �?а панели "Им�? и ра�?положение" введите  ``Abc``  в каче�?тве префик�?а имени кла�?�?а и выберите любой файл изображени�? размером 16 на 16 пик�?елей в каче�?тве значка нового типа файлов, в �?оответ�?твии �? иллю�?трацией ниже.
+
+
+image::images/65-filewizard2.png[]
+
+*Примечание.* Можно и�?пользовать любой значок размером 16x16 пик�?елей. Е�?ли требует�?�?, можно щелкнуть �?тот значок, �?охранить его локально, а затем указать его в ма�?тере, как указано выше: 
+image::images/Datasource.gif[]
+
+
+[start=4]
+1. �?ажмите кнопку "Готово".
+
+Окно "Проекты" должно выгл�?деть �?ледующим образом:
+
+
+image::images/65-projectswindow2.png[]
+
+Ра�?�?мотрим краткое опи�?ание каждого из �?генерированных файлов:
+
+* *AbcDataObject.java.* Обертывает  ``FileObject`` . Объекты данных (DataObject) �?оздают�?�? загрузчиками данных (DataLoader). Подробные �?ведени�? �?м. в документе  link:https://netbeans.apache.org/wiki/devfaqdataobject[Что такое DataObject?].
+* *AbcResolver.xml.* Отображает ра�?ширени�?  ``.abc``  и  ``.ABC``  на тип MIME.  ``AbcDataLoader``  ра�?познает только тип MIME; о ра�?ширении файлов ему ничего не изве�?тно.
+* *AbcTemplate.abc.* Предо�?тавл�?ет о�?нову шаблона файла, зареги�?трированного в файле  ``layer.xml``  так, чтобы он у�?танавливал�?�? в диалоговом окне "�?овый файл" в каче�?тве нового шаблона.
+* *AbcDataObjectTest.java.* кла�?�? те�?та JUnit дл�?  ``DataObject`` .
+
+В файле  ``layer.xml``  должен �?одержать�?�? �?ледующий тек�?т:
+
+
+[source,xml]
+----
+
+<folder name="Loaders">
+    <folder name="text">
+        <folder name="x-abc">
+            <folder name="Actions">
+                <file name="org-myorg-abcfiletype-MyAction.shadow">
+                    <attr name="originalFile" stringvalue="Actions/Edit/org-myorg-abcfiletype-MyAction.instance"/>
+                    <attr name="position" intvalue="600"/>
+                </file>
+                <file name="org-openide-actions-CopyAction.instance">
+                    <attr name="position" intvalue="100"/>
+                </file>
+                <file name="org-openide-actions-CutAction.instance">
+                    <attr name="position" intvalue="200"/>
+                </file>
+                <file name="org-openide-actions-DeleteAction.instance">
+                    <attr name="position" intvalue="300"/>
+                </file>
+                <file name="org-openide-actions-FileSystemAction.instance">
+                    <attr name="position" intvalue="400"/>
+                </file>
+                <file name="org-openide-actions-OpenAction.instance">
+                    <attr name="position" intvalue="500"/>
+                </file>
+                <file name="org-openide-actions-PropertiesAction.instance">
+                    <attr name="position" intvalue="700"/>
+                </file>
+                <file name="org-openide-actions-RenameAction.instance">
+                    <attr name="position" intvalue="800"/>
+                </file>
+                <file name="org-openide-actions-SaveAsTemplateAction.instance">
+                    <attr name="position" intvalue="900"/>
+                </file>
+                <file name="org-openide-actions-ToolsAction.instance">
+                    <attr name="position" intvalue="1000"/>
+                </file>
+                <file name="sep-1.instance">
+                    <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
+                    <attr name="position" intvalue="1100"/>
+                </file>
+                <file name="sep-2.instance">
+                    <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
+                    <attr name="position" intvalue="1200"/>
+                </file>
+                <file name="sep-3.instance">
+                    <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
+                    <attr name="position" intvalue="1300"/>
+                </file>
+                <file name="sep-4.instance">
+                    <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
+                    <attr name="position" intvalue="1400"/>
+                </file>
+            </folder>
+            <folder name="Factories">
+                <file name="AbcDataLoader.instance">
+                    <attr name="SystemFileSystem.icon" urlvalue="nbresloc:/org/myorg/abcfiletype/Datasource.gif"/>
+                    <attr name="dataObjectClass" stringvalue="org.myorg.abcfiletype.AbcDataObject"/>
+                    <attr name="instanceCreate" methodvalue="org.openide.loaders.DataLoaderPool.factory"/>
+                    <attr name="mimeType" stringvalue="text/x-abc"/>
+                </file>
+            </folder>
+        </folder>
+    </folder>
+</folder>
+----
+
+
+
+== У�?тановка и ознакомление �? функциональными возможно�?т�?ми
+
+Теперь у�?тановим модуль и во�?пользуем�?�? базовыми функциональными возможно�?т�?ми, �?озданными на данный момент. Дл�? по�?троени�? и у�?тановки модул�? в �?реде IDE и�?пользует�?�? �?ценарий по�?троени�? Ant. При �?оздании проекта автоматиче�?ки �?оздает�?�? �?ценарий по�?троени�?.
+
+
+[start=1]
+1. В окне "Проекты" щелкните правой кнопкой мыши проект  ``Abc File Type``  и выберите "Выполнить".
+
+Запу�?тит�?�? новый �?кземпл�?р �?реды IDE, выполн�?ющий у�?тановку модул�? в �?еб�?.
+
+
+[start=2]
+1. Создайте приложение любого типа в �?реде IDE �? помощью диалогового окна "�?овый проект" (Ctrl+Shift+N).
+
+[start=3]
+1. Щелкните узел приложени�? правой кнопкой мыши и выберите команду "Создать > Прочее". В категории "Прочее" до�?тупен шаблон дл�? работы �? новым типом файлов:
+
+
+image::images/60-action4.png[]
+
+Выполните ма�?тер до конца; в результате будет �?оздан шаблон, который может и�?пользовать�?�? пользователем дл�? работы �? данным типом файлов.
+
+Е�?ли по�?ред�?твом шаблона должен предо�?тавл�?ть�?�? код по умолчанию, добавьте �?тот код к файлу  ``AbcTemplate.abc`` , автоматиче�?ки �?озданному ма�?тером "�?овый тип файла".
+
+
+
+== Создание функциональных возможно�?тей дл�? файлов Abc
+
+Теперь, когда в платформу NetBeans внедрена возможно�?ть отличени�? файлов Abc от других типов файлов, пришло врем�? добавить функциональные возможно�?ти, �?пециально предназначенные дл�? работы �? файлами �?того типа. В �?том разделе добавл�?ет�?�? пункт меню в контек�?тное меню узла файла в окнах обозревателей, например в окне "Проекты", и добавл�?ет�?�? возможно�?ть открыти�? файла в окне, а не в редакторе.
+
+
+=== Добавление дей�?тви�?
+
+В �?том подразделе �? помощью ма�?тера �?оздани�? дей�?тви�? �?оздает�?�? кла�?�? Java, выполн�?ющее дей�?твие дл�? ра�?�?матриваемого типа файлов. Ма�?тер также реги�?трирует кла�?�? в файле  ``layer.xml`` , по�?ле чего у пользовател�? по�?вл�?ет�?�? возможно�?ть вызывать �?озданное дей�?твие из контек�?тного меню узла типа файла в окне обозревател�?.
+
+
+[start=1]
+1. Щелкните узел проекта правой кнопкой мыши и выберите команду "Создать > Дей�?твие"
+
+[start=2]
+1. В панели "Тип дей�?тви�?" выберите "Включено по у�?ловию". Введите  ``AbcDataObject`` , т.е. им�? объекта данных, �?озданного выше по�?ред�?твом ма�?тера �?оздани�? типов файлов, как показано ниже:
+
+
+image::images/60-action1.png[]
+
+�?ажмите кнопку "Далее".
+
+
+[start=3]
+1. �?а панели "Реги�?траци�? в интерфей�?е" выберите категорию "Изменить" в ра�?крывающем�?�? �?пи�?ке "Категори�?". Значение, выбранное в ра�?крываюшем�?�? �?пи�?ке "Категори�?", определ�?ет ме�?то отображени�? дей�?тви�? в редакторе �?очетаний клавиш в �?реде IDE.
+
+Затем �?нимите флажок "Глобальный пункт меню" и у�?тановите флажок "Пункт контек�?тного меню типа файла". В ра�?крывающем�?�? �?пи�?ке "Тип �?одержимого" выберите тип MIME, указанный выше в ма�?тере �?оздани�? типов файлов, в �?оответ�?твии �? иллю�?трацией ниже:
+
+
+image::images/60-action2.png[]
+
+Отметим, что �?уще�?твует возможно�?ть задани�? положени�? пункта меню, и что пункт меню можно разграничить от предыдушего и �?ледующего пункта. �?ажмите кнопку "Далее".
+
+
+[start=4]
+1. �?а панели "Им�? и ра�?положение" введите  ``MyAction``  в каче�?тве имени кла�?�?а и  ``My Action``  в поле "Видимое им�?". В пунктах контек�?тных меню не отображают�?�? значки. По�?тому нажмите кнопку "Готово", по�?лу чего файл  ``MyAction.java``  будет добавлен к пакету  ``org.myorg.abcfiletype`` .
+
+[start=5]
+1. В редакторе и�?ходного кода добавьте код к методу  ``performAction``  дей�?тви�?:
+
+[source,java]
+----
+
+protected void performAction(Node[] activatedNodes) {
+	AbcDataObject abcDataObject = activatedNodes[0].getLookup().lookup(AbcDataObject.class);
+	FileObject f = abcDataObject.getPrimaryFile();
+	String displayName = FileUtil.getFileDisplayName(f);
+	String msg = "Я " + displayName + ". Зверь рыкающий!"; 
+	NotifyDescriptor nd = new NotifyDescriptor.Message(msg);
+	DialogDisplayer.getDefault().notify(nd);
+}
+----
+
+�?ажмите Ctrl+Shift+I. В верхнюю ча�?ть кла�?�?а автоматиче�?ки добавл�?ют�?�? выражени�? импорта.
+
+Ча�?ть кода по-прежнему выделена кра�?ным подчеркиванием, что указывает на от�?ут�?твие р�?да требуемых пакетов в пути кла�?�?ов. Щелкните правой кнопкой мыши узел проекта, выберите "Свой�?тва" и щелкните "Библиотеки" в диалоговом окне "Свой�?тва проекта". Щелкните в верхней ча�?ти панели "Библиотеки" и добавьте интерфей�? API диалогов.
+
+В кла�?�?е  ``MyAction.java``  �?нова нажмите Ctrl+Shift+I. Выделение кра�?ным подчеркиванием �?нимает�?�?, по�?кольку требуемые пакеты обнаруживают�?�? �?редой IDE в интерфей�?е API диалогов.
+
+
+[start=6]
+1. В узле "Важные файлы" разверните подузел "Слой XML". Обозреватель  link:https://netbeans.apache.org/tutorials/nbm-glossary.html[Файлова�? �?и�?тема �?реды] �?о�?тоит из двух узлов:  ``<�?тот �?лой>``  и  ``<�?тот �?лой в контек�?те>`` , а также их подузлов. Разверните узел  ``<�?тот �?лой>`` , разверните подузел  ``Загрузчики`` , и продолжайте разворачивать узлы, пока не �?танет видно  ``дей�?твие`` , �?озданное ранее.
+
+[start=7]
+1. Перетащите  ``My Action``  в позицию ниже дей�?тви�?  ``Open`` , как показано ниже:
+
+
+image::images/60-action3.png[]
+
+Как было показано в двух предыдущих дей�?тви�?х, обозреватель файловой �?и�?темы �?реды можно и�?пользовать дл�? бы�?трой реорганизации по�?ледовательно�?ти �?лементов, зареги�?трированных в файловой �?и�?теме �?реды.
+
+
+[start=8]
+1. Снова выполните модуль, как в предыдущем разделе.
+
+[start=9]
+1. Создайте файл ABC на о�?нове шаблона, показанного в предыдущем разделе, и щелкните правой кнопкой мыши узел файла в одном из пред�?тавлений обозревател�?, например, в окнах "Проекты" или "Избранное".
+
+Обратите внимание, что файл Abc �?набжен значком, который был назначен ему в �?оответ�?твующем модуле, и что �?пи�?ок дей�?твий, назначенный в �?оответ�?твующем файле  ``layer.xml`` , выводит�?�? в контек�?тном меню, вызываемом щелчком правой кнопкой мыши:
+
+
+image::images/60-dummytemplate.png[]
+
+
+[start=10]
+1. Выберите новый пункт меню; отображает�?�? им�? и ме�?тоположение файла Abc.
+
+
+image::images/60-information.png[]
+
+Итак, было ра�?�?мотрено �?оздание нового дей�?тви�?, до�?тупного из контек�?тного меню дл�? файла определенного типа, в окнах "Проекты", "Файлы" или "Избранное".
+
+
+=== Открытие файла в окне
+
+По умолчанию при открытии файла, тип которого был определен в �?том учебном кур�?е, такой файл открывает�?�? в базовом редакторе. Однако иногда может потребовать�?�? �?оздать визуальное пред�?тавление файла, и предо�?тавить пользователю возможно�?ть перета�?кивать �?лементы оформлени�? в �?то визуальное пред�?тавление. Первый �?тап �?оздани�? подобного интерфей�?а пользовател�? - �?то предо�?тавление пользователю возможно�?ти открыти�? файла в окне. В �?том подразделе приведена по�?ледовательно�?ть необходимых дей�?твий.
+
+
+[start=1]
+1. Щелкните узел проекта правой кнопкой мыши и выберите команду "Создать > Оконный компонент". У�?тановите дл�? параметра "Позици�? окна" значение "editor" и у�?тановите флажок "Открывать при запу�?ке приложени�?", как показано ниже:
+
+
+image::images/65-topc-1.png[]
+
+
+[start=2]
+1. �?ажмите кнопку "Далее" и введите "Abc" в каче�?тве префик�?а имени кла�?�?ов.
+
+
+image::images/65-topc-2.png[]
+
+�?ажмите кнопку "Готово".
+
+
+[start=3]
+1. Измените  ``DataObject`` : укажите и�?пользование  `` link:http://bits.netbeans.org/dev/javadoc/org-openide-loaders/org/openide/loaders/OpenSupport.html[OpenSupport]``  вме�?то DataEditorSupport, дл�? чего измените кон�?труктор  ``DataObject``  �?ледующим образом:
+
+
+[source,java]
+----
+
+public AbcDataObject(FileObject pf, MultiFileLoader loader)
+        throws DataObjectExistsException, IOException {
+
+    super(pf, loader);
+    CookieSet cookies = getCookieSet();
+    *//cookies.add((Node.Cookie) DataEditorSupport.create(this, getPrimaryEntry(), cookies));
+    cookies.add((Node.Cookie) new AbcOpenSupport(getPrimaryEntry()));*
+              
+}
+----
+
+
+[start=4]
+1. Создайте кла�?�?  `` link:http://bits.netbeans.org/dev/javadoc/org-openide-loaders/org/openide/loaders/OpenSupport.html[OpenSupport]`` :
+
+
+[source,java]
+----
+
+class AbcOpenSupport extends OpenSupport implements OpenCookie, CloseCookie {
+
+    public AbcOpenSupport(AbcDataObject.Entry entry) {
+        super(entry);
+    }
+
+    protected CloneableTopComponent createCloneableTopComponent() {
+        AbcDataObject dobj = (AbcDataObject) entry.getDataObject();
+        AbcTopComponent tc = new AbcTopComponent();
+        tc.setDisplayName(dobj.getName());
+        return tc;
+    }
+ 
+}
+----
+
+�?а�?тройте TopComponent: он должен ра�?шир�?ть CloneableTopComponent, а не TopComponent. У�?тановите дл�? модификатора кла�?�?а TopComponent и модификатора его кон�?труктора параметр public вме�?то private.
+
+Снова выполните модуль; когда при открытии файла Abc его открытие обрабатывает�?�? кла�?�?ом  ``OpenSupport`` , обе�?печивает�?�? открытие файла в  ``TopComponent`` , а не в базовом редакторе, предо�?тавл�?емом  ``DataEditorSupport`` :
+
+
+image::images/65-topc-3.png[]
+
+В документе  link:https://netbeans.apache.org/tutorials/nbm-visual_library.html[Руковод�?тво по Visual Library NetBeans] приведен пример дальнейшей разработки TopComponent дл�? визуального отображени�? �?одержимого файла, �?оответ�?твующего типу файла, определенному в �?том руковод�?тве.
+
+
+
+=== Создание окна �? не�?колькими пред�?тавлени�?ми
+
+Теперь файл можно открыть в окне; добавим к �?тому окну дополнительные функциональные возможно�?ти. Создадим окно �? не�?колькими пред�?тавлени�?ми. �?а первой вкладке окна �? не�?колькими пред�?тавлени�?ми обычно выводит�?�? визуальное пред�?тавление файла, а на второй вкладке обычно �?одержит�?�? пред�?тавление и�?ходного кода. Кроме �?тих двух можно и�?пользовать дополнительные закладки, �?одержащие более подробные данные об открытом файле.
+
+
+[start=1]
+1. Щелкните правой кнопкой узел проекта и выберите команду "Properties". В диалоговом окне "Свой�?тва проекта" выберите "Библиотеки" и нажмите "Добавить". Укажите зави�?имо�?ть от "MultiView Windows". �?ажмите кнопку "OK", а затем �?нова нажмите кнопку "OK" дл�? закрыти�? диалогового окна "Свой�?тва проекта".
+
+[start=2]
+1. 
+Дл�? каждой закладки, дл�? которой требует�?�? �?оздать окно �? не�?колькими пред�?тавлени�?ми, необходимо �?оздать кла�?�?, реализующий  ``MultiViewDescription``  и  ``Serializable`` .
+
+В рамках �?того учебного кур�?а начнем �? кла�?�?а, который назовем  ``AbcMultiviewDescription1`` . Этот кла�?�? реализует �?ледующие указанные кла�?�?ы:
+
+
+[source,java]
+----
+
+public class AbcMultiviewDescription1 implements MultiViewDescription, Serializable {
+
+    public int getPersistenceType() {
+        throw new UnsupportedOperationException("Пока не поддерживает�?�?.");
+    }
+
+    public String getDisplayName() {
+        throw new UnsupportedOperationException("Пока не поддерживает�?�?.");
+    }
+
+    public Image getIcon() {
+        throw new UnsupportedOperationException("Пока не поддерживает�?�?.");
+    }
+
+    public HelpCtx getHelpCtx() {
+        throw new UnsupportedOperationException("Пока не поддерживает�?�?.");
+    }
+
+    public String preferredID() {
+        throw new UnsupportedOperationException("Пока не поддерживает�?�?.");
+    }
+
+    public MultiViewElement createElement() {
+        throw new UnsupportedOperationException("Пока не поддерживает�?�?.");
+    }
+
+}
+----
+
+В кла�?�?е  ``AbcMultiviewDescription1`` , приведенном выше, метод  ``createElement()``  возвращает объект MultiViewElement. Однако требует�?�? возвращать �?озданный  ``TopComponent`` , дл�? чего перейдем к �?ледующему дей�?твию.
+
+
+[start=3]
+1. Перепишите �?игнатуру кла�?�?а. Дл�? предо�?тавлени�? �?лемента �? не�?колькими пред�?тавлени�?ми дл�? опи�?ани�?, приведенного на предыдущем �?тапе, потребует�?�? ра�?ширить  ``JPanel``  вме�?то  ``TopComponent`` ; также потребует�?�? �?оздать реализацию  ``MultiViewElement`` :
+
+[source,java]
+----
+
+public final class AbcTopComponent extends JPanel implements MultiViewElement {
+----
+
+В кла�?�?е  ``TopComponent``  необходимо удалить (или закомментировать) методы  ``findInstance()`` ,  ``getPersistenceType()`` ,  ``writeReplace()``  и  ``preferredID()`` .
+
+
+[start=4]
+1. Дл�? начала �?оздадим очень про�?тые реализации дл�? каждого из требуемых методов. Сначала определим новый �?лемент  ``JToolbar``  в верхней ча�?ти кла�?�?а  ``TopComponent`` :
+
+[source,java]
+----
+
+private JToolBar toolbar = new JToolBar();
+----
+
+Затем реализуем методы �?ледующим образом:
+
+
+[source,java]
+----
+
+    public JComponent getVisualRepresentation() {
+        return this;
+    }
+
+    public JComponent getToolbarRepresentation() {
+        return toolbar;
+    }
+
+    public void setMultiViewCallback(MultiViewElementCallback arg0) {
+    }
+
+    public CloseOperationState canCloseElement() {
+        return null;
+    }
+
+    public Action[] getActions() {
+        return new Action[]{};
+    }
+
+    public Lookup getLookup() {
+        return Lookups.singleton(this);
+    }
+
+    public void componentShowing() {
+    }
+
+    public void componentHidden() {
+    }
+
+    public void componentActivated() {
+    }
+
+    public void componentDeactivated() {
+    }
+
+    public UndoRedo getUndoRedo() {
+        return UndoRedo.NONE;
+    }
+----
+
+
+[start=5]
+1. Теперь переопределим  ``AbcMultiviewDescription1``  �?ледующим образом:
+
+[source,java]
+----
+
+public class AbcMultiviewDescription1 implements MultiViewDescription, Serializable {
+
+    public int getPersistenceType() {
+        return TopComponent.PERSISTENCE_ALWAYS;
+    }
+
+    public String getDisplayName() {
+        return "Tab 1";
+    }
+
+    public Image getIcon() {
+        return ImageUtilities.loadImage("/org/myorg/abcfiletype/Datasource.gif");
+    }
+
+    public HelpCtx getHelpCtx() {
+        return null;
+    }
+
+    public String preferredID() {
+       return "AbcMultiviewDescription1";
+    }
+
+    public MultiViewElement createElement() {
+        return new AbcTopComponent();
+    }
+
+}
+----
+
+
+[start=6]
+1. Измените метод  ``createCloneableTopComponent``  в кла�?�?е  ``OpenSupport``  дл�? открыти�?  ``TopComponent``  по�?ред�?твом кла�?�?а  ``MultiViewDescription`` , �?озданного выше:
+
+[source,java]
+----
+
+protected CloneableTopComponent createCloneableTopComponent() {
+
+    // Создание ма�?�?ива де�?крипторов множе�?тва пред�?тавлений:
+    AbcMultiviewDescription1 firstTab = new AbcMultiviewDescription1();
+    MultiViewDescription[] descriptionArray = { firstTab };
+
+    // Создание окна �? не�?колькими пред�?тавлени�?ми:
+    CloneableTopComponent tc = MultiViewFactory.createCloneableMultiView(descriptionArray, firstTab,  null);
+    tc.setDisplayName(entry.getDataObject().getName());
+    return tc;
+
+}
+----
+
+Второй аргумент метода  ``MultiViewFactory.createCloneableMultiView``  определ�?ет вкладку, открываемую по умолчанию. В данном �?лучае выбрана вкладка  ``firstTab`` , определ�?ема�? в  ``AbcMultiViewDescription1`` .
+
+
+[start=7]
+1. Выполните у�?тановку и �?нова откройте файл. Теперь в окне �? не�?колькими пред�?тавлени�?ми �?оздана одна вкладка:
+
+
+image::images/65-mvdeployed.png[]
+
+Теперь в окне �? не�?колькими пред�?тавлени�?ми �?оздана одна вкладка. Дл�? каждой дополнительной вкладки необходимо �?оздать новый кла�?�?  ``MultiviewDescription``  �? новым �?лементом  ``JPanel`` , а затем �?оздать �?кземпл�?р кла�?�?а  ``MultiViewDescription``  в кла�?�?е ра�?ширени�?  ``OpenSupport`` , как показано выше.
+
+
+== Создание �?овме�?тно и�?пользуемого и�?полн�?емого файла модул�?
+
+Готовый модуль можно предо�?тавить дл�? и�?пользовани�? другими разработчиками. Дл�? �?того необходимо �?оздать и ра�?про�?транить двоичный файл "NBM" (модуль NetBeans).
+
+
+[start=1]
+1. В окне "Проекты" щелкните правой кнопкой мыши проект  ``Abc File Type``  и выберите "Создать файл ра�?про�?транени�? модул�? NBM".
+
+Создает�?�? файл NBM, который можно про�?мотреть в окне "Файлы" (Ctrl+2).
+
+
+image::images/60-shareable-nbm.png[]
+
+
+[start=2]
+1. Чтобы предо�?тавить �?тот файл дл�? и�?пользовани�? другим разработчикам, можно, например, во�?пользовать�?�?  link:http://plugins.netbeans.org/PluginPortal/[порталом подключаемых модулкй NetBeans]. Дл�? у�?тановки модул�? получатель должен во�?пользовать�?�? ди�?петчером подключаемых модулей ("Серви�? > Подключаемые модули").
+
+
+link:http://netbeans.apache.org/community/mailing-lists.html[Мы ждем ваших отзывов]
+
+
+
+== Что дальше?
+
+Дополнительные �?ведени�? о �?оздании и разработке модулей NetBeans приведены в �?ледующих ре�?ур�?ах:
+
+*  link:https://netbeans.apache.org/platform/index.html[Домашна�?�? �?траница платформы NetBeans]
+*  link:https://bits.netbeans.org/dev/javadoc/[Спи�?ок интерфей�?ов API �?реды NetBeans (текуща�? вер�?и�? разработки)]
+*  link:https://netbeans.apache.org/kb/docs/platform_ru.html[Другие �?в�?занные руковод�?тва]
+

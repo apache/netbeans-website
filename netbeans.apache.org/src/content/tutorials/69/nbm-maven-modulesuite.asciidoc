@@ -1,0 +1,696 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= Working with NetBeans Module Suites Using Maven
+:jbake-type: platform-tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:icons: font
+:experimental:
+:description: Working with NetBeans Module Suites Using Maven - Apache NetBeans
+:keywords: Apache NetBeans Platform, Platform Tutorials, Working with NetBeans Module Suites Using Maven
+
+This document demonstrates how to create a NetBeans Platform Module Suite from Maven archetypes and build and install the suite in your installation of the IDE. In this tutorial you will create a Maven module suite project that contains three NetBeans modules as sub-projects. The Maven project that contains the sub-projects is a simple POM project that declares how the suite is compiled and the installation target.
+
+This document is based on the Ant-based  link:https://netbeans.apache.org/tutorials/nbm-selection-1.html[NetBeans Selection Management Tutorial] and illustrates some of the differences between using Ant and Maven to develop NetBeans Platform module suites. After you understand some of the differences, you can easily proceed through other tutorials on the the  link:https://netbeans.apache.org/kb/docs/platform.html[NetBeans Platform Learning Trail].
+
+If you are new to the NetBeans Platform, you might want to watch the the screencast series  link:https://netbeans.apache.org/tutorials/nbm-10-top-apis.html[Top 10 NetBeans APIs].
+
+
+
+image::images/netbeans-stamp69.png[title="Content on this page applies to NetBeans IDE 6.5, 6.7, 6.8"]
+
+
+*To follow this tutorial, you need the software and resources listed in the following table.*
+
+|===
+|Software or Resource |Version Required 
+
+| link:https://netbeans.apache.org/download/index.html[NetBeans IDE] |version 6.9 
+
+| link:https://www.oracle.com/technetwork/java/javase/downloads/index.html[Java Developer Kit (JDK)] |Version 6 
+
+| link:http://maven.apache.org/[Maven] |Version 2.0.9 or higher 
+|===
+
+NOTE:  You do not need to download a separate version of the NetBeans Platform to develop applications for the NetBeans Platform. Typically, you develop the applications and modules in the NetBeans IDE and then only include the modules that are necessary to run the NetBeans Platform and your application.
+
+Before starting this tutorial you may want to familiarize yourself with the following documentation.
+
+*  link:https://netbeans.apache.org/wiki/[NetBeans Developer FAQ]
+*  link:http://wiki.netbeans.org/MavenBestPractices[Best Practices for Apache Maven in NetBeans 6.x]
+*  link:http://www.sonatype.com/books/maven-book/reference/introduction.html[Chapter 1. Introducing Apache Maven] (from  link:http://www.sonatype.com/books/maven-book/reference/public-book.html[Maven: The Definitive Guide])
+*  link:https://netbeans.apache.org/kb/docs/java/gui-functionality.html[Introduction to GUI Building]
+
+
+== Using Maven with the IDE
+
+If this is your first Maven project you will want to familiarize yourself with the Maven configuration settings and the Maven Repository Browser.
+
+
+=== Configuring Maven Options
+
+You can use the Maven tab in the Options window to configure the behavior of Maven in the IDE and to check that your configuration is correct.
+
+
+[start=1]
+1. Select the Miscellaneous category in the Options window and click the Maven tab.
+
+[start=2]
+1. Specify the location of your local Maven installation (requires 2.0.9 or newer).
+
+[start=3]
+1. Confirm that the location of the local Maven repository is correct.
+
+[start=4]
+1. Click OK.
+
+In most cases, if your Maven configuration is typical the information in the Options window should already be correct.
+
+*Note.* Maven support is activated as part of the Java SE feature set. If the Maven tab is not available in the Options window, confirm that Java SE is activated by creating a Java application.
+
+
+=== Viewing the Maven Repositories
+
+The artifacts that are used by Maven to build all your projects are stored in your local Maven repository. When an artifact is declared as a project dependency, the artifact is downloaded to your local repository from one of the registered remote repositories if it is not already installed.
+
+The NetBeans repository and several well-known indexed Maven repositories are registered and listed in the Repository Browser window by default. The NetBeans repository contains most of the public artifacts necessary for you to build your project. You can use the Maven Repository Browser to view the contents of your local and remote repositories. You can expand the Local Repository node to see the artifacts that are present locally. The artifacts listed under the NetBeans repository nodes can be added as project dependencies, but not all of them are present locally. They are only added to the Local Repository when they are declared as project dependencies.
+
+To open the Maven Repository Browser:
+
+* Choose Window > Other > Maven Repository Browser from the main menu.
+
+image::images/maven-nbm-netbeans-repo.png[title="Screenshot of Maven Repository Browser"]
+
+
+== Creating the NetBeans Platform Module Suite
+
+In this section you use the New Project wizard to create a NetBeans Platform Module Suite from a Maven archetype. The wizard will create a POM project that will contain the module projects. In the wizard you will also create a module as a sub-project of the suite.
+
+
+[start=1]
+1. Open the New Project wizard and select Maven NetBeans Module Suite in the Maven category. Click Next.
+
+[start=2]
+1. Type *MavenSelectionSuite* for the Project Name. Click Next.
+
+[start=3]
+1. Select Create Module Project and type *MyAPI* for the module name. Click Finish.
+
+When you click Finish, the IDE creates the MavenSelectionSuite project and the sub-project MyAPI NetBeans Module.
+
+image::images/maven-suite-projectswindow.png[title="Screenshot of Projects window"]
+
+MavenSelectionSuite is a POM project which is a container for sub-projects, in this case NetBeans Module projects. The POM project does not contain any source files. The project's POM contains instructions for compiling the suite, and if you look at the POM for the project you can see that  ``pom``  is specified for the packaging.
+
+
+[source,xml]
+----
+
+     <modelVersion>4.0.0</modelVersion>
+    <groupId>com.mycompany</groupId>
+    <artifactId>MavenSelectionSuite</artifactId>
+    *<packaging>pom</packaging>*
+    <version>1.0-SNAPSHOT</version>
+    <name>MavenSelectionSuite Netbeans Module Suite</name>
+    ...
+        <properties>
+            <netbeans.version>RELEASE69</netbeans.version>
+        </properties>
+    *<modules>
+        <module>MyAPI</module>
+    </modules>*
+</project>
+----
+
+The POM also contains a list of the modules that will be included when you build the POM project. You can see that the MyAPI project is listed as a module.
+
+If you expand the Modules node in the Projects window you will see that the MyAPI project is listed as a module. In the Files window you can see that the MyAPI project directory is located in the  ``MavenSelectionSuite``  directory. When you create a new project in the directory of a POM project, the IDE automatically adds the project to the list of modules in the POM that are included when you build and run the POM project.
+
+When you create a NetBeans Platform module suite from the Maven archetype, you do not specify the target NetBeans Platform installation in the New Project wizard as you do when using Ant. To set the NetBeans Platform installation you need to modify the  ``<netbeans.installation>``  element in the POM project's  ``profiles.xml``  file and explicitly specify the path to the NetBeans Platform installation. For more, see the section <<05b,Specifying the Location of the NetBeans Installation>> in this tutorial.
+
+
+== Modifying the MyAPI Module
+
+You created the MyAPI module when you created the module suite, but now you need to create a class in the module and expose the class to other modules.
+
+
+=== Creating a Class in the MyAPI Module
+
+In this exercise you will create a simple class named  ``APIObject`` . Each instance of  ``APIObject``  will be unique because the field  ``index``  is incremented by 1 each time a new instance of  ``APIObject``  is created.
+
+
+[start=1]
+1. Expand the MyAPI project in the Projects window.
+
+[start=2]
+1. Right-click the Source Packages node and choose New > Java Class.
+
+[start=3]
+1. Type *APIObject* as the Class Name and select  ``com.mycompany.mavenselectionsuite``  from the Package dropdown list. Click Finish.
+
+[start=4]
+1. Modify the class to declare some fields and add the following simple methods.
+
+[source,java]
+----
+
+public final class APIObject {
+
+   private final Date date = new Date();
+   private static int count = 0;
+   private final int index;
+
+   public APIObject() {
+      index = count++;
+   }
+
+   public Date getDate() {
+      return date;
+   }
+
+   public int getIndex() {
+      return index;
+   }
+
+   public String toString() {
+       return index + " - " + date;
+   }
+
+}
+----
+
+
+[start=5]
+1. Fix your imports and save your changes.
+
+
+=== Specifying the Public Packages
+
+In this tutorial you will create additional modules that will need to access the methods in  ``APIObject`` . In this exercise you will make the contents of the MyAPI module public so that other modules can access the methods. To declare the  ``com.mycompany.mavenselectionsuite``  package as public you will modify the  ``configuration``  element of  ``nbm-maven-plugin``  in the POM to specify the packages that are exported as public. You can make the changes to the POM in the editor or by selecting the packages to make public in the project's Properties window.
+
+
+[start=1]
+1. Right-click the project node and choose Properties to open the Properties window.
+
+[start=2]
+1. Select the *com.mycompany.mavenselectionsuite* package in the *Public Packages* category. Click OK. 
+image::images/maven-suite-publicpackages.png[title="Public Packages in Properties window"]
+
+When you select a package to export, the IDE modifies the  ``nbm-maven-plugin``  element in the POM to specify the package.
+
+
+[source,xml]
+----
+
+<plugin>
+    <groupId>org.codehaus.mojo</groupId>
+    <artifactId>nbm-maven-plugin</artifactId>
+    <extensions>true</extensions>
+    <configuration>
+        <publicPackages>
+            *<publicPackage>com.mycompany.mavenselectionsuite</publicPackage>*
+        </publicPackages>
+    </configuration>
+</plugin>
+----
+
+
+[start=3]
+1. Right-click the project and choose Build.
+
+When you build the project, the  ``nbm-maven-plugin``  will generate a manifest header in the  ``MANIFEST.MF``  of the JAR that specifies the public packages.
+
+For more information, see the  link:http://bits.netbeans.org/mavenutilities/nbm-maven-plugin/manifest-mojo.html#publicPackages[nbm-maven-plugin manifest documentation].
+
+
+== Creating the MyViewer Module
+
+In this section you will create a new module named MyViewer and add a window component and two text fields. The component will implement  `` link:http://bits.netbeans.org/dev/javadoc/org-openide-util-lookup/org/openide/util/LookupListener.html[LookupListener]``  to listen for changes to the  link:https://netbeans.apache.org/wiki/devfaqlookup[Lookup].
+
+
+=== Creating the Module
+
+In this exercise you will create the MyViewer NetBeans module in the  ``MavenSelectionSuite``  directory.
+
+
+[start=1]
+1. Choose File > New Project from the main menu (Ctrl-Shift-N).
+
+[start=2]
+1. Select Maven NetBeans Module from the Maven category. Click Next.
+
+[start=3]
+1. Type *MyViewer* as the Project Name.
+
+[start=4]
+1. Confirm that the Project Location is the  ``MavenSelectionSuite``  directory. Click Finish.
+
+[start=5]
+1. Right-click the Libraries node in the Projects window and choose Add Dependency.
+
+[start=6]
+1. Select the MyAPI NetBeans Module in the Open Projects tab. Click OK.
+image::images/maven-suite-addapi.png[title="Public Packages in Properties window"]
+
+When you click OK, the IDE adds the artifact to the list of dependencies in the POM and displays the artifact under the Libraries node.
+
+If you look at the POM for the MyViewer module, you see that the parent project for the module is MavenSelectionSuite, that  ``nbm``  is specified for the  ``packaging``  and that the *nbm-maven-plugin* will be used to build the project as a NetBeans module.
+
+
+[source,xml]
+----
+
+<modelVersion>4.0.0</modelVersion>
+*<parent>
+    <groupId>com.mycompany</groupId>
+    <artifactId>MavenSelectionSuite</artifactId>
+    <version>1.0-SNAPSHOT</version>
+</parent>*
+<groupId>com.mycompany</groupId>
+<artifactId>MyViewer</artifactId>
+*<packaging>nbm</packaging>*
+<version>1.0-SNAPSHOT</version>
+<name>MyViewer NetBeans Module</name>
+
+----
+
+
+=== Creating the Window Component
+
+In this exercise you will create a Window component and add two text fields.
+
+
+[start=1]
+1. Right-click the MyViewer project and choose New > Window.
+
+[start=2]
+1. Select *navigator* from the dropdown list and select Open on Application Start. Click Next.
+
+[start=3]
+1. Type *MyViewer* as the Class Name Prefix. Click Finish.
+
+[start=4]
+1. Drag two labels from the Palette into the component and change the text of the top label to  ``"[nothing selected]"`` .
+image::images/maven-suite-myviewertopcomponent.png[title="Text Fields in Window component"]
+
+[start=5]
+1. Click the Source tab and modify the class signature to implement  ``LookupListener`` .
+
+[source,java]
+----
+
+public class MyViewerTopComponent extends TopComponent *implements LookupListener* {
+----
+
+
+[start=6]
+1. Implement the abstract methods by placing the insert cursor in the line and pressing the Alt-Enter keys.
+
+[start=7]
+1. Add the following  ``private``  field  ``result``  and set the initial value to null.
+
+[source,java]
+----
+
+private Lookup.Result result = null;
+----
+
+
+[start=8]
+1. Make the following changes to the  ``componentOpened()`` ,  ``componentClosed()``  and  ``resultChanged()``  methods.
+
+[source,java]
+----
+
+public void componentOpened() {
+    *result = Utilities.actionsGlobalContext().lookupResult(APIObject.class);
+    result.addLookupListener(this);*
+}
+
+public void componentClosed() {
+    *result.removeLookupListener (this);
+    result = null;*
+}
+
+public void resultChanged(LookupEvent le) {
+    *Lookup.Result r = (Lookup.Result) le.getSource();
+    Collection c = r.allInstances();
+    if (!c.isEmpty()) {
+        APIObject o = (APIObject) c.iterator().next();
+        jLabel1.setText (Integer.toString(o.getIndex()));
+        jLabel2.setText (o.getDate().toString());
+    } else {
+        jLabel1.setText("[no selection]");
+        jLabel2.setText ("");
+    }*
+}
+----
+
+By using  `` link:http://bits.netbeans.org/dev/javadoc/org-openide-util/org/openide/util/Utilities.html#actionsGlobalContext%28%29[Utilities.actionsGlobalContext()]`` , each time that a component is opened the class is able to listen globally for the Lookup object of the component that has the focus. The Lookup is removed when the component is closed. The  ``resultChanged()``  method implements the  ``LookupListener``  so that the JLabels in the form are updated according to the  ``APIObject``  that has the focus.
+
+
+[start=9]
+1. Fix the imports and be sure to add * ``org.openide.util.Utilities`` *. Save your changes.
+
+
+== Creating the MyEditor Module
+
+In this section you will create a new module called MyEditor. The module will contain a  `` link:http://bits.netbeans.org/dev/javadoc/org-openide-windows/org/openide/windows/TopComponent.html[TopComponent]``  that will offer instances of  ``APIObject``  via Lookup. You will also create an action that will open new instances of the MyEditor component.
+
+
+=== Creating the Module
+
+In this exercise you will create a NetBeans module in the  ``MavenSelectionSuite``  directory and add a dependency on the MyAPI module.
+
+
+[start=1]
+1. Choose File > New Project from the main menu.
+
+[start=2]
+1. Select Maven NetBeans Module from the Maven category. Click Next.
+
+[start=3]
+1. Type *MyEditor* as the Project Name.
+
+[start=4]
+1. Confirm that the Project Location is the  ``MavenSelectionSuite``  directory. Click Finish.
+
+[start=5]
+1. Right-click the project's Libraries node in the Projects window and choose Add Dependency.
+
+[start=6]
+1. Select the MyAPI NetBeans Module in the Open Projects tab. Click OK.
+
+
+=== Adding an Action
+
+In this exercise you will create a class to add a menu item to the File menu to open a component named MyEditor. You will create the component in the next exercise.
+
+
+[start=1]
+1. Right-click the MyEditor project and choose New > Action to open the New Action dialog.
+
+[start=2]
+1. Select Always Enabled. Click Next.
+
+[start=3]
+1. Keep the defaults in the GUI Registration page. Click Next.
+
+[start=4]
+1. Type *OpenEditorAction* for the Class Name.
+
+[start=5]
+1. Type *Open Editor* for the Display Name. Click Finish.
+
+The IDE opens the  ``OpenEditorAction``  class in the editor and adds the following to the  ``layer.xml``  file.
+
+
+[source,xml]
+----
+
+<filesystem>
+    <folder name="Actions">
+        <folder name="Build">
+            <file name="com-mycompany-myeditor-OpenEditorAction.instance">
+                <attr name="delegate" newvalue="com.mycompany.myeditor.OpenEditorAction"/>
+                <attr name="displayName" bundlevalue="com.mycompany.myeditor.Bundle#CTL_OpenEditorAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
+                <attr name="noIconInMenu" boolvalue="false"/>
+            </file>
+        </folder>
+    </folder>
+    <folder name="Menu">
+        <folder name="File">
+            <file name="com-mycompany-myeditor-OpenEditorAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Build/com-mycompany-myeditor-OpenEditorAction.instance"/>
+                <attr name="position" intvalue="0"/>
+            </file>
+        </folder>
+    </folder>
+</filesystem>
+----
+
+
+[start=6]
+1. Modify the  ``OpenEditorAction``  class to modify the  ``actionPerformed``  method.
+
+[source,java]
+----
+
+public void actionPerformed(ActionEvent e) {
+    MyEditor editor = new MyEditor();
+    editor.open();
+    editor.requestActive();
+}
+----
+
+
+=== Adding the Editor Component
+
+In this exercise you will create the component MyEditor that opens in the editor area when invoked by  ``OpenEditorAction`` . You will not use a Window component template because you will want multiple instances of the component and the Window component is used for creating singleton components. Instead, you will use a JPanel Form template and then modify the class to extend  ``TopComponent`` .
+
+
+[start=1]
+1. Right-click the Source Packages and choose New > Other and select JPanel Form in the Swing GUI Forms category. Click Next.
+
+[start=2]
+1. Type *MyEditor* for the Class Name and select the  ``com.mycompany.myeditor``  package. Click Finish.
+
+[start=3]
+1. Drag two Text Fields into the component.
+
+[start=4]
+1. Make the text fields read-only by deselecting the  ``editable``  property for each Text Field.
+image::images/maven-suite-editableprop.png[title="Editable property for labels"]
+
+[start=5]
+1. Click the Source tab and modify the class signature to extend  ``TopComponent``  instead of  ``javax.swing.JPanel`` .
+
+[source,java]
+----
+
+public class MyEditor extends *TopComponent*
+----
+
+
+[start=6]
+1. Place your insert cursor in the signature and type Alt-Enter to fix the error in the code by searching the Maven repository and adding a dependency on the  ``org.openide.windows``  artifact. Fix your imports.
+image::images/maven-suite-add-topcomponent.png[title="Editable property for labels"]
+
+[start=7]
+1. Modify the constructor to create a new instance of  ``APIObject``  each time the class is invoked.
+
+[source,java]
+----
+
+public MyEditor() {
+    initComponents();
+    *APIObject obj = new APIObject();
+    associateLookup(Lookups.singleton(obj));
+    jTextField1.setText("APIObject #" + obj.getIndex());
+    jTextField2.setText("Created: " + obj.getDate());
+    setDisplayName("MyEditor " + obj.getIndex());*
+
+}
+----
+
+The  ``associateLookup(Lookups.singleton(obj));``  line in the constructor will create a Lookup that contains the new instance of  ``APIObject`` .
+
+
+[start=8]
+1. Fix your imports and save the changes.
+
+The text fields in the component only display the index value and date from  ``APIObject`` . This will enable you to see that each MyEditor component is unique and that MyViewer is displaying the details of the MyEditor component that has the focus.
+
+*Note.* The errors in  ``OpenEditorAction``  will be resolved after you save your changes to  ``MyEditor`` .
+
+
+== Building and Running the Module Suite
+
+At this point you are almost ready to run the suite to see if it builds, installs and behaves correctly.
+
+
+=== Declaring Direct Dependencies
+
+Before you can build and run the suite you need to modify one of the dependencies of the MyEditor project. If you try to build the module suite now, the build output in the Output window will inform you that the suite cannot compile because the MyEditor module requires that the  ``org.openide.util-lookup``  artifact be available at runtime.
+
+If you right-click on the project node and choose Show Dependency Graph, the dependency graph viewer can help you to visualize the module dependencies.
+
+
+image::images/maven-suite-dependency-graph.png[title="artifact dependency graph"]
+
+You can see that MyEditor does not have a direct dependency on  ``org.openide.util-lookup`` . The dependency is transitive and the artifact is available to the project at compile time, but the dependency needs to be direct if the artifact is to be available at runtime. You need to modify the POM to declare the artifact as a direct dependency.
+
+You can make the artifact a direct dependency by manually editing the POM or by using the popup menu item in the Projects window.
+
+
+[start=1]
+1. Expand the Libraries node of the MyEditor module.
+
+[start=2]
+1. Right-click the  ``org.openide.util-lookup``  artifact and choose Declare as Direct Dependency.
+
+When you choose Declare as Direct Dependency, the IDE modifies the POM to add the artifact as a dependency.
+
+*Note.* The  ``org.openide.util-lookup``  artifact is already a direct dependency of the MyViewer module.
+
+
+=== Specifying the Location of the NetBeans Installation
+
+By default, no target NetBeans installation is specified when you use the Maven archetype to create a NetBeans Platform module suite. To install and run the module suite on an installation of the IDE, you need to specify the path to the installation directory by editing the  ``profiles.xml``  file in the POM project.
+
+
+[start=1]
+1. Expand the Project Files node under the MavenSelectionSuite application and double-click  ``profiles.xml``  to open the file in the editor.
+
+[start=2]
+1. Modify the  ``<netbeans.installation>``  element to specify the path to the target NetBeans platform and save the changes.
+
+[source,xml]
+----
+
+<profile>
+   <id>netbeans-ide</id>
+   <properties>
+       <netbeans.installation>/home/me/netbeans-6.9</netbeans.installation>
+   </properties>
+</profile>
+----
+
+*Note.* The path needs to specify the directory that contains the  ``bin``  directory containing the runnable file.
+
+For example, on OS X your path might resemble the following.
+
+
+[source,xml]
+----
+
+<netbeans.installation>/Applications/NetBeans/NetBeans6.9.app/Contents/Resources/NetBeans</netbeans.installation>
+----
+
+
+=== Running the Application
+
+Now that the target installation of the IDE is specified, you can use the Run command on the suite project.
+
+
+[start=1]
+1. Right-click MavenSelectionSuite and choose Run.
+
+When you choose Run, an instance of the IDE will launch with the module suite installed.
+
+
+image::images/maven-suite-run1.png[title="My Viewer and MyEditor windows"]
+
+The MyViewer window will open when the application starts and will display the two text labels. You can now choose Open Editor from the File menu to open a MyEditor component in the editor area. The MyViewer window will display the details of the MyEditor component that has the focus.
+
+The Run action for the module suite project is by default configured to use the Reactor plugin to recursively build and package the modules that are specified as part of the suite. You can open the project's Properties window to view the Maven goals that are mapped to actions in the IDE.
+
+
+image::images/maven-suite-run-action.png[title="My Viewer and MyEditor windows"]
+
+In the Actions category in the Properties window you can see the goals that are mapped to the Run action.
+
+
+== Modifying the Lookup Dynamically
+
+Currently, a new  ``APIObject``  is created each time that you open a new MyEditor component. In this section you will add a button to the MyEditor component that will replace the component's current  ``APIObject``  with a new one. You will modify the code to use  `` link:http://bits.netbeans.org/dev/javadoc/org-openide-util-lookup/org/openide/util/lookup/InstanceContent.html[InstanceContent]``  to dynamically handle changes to the content of Lookup.
+
+
+[start=1]
+1. Expand the MyEditor project and open the  ``MyEditor``  form in the Design view of the editor.
+
+[start=2]
+1. Drag a Button onto the form and set the text of the Button to "Replace".
+
+[start=3]
+1. Right-click the Button and choose Events > Action > actionPerformed to create an event handler method for the button and open the form in the source editor.
+
+[start=4]
+1. Add the following  ``final``  field to the class.
+
+[source,java]
+----
+
+public class MyEditor extends TopComponent {
+    *private final InstanceContent content = new InstanceContent();*
+----
+
+To take advantage of  ``InstanceContent``  you will need to use  `` link:http://bits.netbeans.org/dev/javadoc/org-openide-util-lookup/org/openide/util/lookup/AbstractLookup.html#AbstractLookup%28org.openide.util.lookup.AbstractLookup.Content%29[AbstractLookup]``  instead of  ``Lookup``  in the constructor.
+
+
+[start=5]
+1. Modify the body of the  ``jButton1ActionPerformed``  event handler method to look like the following by copying the lines from the class constructor and adding the call to  ``content.set`` .
+
+[source,java]
+----
+
+private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {
+    *APIObject obj = new APIObject();
+    jTextField1.setText ("APIObject #" + obj.getIndex());
+    jTextField2.setText ("Created: " + obj.getDate());
+    setDisplayName ("MyEditor " + obj.getIndex());
+    content.set(Collections.singleton (obj), null);*
+}
+----
+
+
+[start=6]
+1. Modify the constructor to remove the lines that you copied to the event handler and change  ``associateLookup``  to use  ``AbstractLookup``  and add  ``jButton1ActionPerformed(null);`` . The constructor should now look like the following.
+
+[source,java]
+----
+
+public MyEditor() {
+    initComponents();
+    *associateLookup(new AbstractLookup(content));
+    jButton1ActionPerformed(null);*
+}
+----
+
+You added  ``jButton1ActionPerformed(null);``  to the constructor to ensure that the component is initialized when created.
+
+
+[start=7]
+1. Fix your imports and save your changes.
+
+When you run the module suite project again, you will see the new button in each MyEditor component. When you click the button, the index number in the text fields will increase. The label in the MyViewer window will also update to correspond to the new value.
+
+This tutorial demonstrated how to create and run a NetBeans Platform Module Suite that you create from a Maven Archetype. You saw how module suites are structured and how you configure a modules POM to specify the public packages. You also learned how to modify the parent POM project to specify the target NetBeans installation so that the Run command in the IDE will install the suite and launch a new instance of the Platform. For more examples on how to build NetBeans Platform applications and modules, see the tutorials listed in the  link:https://netbeans.apache.org/kb/docs/platform.html[NetBeans Platform Learning Trail].
+
+link:http://netbeans.apache.org/community/mailing-lists.html[ Send Us Your Feedback]
+
+ 
+
+
+== See Also
+
+For more information about creating and developing on the NetBeans Platform, see the following resources.
+
+*  link:https://netbeans.apache.org/kb/docs/platform.html[NetBeans Platform Learning Trail]
+*  link:https://netbeans.apache.org/wiki/[NetBeans Developer FAQ]
+*  link:http://bits.netbeans.org/dev/javadoc/[NetBeans API Javadoc]
+
+If you have any questions about the NetBeans Platform, feel free to write to the mailing list, dev@platform.netbeans.org, or view the  link:https://netbeans.org/projects/platform/lists/dev/archive[NetBeans Platform mailing list archive].
+

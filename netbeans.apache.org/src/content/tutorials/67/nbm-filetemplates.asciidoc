@@ -1,0 +1,503 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= NetBeans File Template Module Tutorial
+:jbake-type: platform-tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:icons: font
+:experimental:
+:description: NetBeans File Template Module Tutorial - Apache NetBeans
+:keywords: Apache NetBeans Platform, Platform Tutorials, NetBeans File Template Module Tutorial
+
+This tutorial demonstrates how to create a module containing file templates. Once your users have installed the module in the IDE, the file templates are available to them in the New File wizard. Sharing file templates is easy once you have a module that contains them—the IDE lets you create a binary that you can make available to others, who can then install it through the Plugin Manager.
+
+A file template consists of a template file, an HTML description file, and an icon. The HTML description file displays information about the template in the New File wizard. The icon identifies the template and distinguishes it from other templates in the New File wizard. In this tutorial, you create a new file template by copying the content of an existing file template into an empty file. Then, once you have set up a description file for the New File wizard and a distinguishing icon, you register the template, the HTML description file, and the icon in the NetBeans configuration file, that is, in the  ``layer.xml``  file.
+
+
+
+image::images/netbeans-stamp65.gif[title="Content on this page applies to NetBeans IDE 6.5"]
+
+
+*To follow this tutorial, you need the software and resources listed in the following table.*
+
+|===
+|Software or Resource |Version Required 
+
+| link:https://netbeans.apache.org/download/index.html[NetBeans IDE] |version 6.5 
+
+| link:https://www.oracle.com/technetwork/java/javase/downloads/index.html[Java Developer Kit (JDK)] |Version 6 or
+version 5 
+|===
+
+Optionally, for troubleshooting purposes, you can  link:http://plugins.netbeans.org/PluginPortal/faces/PluginDetailPage.jsp?pluginid=3755[download the completed sample] and inspect the sources.
+
+
+== Introduction to FreeMarker
+
+Since NetBeans IDE 6.0, you have been able to optionally use the  link:http://freemarker.org/[FreeMarker] template language to define your file templates. Several of the templates that are bundled with the IDE are defined in this way. For example, the Java class template is defined as follows:
+
+
+[source,xml]
+----
+
+<#assign licenseFirst = "/*">
+<#assign licensePrefix = " * ">
+<#assign licenseLast = " */">
+<#include "../Licenses/license-${project.license}.txt">
+
+<#if package?? &amp;&amp; package != "">
+package ${package};
+
+</#if>
+/**
+ *
+ * @author ${user}
+ */
+public class ${name} {
+
+}
+----
+
+The benefit of using FreeMarker can be seen in the template above, that is, you can add _logic_ to your templates, via _directives_ such as if/elseif/else and loop constructs. For a full description of FreeMarker template language, see the  link:http://freemarker.org/docs/index.html[FreeMarker Manual], in particular, the  link:http://freemarker.org/docs/dgui_template_directives.html[Directives] chapter. In this tutorial, you will be shown, among other things, the steps you need to take to incorporate FreeMarker into your file templates.
+
+
+== Creating the Module Project
+
+We begin by going through the New Module Project wizard, which will create a source structure, with all the minimum requirements, for our new module.
+
+
+[start=1]
+1. Choose File > New Project (Ctrl+Shift+N). Under Categories, select NetBeans Modules. Under Projects, select Module. Click Next.
+
+[start=2]
+1. In the Name and Location panel, type  ``AdditionalFileTemplates``  in the Project Name field. Change the Project Location to any directory on your computer. Leave the Standalone Module option and Set as Main Project checkbox selected. Click Next.
+
+[start=3]
+1. In the Basic Module Configuration panel, type  ``org.myorg.additionalfiletemplates``  in Code Name Base.
+
+[start=4]
+1. Select "Generate XML Layer". Leave the locations of both the localizing bundle and the XML layer file so that they will be stored in a package with the name  ``org/myorg/additionalfiletemplates`` . Click Finish.
+
+The IDE creates the  ``AdditionalFileTemplates``  project. The project contains all of your sources and project metadata, such as the project's Ant build script. The project opens in the IDE. You can view its logical structure in the Projects window (Ctrl-1) and its file structure in the Files window (Ctrl-2). For example, the Projects window should now look as follows:
+
+
+image::images/initial-projects-window-60.png[] 
+
+
+== Creating the File Template
+
+A file template consists of a template file, an HTML description file, and an icon. An easy way to create a new file template is to copy the content of an existing file template into an empty file. Then, once you have set up a description file for the New File wizard and a distinguishing icon, you are ready to register the template in the  ``layer.xml``  file.
+
+
+=== Creating the Template File
+
+
+[start=1]
+1. Right-click the  ``AdditionalFileTemplates``  node and choose New > Other. In the New File wizard, under Categories, choose Other and under File Types, choose HTML. Click Next.
+
+
+[start=2]
+1. Type  ``HTML``  in File Name. Click Browse and browse to  ``src/org/myorg/additionalfiletemplates`` . Click Select Folder. Click Finish.
+
+A new HTML file, called  ``HTML.html`` , opens in the Source Editor, containing the standard HTML file's content shown below:
+
+
+[source,html]
+----
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <title></title>
+  </head>
+  <body>
+     TODO write content
+  </body>
+</html>
+----
+
+
+[start=3]
+1. Change the HTML file according to your needs. You can add the following predefined variables, if needed:
+
+* ${date} inserts the current date, in this format: Feb 16, 2008
+* ${encoding} inserts the default encoding, such as: UTF-8
+* ${name} inserts the name of the file.
+* ${nameAndExt} inserts the name of the file, together with its extension.
+* ${package} inserts the name of the package where the file is created.
+* ${time} inserts the current time, in this format: 7:37:58 PM
+* ${user} inserts the user name.
+
+NOTE:  Your users will be able to set values for these variables in the Template Manager, which is under the Tools menu. There, they will scroll to the end, to "User Configuration Properties". The  ``user.properties``  file within that node can be used to set the above values, to override those provided by the system. Typically, however, they will not do this, because the default values of the above variables will do the job fine.
+
+In addition to the predefined variables, you can provide additional variables to your users, via your module. This is explained later in this tutorial. The full list of FreeMarker directives can also be used to add logic to the template:
+
+* #assign
+* #else
+* #elseif
+* #end
+* #foreach
+* #if
+* #include
+* #list
+* #macro
+* #parse
+* #set
+* #stop
+
+As an example, look at the definition of the Java class template:
+
+
+[source,xml]
+----
+
+<#assign licenseFirst = "/*">
+<#assign licensePrefix = " * ">
+<#assign licenseLast = " */">
+<#include "../Licenses/license-${project.license}.txt">
+
+<#if package?? &amp;&amp; package != "">
+package ${package};
+
+</#if>
+/**
+ *
+ * @author ${user}
+ */
+public class ${name} {
+
+}
+----
+
+For information on the #assign directive, see <<license,Providing a Project License>>. For a full description of FreeMarker template language, see the  link:http://freemarker.org/docs/index.html[FreeMarker Manual], in particular, the  link:http://freemarker.org/docs/dgui_template_directives.html[Directives] chapter.
+
+
+=== Creating the Description File
+
+
+[start=1]
+1. Right-click the  ``org.myorg.additionalfiletemplates``  node and choose New > Other. Under Categories, choose Other. Under File Types, choose HTML File. Click Next. Type  ``Description``  in File Name. Click Browse and browse to  ``src/org/myorg/additionalfiletemplates`` . Click Select Folder. Click Finish.
+
+An empty HTML file opens in the Source Editor and its node appears in the Projects window.
+
+
+[start=2]
+1. Type " ``Creates new HTML file`` " (without the quotation marks) between the  ``<body>``  tags, so that the file looks as follows:
+
+[source,html]
+----
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+   <head>
+      <title></title>
+   </head>
+   <body>
+      Creates new HTML file.
+   </body>
+</html>
+----
+
+
+=== Getting an Icon
+
+The icon accompanies the file template in the New File wizard. It identifies it and distinguishes it from other file templates. The icon must have a dimension of 16x16 pixels.
+
+Name the icon  ``icon.png``  and add it to the  ``org.myorg.additionalfiletemplates``  package.
+
+The Projects window should now look as follows:
+
+
+image::images/final-projects-window-60.png[]
+
+
+
+== Registering the File Template
+
+Once you have created the file template, you must register it in the NetBeans System Filesystem. The  ``layer.xml``  file is made for this purpose.
+
+
+[start=1]
+1. Add the following entry between the  ``<filesystem>``  tags in the  ``layer.xml``  file:
+
+[source,xml]
+----
+
+<folder name="Templates">
+        
+        <folder name="Other">
+            
+            <attr name="SystemFileSystem.localizingBundle" stringvalue="org.myorg.additionalfiletemplates.Bundle"/>
+            <file name="MyHTML.html" url="HTML.html">
+                <attr name="template" boolvalue="true"/>
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="org.myorg.additionalfiletemplates.Bundle"/>
+                <attr name="SystemFileSystem.icon" urlvalue="nbresloc:/org/myorg/additionalfiletemplates/icon.png"/>
+                <attr name="templateWizardURL" urlvalue="nbresloc:/org/myorg/additionalfiletemplates/Description.html"/>
+                *<!--Use this line only if your template makes use of the FreeMarker template language:-->*
+                <attr name="javax.script.ScriptEngine" stringvalue="freemarker"/>
+            </file>
+            
+        </folder>
+        
+</folder>
+----
+
+
+[start=2]
+1. Add the display name to the  ``Bundle.properties``  file:
+
+
+[source,java]
+----
+
+Templates/Other/MyHTML.html=My HTML File
+----
+
+
+
+== Building and Installing the Module
+
+The IDE uses an Ant build script to build and install your module. The build script is created for you when you create the module project.
+
+
+=== Installing the NetBeans Module
+
+In the Projects window, right-click the  ``Additional File Templates``  project and choose Install/Reload in Target Platform.
+
+The module is built and installed in the target IDE or Platform. The target IDE or Platform opens so that you can try out your new module. The default target IDE or Platform is the installation used by the current instance of the development IDE.
+
+NOTE:  When you run your module, you will be using a temporary test user directory, not the development IDE's user directory.
+
+
+=== Using the NetBeans Module
+
+
+[start=1]
+1. Choose File > New Project (Ctrl-Shift-N) and create a new project.
+
+
+[start=2]
+1. Right-click the project and choose New > Other. The New File wizard opens and displays the new category with its new file type. It should look something like this, although your icon will probably be different:
+
+
+image::images/new-file-wizard-60.png[]
+
+
+[start=3]
+1. Select the new file type, click Next, and create a new file. When you click Finish, the Source Editor should display the newly created template.
+
+
+=== Creating a Shareable Module Binary
+
+
+[start=1]
+1. In the Projects window, right-click the  ``Additional File Templates``  project and choose Create NBM.
+
+The NBM file is created and you can view it in the Files window (Ctrl-2):
+
+
+image::images/shareable-nbm-60.png[]
+
+
+[start=2]
+1. Make it available to others via, for example, e-mail.
+
+
+== Providing Additional Variables
+
+As discussed earlier, you can supplement predefined variables such as ${user} and ${time}, with your own. For example, you can define your template like this, if you want to pass in a variable representing a list of names:
+
+
+[source,html]
+----
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <title></title>
+  </head>
+  <body>
+  
+        <#list names as oneName>
+            <b>${oneName}</b>
+        </#list>
+
+  </body>
+</html>
+----
+
+Above, the FreeMarker #list directive iterates through a variable called "names", with each instance being called "oneName". Each value of the iteration is then printed in the file, between bold tags. The value of "names" could come from a variety of places, typically from a wizard panel, where the user, in this case, would have selected a set of names from a list.
+
+To enable the above, that is, to iterate through a new variable, see  link:http://netbeans.dzone.com/news/freemarker-netbeans-ide-60-first-scenario[FreeMarker in NetBeans IDE 6.0: First Scenario] and then see the discussion of  ``DataObject.createFromTemplate(df, targetName, hashMap)``  in  link:http://blogs.oracle.com/geertjan/entry/freemarker_baked_into_netbeans_ide1[this blog entry]. 
+
+
+== Providing a Project License
+
+One point that has not been discussed yet relates to the FreeMarker #assign directive, which is only relevant if you are interested in enabling the user to generate a project license when the file is created. To cater to your user's licensing needs, you can provide licensing directives in the file template. Then all files within the user's project will be created with the licensing directives that you have provided.
+
+To make sense of this, take the following steps:
+
+
+[start=1]
+1. Go to the Tools menu. Choose Templates. Open the Java | Java Class template in the editor:
+
+
+image::http://blogs.oracle.com/geertjan/resource/freemarker-in-nb-2.png[]
+
+
+[start=2]
+1. The template above, and the ramifications of defining it in FreeMarker, have been discussed above. However, let's look specifically at the first four lines:
+
+
+[source,java]
+----
+
+<#assign licenseFirst = "/*">
+<#assign licensePrefix = " * ">
+<#assign licenseLast = " */">
+<#include "../Licenses/license-${project.license}.txt">
+----
+
+These four lines have to do with _licensing_. The last line determines the license that will be used, per project. The first three determine the characters in front of and behind each line in the license. Above are the four lines for Java source files. Here is the same set of definitions that you will find at the start of the Properties file template:
+
+
+[source,java]
+----
+
+<#assign licensePrefix = "# ">
+<#include "../Licenses/license-${project.license}.txt">
+----
+
+The first line tells us that each line in the license will be prefixed with a "# ", instead of with a "*", which is the prefix for Java source files (with "/*" for the first line and " */" for the last line). To verify this, create a Java source file and then create a Properties file. You will see a license in both cases. However, the characters prefixing and postfixing each line is different, because of the above definitions.
+
+
+[start=3]
+1. Next, let's look at the license itself. Notice this line in the templates above:
+
+
+[source,java]
+----
+
+<#include "../Licenses/license-${project.license}.txt">
+----
+
+In particular, notice this part:
+
+
+[source,java]
+----
+
+${project.license}
+----
+
+Put that, as a key, in your application's  ``nbproject/project.properties``  file. Now add a value. For example:
+
+
+[source,java]
+----
+
+project.license=apache
+----
+
+Now look in the Template Manager again, in the Licenses folder. You see some templates there. Create a new one called " ``license-apache.txt`` ". For now, you can just copy an existing one and paste it in the same category in the Template Manager. Then, next time that you create a file that is defined by a FreeMarker template that includes this line:
+
+
+[source,java]
+----
+
+<#include "../Licenses/license-${project.license}.txt">
+----
+
+...you will have the specified license embedded within the newly created file.
+
+In summary, since NetBeans IDE 6.0, you are able to let the user define, per project, the license that each of its files should display. Plus, imagine if the user needs to create a new project with a different license. Assuming the user has a set of licenses defined in the Template Manager, using a new license is as simple as adding that one key/value pair to the  ``nbproject/project.properties``  file. That was not possible before but, thanks to FreeMarker support, is possible now. For further reading about licensing, especially the comments at the end of it, see  link:http://blogs.oracle.com/geertjan/date/20071126[this blog entry].
+
+
+
+link:http://netbeans.apache.org/community/mailing-lists.html[Send Us Your Feedback]
+
+
+
+== Next Steps
+
+For more information about creating and developing NetBeans Module, see the following resources:
+
+*  link:https://netbeans.apache.org/kb/docs/platform.html[Other Related Tutorials]
+
+*  link:https://bits.netbeans.org/dev/javadoc/[NetBeans API Javadoc]
+
+
+== Versioning
+
+|===
+|*Version* |*Date* |*Changes* 
+
+|1 |26 June 2005 |Initial version 
+
+|2 |28 June 2005 |
+
+* Added bold tags to descriptor file to show that Description box displays HTML tags
+* Ordering attributes added
+* Display names moved to Bundle.properties
+* Screenshot in "Using the NetBeans Plug-in" changed
+* Added ".template" as extension to the "BrandedJavaClass" file, because the  ``layer.xml``  looks for a file called "BrandedJavaClass.template". Also changed the screenshot of the Projects window at the end of the "Creating the File Template" section to reflect the ".template" extension.
+ 
+
+|3 |2 October 2005 |
+
+* Went through the whole tutorial with the latest build. Made several changes, mainly because the Templates replaces the Options window for templates.
+* Added new 2nd and 3rd paragraphs to the introduction, to explain that this tutorial isn't necessary if you're creating a new file type.
+ 
+
+|4 |3 October 2005 |
+
+* Changed templateWizard[Iterator|URL] in layer.xml to instantiating[Iterator|WizardURL] because templateWizard[Iterator|URL] is going to be deprecated.
+ 
+
+|5 |16 March 2006 |
+
+* Went through whole tutorial and tweaked line spacing a little bit, everything works fine still.
+* Need to replace screenshots because icons are a bit different.
+* Need to add icon to the doc, not just refer to the location.
+* Need to show how multiple file templates can be created simultaneously from the New File wizard.
+ 
+
+|6 |12 September 2006 |
+
+* Went through whole tutorial in NetBeans IDE 5.5 Beta 2.
+* No problems, worked exactly as described.
+* Updated some screenshots.
+* Fixed indentations in code.
+ 
+
+|7 |9 June 2007 |Started updating to NetBeans 6. 
+
+|8 |16 February 2008 |Started migrating the info from  link:http://blogs.oracle.com/geertjan/entry/freemarker_baked_into_netbeans_ide1[this blog entry],  link:http://blogs.oracle.com/geertjan/entry/freemarker_baked_into_netbeans_ide2[this blog entry], and  link:http://blogs.oracle.com/geertjan/date/20071126[this blog entry], and  link:http://netbeans.dzone.com/news/freemarker-netbeans-ide-60-first-scenario[this article] into this tutorial. 
+
+|9 |15 April 2008 |Updated the styles (badge, table of contents, required software table) to the new format. 
+
+|10 |31 October 2008 |Updated to 6.5 (badge, version numbers, requirement table). 
+|===

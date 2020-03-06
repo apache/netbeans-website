@@ -1,0 +1,565 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= NetBeans Refactoring Module Tutorial - Part 1
+:jbake-type: platform-tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:icons: font
+:experimental:
+:description: NetBeans Refactoring Module Tutorial - Part 1 - Apache NetBeans
+:keywords: Apache NetBeans Platform, Platform Tutorials, NetBeans Refactoring Module Tutorial - Part 1
+
+This tutorial demonstrates how to create a module suite that provides one or more Java Refactorings. The tutorial is split into three parts:
+
+* Part1: Initiate
+* Part2: Configurate and Execute
+* Part3: Testing and Distribution
+
+At the end of this series we will have a fully tested implementation of the Inline Constant Refactoring.
+
+
+
+image::https://platform.netbeans.org/images/articles/65/netbeans-stamp65.gif[title="Content on this page applies to NetBeans IDE 6.5"]
+
+
+*To follow this tutorial, you need the software and resources listed in the following table.*
+
+|===
+|Software or Resource |Version Required 
+
+| link:https://netbeans.apache.org/download/index.html[NetBeans IDE] |version 6.5 
+
+| link:https://www.oracle.com/technetwork/java/javase/downloads/index.html[Java Developer Kit (JDK)] |Version 6 or
+version 5 
+|===
+
+
+== Prerequisite Knowledge
+
+* Using Refactorings in NetBeans
+* NetBeans top 10 API's
+* Java Infrastructure Tutorial
+
+
+== NetBeans Refactoring
+
+When you want to refactor in NetBeans, you will find yourself doing the following steps:
+
+* Select
+* Initiate
+* Configure
+* Preview
+* Execute
+* Undo
+
+You begin by selecting the code you want to refactor. In NetBeans this can be done from the editor, the navigator or in your projects window. You initiate the refactoring by choosing it from the global menu, the contextual menu or by using a keyboard shortcut. If there are no problems found, you will be presented with the configuration dialog. After setting you desired settings, you can either choose for a preview from which you can execute the refactoring, or execute it immediately. Your code-base has been changed, but can still be undone by the Undo operation.
+
+The steps Select, Preview and Undo are all automagically done by NetBeans. In this tutorial, Part 1, we will start by making the Initiation part. In Part 2 we will take care of the Configure and Execute steps and in Part 3 we will write tests and make it ready to distribute.
+
+
+== Project Setup
+
+For this tutorial you need to create a module suite, starting with just one module.
+SuiteName: InlineDemo
+ModuleName: InlineDemoAPI
+CodeNameBase: org.nb.inlinedemo
+XML Layer: org/nb/inlinedemo/layer.xml
+
+Our module will use different API's from the NetBeans Platform and IDE. Setup the dependencies as shown below:
+
+
+image::images/APIDependencies.png[]
+
+
+== Initiate
+
+A refactoring is initiated by choosing it from the global menu, the contextual menu or by using a keyboard shortcut. NetBeans will take care of the difficult parts, we will only have to create the Action and make an implementation factory.
+
+
+=== Action
+
+
+[start=1]
+1. Right-click the module project, choose New > Other and choose Action from the Module Development category.
+
+[start=2]
+1. Choose Conditionally Enabled, and keep the defaults. We will plugin our Action into the RefactoringActions, so we will change these settings later.
+
+[start=3]
+1. 
+Choose Refactor in Category, only select the Editor Context Menu and choose text/x-java in Content Type. Position will be changed later.
+
+
+image::images/RefactoringAction.png[]
+
+
+[start=4]
+1. Type  ``InlineAction``  in Class Name and  ``Inline...``  in Display Name. Change the Package to  ``org.nb.inlinedemo.ui`` 
+
+
+image::images/RefactoringAction2.png[]
+
+
+=== RefactoringActions
+
+The NetBeans Refactoring API facilitates context sensitive actions. To use it, all we have to is register our action in the appropriate folder. Now we will also change how our action is created.
+
+
+[start=1]
+1. Open the Layer file and change it to the following:
+
+[start=1]
+1. 
+[source,java]
+----
+
+<file name="org-nb-inlinedemo-ui-InlineAction.instance"/>
+----
+
+into
+
+[source,xml]
+----
+
+<file name="org-nb-inlinedemo-ui-InlineAction.instance">
+    <attr name="instanceCreate" methodvalue="org.nb.inlinedemo.api.ui.RefactoringActionsFactory.inlineAction"/>
+</file>
+----
+
+
+[start=2]
+1. 
+[source,java]
+----
+
+<folder name="Popup">
+----
+
+into
+
+[source,java]
+----
+
+<folder name="RefactoringActions">
+----
+
+
+[start=2]
+1. Your layer file should now look like this:
+
+[source,xml]
+----
+
+<filesystem>
+	<folder name="Actions">
+        <folder name="Refactoring">
+            <file name="org-nb-inlinedemo-ui-InlineAction.instance">
+                <attr name="instanceCreate" methodvalue="org.nb.inlinedemo.api.ui.RefactoringActionsFactory.inlineAction"/>
+            </file>
+        </folder>
+    </folder>
+    <folder name="Editors">
+        <folder name="text">
+            <folder name="x-java">
+                <folder name="RefactoringActions">
+                    <file name="org-nb-inlinedemo-ui-InlineAction.shadow">
+                        <attr name="originalFile" stringvalue="Actions/Refactoring/org-nb-inlinedemo-ui-InlineAction.instance"/>
+                        <attr name="position" intvalue="430"/>
+                    </file>
+                </folder>
+            </folder>
+        </folder>
+    </folder>
+</filesystem>
+----
+
+
+[start=3]
+1. Expand your layer file and expand  ``<this layer in context>`` .
+
+[start=4]
+1. Goto Editors > text > x-java > RefactoringActions.
+
+[start=5]
+1. Here you can drag and drop the InlineAction to change the order. Put it right above introduce-variable.
+
+[start=6]
+1. Right-click the module project, choose New > Other and choose Java Class from the Java category.
+
+[start=7]
+1. Type  ``RefactoringActionsFactory in Class Name and  ``org.nb.inlinedemo.api.ui``  in Package.`` 
+
+[start=8]
+1. Add an empty private constructor and the following method to the class:
+
+[source,java]
+----
+
+public static ContextAwareAction inlineAction() {
+    return InlineAction.findObject(InlineAction.class, true);
+}
+----
+
+
+=== RefactoringGlobalAction
+
+The next step for our Action is to let it subclass the RefactoringGlobalAction. There used to be an AbstractRefactoringAction, but this isn't used anymore. Because the RefactoringGlobalAction isn't in a public package, we will create a copy. The Java Refactoring module also created a copy and added some more functionality, so we will take that one.
+
+
+[start=1]
+1. Right-click the module project, choose New > Other and choose Java Class from the Java category.
+
+[start=2]
+1. Type  ``RefactoringGlobalAction in Class Name and  ``org.nb.inlinedemo.api.ui``  in Package.`` 
+
+[start=3]
+1. Change the contents of the file to the following:
+
+[source,java]
+----
+
+/**
+ * JavaRefactoringGlobalAction
+ * This class is copy of RefactoringGlobalAction, which is not in public packages
+ * @author Jan Becicka
+ */
+public abstract class JavaRefactoringGlobalAction extends NodeAction {
+
+    /** Creates a new JavaRefactoringGlobalActiongGlobalAction */
+    public JavaRefactoringGlobalAction(String name, Icon icon) {
+        setName(name);
+        setIcon(icon);
+    }
+    
+    public final String getName() {
+        return (String) getValue(Action.NAME);
+    }
+    
+    protected void setName(String name) {
+        putValue(Action.NAME, name);
+    }
+    
+    protected void setMnemonic(char m) {
+        putValue(Action.MNEMONIC_KEY, new Integer(m));
+    }
+    
+    private static String trim(String arg) {
+        arg = arg.replace("&amp;", ""); // NOI18N
+        return arg.replace("...", ""); // NOI18N
+    }
+    
+    public org.openide.util.HelpCtx getHelpCtx() {
+        return HelpCtx.DEFAULT_HELP;
+    }
+
+    protected Lookup getLookup(Node[] n) {
+        InstanceContent ic = new InstanceContent();
+        for (Node node:n)
+            ic.add(node);
+        if (n.length>0) {
+            EditorCookie tc = getTextComponent(n[0]);
+            if (tc != null) {
+                ic.add(tc);
+            }
+        }
+        ic.add(new Hashtable(0));
+        return new AbstractLookup(ic);
+    }
+
+    
+    protected static EditorCookie getTextComponent(Node n) {
+        DataObject dobj = n.getCookie(DataObject.class);
+        if (dobj != null) {
+            EditorCookie ec = dobj.getCookie(EditorCookie.class);
+            if (ec != null) {
+                TopComponent activetc = TopComponent.getRegistry().getActivated();
+                if (activetc instanceof Pane) {
+                    return ec;
+                }
+            }
+        }
+        return null;
+    }
+    
+    public abstract void performAction(Lookup context);
+    
+    protected abstract boolean enable(Lookup context);
+    
+    public final void performAction(final Node[] activatedNodes) {
+        performAction(getLookup(activatedNodes));
+    }
+
+    protected boolean enable(Node[] activatedNodes) {
+        return enable(getLookup(activatedNodes));
+    }
+    
+    
+    @Override
+    public Action createContextAwareInstance(Lookup actionContext) {
+        return new ContextAction(actionContext);
+    }
+    
+    public class ContextAction implements Action, Presenter.Menu, Presenter.Popup, Presenter.Toolbar {
+
+        Lookup context;
+
+        public ContextAction(Lookup context) {
+            this.context=context;
+        }
+        
+        public Object getValue(String arg0) {
+            return JavaRefactoringGlobalAction.this.getValue(arg0);
+        }
+        
+        public void putValue(String arg0, Object arg1) {
+            JavaRefactoringGlobalAction.this.putValue(arg0, arg1);
+        }
+        
+        public void setEnabled(boolean arg0) {
+            JavaRefactoringGlobalAction.this.setEnabled(arg0);
+        }
+        
+        public boolean isEnabled() {
+            return enable(context);
+        }
+        
+        public void addPropertyChangeListener(PropertyChangeListener arg0) {
+            JavaRefactoringGlobalAction.this.addPropertyChangeListener(arg0);
+        }
+        
+        public void removePropertyChangeListener(PropertyChangeListener arg0) {
+            JavaRefactoringGlobalAction.this.removePropertyChangeListener(arg0);
+        }
+        
+        public void actionPerformed(ActionEvent arg0) {
+            JavaRefactoringGlobalAction.this.performAction(context);
+        }
+        public JMenuItem getMenuPresenter() {
+            if (isMethodOverridden(JavaRefactoringGlobalAction.this, "getMenuPresenter")) { // NOI18N
+
+                return JavaRefactoringGlobalAction.this.getMenuPresenter();
+            } else {
+                return new Actions.MenuItem(this, true);
+            }
+        }
+
+        public JMenuItem getPopupPresenter() {
+            if (isMethodOverridden(JavaRefactoringGlobalAction.this, "getPopupPresenter")) { // NOI18N
+
+                return JavaRefactoringGlobalAction.this.getPopupPresenter();
+            } else {
+                return new Actions.MenuItem(this, false);
+            }
+        }
+
+        public Component getToolbarPresenter() {
+            if (isMethodOverridden(JavaRefactoringGlobalAction.this, "getToolbarPresenter")) { // NOI18N
+
+                return JavaRefactoringGlobalAction.this.getToolbarPresenter();
+            } else {
+                final JButton button = new JButton();
+                Actions.connect(button, this);
+                return button;
+            }
+        }
+
+        private boolean isMethodOverridden(NodeAction d, String name) {
+            try {
+                Method m = d.getClass().getMethod(name, new Class[0]);
+
+                return m.getDeclaringClass() != CallableSystemAction.class;
+            } catch (java.lang.NoSuchMethodException ex) {
+                ex.printStackTrace();
+                throw new IllegalStateException("Error searching for method " + name + " in " + d); // NOI18N
+            }
+        }        
+    }
+}
+
+----
+
+
+[start=4]
+1. Fix Imports and open InlineAction.
+
+[start=5]
+1. Instead of CookieAction, let InlineAction subclass our JavaRefactoringGlobalAction.
+
+[start=6]
+1. Remove the constructor and add the following:
+
+[source,java]
+----
+
+public InlineAction() {
+    super(NbBundle.getMessage(InlineAction.class, "CTL_InlineAction"), null);
+    putValue("noIconInMenu", Boolean.TRUE); // NOI18N
+}
+
+----
+
+
+[start=7]
+1. Change the Method  ``performAction``  with this one:
+
+[source,java]
+----
+
+public void performAction(Lookup context) {
+    throw new UnsupportedOperationException("Not supported yet.");
+}
+
+----
+
+
+[start=8]
+1. Remove the methods:  ``mode`` ,  ``getName`` ,  ``cookieClasses``  and  ``initialize`` 
+
+[start=9]
+1. Add the enable method:
+
+[source,java]
+----
+
+protected boolean enable(Lookup context) {
+    return false;
+}
+
+----
+
+You have now created a Refactoring Action which will be shown in the refactoring menu's.
+
+
+== Implementation Factory
+
+You can write the performAction and the enable method directly in your Action class, but we will create a Factory for that. Using a Factory here, will make it possible to write different implementations for the same Refactoring Action. The action can be used, for instanced for Java projects as well for Ruby projects.
+
+
+[start=1]
+1. Right-click the module project, choose New > Other and choose Java Class from the Java category.
+
+[start=2]
+1. Type  ``ActionsImplementationProvider``  in Class Name and  ``org.nb.inlinedemo.spi.ui``  in Package. This class can later be used by implementations of our refactoring, to register with the action.
+
+[start=3]
+1. Add the methods  ``canInline``  and  ``doInline``  using the following code:
+
+[source,java]
+----
+
+public boolean canInline(Lookup lookup) {
+    return false;
+}
+
+public void doInline(Lookup lookup) {
+    throw new UnsupportedOperationException("Not implemented"); // NOI18N
+}
+
+----
+
+
+[start=4]
+1. Right-click the module project, choose New > Other and choose Java Class from the Java category.
+
+[start=5]
+1. Type  ``ActionsImplementationFactory``  in Class Name and  ``org.nb.inlinedemo.ui``  in Package.
+
+[start=6]
+1. Add an empty private constructor.
+
+[start=7]
+1. The factory will try every implementation of our ActionsImplementationProvider to see if it can do the refactoring. Add the field implementations using the following code:
+
+[source,java]
+----
+
+private static final Lookup.Result<ActionsImplementationProvider> implementations =
+        Lookup.getDefault().lookup(new Lookup.Template<ActionsImplementationProvider>
+        (ActionsImplementationProvider.class));
+
+----
+
+
+[start=8]
+1. Add the methods  ``canInline``  and  ``doInline``  using the following code:
+
+[source,java]
+----
+
+public static boolean canInline(Lookup lookup) {
+    for (ActionsImplementationProvider rafi : implementations.allInstances()) {
+        if (rafi.canInline(lookup)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+public static void doInline(Lookup lookup) {
+    for (ActionsImplementationProvider rafi : implementations.allInstances()) {
+        if (rafi.canInline(lookup)) {
+            rafi.doInline(lookup);
+            return;
+        }
+    }
+}
+
+----
+
+
+[start=9]
+1. Open InlineAction and change the method body of performAction with:
+
+[source,java]
+----
+
+ActionsImplementationFactory.doInline(context);
+----
+
+
+[start=10]
+1. Change the method body of enable with:
+
+[source,java]
+----
+
+return ActionsImplementationFactory.canInline(context);
+----
+
+
+[start=11]
+1. The next step is to have your module export the `org.nb.inlinedemo.api.ui` and `org.nb.inlinedemo.spi.ui` package so other modules can see classes in it. Right click the module project and choose Properties.
+
+[start=12]
+1. 
+In the API Versioning page in the Project Properties dialog box, check the checkbox for `org.nb.inlinedemo.api.ui` and `org.nb.inlinedemo.spi.ui` in the Public Packages list, shown below:
+
+
+image::images/ExportPackage.png[]
+
+
+== Next Steps
+
+You now have a working menu action, which only shows when a Java file is opened and is ready to be implemented. In the next tutorial we will write an implementation for this action. 
+

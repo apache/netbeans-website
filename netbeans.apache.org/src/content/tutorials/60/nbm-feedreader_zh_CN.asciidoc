@@ -1,0 +1,1209 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= NetBeans 平台 Feed Reader 教程
+:jbake-type: platform-tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:icons: font
+:experimental:
+:description: NetBeans 平台 Feed Reader 教程 - Apache NetBeans
+:keywords: Apache NetBeans Platform, Platform Tutorials, NetBeans 平台 Feed Reader 教程
+
+欢迎学习 NetBeans 平台 Feed Reader 教程。您在本教程中构建的 Feed Reader 是一个简单的 RSS/Atom Feed 浏览器，它模仿的是 Mozilla Firefox 的 Sage 插件。它用于呈现一个 Feed 树，其中的子节点表示可以在浏览器中打开的各个 Feed 条目。
+
+为了说明最终的结果，下面显示了您将在本教程中构建的 Feed Reader，并且打开了  link:https://netbeans.org/rss-091.xml[NetBeans Highlights Feed] 中的一个 Feed 条目：
+
+
+image::images/60-result.png[]
+
+
+
+image::images/netbeans-stamp60-61.gif[title="本页上的内容适用于 NetBeans IDE 6.1"]
+
+
+*要学习本教程，您需要具备下表中列出的软件和资源。*
+
+|===
+|软件或资源 |要求的版本 
+
+|NetBeans IDE | link:https://netbeans.apache.org/download/index.html[版本 6.1] 或
+版本 6.0 
+
+|Java Developer Kit (JDK) | link:https://www.oracle.com/technetwork/java/javase/downloads/index.html[版本 6] 或
+版本 5 
+
+|RSS 和 Atom 实用程序（ link:https://rome.dev.java.net/[下载]） 
+
+|Rome Fetcher（ link:http://wiki.java.net/bin/view/Javawsxml/RomeFetcherRelease06[下载]） 
+
+|JDom（ link:http://jdom.org/downloads/index.html[下载]） 
+
+|FeedReader 图标和闪屏（ link:https://netbeans.org/files/documents/4/550/feedreader-images.zip[下载]）。 
+|===
+
+
+== 必备知识
+
+您无需了解有关 NetBeans 平台开发的任何知识即可学习本教程。此外，具有一些 Java 编程背景将会对您有所帮助，但这并不是必需的。不过，在开始学习本教程之前阅读下列文档可能会很有用，您可以从中获取一些有用的背景信息：
+
+*  link:https://netbeans.apache.org/tutorials/60/nbm-feedreader_background.html[Preparing to Create the FeedReader Application]（准备创建 FeedReader 应用程序）。此文档提供了本教程的背景知识。它指导您从概念上理解将在本教程中执行的所有操作。此外，还说明了可以从何处找到在本教程中构建的样例的源代码。
+*  link:../61/nbm-htmleditor.html[NetBeans 平台快速入门]。此简短教程将引导您完成在 NetBeans 平台之上构建富客户端 (rich client) 应用程序的完整过程。其中介绍了主要开发阶段和工具，并且最终生成了一个 HTML 编辑器。
+
+
+== 设置应用程序
+
+在 NetBeans IDE 中，要在 NetBeans 之上构建应用程序，首先应生成许多将用作应用程序基础的文件。例如，IDE 提供了一个模块项目向导、一个模块套件项目向导以及一个库包装模块项目向导，这些向导用于设置在 NetBeans 平台上构建模块和应用程序所需的全部基本文件。
+
+* *模块套件项目。*该项目用于将一组互相依赖的模块项目和库包装模块项目组合在一起，并允许您将它们作为一个整体进行部署。
+* *库包装模块项目。*该项目用于将库 JAR 文件放在其类路径上，并将 JAR 文件的部分或所有包作为公共包从模块中导出。
+* *模块项目。*该项目用于实现在 NetBeans 平台上构建的模块或应用程序的功能、业务逻辑和用户界面。
+
+
+=== 创建模块套件项目
+
+
+[start=1]
+1. 选择“文件”>“新建项目”(Ctrl-Shift-N)。在“类别”下选择“NetBeans 模块”。在“项目”下选择“模块套件”项目。您应该看到如下所示的屏幕：
+
+
+image::images/60-suite-wiz.png[]
+
+单击“下一步”。
+
+
+[start=2]
+1. 在“名称和位置”面板的“项目名称”中键入  ``feedreader-suite`` 。将项目位置更改为计算机上的任意目录。您现在应该看到如下所示的屏幕：
+
+
+image::images/60-suite-wiz2.png[]
+
+单击“完成”。
+
+IDE 将创建  ``feedreader-suite``  项目，并在“项目”窗口中显示该项目，如下所示：
+
+
+image::images/60-suite.png[]
+
+该项目将包含您在下面几小节中创建的模块项目和库包装模块项目。
+
+
+=== 包装库
+
+您可以将整个 Feed Reader 应用程序捆绑到单个模块中。但是，该应用程序需要 Rome、Rome Fetcher 和 JDom 库：
+
+* *Rome。*使用非常简单的 API 读取 RSS 和 Atom Feed。
+* *Rome Fetcher。*允许通过 HTTP 检索 Feed。
+* *JDom。*它是一个 XML 解析 API。Feed Reader 需要它的唯一原因是，Rome 库要使用它。
+
+如果您打算以后通过添加更多使用这些库的模块来扩展 Feed Reader 应用程序，则最好让这些模块只依赖库模块，而不是整个 Feed Reader。此外，库模块可以“自动装入”，这意味着 NetBeans 将只在需要时才装入它们。在自动装入库模块之前，它不会在运行时占用任何内存。
+
+
+[start=1]
+1. 在如下所示的“项目”窗口中右键单击模块套件项目的“模块”节点，然后单击“添加新库”：
+
+
+image::images/60-add-lib0.png[]
+
+执行此操作时，您应该看到如下所示的屏幕：
+
+
+image::images/60-lib-wiz.png[]
+
+
+[start=2]
+1. 在如上所示的“选择库”面板中，浏览到下载的 JDom 所在的文件夹，然后选择 "jdom.jar" 和 "LICENSE.txt"。单击“下一步”。
+
+[start=3]
+1. 在“名称和位置”面板中，接受所有缺省设置。您应该看到如下所示的屏幕：
+
+
+image::images/60-lib-wiz3.png[]
+
+*注意：*库包装模块项目将被存储在模块套件项目中。您也可以将它存储在其他位置，但为了便于进行版本控制，最好将它放在模块套件项目内。因此， ``feedreader-suite``  模块套件项目在“添加到模块套件中”下拉列表内处于选定状态。
+
+单击“下一步”。
+
+
+[start=4]
+1. 在“基本模块配置”面板中，接受所有缺省设置。您应该看到如下所示的屏幕：
+
+
+image::images/60-lib-wiz2.png[]
+
+单击“完成”。
+
+将在 IDE 中打开新的库包装模块项目，并在“项目”窗口中显示该项目。您现在应该在“项目”窗口中看到如下所示的内容：
+
+
+image::images/60-lib-wiz4.png[]
+
+[start=5]
+1. 返回至本小节的步骤 1，为 Rome 创建一个库包装模块项目。接受所有缺省设置。
+
+[start=6]
+1. 返回至本小节的步骤 1，为 Rome Fetcher 创建一个库包装模块项目。接受所有缺省设置。
+
+现在，您已具有一个模块套件项目以及三个库包装模块项目，从而提供了可供您在本教程中使用的许多有用的 Java 类。
+
+
+=== 创建模块项目
+
+在本小节中，我们将为应用程序所提供的功能创建一个项目。该项目将使用在上一节中创建的库包装模块所提供的类。
+
+
+[start=1]
+1. 在如下所示的“项目”窗口中右键单击模块套件项目的“模块”节点，然后单击“添加新模块”：
+
+
+image::images/60-module-project.png[]
+
+执行此操作时，您应该看到如下所示的屏幕：
+
+
+image::images/60-module-wiz.png[]
+
+
+[start=2]
+1. 在如上所示的“名称和位置”面板的“项目名称”中键入  ``FeedReader`` 。接受所有缺省设置。单击“下一步”。
+
+[start=3]
+1. 在“基本模块配置”面板中，将“代码名称基”中的  ``yourorghere``  替换为  ``myorg`` ，以使整个代码名称基为  ``org.myorg.feedreader`` 。在“模块显示名称”中键入  ``FeedReader`` 。保留本地化包和 XML 层的位置，以将其存储在名为  ``org/myorg/feedreader``  的包中。您现在应该看到如下所示的屏幕：
+
+
+image::images/60-module-wiz2.png[]
+
+单击“完成”。
+
+IDE 将创建 FeedReader 项目。此项目包含模块的所有源代码和项目 meta 数据，例如项目的 Ant 生成脚本。此项目将会在 IDE 中打开。您可以在“项目”窗口 (Ctrl-1) 中查看其逻辑结构，在“文件”窗口 (Ctrl-2) 中查看其文件结构。“项目”窗口现在应如下所示：
+
+
+image::images/60-module.png[]
+
+至此，您已创建了新应用程序的源代码结构。在下一节中，我们将开始添加一些代码。
+
+
+== 创建 Feed Reader 窗口
+
+在本节中，您将使用“窗口组件”向导来生成一些用于创建定制窗口组件的文件，以及一个用于调用该组件的操作。此向导还将在  ``layer.xml``  配置文件中将该操作注册为一个菜单项，并添加用于序列化窗口组件的条目。学完本节后，我们将向您演示如何试用“窗口组件”向导所生成的文件。
+
+
+[start=1]
+1. 右键单击 "FeedReader" 项目节点，然后选择“新建”>“其他”。在“类别”下选择“模块开发”。在“文件类型”下选择“窗口组件”，如下所示：
+
+
+image::images/60-windowcomp-wiz.png[]
+
+单击“下一步”。
+
+
+[start=2]
+1. 在“基本设置”面板中，从下拉列表中选择 "explorer"，然后选中“在应用程序启动时打开”，如下所示：
+
+
+image::images/60-windowcomp-wiz2.png[]
+
+单击“下一步”。
+
+
+[start=3]
+1. 在“名称和位置”面板的“类名前缀”中键入 Feed，然后浏览到  ``rss16.gif (
+image::images/rss16.gif[])``  的保存位置。该 GIF 文件将显示在调用此操作的菜单项中。您现在应该看到如下所示的屏幕：
+
+
+image::images/60-windowcomp-wiz3.png[]
+
+单击“完成”。
+
+“项目”窗口现在应如下所示：
+
+
+image::images/60-windowcomp.png[]
+
+IDE 已创建下列新文件：
+
+*  ``FeedAction.java。`` 定义出现在“窗口”菜单中且带有标签 "Open Feed Window" 和图像  ``rss16.gif``  (
+image::images/rss16.gif[]) 的操作。它将打开 "Feed Window"。
+*  ``FeedTopComponent.java。`` 定义 "Feed Window"。
+*  ``FeedTopComponentSettings.xml。`` 指定  ``org.myorg.feedreader``  富客户端 (rich client) 应用程序的所有接口。可以轻松地查找实例，无需实例化每个实例。不必装入类或创建对象，从而提高了性能。已在  ``layer.xml``  文件的  ``Windows2/Components``  文件夹中注册。
+*  ``FeedTopComponentWstcref.xml。`` 指定对组件的引用。允许组件属于多种模式。已在  ``layer.xml``  文件的  ``Windows2/Modes``  文件夹中注册。
+
+IDE 已修改下列现有文件：
+
+*  ``project.xml。`` 添加了两个模块依赖关系：“实用程序 API”（单击 link:http://bits.netbeans.org/dev/javadoc/org-openide-util/overview-summary.html[此处]可获取 Javadoc）和“窗口系统 API”（单击 link:http://bits.netbeans.org/dev/javadoc/org-openide-windows/overview-summary.html[此处]可获取 Javadoc）。
+*  ``Bundle.properties。`` 
+添加了以下三个键值对：
+*  ``CTL_FeedAction。`` 对  ``FeedAction.java``  中定义的菜单项的标签进行本地化。
+*  ``CTL_FeedTopComponent。`` 对  ``FeedTopComponent.java``  的标签进行本地化。
+*  ``HINT_FeedTopComponent。`` 对  ``FeedTopComponent.java``  的工具提示进行本地化。
+
+最后，在  ``layer.xml``  文件中添加了三个注册条目。
+
+下面介绍了  ``layer.xml``  文件中各个条目的作用：
+
+*  ``<Actions>``  
+将操作注册为“窗口”文件夹中的操作。
+*  ``<Menu>``  
+将操作注册为“窗口”菜单中的菜单项。
+*  ``<Windows2> `` 注册  ``FeedTopComponentSettings.xml`` ，它用于查找窗口组件。在 "explorer" 区域中注册组件引用文件  ``FeedTopComponentWstcref.xml`` 。 
+
+
+== 运行应用程序
+
+无需键入任何代码，您便可以试用应用程序。要试用应用程序，您需要将模块部署到 NetBeans 平台，然后检查是否正确显示了空的 "Feed Window"。
+
+
+[start=1]
+1. 首先删除用于定义 NetBeans IDE，但在 Feed Reader 应用程序中不需要的所有模块。右键单击 "feedreader-suite" 项目，选择“属性”，然后单击“项目属性”对话框中的“库”。
+
+将显示一个“群集”列表。每个群集都是一组相关的模块。我们需要的唯一群集是平台群集，因此请取消选中所有其他群集，直到仅选中平台群集。
+
+
+image::images/60-runapp4.png[]
+
+展开平台群集，浏览它所提供的模块：
+
+
+image::images/60-runapp5.png[]
+
+平台模块提供 Swing 应用程序的通用基础结构。因此，由于我们已经包括了平台群集，所以将不需要为应用程序的基础结构（例如，菜单栏、窗口系统以及引导功能）创建“具体”的代码。
+
+单击“确定”。
+
+
+[start=2]
+1. 在“项目”窗口中，右键单击 "feedreader-suite" 项目，然后选择“清理并生成所有”。
+
+[start=3]
+1. 在“项目”窗口中，右键单击 "feedreader-suite" 项目，然后选择“运行”，如下所示：
+
+
+image::images/60-runapp.png[]
+
+将启动应用程序。您会看到一个闪屏。然后，将打开应用程序，并显示新的 "Feed Window" 作为资源管理器窗口，如下所示：
+
+
+image::images/60-runapp2.png[]
+
+*注意：*您现在获得的是一个包含以下模块的应用程序：
+
+* NetBeans 平台所提供的模块，用于引导应用程序、管理生命周期以及解决其他基础结构问题。
+* 您在本教程中创建的三个库包装模块。
+* 您在本教程中创建的 FeedReader 功能模块，用于提供 Feed 窗口。
+
+在应用程序的“窗口”菜单中，您应该看到可用来打开 Feed 窗口（如果已关闭）的新菜单项，如下所示：
+
+
+image::images/60-runapp3.png[]
+
+正如您所看到的，无需执行任何编码工作，您便拥有了一个完整的应用程序。它的功能并不多，但是具有完整的基础结构，并且可以按预期的方式工作。接下来，我们将使用一些 NetBeans API 向应用程序中添加代码。
+
+
+== 在应用程序中添加代码
+
+现在，您已建立了应用程序的基础结构，接下来该着手添加自己的代码了。在执行此操作之前，您需要指定应用程序的依赖关系。指定依赖关系也就是指定可提供将扩展或实现的 NetBeans API 的模块。然后，您将使用“新建文件”向导和源代码编辑器来创建组成 Feed Reader 应用程序的类并对这些类进行编码。
+
+
+=== 指定应用程序的依赖关系
+
+您需要对属于 NetBeans API 的几个类创建子类。这些类所属的模块需要声明为与 Feed Reader 应用程序具有依赖关系。为此，请使用“项目属性”对话框，具体如下面的步骤所述。
+
+
+[start=1]
+1. 在“项目”窗口中，右键单击 "FeedReader" 项目，然后选择“属性”。在“项目属性”对话框中，单击“库”。请注意，一些 API 已被声明为与该模块具有依赖关系，如下所示：
+
+
+image::images/60-add-lib1.png[]
+
+上面的库注册是在本教程的前面部分由“窗口组件”向导完成的。
+
+
+[start=2]
+1. 单击“添加依赖关系”。
+
+[start=3]
+1. 添加以下 API：
+
+[source,java]
+----
+
+操作 API
+数据系统 API
+对话框 API
+资源管理器和属性表单 API
+文件系统 API
+节点 API
+rome
+rome-fetcher
+----
+
+您现在应该看到如下所示的屏幕：
+
+
+image::images/60-add-lib2.png[]
+
+单击“确定”退出“项目属性”对话框。
+
+
+[start=4]
+1. 展开 "FeedReader" 项目的“库”节点，并请注意现在可用于此项目的模块列表：
+
+
+image::images/60-add-lib5.png[]
+
+
+=== 设置库包装模块之间的依赖关系
+
+现在，您已设置了与将使用的 NetBeans API 模块之间的依赖关系，接下来还要设置库包装模块之间的依赖关系。例如，Rome JAR 使用来自 JDom JAR 的类。由于这些类包装在单独的库包装模块中，因此我们需要通过库包装模块的“项目属性”对话框指定 JAR 之间的关系。
+
+
+[start=1]
+1. 首先，使 Rome 依赖于 JDom。在“项目”窗口中，右键单击 "rome" 库包装模块项目，然后选择“属性”。在“项目属性”对话框中，单击“库”，然后单击“添加依赖关系”。添加 "jdom"。您现在应该看到如下所示的屏幕：
+
+
+image::images/60-add-lib3.png[]
+
+单击“确定”退出“项目属性”对话框。
+
+
+[start=2]
+1. 最后，由于 Rome Fetcher 同时依赖于 Rome 和 JDom，因此您需要使 Rome Fetcher 依赖于 Rome，如下所示：
+
+
+image::images/60-add-lib4.png[]
+
+由于 Rome 已依赖于 JDom，因此您不需要使 Rome Fetcher 依赖于 JDom。
+
+
+=== 创建 RssFeeds 文件夹
+
+您将使用 IDE 的用户界面在  ``layer.xml``  文件中添加一个文件夹。该文件夹将包含 RSS Feed 对象。之后，您将在由“窗口组件”向导所创建的  ``FeedTopComponent.java``  中添加代码，用于查看此文件夹的内容。
+
+
+[start=1]
+1. 在“项目”窗口中，依次展开 "FeedReader" 项目节点、“重要文件”节点和“XML 层”节点。此时，您应该看到以下节点：
+
+*  ``<此层>。`` 显示由当前模块所提供的文件夹。例如，FeedReader 模块提供了本教程前面已讨论过的 "Actions"、"Menu" 和 "Windows2" 文件夹，如下所示：
+
+
+image::images/60-feedfolder-1.png[]
+
+*  ``<上下文中的此层>。`` 显示可用于整个应用程序的所有文件夹。我们将在本教程的后面部分介绍此节点。
+
+
+[start=2]
+1. 右键单击 "<此层>" 节点，然后选择“新建”>“文件夹”，如下所示：
+
+
+image::images/60-feedfolder-2.png[]
+
+[start=3]
+1. 在“新建文件夹”对话框中键入  ``RssFeeds`` 。单击“确定”。现在有了一个新文件夹，如下所示：
+
+
+image::images/60-feedfolder-3.png[]
+
+[start=4]
+1. 双击  ``layer.xml``  文件的节点，以在源代码编辑器中打开该文件。请注意，此时已添加了以下条目： `` <folder name="RssFeeds"/>`` 
+
+
+=== 创建 Feed 对象
+
+接下来，您将创建一个简单的 POJO，用于封装 URL 及其关联的 Rome Feed。
+
+
+[start=1]
+1. 右键单击 "FeedReader" 项目节点，然后选择“新建”>“Java 类”。单击“下一步”。
+
+[start=2]
+1. 将此类命名为  ``Feed`` ，然后在“包”下拉列表中选择 "org.myorg.feedreader"。单击“完成”。
+
+[start=3]
+1. 在源代码编辑器中，将缺省的  ``Feed``  类替换为以下代码：
+
+[source,java]
+----
+
+public class Feed implements Serializable {
+
+    private static FeedFetcher s_feedFetcher 
+            = new HttpURLFeedFetcher(HashMapFeedInfoCache.getInstance());
+    private transient SyndFeed m_syndFeed;
+    private URL m_url;
+    private String m_name;
+
+    protected Feed() {
+    }
+
+    public Feed(String str) throws MalformedURLException {
+        m_url = new URL(str);
+        m_name = str;
+    }
+
+    public URL getURL() {
+        return m_url;
+    }
+
+    public SyndFeed getSyndFeed() throws IOException {
+        if (m_syndFeed == null) {
+            try {
+                m_syndFeed = s_feedFetcher.retrieveFeed(m_url);
+                if (m_syndFeed.getTitle() != null) {
+                    m_name = m_syndFeed.getTitle();
+                }
+            } catch (Exception ex) {
+                throw new IOException(ex.getMessage());
+            }
+        }
+        return m_syndFeed;
+    }
+
+    @Override
+    public String toString() {
+        return m_name;
+    }
+    
+}
+----
+
+许多代码带有下划线，这是因为您尚未声明其包。您将在下面的步骤中执行此操作。
+
+请通过执行以下步骤来重新设置文件的格式并声明其依赖关系：
+
+
+[start=1]
+1. 按 Alt-Shift-F 组合键设置代码格式。
+
+[start=2]
+1. 按 Ctrl-Shift-I 组合键并确保选定以下 import 语句：
+
+
+image::images/60-imports.png[]
+
+单击“确定”，IDE 将在类中添加以下 import 语句：
+
+
+[source,java]
+----
+
+import com.sun.syndication.feed.synd.SyndFeed;
+import com.sun.syndication.fetcher.FeedFetcher;
+import com.sun.syndication.fetcher.impl.HashMapFeedInfoCache;
+import com.sun.syndication.fetcher.impl.HttpURLFeedFetcher;
+import java.io.IOException;
+import java.io.Serializable;
+import java.net.MalformedURLException;
+import java.net.URL;
+----
+
+现在，所有红色下划线都应消失。否则，请先解决此问题，然后再继续学习本教程。
+
+
+=== 扩展 Feed 窗口
+
+
+[start=1]
+1. 双击 "FeedTopComponent.java" 以在源代码编辑器中将其打开。
+
+[start=2]
+1. 在类声明的末尾键入  ``implements ExplorerManager.Provider`` 。
+
+[start=3]
+1. 在此代码行中按 Alt-Enter 组合键，然后单击建议的内容。IDE 将添加所需包  ``org.openide.explorer.ExplorerManager``  的 import 语句。
+
+[start=4]
+1. 再次按 Alt-Enter 组合键，然后单击建议的内容。IDE 将实现抽象方法  ``getExplorerManager()`` 。
+
+[start=5]
+1. 在新的  ``getExplorerManager()``  方法的主体中键入  ``return manager;`` 。在此代码行中按 Alt-Enter 组合键，使 IDE 创建一个名为  ``manager``  的字段。将缺省定义替换为以下定义：
+
+[source,java]
+----
+
+private final ExplorerManager manager = new ExplorerManager();
+----
+
+
+[start=6]
+1. 在紧邻上一步中创建的字段声明下方，声明以下内容：
+
+[source,java]
+----
+
+private final BeanTreeView view = new BeanTreeView();
+----
+
+
+[start=7]
+1. 最后，在构造函数的末尾添加以下代码：
+
+[source,java]
+----
+
+setLayout(new BorderLayout());
+add(view, BorderLayout.CENTER);
+view.setRootVisible(true);
+try {
+    manager.setRootContext(new RssNode.RootRssNode());
+} catch (DataObjectNotFoundException ex) {
+    ErrorManager.getDefault().notify(ex);
+}
+ActionMap map = getActionMap();
+map.put("delete", ExplorerUtils.actionDelete(manager, true));
+associateLookup(ExplorerUtils.createLookup(manager, map));
+----
+
+现在，许多代码带有下划线，这是因为您尚未声明其关联包。您将在下面的步骤中执行此操作。
+
+请通过执行以下步骤来重新设置文件的格式并声明其依赖关系：
+
+
+[start=1]
+1. 按 Alt-Shift-F 组合键设置代码格式。
+
+[start=2]
+1. 按 Ctrl-Shift-I 组合键，选择 "org.openide.ErrorManager"，然后单击“确定”，IDE 将在 package 语句下方添加几条 import 语句。import 语句的完整列表现在应如下所示：
+
+[source,java]
+----
+
+import java.awt.BorderLayout;
+import java.io.Serializable;
+import javax.swing.ActionMap;
+import org.openide.ErrorManager;
+import org.openide.explorer.ExplorerManager;
+import org.openide.explorer.ExplorerUtils;
+import org.openide.explorer.view.BeanTreeView;
+import org.openide.loaders.DataObjectNotFoundException;
+import org.openide.util.NbBundle;
+import org.openide.util.RequestProcessor;
+import org.openide.util.Utilities;
+import org.openide.windows.TopComponent;
+----
+
+
+[start=3]
+1. 请注意， ``manager.setRootContext(new RssNode.RootRssNode());``  一行下面仍带有红色下划线，这是因为您尚未创建  ``RssNode.java`` 。您将在下面一小节中执行此操作。现在，所有其他红色下划线都应消失。否则，请先解决此问题，然后再继续学习本教程。
+
+
+=== 创建 RssNode 类
+
+Feed Reader 的顶层节点由 RssNode 类提供。此类扩展用于代理 "RssFeeds" 节点的  `` link:http://bits.netbeans.org/dev/javadoc/org-openide-nodes/org/openide/nodes/FilterNode.html[FilterNode]`` 。在本小节中，我们将定义一个显示名称并声明两个菜单项："Add" 和 "Add Folder"，如下所示：
+
+
+image::images/60-actions.png[]
+
+请通过执行以下步骤来创建此类：
+
+
+[start=1]
+1. 在  ``org.myorg.feedreader``  包中创建  ``RssNode.java`` 。
+
+[start=2]
+1. 将缺省类替换为以下代码：
+
+[source,java]
+----
+
+public class RssNode extends FilterNode {
+
+    public RssNode(Node folderNode) throws DataObjectNotFoundException {
+        super(folderNode, new RssFolderChildren(folderNode));
+    }
+
+    @Override
+    public Action[] getActions(boolean popup) {
+    
+        *//Declare our actions
+        //and pass along the node's data folder:*
+        DataFolder df = getLookup().lookup(DataFolder.class);
+        return new Action[]{
+            new AddRssAction(df), 
+            new AddFolderAction(df)
+        };
+        
+    }
+
+    public static class RootRssNode extends RssNode {
+
+        *//The filter node will serve as a proxy
+        //for the 'RssFeeds' node, which we here
+        //obtain from the NetBeans user directory:*
+        public RootRssNode() throws DataObjectNotFoundException {
+            super(DataObject.find(Repository.getDefault().getDefaultFileSystem().
+                    getRoot().getFileObject("RssFeeds")).getNodeDelegate());
+        }
+
+        *//Set the display name of the node,
+        //referring to the bundle file, and
+        //a key, which we will define later:*
+        @Override
+        public String getDisplayName() {
+            return NbBundle.getMessage(RssNode.class, "FN_title");
+        }
+        
+    }
+
+}
+----
+
+此类中存在几个红色下划线标记，这是因为当前尚未创建操作以及用于定义节点子级的类。
+
+
+=== 创建 RssFolderChildren 类
+
+接下来，我们将考虑 "RSS/Atom Feeds" 节点的子级。这些子级可以是文件夹或 Feed。这就是下面的代码所执行的操作。
+
+请通过执行以下步骤来创建此类：
+
+
+[start=1]
+1. 在  ``org.myorg.feedreader``  包中创建  ``RssFolderChildren.java`` 。
+
+[start=2]
+1. 将缺省类替换为以下代码：
+
+[source,java]
+----
+
+public class RssFolderChildren extends FilterNode.Children {
+
+    RssFolderChildren(Node rssFolderNode) {
+        super(rssFolderNode);
+    }
+
+    @Override
+    protected Node[] createNodes(Node key) {
+        Node n = key;
+        
+        *//If we can find a data folder, then we create an RssNode,
+        //if not, we look for the feed and then create a OneFeedNode:*
+        try {
+            if (n.getLookup().lookup(DataFolder.class) != null) {
+                return new Node[]{new RssNode(n)};
+            } else {
+                Feed feed = getFeed(n);
+                if (feed != null) {
+                    return new Node[]{
+                        new OneFeedNode(n, feed.getSyndFeed())
+                    };
+                } else {
+                    // best effort
+                    return new Node[]{new FilterNode(n)};
+                }
+            }
+        } catch (IOException ioe) {
+            Exceptions.printStackTrace(ioe);
+        } catch (IntrospectionException exc) {
+            Exceptions.printStackTrace(exc);
+        }
+        // Some other type of Node (gotta do something)
+        return new Node[]{new FilterNode(n)};
+    }
+
+    /** Looking up a feed */
+    private static Feed getFeed(Node node) {
+        InstanceCookie ck = node.getCookie(InstanceCookie.class);
+        if (ck == null) {
+            throw new IllegalStateException("Bogus file in feeds folder: " + node.getLookup().lookup(FileObject.class));
+        }
+        try {
+            return (Feed) ck.instanceCreate();
+        } catch (ClassNotFoundException ex) {
+            Exceptions.printStackTrace(ex);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return null;
+    }
+    
+}
+----
+
+此类中存在几个红色下划线标记，这是因为尚未创建  ``OneFeedNode``  类。
+
+
+=== 创建 OneFeedNode 类
+
+在本小节中，我们将考虑文章节点的容器，下面显示了 "NetBeans Highlights" 节点的容器：
+
+
+image::images/60-actions2.png[]
+
+如上所示，其中每个节点都有一个从 Feed 检索的显示名称、一个图标以及一个 "Delete" 菜单项。
+
+请通过执行以下步骤来创建此类：
+
+
+[start=1]
+1. 在  ``org.myorg.feedreader``  包中创建  ``OneFeedNode.java`` 。
+
+[start=2]
+1. 将缺省类替换为以下代码：
+
+[source,java]
+----
+
+public class OneFeedNode extends FilterNode {
+
+    OneFeedNode(Node feedFileNode, SyndFeed feed) throws IOException, IntrospectionException {
+        super(feedFileNode, 
+                new FeedChildren(feed), 
+                new ProxyLookup(
+                new Lookup[]{Lookups.fixed(
+                        new Object[]{feed}), 
+                        feedFileNode.getLookup()
+        }));
+    }
+
+    @Override
+    public String getDisplayName() {
+        SyndFeed feed = getLookup().lookup(SyndFeed.class);
+        return feed.getTitle();
+    }
+
+    @Override
+    public Image getIcon(int type) {
+        return Utilities.loadImage("org/myorg/feedreader/rss16.gif");
+    }
+
+    @Override
+    public Image getOpenedIcon(int type) {
+        return getIcon(0);
+    }
+
+    @Override
+    public Action[] getActions(boolean context) {
+        return new Action[]{SystemAction.get(DeleteAction.class)};
+    }
+    
+}
+----
+
+此类中存在几个红色下划线标记，这是因为尚未创建  ``FeedChildren``  类。
+
+
+=== 创建 FeedChildren 类
+
+在本小节中，我们将添加用于为 Feed 所提供的每篇文章提供节点的代码。
+
+请通过执行以下步骤来创建此类：
+
+
+[start=1]
+1. 在  ``org.myorg.feedreader``  包中创建  ``FeedChildren.java`` 。
+
+[start=2]
+1. 将缺省类替换为以下代码：
+
+[source,java]
+----
+
+public class FeedChildren extends Children.Keys {
+
+    private final SyndFeed feed;
+
+    public FeedChildren(SyndFeed feed) {
+        this.feed = feed;
+    }
+
+    @SuppressWarnings(value = "unchecked")
+    @Override
+    protected void addNotify() {
+        setKeys(feed.getEntries());
+    }
+
+    public Node[] createNodes(Object key) {
+        
+        *//Return new article-level nodes:*
+        try {
+            return new Node[]{
+                new EntryBeanNode((SyndEntry) key)
+            };
+            
+        } catch (final IntrospectionException ex) {
+            Exceptions.printStackTrace(ex);
+            *//Should never happen, no reason for it to fail above:*
+            return new Node[]{new AbstractNode(Children.LEAF) {
+                @Override
+                public String getHtmlDisplayName() {
+                    return "" + ex.getMessage() + "";
+                }
+            }};
+        }
+    }
+}
+----
+
+此类中存在几个红色下划线标记，这是因为尚未创建  ``EntryBeanNode``  类。
+
+
+=== 创建 EntryBeanNode 类
+
+最后，我们将处理最低层的节点，即表示由 Feed 所提供的文章的节点。
+
+要创建此类，请执行以下步骤：
+
+
+[start=1]
+1. 在  ``org.myorg.feedreader``  包中创建  ``EntryBeanNode.java`` 。
+
+[start=2]
+1. 将缺省类替换为以下代码：
+
+[source,java]
+----
+
+public class EntryBeanNode extends FilterNode {
+
+    private SyndEntry entry;
+
+    @SuppressWarnings(value = "unchecked")
+    public EntryBeanNode(SyndEntry entry) throws IntrospectionException {
+        super(new BeanNode(entry), Children.LEAF, 
+                Lookups.fixed(new Object[]{
+            entry, 
+            new EntryOpenCookie(entry)
+        }));
+        this.entry = entry;
+    }
+
+    */** Using HtmlDisplayName ensures any HTML in RSS entry titles are
+     * /**properly handled, escaped, entities resolved, etc. */*
+    @Override
+    public String getHtmlDisplayName() {
+        return entry.getTitle();
+    }
+
+    */** Making a tooltip out of the entry's description */*
+    @Override
+    public String getShortDescription() {
+        return entry.getDescription().getValue();
+    }
+
+    */** Providing the Open action on a feed entry */*
+    @Override
+    public Action[] getActions(boolean popup) {
+        return new Action[]{SystemAction.get(OpenAction.class)};
+    }
+
+    @Override
+    public Action getPreferredAction() {
+        return (SystemAction) getActions(false) [0];
+    }
+
+    */** Specifying what should happen when the user invokes the Open action */*
+    private static class EntryOpenCookie implements OpenCookie {
+
+        private final SyndEntry entry;
+
+        EntryOpenCookie(SyndEntry entry) {
+            this.entry = entry;
+        }
+
+        public void open() {
+            try {
+                URLDisplayer.getDefault().showURL(new URL(entry.getUri()));
+            } catch (MalformedURLException mue) {
+                Exceptions.printStackTrace(mue);
+            }
+        }
+        
+    }
+    
+}
+----
+
+
+=== 创建 "Add Folder" 菜单项
+
+在本小节中，我们将创建用于添加文件夹的菜单项（已在前面声明）。
+
+要创建此类，请执行以下步骤：
+
+
+[start=1]
+1. 在  ``org.myorg.feedreader``  包中创建  ``AddFolderAction.java`` 。
+
+[start=2]
+1. 将缺省类替换为以下代码：
+
+[source,java]
+----
+
+public class AddFolderAction extends AbstractAction {
+
+    private DataFolder folder;
+
+    public AddFolderAction(DataFolder df) {
+        folder = df;
+        putValue(Action.NAME, NbBundle.getMessage(RssNode.class, "FN_addfolderbutton"));
+    }
+
+    public void actionPerformed(ActionEvent ae) {
+        NotifyDescriptor.InputLine nd = 
+                new NotifyDescriptor.InputLine(
+                NbBundle.getMessage(RssNode.class, "FN_askfolder_msg"), 
+                NbBundle.getMessage(RssNode.class, "FN_askfolder_title"), 
+                NotifyDescriptor.OK_CANCEL_OPTION, NotifyDescriptor.PLAIN_MESSAGE);
+        Object result = DialogDisplayer.getDefault().notify(nd);
+        if (result.equals(NotifyDescriptor.OK_OPTION)) {
+            final String folderString = nd.getInputText();
+            try {
+                DataFolder.create(folder, folderString);
+            } catch (IOException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+        }
+    }
+}
+----
+
+
+=== 创建 "Add RSS" 菜单项
+
+在本小节中，我们将创建用于添加新 Feed 的菜单项。
+
+要创建此类，请执行以下步骤：
+
+
+[start=1]
+1. 在  ``org.myorg.feedreader``  包中创建  ``AddRssAction.java`` 。
+
+[start=2]
+1. 将缺省类替换为以下代码：
+
+[source,java]
+----
+
+public class AddRssAction extends AbstractAction {
+
+    private DataFolder folder;
+
+    public AddRssAction(DataFolder df) {
+        folder = df;
+        putValue(Action.NAME, NbBundle.getMessage(RssNode.class, "FN_addbutton"));
+    }
+
+    public void actionPerformed(ActionEvent ae) {
+    
+        NotifyDescriptor.InputLine nd = new NotifyDescriptor.InputLine(
+                NbBundle.getMessage(RssNode.class, "FN_askurl_msg"),
+                NbBundle.getMessage(RssNode.class, "FN_askurl_title"),
+                NotifyDescriptor.OK_CANCEL_OPTION,
+                NotifyDescriptor.PLAIN_MESSAGE);
+
+        Object result = DialogDisplayer.getDefault().notify(nd);
+
+        if (result.equals(NotifyDescriptor.OK_OPTION)) {
+            String urlString = nd.getInputText();
+            URL url;
+            try {
+                url = new URL(urlString);
+            } catch (MalformedURLException e) {
+                String message = NbBundle.getMessage(RssNode.class, "FN_askurl_err", urlString);
+                Exceptions.attachLocalizedMessage(e, message);
+                Exceptions.printStackTrace(e);
+                return;
+            }
+            try {
+                checkConnection(url);
+            } catch (IOException e) {
+                String message = NbBundle.getMessage(RssNode.class, "FN_cannotConnect_err", urlString);
+                Exceptions.attachLocalizedMessage(e, message);
+                Exceptions.printStackTrace(e);
+                return;
+            }
+            Feed f = new Feed(url);
+            FileObject fld = folder.getPrimaryFile();
+            String baseName = "RssFeed";
+            int ix = 1;
+            while (fld.getFileObject(baseName + ix, "ser") != null) {
+                ix++;
+            }
+            try {
+                FileObject writeTo = fld.createData(baseName + ix, "ser");
+                FileLock lock = writeTo.lock();
+                try {
+                    ObjectOutputStream str = new ObjectOutputStream(writeTo.getOutputStream(lock));
+                    try {
+                        str.writeObject(f);
+                    } finally {
+                        str.close();
+                    }
+                } finally {
+                    lock.releaseLock();
+                }
+            } catch (IOException ioe) {
+                Exceptions.printStackTrace(ioe);
+            }
+    }    
+    
+    private static void checkConnection(final URL url) throws IOException {
+        InputStream is = url.openStream();
+        is.close();
+    }
+    
+}
+----
+
+
+=== 对 RssNode 类进行本地化
+
+
+[start=1]
+1. 打开  ``FeedReader``  模块的  ``Bundle.properties``  文件。
+
+[start=2]
+1. 添加以下键值对：
+
+[source,java]
+----
+
+FN_title=RSS/Atom Feeds
+FN_addbutton=Add
+FN_askurl_title=New Feed
+FN_askurl_msg=Enter the URL of an RSS/Atom Feed
+FN_askurl_err=Invalid URL: {0}|
+FN_addfolderbutton=Add Folder
+FN_askfolder_msg=Enter the folder name
+FN_askfolder_title=New Folder
+----
+
+下面是有关新键值对的说明，它们用于对  ``RssNode.java``  中定义的字符串进行本地化：
+
+* *FN_title。*对 "Feed Window" 中顶层节点的标签进行本地化。
+
+以下键值对用于对添加 Feed 的用户界面进行本地化：
+
+* *FN_addbutton。*对 "Add" 菜单项（出现在顶层节点的弹出式菜单中）的标签进行本地化。
+* *FN_askurl_title。*对 "New Feed" 对话框的标题进行本地化。
+* *FN_askurl_msg。*对 "New Feed" 对话框中出现的消息进行本地化。
+* *FN_askurl_err。*对由于 URL 无效而显示的错误字符串进行本地化。
+
+以下键值对用于对添加文件夹的用户界面进行本地化：
+
+* *FN_addfolderbutton。*对 "Add Folder" 菜单项（出现在顶层节点的弹出式菜单中）的标签进行本地化。
+* *FN_askfolder_msg。*对 "Add Folder" 对话框中出现的消息进行本地化。
+* *FN_askfolder_title。*对 "Add Folder" 对话框的标题进行本地化。
+
+
+== 标记应用程序
+
+现在，您已进展到开发周期的最后阶段，在即将完成该应用程序的开发时，您需要考虑以下问题：
+
+* 应用程序可执行文件的名称应该是什么？
+* 用户在启动应用程序时应该看到什么？是否需要进度栏？是否需要闪屏？是否两者都需要？
+* 当应用程序启动时，应该在标题栏中显示什么？
+* 是否需要 NetBeans 平台缺省提供的所有菜单和工具栏按钮？
+
+这些问题都与标记应用程序（即对构建于 NetBeans 平台之上的应用程序进行个性化定制的活动）有关。在模块套件项目的“项目属性”对话框中，IDE 提供了一个用于帮助您进行标记的面板。
+
+
+[start=1]
+1. 右键单击 "feedreader-suite" 项目节点（而不是 "FeedReader" 项目节点），然后选择“属性”。在“项目属性”对话框中，单击“生成”。
+
+[start=2]
+1. 在“生成”面板的“标记名称”中键入  ``feedreader`` 。在“应用程序标题”中键入  ``Feed Reader Application`` 。“标记名称”中的值用于设置可执行文件的名称，而“应用程序标题”中的值用于设置应用程序的标题栏。
+
+[start=3]
+1. 单击“浏览”找到  ``rss16.gif``  图标 (
+image::images/rss16.gif[])。该图标将显示在“帮助”>“关于”对话框中。
+
+您现在应该看到如下所示的屏幕：
+
+
+image::images/60-brand1.png[]
+
+[start=4]
+1. 在“闪屏”面板中，单击“浏览”找到  ``splash.gif`` 。（可选）更改进度栏的颜色和文本大小。如果不需要进度栏，请取消选中“启用”。
+
+您现在应该看到如下所示的屏幕：
+
+
+image::images/60-brand2.png[]
+
+[start=5]
+1. 单击“确定”。在  ``FeedReader Application``  项目中创建  ``branding``  文件夹。您可以在“文件”窗口 (Ctrl-2) 中看到它。
+
+[start=6]
+1. 在“文件”窗口中，展开 "FeedReader Application" 项目节点。然后，继续展开其节点，直到您找到以下节点： ``branding/modules/org-netbeans-core-window.jar/org/netbeans/core/windows`` 
+
+[start=7]
+1. 右键单击该节点，选择“新建”>“其他”，并在“其他”类别中选择“文件夹”。单击“下一步”，然后将文件夹命名为  ``resources`` 。单击“完成”。
+
+[start=8]
+1. 右键单击新的 "resources" 节点，选择“新建”>“其他”，并在 "XML" 类别中选择“XML 文档”。单击“下一步”。将文件命名为  ``layer`` 。单击“下一步”，然后单击“完成”。将新的  ``layer.xml``  文件的内容替换为以下内容：
+
+[source,xml]
+----
+
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE filesystem PUBLIC "-//NetBeans//DTD Filesystem 1.1//EN" "https://netbeans.org/dtds/filesystem-1_1.dtd">
+<!--
+This is a `branding' layer.  It gets merged with the layer file it's branding.
+In this case, it's just hiding menu items and toolbars we don't want.
+-->
+<filesystem>
+
+	<!-- hide unused toolbars -->
+	<folder name="Toolbars">
+		<folder name="File_hidden"/>
+		<folder name="Edit_hidden"/>
+	</folder>
+
+	<folder name="Menu">
+		<folder name="File">
+			<file name="org-openide-actions-SaveAction.instance_hidden"/>
+			<file name="org-openide-actions-SaveAllAction.instance_hidden"/>
+			<file name="org-netbeans-core-actions-RefreshAllFilesystemsAction.instance_hidden"/>            
+			<file name="org-openide-actions-PageSetupAction.instance_hidden"/>
+			<file name="org-openide-actions-PrintAction.instance_hidden"/>
+		</folder>
+		<folder name="Edit_hidden"/>
+		<folder name="Tools_hidden"/>
+	</folder>
+
+</filesystem>
+----
+
+
+== 分发应用程序
+
+IDE 使用 Ant 生成脚本来创建应用程序的分发。此生成脚本是在创建项目时创建的。
+
+
+[start=1]
+1. 在“项目”窗口中，右键单击 "FeedReader Application" 项目节点，然后选择“生成 ZIP 分发”。“输出”窗口将显示 ZIP 分发的创建位置。
+
+[start=2]
+1. 在文件系统中，在项目目录的  ``dist``  文件夹中找到  ``feedreader.zip``  分发。对其进行解压缩。启动位于  ``bin``  文件夹中的应用程序。在启动过程中，将显示闪屏。启动应用程序后，转至“帮助”>“关于”对话框，您会看到在<<branding,标记应用程序>>一节中指定的图标和闪屏。
+
+当 Feed Reader 应用程序启动并运行时，它将显示 RSS/Atom Feed 窗口，其中包含一个名为 "RSS/Atom Feeds" 的节点。
+
+恭喜！您已学完了 FeedReader 教程。
+
+
+link:http://netbeans.apache.org/community/mailing-lists.html[请将您的意见和建议发送给我们]
+
+

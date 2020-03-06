@@ -1,0 +1,665 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= NetBeans ノード API チュートリアル
+:jbake-type: platform-tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:icons: font
+:experimental:
+:description: NetBeans ノード API チュートリアル - Apache NetBeans
+:keywords: Apache NetBeans Platform, Platform Tutorials, NetBeans ノード API チュートリアル
+
+
+image::images/netbeans-stamp60-61.gif[title="Content on this page applies to NetBeans IDE 6.1"]
+
+このチュートリアルでは、どのように NetBeans ノード API のいくつかの機能を活用したらよいのかを示します。これから紹介するのは以下の方法です:
+
+* ノードをアイコンで修飾する
+* HTML マークアップを使ってノードの表示を豪華にする
+* プロパティーを作成してプロパティーシートに表示する
+* ノードのアクションを定義する
+
+
+== はじめに
+
+このチュートリアルは、NetBeans ウィンドウシステム上のセレクション管理で `Lookup` がどのように使われているかを扱った  link:nbm-selection-1_ja.html[NetBeans セレクション管理のチュートリアル]、さらにノード API を使ったセレクション管理の方法を示した link:nbm-selection-2_ja.html[続きのチュートリアル]の続きとして用意されたものです。
+
+サンプルをダウンロードするには link:http://plugins.netbeans.org/PluginPortal/faces/PluginDetailPage.jsp?pluginid=3146[ここ]をクリックしてください。
+
+このチュートリアルではスタート地点として、最初のチュートリアルで作成し、次のチュートリアルで拡張したソースコードを使います。もしもこれらのチュートリアルがまだお済みでないなら、先に済ませることをお勧めします。
+
+
+== ノードのサブクラスの作成
+
+link:nbm-selection-2_ja.html[前回のチュートリアル]で述べたように、ノードは_プレゼンテーションオブジェクト_ です。つまり、ノードはデータモデルそのものではなく、むしろ_背後に隠れているデータモデル_ のためのプレゼンテーションレイヤです。 NetBeans IDE のプロジェクトもしくはファイルウィンドウの場合、ノードの背後にあるデータモデルはディスク上のファイルであることがわかります。IDE のサービスウィンドウの場合は、背後にあるデータモデルは、利用可能なアプリケーションサーバやデータベースなど、 NetBeans の実行環境でコンフィギュア可能なアスペクトであることがわかります。
+
+ノードはプレゼンテーションレイヤとして、モデル化しているオブジェクトに人に親切な属性を与えています。主要なものは以下の通りです:
+
+* *表示名*—判読可能でユーザーにとって親しみのある表示名
+* *説明*—判読可能でユーザーに分かりやすい説明。しばしばツールチップとして表示される
+* *アイコン*—オブジェクトの種類やあるいは状態までグラフィカルに表すシンボル
+* *アクション*—ノードを右クリックすると現れるコンテキストメニューのアクション。ユーザーが実行することができる
+
+これまでのチュートリアルでは、ノードを作成するために `MyChildren` クラスを使いました、
+
+
+[source,java]
+----
+
+new AbstractNode (new MyChildren(), Lookups.singleton(obj));
+----
+
+それから `setDisplayName(obj.toString())` を呼んで、表示名をつけました。このノードをユーザーにとってより親切なものにする方法があります。まず最初に `Node` のサブクラスを作ります:
+
+
+[start=1]
+1. My Editor プロジェクトの `org.myorg.myeditor` を右クリックし、「新規」> 「Java クラス」を選択します。
+
+[start=2]
+1. ウィザードが開いたら、クラス名を "MyNode" とし、 Enter キーを押すか「完了」をクリックします。
+
+[start=3]
+1. クラスのシグネチャとコンストラクタを以下のように変更します:
+
+[source,java]
+----
+
+public class MyNode extends AbstractNode {
+
+    public MyNode(APIObject obj) {
+        super (new MyChildren(), Lookups.singleton(obj));
+        setDisplayName ( "APIObject " + obj.getIndex());
+    }
+    
+    public MyNode() {
+        super (new MyChildren());
+        setDisplayName ("Root");
+    }
+----
+
+
+[start=4]
+1. 同じパッケージの `MyEditor` をコードエディタで開きます。
+
+[start=5]
+1. コンストラクタの以下の行を:
+
+[source,java]
+----
+
+mgr.setRootContext(new AbstractNode(new MyChildren()));
+setDisplayName ("My Editor");
+----
+
+以下の１行に置き換えます:
+
+[source,java]
+----
+
+mgr.setRootContext(new MyNode());
+----
+
+
+[start=6]
+1. さらに、同じような変更を Chirdren オブジェクトに対しても行います. `MyChildren` クラスをエディタで開き、`createNodes` メソッドを以下のように変更します:
+
+[source,java]
+----
+
+protected Node[] createNodes(Object o) {
+    APIObject obj = (APIObject) o;
+    return new Node[] { new MyNode(obj) };
+}
+----
+
+
+== 表示名を HTML で豪華にする
+
+これでサンプルコードは実行することができますが、これまでしたことはロジックの変更だけです。サンプルコードは変更前と全く同じように動作するでしょう。唯一の (ユーザーには見えない) 違いは AbstractNode の代わりに Node のサブクラスを使っている点です。
+
+まず最初に、表示名を豪華にしていきます。ノード API と エクスプローラ API は HTML の一部をサポートしており、エクスプローラ UI コンポーネント上でノードのラベルを豪華にすることができます。サポートされているタグは以下の通りです:
+
+* フォントカラー—フォントのサイズや書体の設定はサポートされないが、色は標準の html 文法を使って設定可
+* フォントスタイルのタグ—b (ボールド)、i (イタリック)、u (下線付き)、s (取り消し線付き)
+* SGML エンティティの一部: &amp;quot;、&amp;lt;、&amp;amp;、&amp;lsquo;、&amp;rsquo;、&amp;ldquo;、&amp;rdquo;、&amp;ndash;、&amp;mdash;、&amp;ne;、&amp;le;、&amp;ge;、&amp;copy;、&amp;reg;、&amp;trade;、&amp;nbsp;
+
+サンプルの `APIObject` には、番号と作成日時があるだけで特に面白いデータはないので、このおざなりのサンプルを拡張して、奇数の `APIObjects` を青色で表示することにします。
+
+
+[start=1]
+1. `MyNode` に以下のメソッドを追加します:
+
+[source,xml]
+----
+
+public String getHtmlDisplayName() {
+    APIObject obj = getLookup().lookup (APIObject.class);
+    if (obj!=null &amp;&amp; obj.getIndex() % 2 != 0) {
+        return "<font color='0000FF'>APIObject " + obj.getIndex() + "</font>";
+    } else {
+        return null;
+    }
+}
+----
+
+
+[start=2]
+1. 上のコードによって次のようなことが行われるようになります。エクスプローラコンポーネントは、ノードを表示する時にまず `getHtmlDisplayName()` を呼びます。もしヌル以外の値を受け取ったら、受け取った HTML 文字列と、動作が速くて軽量な HTML レンダラを使います。もしヌルなら、 `getDisplayName()` の戻り値を表示するのみとします。こうすると、２で割り切れないインデックスを持つ `APIObject` の `MyNode` は、ヌル以外の HTML 表示名を持つことになります。
+
+再びモジュールスイートを実行すると以下のようになるはずです:
+
+
+image::images/technicolor-nodes-60.png[]
+
+`getDisplayName()` と `getHtmlDisplayName()` が分かれているのには２つの理由があります。第１に最適化のため、第２に後でわかりますが、 <html> タグをいちいちはずさなくてもを HTML 文書を作れるようにするためです。
+
+前回のチュートリアルでは作成日時も表示名に含まれていましたが、ここでは取り除いてしまいましたから、もっと豪華にできます。では、 HTML 文をもう少し複雑にして、すべてのノードに HTML 表示名をつけましょう。
+
+
+[start=1]
+1. `getHtmlDisplayName()` メソッドを以下のように変更します:
+
+[source,xml]
+----
+
+public String getHtmlDisplayName() {
+    APIObject obj = getLookup().lookup (APIObject.class);
+    if (obj != null) {
+        return "<font color='#0000FF'>APIObject " + obj.getIndex() + "</font>" +
+                "<font color='AAAAAA'><i>" + obj.getDate() + "</i></font>";
+    } else {
+        return null;
+    }
+}
+----
+
+
+[start=2]
+1. 再びモジュールスイートを実行すると今度は以下のようになるはずです:
+
+
+image::images/technicolor-nodes-2-60.png[]
+
+さらに外見をよくするためにちょっとしたコツがあります。今作成した HTML 文では、色をハードコードしています。しかし、 NetBeans はさまざまなルック &amp; フィールに基づいて動作することができますから、ハードコードされた色が、ツリーなどノードが表示されている UI コンポーネントの背景色と全く同じかとても近い色でないとは限りません。
+
+NetBeans の HTML レンダラは、UIManager のキーを渡すことで色を見つけることができるように、HTML の仕様にちょっとした拡張機能を提供しています。Swing が使用しているルック &amp; フィールは、ルック &amp; フィールで使用する色とフォントの名前と値のマップを管理する UIManager を持っています。ほとんど (すべてではない) のルック &amp; フィールは何か決めれられた値を文字列キーとして指定して `UIManager.getColor(String)` を実行して、さまざまなな GUI 要素の色を見つけます。ですから、 UIManager から取得した値を使えば、いつでも判読可能なテキストを生成することが保障されます。これから使用するキーは、テキストのデフォルト色 (暗い背景色のルック &amp; フィールでない限り通常はブラック) を取得する "textText" と、デフォルトの背景色とは異なるものの著しく異なるわけではない色を取得できる "controlShadow" の２つです。
+
+
+[start=1]
+1. `getHtmlDisplayName()` メソッドを以下のように変更します:
+
+[source,xml]
+----
+
+public String getHtmlDisplayName() {
+    APIObject obj = getLookup().lookup (APIObject.class);
+    if (obj != null) {
+        return "<font color='!textText'>APIObject " + obj.getIndex() + "</font>" +
+                "<font color='!controlShadow'><i>" + obj.getDate() + "</i></font>";
+    } else {
+        return null;
+    }
+}
+----
+
+
+[start=2]
+1. 再びモジュールスイートを実行すると今度は以下のようになるはずです:
+
+
+image::images/technicolor-nodes-3-60.png[]
+
+先ほどハードコードした青に代わって、おなじみの標準色の黒になりましたね。`UIManager.getColor("textText")` の戻り値はどのようなルック &amp; フィールの下でも判読可能なテキストの色を保証します。それだけでなく、 link:http://www.catb.org/jargon/html/A/angry-fruit-salad.html[angry fruit salad] 効果を避けるためにも、ユーザーインタフェースに使う色の数は控えめにするべきです。もしどうしてももっと派手な色を UI に使いたいならば、最善の方法は、普遍的に望み通りの色を取得するための UIManager のキー/値のペアを見つけるか、 link:https://netbeans.apache.org/wiki/devfaqmodulesgeneral[ModuleInstall] クラスを作成し、_UIManager から取得できる色の中から_ link:https://github.com/apache/netbeans/blob/master/platform/o.n.swing.plaf/src/org/netbeans/swing/plaf/util/RelativeColor.java[_色を導き出す_]ことです。もしくは、ルック &amp; フィールのテーマがわかっているならば、テーマごとにハードコードするとよいでしょう (`if ("aqua".equals(UIManager.getLookAndFeel().getID())...`)。
+
+
+== アイコンの提供
+
+アイコンも、適切に使えば、ユーザーインターフェースを豪華にすることができます。ですから、16x16 ピクセルのアイコンを使うことが、 UI をより良くするためのもう１つの方法です。アイコンを使う上で特に注意する点は、第１に、あまりたくさんの情報をアイコン上に盛り込まないことです。使用できるピクセルは限られているからです。第２に、アイコン、表示名ともに_ノードを識別するのに色だけを使わないこと_。世の中には色盲の人が大勢いるからです。
+
+アイコンを提供することはとても簡単です。イメージをロードしてセットするだけです。イメージファイルは GIF もしくは PNG 形式のものを用意します。簡単に手に入らなければ、これが使えます:
+
+
+image::images/icon.png[]
+
+
+[start=1]
+1. 上のイメージか、他の 16x16 の PNG または GIF を、 `MyEditor` クラスと同じパッケージの中にコピーします。
+
+[start=2]
+1. `MyNode` クラスに以下のメソッドを追加します:
+
+[source,java]
+----
+
+public Image getIcon (int type) {
+    return Utilities.loadImage ("org/myorg/myeditor/icon.png");
+}
+----
+
+サイズやスタイルの異なるアイコンも提供することができることに注意してください。`getIcon()` の引数には `BeanInfo.ICON_COLOR_16x16` などの `java.beans.BeanInfo` の定数が渡されます。また、イメージをロードするのに、JDK 標準の `ImageIO.read()` を使うこともできますが、 `Utilities.loadImage()` はより最適化され、キャッシュの振る舞いに優れ、イメージのブランド化をサポートします。
+
+[start=3]
+1. ここでサンプルを実行すると、アイコンが、あるノードには適用され、あるノードには適用されてないことに気づくでしょう！これは、展開/折りたたみ時の `Node` に対して異なるアイコンを使うことが一般的だからです。修正するには、メソッドをもう１つオーバーラィドする必要があります。
+
+`MyNode` に以下のメソッドを追加します:
+
+
+[source,java]
+----
+
+public Image getOpenedIcon(int i) {
+    return getIcon (i);
+}
+----
+
+
+[start=4]
+1. スイートを実行すると、以下のように全てのノードに正しいアイコンが適用されています:
+
+
+image::images/icon-nodes.png[]
+
+
+== アクションとノード
+
+次に、`Node` の_アクション_ について見ていきましょう。`Node` は、アクションを含んだポップアップメニューを持っており、ユーザーはこれらのアクションを `Node` に対して実行することができます。`javax.swing.Action` のサブクラスなら、`Node` が提供し、ポップアップメニューに表示することができます。さらに、後で扱いますが、_プレゼンター_ というコンセプトがあります。
+
+まずは、ノードにシンプルなアクションを作成しましょう:
+
+
+[start=1]
+1. `MyNode` の `getActions()` メソッドを以下のようにオーバーライドします:
+
+[source,java]
+----
+
+public Action[] getActions (boolean popup) {
+    return new Action[] { new MyAction() };
+}
+----
+
+
+[start=2]
+1. そして、`MyNode` のインナークラスとして `MyAction` クラスを作成します:
+
+[source,java]
+----
+
+private class MyAction extends AbstractAction {
+    public MyAction () {
+        putValue (NAME, "Do Something");
+    }
+
+    public void actionPerformed(ActionEvent e) {
+        APIObject obj = getLookup().lookup (APIObject.class);
+        JOptionPane.showMessageDialog(null, "Hello from " + obj);
+    }
+} 
+----
+
+
+[start=3]
+1. 再びモジュールスイートを実行し、ノードを右クリックすると以下のようにメニューアイテムが表示されます:
+
+
+image::images/action-no-presenter-60.png[]
+
+メニューアイテムを選択するとアクションが実行されます:
+
+
+image::images/optionpane-60.png[]
+
+
+== プレゼンター
+
+もちろん、ポップアップメニューに、サブメニューやチェックボックスメニューや、JMenuItem ではない他のコンポーネントを表示したいときもあるでしょう。これはとても簡単です:
+
+
+[start=1]
+1. `MyAction` のシグネチャに `Presenter.Popup` を実装するよう付け加えます:
+
+[source,java]
+----
+
+private class MyAction extends AbstractAction implements Presenter.Popup {
+----
+
+
+[start=2]
+1. Press Ctrl-Shift-I to fix imports.
+
+[start=3]
+1. `MyAction` クラスのシグネチャの行にカーソルを置いて欄外に電球が現れたら Alt-Enter キーを押し、「すべての抽象メソッドの実装」を実行します。
+
+[start=4]
+1. 新たに作成された `getPopupPresenter()` メソッドを以下のように実装します:
+
+[source,java]
+----
+
+public JMenuItem getPopupPresenter() {
+    JMenu result = new JMenu("Submenu");  //remember JMenu is a subclass of JMenuItem
+    result.add (new JMenuItem(this));
+    result.add (new JMenuItem(this));
+    return result;
+}
+----
+
+
+[start=5]
+1. 再びスイートを実行し、以下のようになるのを確認してください:
+
+
+image::images/action-with-presenter-60.png[]
+
+結果はとても面白いものです。これで二つの同じメニューアイテムを持つ "Submenu" というサブメニューができました。しかし、まだ可能性を探らなくてはいけません。もし `JCheckBoxMenuItem` や他の種類のメニューアイテムを表示したいのなら、そうすることができます。
+
+
+[NOTE]
+====
+*要注意:* Presenter.Menu を使い、メインメニューのアクションを表示するのに異なるコンポーネントを提供することもできます。_が、_ マッキントッシュの Mac OS-X の特定のバージョンではメニューに組み込まれたランダムな Swing コンポーネントが上手く動作しません。念のため、メインメニューでは JMenu、JMenuItem と これらのサブクラス以外は使用しないでください。
+
+====
+
+
+== プロパティーとプロパティーシート
+
+最後にプロパティーについて説明します。NetBeans IDE には "プロパティーシート" があり、ノードの "プロパティー" を表示できることをご存じかと思います。"プロパティー" が何であるかはノードがどのように実装されているかによります。プロパティーは基本的に Java の型を持つ名前と値のペアで、複数のセットに分類され、プロパティーシートに表示されます。編集可能なプロパティーは_プロパティーエディタ_によって編集することができます。 (一般的なプロパティーエディタについては  link:http://sdc.sun.co.jp/java/docs/j2se/1.5.0/ja/docs/ja/api/java/beans/PropertyEditor.html[`java.beans.PropertyEditor`] を参照)
+
+ノードは、プロパティーシートで見たり、あるいは編集することができるプロパティーを持っているものだという考え方が、最初からノードの基本にあります。これをサポートするのはとても簡単です。ノード API には、ノードのプロパティーのすべてのセットを表す `Sheet` という便利なクラスがあります。これに、プロパティーシートでプロパティーのグループとして表示される "プロパティーセット" を表す `Sheet.Set` のインスタンスを追加します。
+
+
+[start=1]
+1. `MyNode.createSheet()` を以下のようにオーバーライドします:
+
+[source,java]
+----
+
+protected Sheet createSheet() {
+
+    Sheet sheet = Sheet.createDefault();
+    Sheet.Set set = Sheet.createPropertiesSet();
+    APIObject obj = getLookup().lookup(APIObject.class);
+
+    try {
+
+        Property indexProp = new PropertySupport.Reflection(obj, Integer.class, "getIndex", null);
+        Property dateProp = new PropertySupport.Reflection(obj, Date.class, "getDate", null);
+
+        indexProp.setName("index");
+        dateProp.setName("date");
+
+        set.put(indexProp);
+        set.put(dateProp);
+
+    } catch (NoSuchMethodException ex) {
+        ErrorManager.getDefault();
+    }
+
+    sheet.put(set);
+    return sheet;
+
+}
+----
+
+
+[start=2]
+1. Ctrl-Shift-I キーを押してインポートを修正します。
+
+[start=3]
+1. モジュールスイートを右クリックして「実行」を選択し、スイートのモジュールがインストールされた NetBeans のコピーを起動します。
+
+[start=4]
+1. 「ファイル」>「Open Editor」をクリックしてエディタを表示します。
+
+[start=5]
+1. 「ウィンドウ」>「プロパティー」を選択し、 NetBeans のプロパティーシートを表示します。
+
+[start=6]
+1. エディタウィンドウ上をクリックし、選択するノードを変更すると、以下のように、作成した `MyViewer` と同じように、プロパティーシートの表示が更新されることがわかるでしょう:
+
+
+image::images/property-sheet-60.png[]
+
+上のコードでは、 `PropertySupport.Reflection` というとても便利なクラスを利用しています。これは、オブジェクトと型、取得および設定メソッドの名前を指定すれば、参照可能な (編集することも可能です) プロパティーを作成してくれます。`PropertySupport.Reflection` を使うことがプロパティーオブジェクトと `APIObject` オブジェクトの `getIndex()` メソッドをつなぐための簡単な方法です。
+
+もしも、モデルオブジェクトのほとんどすべての取得/設定メソッドに対してプロパティーを用意する場合は、`BeanNode` のサブクラスを使った方がいいかもしれません。これは、ノードをフルに実装したクラスで、リフレクションを通じて、ランダムなオブジェクトに対して必要なプロパティーを作成しようとします。(変更の監視も行います。どれだけ正確に動作するかはノードを表すクラスオブジェクトに対して  link:http://sdc.sun.co.jp/java/docs/j2se/1.5.0/ja/docs/ja/api/java/beans/BeanInfo.html[`BeanInfo`] を作成することにより調整することができます。)
+
+
+[NOTE]
+====
+*要注意:*プロパティー名の設定はとても重要です。プロパティーオブジェクトはその名前で自身を識別します。`Sheet.Set` にプロパティーを追加したのに見当たらないときは、大抵名前が設定されていないのです。`HashSet` に同じ (空の) 名前のプロパティーを登録すると、前に登録されていたものが上書きされてしまうからです。
+
+====
+
+
+== 読み書き可能なプロパティー
+
+このコンセプトを使いこなすためには、読み書き可能なプロパティが必須になります。ですから次のステップは、`APIObject` に `Date` プロパティを設定できるようにすることです。
+
+
+[start=1]
+1. `org.myorg.myapi.APIObject` をコードエディタで開きます。
+
+[start=2]
+1. `date`フィールドから `final` キーワードを削除します。
+
+[start=3]
+1. `APIObject` に、以下のプロパティーの変更をサポートするメソッドを追加します:
+
+[source,java]
+----
+
+private List listeners = Collections.synchronizedList(new LinkedList());
+
+public void addPropertyChangeListener (PropertyChangeListener pcl) {
+    listeners.add (pcl);
+}
+
+public void removePropertyChangeListener (PropertyChangeListener pcl) {
+    listeners.remove (pcl);
+}
+
+private void fire (String propertyName, Object old, Object nue) {
+    //Passing 0 below on purpose, so you only synchronize for one atomic call:
+    PropertyChangeListener[] pcls = (PropertyChangeListener[]) listeners.toArray(new PropertyChangeListener[0]);
+    for (int i = 0; i < pcls.length; i++) {
+        pcls[i].propertyChange(new PropertyChangeEvent (this, propertyName, old, nue));
+    }
+}
+----
+
+
+[start=4]
+1. では、 ``APIObject``  から、上の  ``fire``  メソッドを呼びます:
+
+[source,java]
+----
+
+public void setDate(Date d) {
+    Date oldDate = date;
+    date = d;
+    fire("date", oldDate, date);
+ }
+----
+
+
+[start=5]
+1. `MyNode.createSheet()` で、読み取りだけでなく書き込みもできるように、 `dateProp` の宣言部分を変更します:
+
+[source,java]
+----
+
+Property dateProp = new PropertySupport.Reflection(obj, Date.class, "date");
+----
+
+このように、取得メソッドと設定メソッドを明示的に指定するのではなく、ただプロパティーの名前を指定するだけで、 `PropertySupport.Reflection` は設定および取得メソッドをを見つけてくれます。(実際には、 `addPropertyChangeListener()` メソッドも自動的に見つけ出します。)
+
+[start=6]
+1. モジュールスイートを再実行し、今度は以下のように、 `MyEditor` で `MyNode` インスタンスを選択し、日付の値を実際に編集できることを確認してください:
+
+
+image::images/date-readwrite-60.png[]
+
+*注意:*結果は IDE 再起動時にも保持されます。
+
+しかし、このコードにはまだバグがあります。"date" プロパティーを変更したとき、ノードの表示名も更新しなくてはいけません。ですから、 `MyNode` にもう１か所変更を加え、 `APIObject` のプロパティーの変更を監視させるようにします。
+
+
+[start=1]
+1. `java.beans.PropertyChangeListener` を実装するように、 `MyNode` のシグネチャを変更します:
+
+[source,java]
+----
+
+public class MyNode extends AbstractNode implements PropertyChangeListener {
+----
+
+
+[start=2]
+1. Ctrl-Shift-I キーを押してインポートを修正します。
+
+[start=3]
+1. シグネチャの行にカーソルを置き、ヒントの「すべての抽象メソッドの実装」を実行します。
+
+[start=4]
+1. 以下の行を `APIObject` を引数に持つコンストラクタに追加します:
+
+[source,java]
+----
+
+obj.addPropertyChangeListener(WeakListeners.propertyChange(this, obj));
+----
+
+ここで `org.openide.util.WeakListeners` のユーティリティーメソッドを使っていることに注意してください。これはメモリーリークを防ぐためのテクニックです。 `APIObject` は `MyNode` を弱参照するだけですから、もしノードの親が壊れた場合は、ノードはガベージコレクタによりクリアされます。もし、ノードが依然として `APIObject` の有するリスナーのリストより参照されたままだと、メモリーリークになってしまいます。サンプルの場合では、実際にはノードが `APIObject` を所有しているので大変な事態にはなりません。しかし、実際のプログラミングの世界では、データモデルのオブジェクト (ディスク上のファイルなど) はユーザーに見えているノードよりもはるかに長生きするのです。リスナーを明示的に削除されないオブジェクトに追加する際には、常に `WeakListeners` を使うことが望ましいでしょう。でなければ、後でひどく悩まされることになるメモリーリークを引き起こしてしまいかねません。しかし、もしもリスナークラスを別に作成するのであれば、強参照を保持するようにしてください。でなければ、追加されたとたんにガベージコレクトされてしまいます。
+
+[start=5]
+1. 最後に、 `propertyChange()` メソッドを以下のように実装します:
+
+[source,java]
+----
+
+public void propertyChange(PropertyChangeEvent evt) {
+    if ("date".equals(evt.getPropertyName())) {
+        this.fireDisplayNameChange(null, getDisplayName());
+    }
+}
+----
+
+
+[start=6]
+1. モジュールスイートを再び実行し、 `MyEditor` ウィンドウの `MyNode` を選択して、 `Date` プロパティーを変更してください。今度はノードの表示名が正しく更新されますね。以下のようにノードとプロパティーシートの両方に 2009 年が反映されています:
+
+
+image::images/changed-date-nodes-60.png[]
+
+
+== プロパティーセットの分類
+
+NetBeans IDE のフォームエディタの Matisse を使っていてお気づきでしょうが、プロパティーシートの最上部にはプロパティーセットのグループを切り替えるためのボタンがある場合があります。
+
+通常、これは大量のプロパティーがあるときに使う方法であり、大量のプロパティーを容易に扱う為にこそあるのではありません。しかしながら、プロパティーセットをグループ分けする必要があるならば、簡単に実現できます。
+
+`Property` には `PropertySet` と同じように `getValue()` と `setValue()` というメソッド (共に  link:http://sdc.sun.co.jp/java/docs/j2se/1.5.0/ja/docs/ja/api/java/beans/FeatureDescriptor.html[`java.beans.FeatureDescriptor`] から継承) があります。これらのメソッドは、対象の Property や PropertySet とプロパティーシートやプロパティーエディタ間で、特別な "ヒント" をやり取りするために、決まった状況で使われます。例えば、 `java.io.File` のエディタには filechooser のデフォルトディレクトリが渡されるといった具合です。そして、この方法によって `PropertySet` のグループに対し、グループ名 (ボタンに表示される) を指定することができます。実際のコーディングの世界では、以下のようにハードコードされた文字列ではなく、ローカライズされた文字列であるべきでしょう:
+
+
+[start=1]
+1. `MyNode` をコードエディタで開きます
+
+[start=2]
+1. `createSheet()` メソッドを以下のように変更します (変更、追加された行は青色で表示):
+
+[source,java]
+----
+
+    protected Sheet createSheet() {
+        
+        Sheet sheet = Sheet.createDefault();
+        Sheet.Set set = sheet.createPropertiesSet();
+        Sheet.Set set2 = sheet.createPropertiesSet();
+        set2.setDisplayName("Other");
+        set2.setName("other");
+        APIObject obj = getLookup().lookup (APIObject.class);
+
+        try {
+        
+            Property indexProp = new PropertySupport.Reflection(obj, Integer.class, "getIndex", null);
+            Property dateProp = new PropertySupport.Reflection(obj, Date.class, "date");
+            
+            indexProp.setName("index");
+            dateProp.setName ("date");
+            set.put (indexProp);
+            
+            set2.put (dateProp);
+            set2.setValue("tabName", "Other Tab");
+            
+        } catch (NoSuchMethodException ex) {
+            ErrorManager.getDefault();
+        }
+        
+        sheet.put(set);
+        sheet.put(set2);
+        return sheet;
+        
+    }
+----
+
+
+[start=3]
+1. 再びスイートを実行し、以下のようにプロパティーシートの最上部にボタンが追加され、それぞれには１つづつプロパティーがあることを確認してください:
+
+
+image::images/other-tab-60.png[]
+
+
+== 一般的なプロパティーシートの要注意点
+
+もしも NetBeans 3.6 以前のバージョンを使ったことがあれば、以前の NetBeans ではプロパティーシートが UI のコアな要素として重要視されていたのに、現在はそれほどでもないことにお気づきかと思います。理由は単に、_プロパティーシートベースの UI がそれほどユーザーに親切ではない_ からです。プロパティーシートを使うなというのではありません、ただよく考えて使ってください。もし、見栄えの良い GUI を持ったカスタマイザーを提供できるならばそうしてください。きっとユーザーにはその方がありがたいでしょう。
+
+また、もし１つのオブジェクトに対して膨大な数のプロパティーがあるときは、ありそうな設定の組み合わせにまとめる方法を探してください。例えば、 Java クラスのインポートを管理するツールのための設定を考えてみてください。ワイルドカードを使ったインポート使用数のしきい値や、インポート前の完全限定名の使用数のしきい値など、うんざりするほど大量の整数を設定することができるでしょう。または、自身に問いかけてみてください、_ユーザーは何をしようとしているのか？_ と。この場合では、インポート文か完全限定名のどちらかを取り除くことでしょう。ですから、"noise" が完全限定名のクラス/パッケージ名の量を表すことにして、"low noise", "medium noise", "high noise" の３設定を用意することが適当で、より便利なのではないでしょうか。ユーザーのシンプルライフのためにぜひそうしてください。
+
+
+== コンセプトのおさらい
+
+このチュートリアルでは以下の考え方について説明しました:
+
+* プレゼンテーションレイヤーとしてのノード
+* ノードの表示名は HTML の一部を使ってカスタマイズ可能
+* ノードはアイコンを持っており、カスタムアイコンの使用も可
+* ノードはアクションを持っている。Presenter.Popup を実装するアクションはポップアップメニューに独自のコンポーネントを表示することができる。Presenter.Menu を用いたメインメニューや、 Presenter.Toolbar を用いたツールバーについても同様
+* ノードはプロパティーシートに表示することができるプロパティーを持つ
+
+
+link:http://netbeans.apache.org/community/mailing-lists.html[ご意見をお寄せください]
+
+
+
+== 次の手順
+
+あなたは今、 NetBeans のプロパティーシートについて探り始めたところです。 link:nbm-property-editors_ja.html[次のチュートリアル]では、プロパティーシートで使う、カスタムエディタを実装する方法やカスタムインラインエディタを提供する方法について学びます。 
+
+
+=== この翻訳は、nora さんに提供していただきました。
+
+
