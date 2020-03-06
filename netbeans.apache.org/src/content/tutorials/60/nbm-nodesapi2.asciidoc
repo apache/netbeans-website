@@ -1,0 +1,672 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= NetBeans Nodes API Tutorial
+:jbake-type: platform-tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:icons: font
+:experimental:
+:description: NetBeans Nodes API Tutorial - Apache NetBeans
+:keywords: Apache NetBeans Platform, Platform Tutorials, NetBeans Nodes API Tutorial
+
+This tutorial shows how to make use of some of the features of the Nodes API in NetBeans. It shows how to do the following:
+
+* Decorate Nodes with icons
+* Use HTML markup to enhance how Nodes are displayed
+* Create properties for display in the property sheet
+* Provide Actions from Nodes
+
+This tutorial is intended as a follow-on to the  link:nbm-selection-1.html[NetBeans Selection Management Tutorial], which covers how `Lookup` is used in managing selection in the NetBeans windowing system, and its  link:nbm-selection-2.html[follow-on tutorial] which demonstrates how to use the Nodes API in managing selection.
+
+As its basis, this tutorial uses the source code created in the first tutorial and enhanced further in the second. If you have not yet done these tutorials, it is recommended to do them first.
+
+
+
+image::images/netbeans-stamp60-61.gif[title="Content on this page applies to NetBeans IDE 6.1"]
+
+
+*To follow this tutorial, you need the software and resources listed in the following table.*
+
+|===
+|Software or Resource |Version Required 
+
+|NetBeans IDE |version  link:https://netbeans.apache.org/download/index.html[version 6.1] or
+version 6.0 
+
+|Java Developer Kit (JDK) | link:https://www.oracle.com/technetwork/java/javase/downloads/index.html[version 6] or
+version 5 
+|===
+
+Optionally, for troubleshooting purposes, you can  link:http://plugins.netbeans.org/PluginPortal/faces/PluginDetailPage.jsp?pluginid=3146[download the completed sample].
+
+
+== Creating a Node subclass
+
+As mentioned in the  link:nbm-selection-2.html[previous tutorial], Nodes are _presentation objects_. That means that they are not a data model themselves—rather, they are a presentation layer for an _underlying data model_. In the Projects or Files windows in the NetBeans IDE, you can see `Node`s used in a case where the underlying data model is files on disk. In the Services window in the IDE, you can see them used in a case where the underlying objects are configurable aspects of NetBeans runtime environment, such as available application servers and databases.
+
+As a presentation layer, `Node`s add human-friendly attributes to the objects they model. The essential ones are:
+
+* *Display Name*—a human readable, user-friendly display name
+* *Description*—a human readable, user-friendly description, often shown as a tooltip
+* *Icon*—some glyph that graphically indicates the type of object shown and possibly its state
+* *Actions*—actions that appear on the context menu when the node is right-clicked, which can be invoked by the user
+
+In the preceding tutorial, you used your `MyChildren` class to create `Node`s, by calling
+
+
+[source,java]
+----
+
+new AbstractNode (new MyChildren(), Lookups.singleton(obj));
+----
+
+and then calling `setDisplayName(obj.toString())` to provide a basic display name. There is much more that can be done to make your `Node`s more user-friendly. First you will need to create a `Node` subclass to work with:
+
+
+[start=1]
+1. In the My Editor project, right click the package `org.myorg.myeditor` and choose New > Java Class.
+
+[start=2]
+1. When the wizard opens, name the class "MyNode" and press Enter or click Finish.
+
+[start=3]
+1. Change the signature and constructors of the class as follows:
+
+[source,java]
+----
+
+public class MyNode extends AbstractNode {
+
+    public MyNode(APIObject obj) {
+        super (new MyChildren(), Lookups.singleton(obj));
+        setDisplayName ( "APIObject " + obj.getIndex());
+    }
+    
+    public MyNode() {
+        super (new MyChildren());
+        setDisplayName ("Root");
+    }
+----
+
+
+[start=4]
+1. Open `MyEditor` from the same package, in the code editor.
+
+[start=5]
+1. Replace these lines in the constructor:
+
+[source,java]
+----
+
+mgr.setRootContext(new AbstractNode(new MyChildren()));
+setDisplayName ("My Editor");
+----
+
+with this single line of code:
+
+[source,java]
+----
+
+mgr.setRootContext(new MyNode());
+----
+
+
+[start=6]
+1. Now you will make a similar change to the Children object. Open the `MyChildren` class in the editor, and change its `createNodes` method as follows:
+
+[source,java]
+----
+
+protected Node[] createNodes(Object o) {
+    APIObject obj = (APIObject) o;
+    return new Node[] { new MyNode(obj) };
+}
+----
+
+
+== Enhancing Display Names with HTML
+
+The code is now runnable, but so far all you've done is moved logic around. It will do exactly what it did before. The only (non-user-visible) difference you now are using a Node subclass instead of just using AbstractNode.
+
+The first thing you will do is provide an enhanced display name. The Nodes and Explorer APIs support a limited subset of HTML which you can use to enhance how the labels for `Node`s are shown in Explorer UI components. The following tags are supported:
+
+* font color—font size and face settings are not supported, but color is, using standard html syntax
+* font style tags—b,i,u and s tags—bold, italic, underline, strikethrough
+* A limited subset of SGML entities: &amp;quot;, &amp;lt;, &amp;amp;, &amp;lsquo;, &amp;rsquo;, &amp;ldquo;, &amp;rdquo;, &amp;ndash;, &amp;mdash;, &amp;ne;, &amp;le;, &amp;ge;, &amp;copy;, &amp;reg;, &amp;trade;, and &amp;nbsp;
+
+Since there is no terribly exciting data available from your `APIObject`, which only has an integer and a creation date, you'll extend this artificial example, and decide that odd numbered `APIObjects` should appear with blue text.
+
+
+[start=1]
+1. Add the following method to `MyNode`:
+
+[source,xml]
+----
+
+public String getHtmlDisplayName() {
+    APIObject obj = getLookup().lookup (APIObject.class);
+    if (obj!=null &amp;&amp; obj.getIndex() % 2 != 0) {
+        return "<font color='0000FF'>APIObject " + obj.getIndex() + "</font>";
+    } else {
+        return null;
+    }
+}
+----
+
+
+[start=2]
+1. What the above code accomplishes is this: When painting, the Explorer component showing the nodes calls `getHtmlDisplayName()` first. If it gets a non-null value back, then it will use the HTML string it received and a fast, lightweight HTML renderer to render it. If it is null, then it will fall back to whatever is returned by `getDisplayName()`. So this way, any `MyNode` whose `APIObject` has an index not divisible by 2 will have a non-null HTML display name.
+
+Run the suite again and you should see the following:
+
+
+image::images/technicolor-nodes-60.png[]
+
+There are two reasons for `getDisplayName()` and `getHtmlDisplayName()` being separate methods: First, it is an optimization; second, as you will see later, it makes it possible to compose HTML strings together, without needing to strip <html> marker tags.
+
+You can enhance this further—in the previous tutorial, the date was included in the HTML string, and you have removed it here. So let's make your HTML string a little more complex, and provide HTML display names for all of your nodes.
+
+
+[start=1]
+1. Modify the `getHtmlDisplayName()` method as follows:
+
+[source,xml]
+----
+
+public String getHtmlDisplayName() {
+    APIObject obj = getLookup().lookup (APIObject.class);
+    if (obj != null) {
+        return "<font color='#0000FF'>APIObject " + obj.getIndex() + "</font>" +
+                "<font color='AAAAAA'><i>" + obj.getDate() + "</i></font>";
+    } else {
+        return null;
+    }
+}
+----
+
+
+[start=2]
+1. Run the suite again and now you should see the following:
+
+
+image::images/technicolor-nodes-2-60.png[]
+
+One minor thing you can do to improve appearance here: You are currently using hard-coded colors in your HTML. Yet NetBeans can run under various look and feels, and there's no guarantee that your hard-coded color will not be the same as or very close to the background color of the tree or other UI component your Node appears in.
+
+The NetBeans HTML renderer provides a minor extension to the HTML spec which makes it possible to look up colors by passing UIManager keys. The look and feel Swing is using provides a UIManager, which manages a name-value map of the colors and fonts a given look and feel uses. Most (but not all) look and feels find the colors to use for different GUI elements by calling `UIManager.getColor(String)`, where the string key is some agreed-upon value. So by using values from UIManager, you can guarantee that you will always be producing readable text. The two keys you will use are "textText", which returns the default color for text (usually black unless using a look and feel with a dark-background theme), and "controlShadow" which should give us a color that contrasts, but not too much, with the default control background color.
+
+
+[start=1]
+1. Modify the `getHtmlDisplayName()` method as follows:
+
+[source,xml]
+----
+
+public String getHtmlDisplayName() {
+    APIObject obj = getLookup().lookup (APIObject.class);
+    if (obj != null) {
+        return "<font color='!textText'>APIObject " + obj.getIndex() + "</font>" +
+                "<font color='!controlShadow'><i>" + obj.getDate() + "</i></font>";
+    } else {
+        return null;
+    }
+}
+----
+
+
+[start=2]
+1. Run the suite again and now you should see the following:
+
+
+image::images/technicolor-nodes-3-60.png[]
+
+You'll note above that you got rid of your blue color and switched to plain old black. Using the value of `UIManager.getColor("textText")` guarantees us text that will always be readable under any look and feel, which is valuable; also, color should be used sparingly in user interfaces, to avoid the  link:http://www.catb.org/jargon/html/A/angry-fruit-salad.html[angry fruit salad] effect. If you really want to use wilder colors in your UI, the best bet is to either find a UIManager key/value pair that consistently gets what you want, or create a  link:https://netbeans.apache.org/wiki/devfaqmodulesgeneral[ModuleInstall] class and  link:https://github.com/apache/netbeans/blob/master/platform/o.n.swing.plaf/src/org/netbeans/swing/plaf/util/RelativeColor.java[ _derive the color_] _from a color you can get from UIManager_, or if you are sure you know the color theme of the look and feel, hard-code it on a per-look and feel basis (`if ("aqua".equals(UIManager.getLookAndFeel().getID())...`).
+
+
+== Providing Icons
+
+Icons, used judiciously, also enhance user interfaces. So providing 16x16 pixel icon is another way to improve the appearance of your UI. One caveat of using icons is, do not attempt to convey too much information via an icon—there are not a lot of pixels there to work with. A second caveat that applies to both icons and display names is, _never use only color to distinguish a node_— there are many people in the world who are colorblind.
+
+Providing an icon is quite simple—you just load an image and set it. You will need to have a GIF or PNG file to use. If you do not have one easily available, here is one you can use:
+
+
+image::images/icon.png[]
+
+
+[start=1]
+1. Copy the image linked above, or another 16x16 PNG or GIF, into the same package as the `MyEditor` class.
+
+[start=2]
+1. Add the following method to the `MyNode` class:
+
+[source,java]
+----
+
+public Image getIcon (int type) {
+    return Utilities.loadImage ("org/myorg/myeditor/icon.png");
+}
+----
+
+Note that it is possible to have different icon sizes and styles—the possible int values passed to `getIcon()` are constants on `java.beans.BeanInfo`, such as `BeanInfo.ICON_COLOR_16x16`. Also, while you can use the standard JDK `ImageIO.read()` to load your images, `Utilities.loadImage()` is more optimized, has better caching behavior, and supports branding of images.
+
+[start=3]
+1. If you run the code now, you will notice one thing—the icon is used for some nodes but not others! The reason for this is that it is common to use a different icon for an unexpanded versus an expanded `Node`. All you need to do to fix this is to override another method.
+
+Add the following additional method to the `MyNode`:
+
+
+[source,java]
+----
+
+public Image getOpenedIcon(int i) {
+    return getIcon (i);
+}
+----
+
+
+[start=4]
+1. Now if you run the suite, all of the Nodes will have the correct icon, as shown below:
+
+
+image::images/icon-nodes.png[]
+
+
+== Actions and Nodes
+
+The next aspect of `Node`s you will treat is _Actions_. A `Node` has a popup menu which can contain actions that the user can invoke against that `Node`. Any subclass of `javax.swing.Action` can be provided by a `Node`, and will show up in its popup menu. Additionally, there is the concept of _presenters_, which you will cover later.
+
+First, let's create a simple action for your nodes to provide:
+
+
+[start=1]
+1. Override the `getActions()` method of `MyNode` as follows:
+
+[source,java]
+----
+
+public Action[] getActions (boolean popup) {
+    return new Action[] { new MyAction() };
+}
+----
+
+
+[start=2]
+1. Now, create the `MyAction` class as an inner class of `MyNode`:
+
+[source,java]
+----
+
+private class MyAction extends AbstractAction {
+    public MyAction () {
+        putValue (NAME, "Do Something");
+    }
+
+    public void actionPerformed(ActionEvent e) {
+        APIObject obj = getLookup().lookup (APIObject.class);
+        JOptionPane.showMessageDialog(null, "Hello from " + obj);
+    }
+} 
+----
+
+
+[start=3]
+1. Run the suite again and notice that when you right-click on a node, a menu item is shown:
+
+
+image::images/action-no-presenter-60.png[]
+
+When you select the menu item, the action is invoked:
+
+
+image::images/optionpane-60.png[]
+
+
+== Presenters
+
+Of course, sometimes you will want to provide a submenu or checkbox menu item or some other component, other than a JMenuItem, to display in the popup menu. This is quite easy:
+
+
+[start=1]
+1. Add to the signature of `MyAction` that it implements `Presenter.Popup`:
+
+[source,java]
+----
+
+private class MyAction extends AbstractAction implements Presenter.Popup {
+----
+
+
+[start=2]
+1. Press Ctrl-Shift-I to fix imports.
+
+[start=3]
+1. Position the caret in the class signature line of `MyAction` and press Alt-Enter when the lightbulb glyph appears in the margin, and accept the hint "Implement All Abstract Methods".
+
+[start=4]
+1. Implement the newly created method `getPopupPresenter()` as follows:
+
+[source,java]
+----
+
+public JMenuItem getPopupPresenter() {
+    JMenu result = new JMenu("Submenu");  //remember JMenu is a subclass of JMenuItem
+    result.add (new JMenuItem(this));
+    result.add (new JMenuItem(this));
+    return result;
+}
+----
+
+
+[start=5]
+1. Run the suite again and notice that you now have the following:
+
+
+image::images/action-with-presenter-60.png[]
+
+The result is not too exciting—you now have a submenu called "Submenu" with two identical menu items. But again, you should get the idea of what is possible here—if you want to return a `JCheckBoxMenuItem` or some other kind of menu item, it is possible to do that.
+
+
+[NOTE]
+====
+*Caveat:* You can also use Presenter.Menu to provide a different component to display for any action in the main menu, _but_ certain versions of Mac OS-X for Macintosh do not play nicely at all with random Swing components being embedded in menu items. To be safe, do not use anything but JMenu, JMenuItem and subclasses thereof in the main menu.
+
+====
+
+
+== Properties and the Property Sheet
+
+The last subject you'll cover in this tutorial is properties. You are probably aware that NetBeans IDE contains a "property sheet" which can display the "properties" of a `Node`. What exactly "properties" means depends on how the `Node` is implemented. Properties are essentially name-value pairs which have a Java type, which are grouped in sets and shown in the property sheet—where writable properties can be edited via their _property editors_ (see  link:https://docs.oracle.com/javase/8/docs/api/java/beans/PropertyEditor.html[`java.beans.PropertyEditor`] for general information about property editors).
+
+So, built into `Node`s from the ground up is the idea that a Node may have properties that can be viewed and, optionally, edited on a property sheet. Adding support for this is quite easy. There is a convenience class in the Nodes API, `Sheet`, which represents the entire set of properties for a Node. To it you may add instances of `Sheet.Set`, which represent "property sets", which appear in the property sheet as groups of properties.
+
+
+[start=1]
+1. Override `MyNode.createSheet()` as follows:
+
+[source,java]
+----
+
+protected Sheet createSheet() {
+
+    Sheet sheet = Sheet.createDefault();
+    Sheet.Set set = Sheet.createPropertiesSet();
+    APIObject obj = getLookup().lookup(APIObject.class);
+
+    try {
+
+        Property indexProp = new PropertySupport.Reflection(obj, Integer.class, "getIndex", null);
+        Property dateProp = new PropertySupport.Reflection(obj, Date.class, "getDate", null);
+
+        indexProp.setName("index");
+        dateProp.setName("date");
+
+        set.put(indexProp);
+        set.put(dateProp);
+
+    } catch (NoSuchMethodException ex) {
+        ErrorManager.getDefault();
+    }
+
+    sheet.put(set);
+    return sheet;
+
+}
+----
+
+
+[start=2]
+1. Press Ctrl-Shift-I to Fix Imports.
+
+[start=3]
+1. Right click the module suite and choose Run to launch a copy of NetBeans with the suite's modules installed.
+
+[start=4]
+1. Use File > Open Editor to show your editor.
+
+[start=5]
+1. Select Window > Properties to show the NetBeans property sheet.
+
+[start=6]
+1. Click in your editor window and move the selection between different nodes, and notice the property sheet updating, just as your `MyViewer` component does, as shown below:
+
+
+image::images/property-sheet-60.png[]
+
+The above code makes use of a very convenient class: `PropertySupport.Reflection`, which may simply be passed an object, a type, and getter and setter method names, and it will create a Property object that can read (and optionally write) that property of the object in question. So you use `PropertySupport.Reflection` a simple way to wire one `Property` object up to the `getIndex()` method of `APIObject`.
+
+If you want `Property` objects for nearly all of the getters/setters on an underlying model object, you may want to use or subclass `BeanNode`, which is a full implementation of `Node` that can be given a random object and will try to create all the necessary properties for it (and listen for changes) via reflection (how exactly they are presented can be controlled by creating a  link:https://docs.oracle.com/javase/8/docs/api/java/beans/BeanInfo.html[`BeanInfo`] for the class of the object to be represented by the node).
+
+
+[NOTE]
+====
+*Caveat:* Setting the `name` of your properties is very important. Property objects test their equality based on names. If you are adding some properties to a `Sheet.Set` and they seem to be disappearing, very probably their name is not set—so putting one property in a `HashSet` with the same (empty) name as another is causing later added ones to displace earlier added ones.
+
+====
+
+
+== Read-Write Properties
+
+To play with this concept further, what you really need is a read/write property. So the next step is to add some additional support to `APIObject` to make the `Date` property settable.
+
+
+[start=1]
+1. Open `org.myorg.myapi.APIObject` in the code editor.
+
+[start=2]
+1. Remove the `final` keyword from the line declaring the `date` field
+
+[start=3]
+1. Add the following setter and property change support methods to `APIObject`:
+
+[source,java]
+----
+
+private List listeners = Collections.synchronizedList(new LinkedList());
+
+public void addPropertyChangeListener (PropertyChangeListener pcl) {
+    listeners.add (pcl);
+}
+
+public void removePropertyChangeListener (PropertyChangeListener pcl) {
+    listeners.remove (pcl);
+}
+
+private void fire (String propertyName, Object old, Object nue) {
+    //Passing 0 below on purpose, so you only synchronize for one atomic call:
+    PropertyChangeListener[] pcls = (PropertyChangeListener[]) listeners.toArray(new PropertyChangeListener[0]);
+    for (int i = 0; i < pcls.length; i++) {
+        pcls[i].propertyChange(new PropertyChangeEvent (this, propertyName, old, nue));
+    }
+}
+----
+
+
+[start=4]
+1. Now, within the  ``APIObject`` , call the  ``fire``  method above:
+
+[source,java]
+----
+
+public void setDate(Date d) {
+    Date oldDate = date;
+    date = d;
+    fire("date", oldDate, date);
+ }
+----
+
+
+[start=5]
+1. In `MyNode.createSheet()`, change the way `dateProp` is declared, so that it will be writable as well as readable:
+
+[source,java]
+----
+
+Property dateProp = new PropertySupport.Reflection(obj, Date.class, "date");
+----
+
+Now, rather than specifying explicit getters and setters, you are just providing the property name, and `PropertySupport.Reflection` will find the getter and setter methods for us (and in fact it will also find the `addPropertyChangeListener()` method automatically).
+
+[start=6]
+1. Re-run the module suite, and notice that you can now select an instance of `MyNode` in `MyEditor` and actually edit the date value, as shown below:
+
+
+image::images/date-readwrite-60.png[]
+
+NOTE:  The result is persisted when you restart the IDE.
+
+However, there is still one bug in this code: When you change the Date property, you should also update the display name of your node. So you will make one more change to `MyNode` and have it listen for property changes on `APIObject`.
+
+
+[start=1]
+1. Modify the signature of `MyNode` so that it implements `java.beans.PropertyChangeListener`:
+
+[source,java]
+----
+
+public class MyNode extends AbstractNode implements PropertyChangeListener {
+----
+
+
+[start=2]
+1. Press Ctrl-Shift-I to Fix Imports.
+
+[start=3]
+1. Placing the caret in the signature line, accept the hint "Implement All Abstract Methods".
+
+[start=4]
+1. Add the following line to the constructor which takes an argument of `APIObject`:
+
+[source,java]
+----
+
+obj.addPropertyChangeListener(WeakListeners.propertyChange(this, obj));
+----
+
+Note that here you are using a utility method on `org.openide.util.WeakListeners`. This is a technique for avoiding memory leaks—an `APIObject` will only weakly reference its `MyNode`, so if the `Node`'s parent is collapsed, the `Node` can be garbage collected. If the `Node` were still referenced in the list of listeners owned by `APIObject`, it would be a memory leak. In your case, the `Node` actually owns the `APIObject`, so this is not a terrible situation—but in real world programming, objects in a data model (such as files on disk) may be much longer-lived than `Node`s displayed to the user. Whenever you add a listener to an object which you never explicitly remove, it is preferable to use `WeakListeners`—otherwise you may create memory leaks which will be quite a headache later. If you instantiate a separate listener class, though, be sure to keep a strong reference to it from the code that attaches it—otherwise it will be garbage collected almost as soon as it is added.
+
+[start=5]
+1. Finally, implement the `propertyChange()` method:
+
+[source,java]
+----
+
+public void propertyChange(PropertyChangeEvent evt) {
+    if ("date".equals(evt.getPropertyName())) {
+        this.fireDisplayNameChange(null, getDisplayName());
+    }
+}
+----
+
+
+[start=6]
+1. Run the module suite again, select a `MyNode` in the `MyEditor` window and change its `Date` property—notice that the display name of the `Node` is now updated correctly, as shown below, where the year 2009 and is now reflected both on the node and in the property sheet:
+
+
+image::images/changed-date-nodes-60.png[]
+
+
+== Grouping Property Sets
+
+You may have noticed when running Matisse, NetBeans IDE's form editor, that there is a set of buttons at the top of the property sheet, for switching between groups of property sets.
+
+Generally this is only advisable if you have a really large number of properties, and generally it's not advisable for ease-of-use _to_ have a really large number of properties. Nonetheless, if you feel you need to split out your sets of properties into groups, this is easy to accomplish.
+
+`Property` has the methods `getValue()` and `setValue()`, as does `PropertySet` (both of them inherit this from  link:https://docs.oracle.com/javase/8/docs/api/java/beans/FeatureDescriptor.html[`java.beans.FeatureDescriptor`]). These methods can be used in certain cases, for passing ad-hoc "hints" between a given `Property` or `PropertySet` and the property sheet or certain kinds of property editor (for example, passing a default filechooser directory to an editor for `java.io.File`). And that is the technique by which you can specify a group name (to be displayed on a button) for one or more `PropertySet`s. In real world coding, this should be a localized string, not a hard-coded string as below:
+
+
+[start=1]
+1. Open `MyNode` in the code editor
+
+[start=2]
+1. Modify the method `createSheet()` as follows (modified and added lines are in blue):
+
+[source,java]
+----
+
+    protected Sheet createSheet() {
+        
+        Sheet sheet = Sheet.createDefault();
+        Sheet.Set set = sheet.createPropertiesSet();
+        Sheet.Set set2 = sheet.createPropertiesSet();
+        set2.setDisplayName("Other");
+        set2.setName("other");
+        APIObject obj = getLookup().lookup (APIObject.class);
+
+        try {
+        
+            Property indexProp = new PropertySupport.Reflection(obj, Integer.class, "getIndex", null);
+            Property dateProp = new PropertySupport.Reflection(obj, Date.class, "date");
+            
+            indexProp.setName("index");
+            dateProp.setName ("date");
+            set.put (indexProp);
+            
+            set2.put (dateProp);
+            set2.setValue("tabName", "Other Tab");
+            
+        } catch (NoSuchMethodException ex) {
+            ErrorManager.getDefault();
+        }
+        
+        sheet.put(set);
+        sheet.put(set2);
+        return sheet;
+        
+    }
+----
+
+
+[start=3]
+1. Run the suite again, and notice that there are now buttons at the top of the property sheet, and there is one property under each, as seen here:
+
+
+image::images/other-tab-60.png[]
+
+
+== General Property Sheet Caveats
+
+If you used NetBeans 3.6 or earlier, you may notice that older versions of NetBeans employed the property sheet very heavily as a core element of the UI, whereas it's not so prevalent today. The reason is simple: _property sheet based UIs are not terribly user-friendly_. That doesn't mean don't use the property sheet, but use it judiciously. If you have the option of providing a customizer with a nice GUI, do so—your users will thank you.
+
+And if you have an enormous number of properties on one object, try to find some overall settings that encapsulate the most probable combinations of settings. For example, think of what the settings for a tool for managing imports on a Java class can be—you can provide integers for setting the threshold number of usages of a package required for wildcard imports, the threshold number of uses of a fully qualified class name required before importing it at all, and lots of other numbers ad nauseum. Or you can ask yourself the question, _what is the user trying to do?_. In this case, it's either going to be getting rid of import statements or getting rid of fully qualified names. So probably settings of _low noise, medium noise_ and _high noise_ where "noise" refers to the amount of fully qualified class/package names in the edited source file would do just as well and be much easier to use. Where you can make life simpler for the user, do so.
+
+
+== Review of Concepts
+
+This tutorial has sought to get across the following ideas:
+
+* Nodes are a presentation layer
+* The display names of Nodes can be customized using a limited subset of HTML
+* Nodes have icons, and you can provide custom icons for nodes you create
+* Nodes have Actions; an Action which implements Presenter.Popup can provide its own component to display in a popup menu; the same is true for main menu items using Presenter.Menu, and toolbar items using Presenter.Toolbar
+* Nodes have properties, which can be displayed on the property sheet
+
+
+link:http://netbeans.apache.org/community/mailing-lists.html[Send Us Your Feedback]
+
+
+
+== Next Steps
+
+You've now begun to delve into how to get more out of the property sheet in NetBeans. In the  link:nbm-property-editors.html[next tutorial], you will cover how to write custom editors and provide a custom inline editor for use in the property sheet. 
+

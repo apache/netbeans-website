@@ -1,0 +1,138 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= Introduction to the NetBeans APIs
+:jbake-type: platform-tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:icons: font
+:experimental:
+:description: Introduction to the NetBeans APIs - Apache NetBeans
+:keywords: Apache NetBeans Platform, Platform Tutorials, Introduction to the NetBeans APIs
+
+link:mailto:dev@netbeans.apache.org?subject=Feedback:%20NetBeans%20IDE%20Introduction%20to%20NetBeans%20APIs[Feedback]
+
+API stands for "Application Programming Interface". The word "interface" indicates that the API lives between at least two different subjects. For example, the internal structure of the application could be seen on one side, while the foreign applications that make calls into it are found on the other. Or there is the programmer (or team) developing the application and its API on one side and on the other side are the the programmers using it. The important observation is that in both cases these two sides are _separated_ - either compiled separately or developed in completely different groups with their own schedules, goals and needs.
+
+An API is everything that another team or application can depend on:
+
+* *Method and field signatures.* Communication between applications is usually about calling functions and passing data structures between each other. If there is a change in the names of the methods, in their arguments or in structure of exchanged data, the whole program often does not even link well, nor it can run.
+
+* *Files and their content.* Many applications read various files and their content can influence their behaviour. Imagine one application relying on another to read its configuration file and modifying its content prior to invoking the application. If the format of the file changes or the file is completely ignored, the communication between those applications gets broken.
+
+* *Environment variables.* For example, the behavior of CVS can be influenced by the variable  ``CVSEDITOR`` .
+
+* *Protocols.* Opening a socket and being prepared to interpret streams sent there, or putting or reading a data to clipboard or during drag and drop again, establishes an API that others can depend on.
+
+* *Behavior.* What the program flow looks like - what is the order of execution, what locks are being held during calls, in which threads a call can happen, etc.
+
+* *L10N messages.* Because the localization to a certain language is usually developed and distributed by somebody other than the person that writes the code, yet both of them have to use the same keys ( ``NbBundle.getMessage ("CTL_SomeKey")`` ), there is inherently a contract between the writer of the code and the translator - an API of sorts.
+
+This document provides an overview of the NetBeans APIs, together with related resources that you can use to get to know them better.
+
+
+== Actions API
+
+This API is a standard representation of the actions a user can invoke. It provides an interface to such IDE elements as toolbars, menus, and keyboard shortcuts - allowing third parties to create actions that are sensitive to context and invocable in more than one way. Special superclasses are sensitive to selected nodes and cookie sets - the module author decides if these apply. The Actions API offers the ability to write the action once, and have it automatically apply as appropriate. For example, a user action might show up in both a toolbar, and be selected by a keyboard shortcut, all from the same implementation.
+
+All actions in the IDE are subclasses of SystemAction, which extends the Swing action API to interact smoothly with the IDE. The Actions API provides abilities such as context sensitivity, callback support, automatic presentation devices in menus and toolbars, and a few other features used by the IDE.
+
+Actions are typically presented in popup menus, or attached to a component such as a window, node, or data object.
+
+
+
+== DataSystems API
+
+Developers use this API primarily to cause the IDE to recognize new data types, such as UML model files, add user-visible actions to nodes representing a custom or standard type, implement templates, and so on. Data objects may also represent logical groupings of physical files where appropriate.  ``org.openide.loaders``  associates files together into groups and assigns types to data, creates data objects from files, and defines how cookies attach behavior to these objects.  ``org.openide.cookies``  provides a design pattern for attachable behaviors for data objects and nodes.
+
+The loader mechanism is responsible for scanning files in a directory on disk, ignoring files irrelevant to the IDE, and grouping the rest into logical chunks. The loaders also determine what type of data each file represents. This scanning is performed by asking each registered data loader whether or not the given file(s) should be handled. The first loader to recognize a file takes ownership of it, and creates a matching data object to represent it to the rest of the IDE.
+
+Loaders are used in the IDE to group associated files together into a data object. Within the IDE, a data object is represented by a single node, and has a single set of actions applicable to it. Unlike a bare file object, a data object holds a number of behaviors. For example, it can hold cookies providing various behaviors, have an associated opened editor, be specified as a template, and may provide special procedures to be run when it is moved or renamed.
+
+
+=== MultiFileLoaders and UniFileLoaders
+
+Multifile loaders are able to recognize multiple files at once and create a data object from them. All data objects have a primary file that is representative of the data object and is often used to identify it. As well, these multifile loaders may have any number of secondary files. The basic mechanism used is that the loader pool will pass file objects to it in an arbitrary order; the loader may get a primary or secondary file first. Either way, it must recognize that it belongs to a cluster; find the primary file if it got a secondary one; and create a new  ``MultiDataObject``  containing the supplied file as an entry. When other files in the cluster are passed to the loader, it must create new entries in the same multidata object, to indicate their association.
+
+Of course, a single-file loader is simpler, and is likely to be more commonly used since the majority of file types make sense by themselves. The default implementation simplifies the creation of a subclass that recognizes only certain file extensions. Note that the standard UniFileLoader is actually a special type of MultiFileLoader in that it recognizes only one file. UniFileLoader actually creates a MultiDataObject when it recognizes its file. Normally the UniFileLoader is used for most purposes, and the behaviors in MultiDataObject are generally available as defaults.
+
+
+=== Cookies
+
+A cookie is a design pattern that separates the presentation of implementation of some interface from the actual object that implementation ought to be associated with. It is a convenient way of removing the requirement that all interfaces presented by the cookie holder - usually a data object or node - must be actually implemented by the Java class of the object.
+
+When cookies are attached to a data object, they define what properties and behaviors are available. For example, if a data object is editable, attaching an editor cookie defines editable actions. EditorCookie deals only with opening the contents of a file as text within the window. Cutting and copying text within the window is a function of the editor, as opened by the editor cookie. Note that the more general OpenCookie could be added to a file to open something else, such as a thumbnail (as is done in the standard IDE for image files).
+
+For purposes of marking a cookie as such, the cookie interface (or an abstract class) should extend  ``Node.Cookie`` . Other than that, there are no requirements as to what makes a valid cookie. Typically a cookie provides a small set of abstract operations, such as "opening", "compiling", "searching" and so on. Using cookie sets, it is convenient to dynamically add and remove cookies from a holder. This is appropriate for holders of cookie types whose applicability may vary over time.
+
+
+=== Cookie Supports
+
+While it is possible for any data object or node to offer ad hoc support for any given cookie if it has a special way of doing so, more commonly there is a standard way (or set of ways) that a particular cookie is likely to be implemented. It is the primary job of the holders to declare that they want to use a cookie. In this case, the standard implementing class is called a support, and typically its constructor will provide an association to the holder in some fashion. The support itself will determine what to do with the holder object when invoked.
+
+This is why the IDE has supports - implementations of cookies - that provide the IDE�s standard way of handling something and which anyone is free to reuse. For example, the editor cookie has the corresponding support "editor support." The editor cookie says this document can be opened, this object can produce a document, and so on. The concrete class  ``EditorSupport``  actually deals with the details of telling what is modified when it should be saved, loading the object from disk, etc.  ``EditorSupport``  is physically contained in the Editor API. Most of the others are contained in the DataSystems API under  ``org.openide.loaders`` .
+
+OpenSupport is another important support. It is an implementation of OpenCookie, and provides some of the infrastructure necessary to open the object in a window. EditorSupport extends this. The editor support is a special case that handles opening a text file. In most other cases, for example when providing an image editor, the module author would directly extend OpenSupport. It provides some of the required functions needed, such as handling the opening of a file, cloning the resulting window, and so on. This is an abstract class - some details need to be implemented by the module author. For example, how to actually paint the pane that is going to be opened.
+
+Supports and cookies typically are paired off in this manner. The outer API uses cookies in a high-level, nonspecific way, while the inner API (which is comprised of the supports) is a concrete, useful implementation. If the support does what is needs, extra code is not required. If the supports do not know what is needed, the cookie may be implemented any way that obtains the desired control.
+
+Most of the standard cookies exist in the org.openide.cookies package. Many of these have standard supports as well, frequently in org.openide.loaders. Using the Javadoc, the most efficient way to find cookies and supports is to look at Node.Cookie and browse the subinterfaces for implementing classes, which are usually supports.
+
+
+=== Transferables
+
+org.openide.util.datatransfer is often grouped in the DataSystems API. This class is an extension of things that are already in the core Java platform API. The basic system of Java data transfer offers cut, copy, paste, drag-and-drop, clipboards - everything typically used in authoring modules and applications.
+
+Extended transferables contain many classes. One special edition makes it easy to support different types of data flavors at once. A data flavor is defined by the Java specification as a type of data that can be can transferred - a string of text, file, or image. Also, there is a provision for transferring a cluster of objects such as multiple strings of text at once. An automatic clipboard converter, installed only by the manifest, converts one flavor to another. It acts as a middleman between the thing that is producing the data and the thing that is using it. Cutting, copying, pasting, and dragging nodes between two parent nodes is supported. The module author can cut a node in the Explorer, select another node that can accept children, and paste. Both the source and the target may arbitrarily add extra behavior by this operation.
+
+Copying and pasting with the IDE is very configurable and flexible. It is not necessary that both sides actually be nodes - if you write a node, you can enable copying it as a text string. For example, if there is a RMI connection in the RMI module, selecting that node in the runtime tab, copying, moving to the Editor and selecting paste, will insert the code to re-create the connection in an application. This process is bi-directional. To produce a new child node, text can be selected from within the editor and pasted onto a node, though it is up to the developer to create the appropriate working code for this.
+
+
+
+== FileSystems API
+
+This API represents an abstraction of the file system in the IDE. It is made up of objects and classes that represent files, and is used to display files and directories. It can also display the file entries contained in JAR and ZIP archives, and contains full capabilities for version control support.
+
+The FileSystems API permits module authors to access files in a uniform manner. For example, you may access a file and be unaware of whether a file you are using is stored on local disk in the user's repository, in an auxiliary directory, or in a JAR archive. Alternately, you may have reason to implement a custom file system. For example, a vendor tool being integrated into the IDE may handle its own local or remote storage of files in a special fashion; using this API, the rest of the IDE will be able to seamlessly work with your files.
+
+The FileSystems API is used only to manipulate files on disk - or whatever storage mechanism a file system may use - and makes no reference to the nature of their contents nor how they are being used elsewhere in the IDE - beyond whether or not they are locked. From the perspective of this API, all files consist of byte streams (albeit with MIME types).
+
+
+
+== Nodes API
+
+The Nodes API controls the usage and creation of nodes, which are a variant of JavaBeans that may have adjustable property sets. The Nodes API also provides cookies and actions. The functionality in the Nodes API includes operations such as browsing of nodes; cut, copy, paste, and reordering; display characteristics, both icon and available properties; and actions that may be taken on the node, such as in a context menu. A rich API deals with children of nodes, and access to changes of information is provided. Using the Nodes API:
+
+* The icon for a node can be defined, including the display name, behavior on a rename attempt, copy, drag, and so on. There is also a pop-up dialog customizer.
+
+* Properties may be displayed as shown in the property sheet. Every node can define what properties to present.
+
+Each data object can designate a single node to represent it. For example, a Java source file node displays the source name and properties, as well as configured items on the execution tab. The interaction of the node to the DataSystems API is responsible for all these capabilities and representations. Nodes are not static data - they are live components of the IDE. So actions taken in one part of the system will frequently cause open Explorer views to refresh to display the new node structure. For example, typing in a new method in a class, after a moment�s delay to reparse, will cause a new method node to appear in the tree for that class (if it was already expanded). A node is an extension to the JavaBeans concept, adding some features that were necessary for the full functioning of the IDE:
+
+* Full hierarchy support, including special support for various kinds of child containment policies.
+
+* Actions and other IDE-specific interfaces are placed as direct Java technologylevel API requirements - casts or introspection are not needed to determine their availability.
+
+* Certain basic operations on nodes, such as creating a serializable form of the node, or cut-and-paste support, are implemented as an abstract base class. Concrete subclasses then provide the easiest and most common implementations of these operations.
+
+

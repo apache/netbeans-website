@@ -1,0 +1,1581 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= NetBeans Copy Class Refactoring Module Tutorial
+:jbake-type: platform-tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:icons: font
+:experimental:
+:description: NetBeans Copy Class Refactoring Module Tutorial - Apache NetBeans
+:keywords: Apache NetBeans Platform, Platform Tutorials, NetBeans Copy Class Refactoring Module Tutorial
+
+link:http://netbeans.apache.org/community/mailing-lists.html[Feedback]
+
+Refactoring is the restructuring of code, using small transformations, in which the result does not change any program behavior. Just as you factor an expression to make it easier to understand or modify, you refactor code to make it easier to read, simpler to understand, and faster to update. And just as a refactored expression must produce the same result, the refactored program must be functionally equivalent with the orginal source.
+
+Some common motivations for refactoring code include:
+
+* Making the code easier to change or easier to add a new feature
+* Reducing complexity for better understanding
+* Removing unnecssary repetition
+* Enabling use of the code for other needs or more general needs
+
+This tutorial shows you how to extend the IDE by adding support for an additional refactoring feature—Copy Class. The Copy Class feature enables you to copy a class to the same or a different package. When you copy the class, you can change the name, which also changes the name of the constructor. The package declaration is automatically updated if the class is copied into a new package.
+
+The following topics are covered in this tutorial:
+
+* <<gettingtoknowthesample,Getting to Know the Sample>>
+
+* <<installing-software,Installing the Software>>
+* <<installing-sample,Installing the Sample>>
+* <<introducing-sample,Introducing the Sample>>
+* <<settingupthemoduleproject,Setting Up the Module Project>>
+
+* <<providingaccesstothesources,Providing Access to the NetBeans IDE Sources>>
+* <<creatingthemoduleproject,Creating the Module Project>>
+* <<specifying,Specifying the Module's Dependencies>>
+* <<creatingthemainfiles,Creating the Refactoring Logic>>
+
+* <<creatingtherefactoringclass,Creating the Refactoring Class>>
+* <<creatingtherefactoringpluginclass,Creating the Refactoring Plugin Class>>
+* <<cretaingtherefactoringpluginfactory,Creating the Refactoring Plugin Factory>>
+* <<creatingtheuserinterface,Creating the User Interface>>
+
+* <<creatingthecopyclassaction,Creating the CopyClass Action>>
+* <<creatingthecopyclassrefactoringui,Creating the CopyClass RefactoringUI>>
+* <<creatingthecopyclasspanel,Creating the CopyClass Panel>>
+* <<registeringtherefactoring,Registering the Refactoring in the NetBeans System Filesystem>>
+* <<building,Building and Installing the Module>>
+* <<contribute,Contributing Refactorings to NetBeans>>
+
+Once the software is installed, this tutorial can be completed in 60 minutes.
+
+For more information on creating NetBeans plug-in modules, see the  link:https://netbeans.apache.org/platform/index.html[ NetBeans Development Project home] on the NetBeans website. If you have questions, visit the  link:http://wiki.netbeans.org/wiki/view/NetBeansDeveloperFAQ[NetBeans Developer FAQ] or use the feedback link at the top of this page.
+
+
+
+== Getting to Know the Sample
+
+Before you start writing the module, you have to make sure you have all of the necessary software. In addition, you might want to play with the sample before building it yourself.
+
+
+=== Installing the Software
+
+Before you begin, you need to install the following software on your computer:
+
+* NetBeans IDE 5.x ( link:https://netbeans.apache.org/download/index.html[download])
+* Source of NetBeans IDE 5.x ( link:https://netbeans.apache.org/download/index.html[download])
+* Java Standard Development Kit (JDK™) version 1.4.2 ( link:https://www.oracle.com/technetwork/java/javase/downloads/index.html[download]) or 5.0 ( link:https://www.oracle.com/technetwork/java/javase/downloads/index.html[download])
+
+
+=== Installing the Sample
+
+Take the following steps to install the sample:
+
+
+[start=1]
+1. Unzip the  link:https://netbeans.org/files/documents/4/589/CopyClass.zip[attached file].
+
+
+[start=2]
+1. In the IDE, choose File > Open Project and browse to the folder that contains the unzipped file. Open the module project. It should look as follows:
+
+
+image::images/completed-projects-window.png[]
+
+
+[start=3]
+1. Right-click the project node and choose Install/Reload in Target Platform. The target platform opens and the module is installed.
+
+
+=== Introducing the Sample
+
+
+[start=1]
+1. Create or open an application and make sure that it has a Java source file.
+
+
+[start=2]
+1. Select the Java source file and, in the Refactor window, choose the new Copy Class menu item, as shown below:
+
+
+image::images/copyclass-menu-item.png[]
+
+The Copy Class dialog box opens, as shown below:
+
+
+image::images/copyclass-dialog-box.png[]
+
+Optionally, use the To Package drop-down list to choose a package to which you want to copy the Java source file. If you do not choose a package, the file is copied into the package that contains the original file.
+
+
+[start=3]
+1. Click Next. The Refactoring window opens, as shown below:
+
+
+image::images/refactoring-dialog-box.png[]
+
+
+[start=4]
+1. Click Do Refactoring. The class is copied to the folder you specified.
+
+Now that you know what the user interface of the Copy Class Refactoring plug-in module looks like, let's create it from scratch.
+
+
+== Setting Up the Module Project
+
+Before you start writing the module, you have to make sure you that your project is set up correctly.
+
+
+=== Providing Access to the NetBeans IDE Sources
+
+When you make the IDE's sources available to the NetBeans Platform Manager, you can access the IDE's source files and Javadoc from the Source Editor. This simplifies plug-in module development, because it enables you to very quickly find out information about the classes and methods that you are implementing. Throughout this tutorial, you will be referred to the sources and Javadoc, so it helps to have them available before going further.
+
+
+[start=1]
+1. If you have not already done so, download the sources  link:https://netbeans.apache.org/download/index.html[here].
+
+
+[start=2]
+1. Choose Tools > NetBeans Platform Manager.
+
+
+[start=3]
+1. In the Sources tab, click Add ZIP/Folder, and browse to the ZIP file that contains the NetBeans IDE sources, as shown below:
+
+
+image::images/platform_manager.png[]
+
+
+[start=4]
+1. Click Close.
+
+
+=== Creating the Module Project
+
+
+[start=1]
+1. Choose File > New Project. Under Categories, select NetBeans Plug-in Modules. Under projects, select Module Project and click Next.
+
+
+[start=2]
+1. In the Name and Location panel, type  ``CopyClassRefactoring``  in Project Name. Change the Project Location to any directory on your computer, such as  ``c:\mymodules`` . Leave the Standalone Module radiobutton and the Set as Main Project checkbox selected. Click Next.
+
+
+[start=3]
+1. In the Basic Module Configuration panel, replace  ``yourorghere``  in Code Name Base with  ``netbeans.modules``  so that the whole name is  ``org.netbeans.modules.copyclassrefactoring`` . Leave  ``CopyClassRefactoring``  as the Module Display Name. Leave the location of the localizing bundle and XML layer, so that they will be stored in a package with the name  ``org.netbeans.modules.copyclassrefactoring`` . Click Finish.
+
+The IDE creates the  ``CopyClassRefactoring``  project. The project contains all of your sources and project metadata, such as the project's Ant build script. The project opens in the IDE. You can view its logical structure in the Projects window (Ctrl-1) and its file structure in the Files window (Ctrl-2).
+
+
+=== Specifying the Module's Dependencies
+
+You will need to subclass several classes that belong to  link:https://bits.netbeans.org/dev/javadoc/[NetBeans APIs]. Each has to be declared as a Module dependency. Use the Project Properties dialog box for this purpose.
+
+
+[start=1]
+1. In the Projects window, right-click the  ``CopyClassRefactoring``  project node and choose Properties. In the Project Properties dialog box, click Libraries.
+
+
+[start=2]
+1. For each of the following APIs, click "Add...", select the name from the Module list, and then click OK to confirm it:
+
+
+image::images/projprops.png[]
+
+
+[start=3]
+1. Click OK to exit the Project Properties dialog box.
+
+
+[start=4]
+1. In the Projects window, expand the Important Files node, double-click the Project Metadata node, and note that the APIs you selected have been declared as Module dependencies:
+
+[source,xml]
+----
+
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="https://netbeans.org/ns/project/1">
+    <type>org.netbeans.modules.apisupport.project</type>
+    <configuration>
+        <data xmlns="https://netbeans.org/ns/nb-module-project/2">
+            <code-name-base>org.netbeans.modules.refactoring.copyclass</code-name-base>
+            <standalone/>
+            <module-dependencies>
+                <dependency>
+                    <code-name-base>javax.jmi.reflect</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <release-version>1</release-version>
+                        <specification-version>1.6</specification-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
+                    <code-name-base>org.netbeans.api.mdr</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <release-version>1</release-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
+                    <code-name-base>org.netbeans.jmi.javamodel</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <release-version>2</release-version>
+                        <specification-version>1.19.0</specification-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
+                    <code-name-base>org.netbeans.modules.java</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <release-version>1</release-version>
+                        <specification-version>1.24.0.2.2.2</specification-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
+                    <code-name-base>org.netbeans.modules.java.project</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <release-version>1</release-version>
+                        <specification-version>1.7</specification-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
+                    <code-name-base>org.netbeans.modules.javacore</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <release-version>1</release-version>
+                        <specification-version>1.16.0.2.2</specification-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
+                    <code-name-base>org.netbeans.modules.jmiutils</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <release-version>1</release-version>
+                        <specification-version>1.4.0.2</specification-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
+                    <code-name-base>org.netbeans.modules.projectapi</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <release-version>1</release-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
+                    <code-name-base>org.netbeans.modules.projectuiapi</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <release-version>1</release-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
+                    <code-name-base>org.netbeans.modules.refactoring</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <release-version>1</release-version>
+                        <implementation-version/>
+                    </run-dependency>
+                </dependency>
+                <dependency>
+                    <code-name-base>org.openide.awt</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <specification-version>6.6</specification-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
+                    <code-name-base>org.openide.filesystems</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <specification-version>6.2</specification-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
+                    <code-name-base>org.openide.loaders</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <specification-version>5.4</specification-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
+                    <code-name-base>org.openide.modules</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <specification-version>6.2</specification-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
+                    <code-name-base>org.openide.nodes</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <specification-version>6.2</specification-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
+                    <code-name-base>org.openide.text</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <specification-version>6.2</specification-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
+                    <code-name-base>org.openide.util</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <specification-version>6.5</specification-version>
+                    </run-dependency>
+                </dependency>
+            </module-dependencies>
+            <public-packages/>
+        </data>
+    </configuration>
+</project>
+----
+
+
+== Creating the Refactoring Logic
+
+The non-visual part of the refactoring implements the refactoring logic. It consists basically of two classes—the "refactoring" class and "refactoring plugin" class.
+
+
+=== Creating the Refactoring Class
+
+The refactoring class serves as an API for invoking the refactoring. In addition, it is used by the refactoring plugin class to determine refactoring parameters. The refactoring class itself should do almost no work—all the work is done by the plugin class. The refactoring class usually contains just getters and setters for the refactoring parameters. The parameters are  ``newName`` ,  ``targetFolder`` , and  ``targetPackageName`` . They are used in the Copy Class dialog box:
+
+
+image::images/copyclass-dialog-box.png[]
+
+Do the following:
+
+
+[start=1]
+1. *Create the file.* Right-click the  ``CopyClassRefactoring``  project node, choose New > Java Class, type  ``CopyClassRefactoring``  in Class Name, and select  ``org.netbeans.modules.copyclassrefactoring``  from the Package drop-down list. Click Finish. The new Java class opens in the Source Editor. Replace the default code with the following:
+
+[source,java]
+----
+
+package org.netbeans.modules.refactoring.copyclass;
+
+import org.netbeans.jmi.javamodel.Resource;
+import org.netbeans.modules.refactoring.api.AbstractRefactoring;
+import org.netbeans.modules.refactoring.classpath.Util;
+import org.openide.filesystems.FileObject;
+
+public final class CopyClassRefactoring extends  link:https://bits.netbeans.org/dev/javadoc/org-netbeans-modules-refactoring/org/netbeans/modules/refactoring/api/AbstractRefactoring.html[AbstractRefactoring] {
+    
+    private Resource resource;
+    private FileObject targetFolder;
+    private String targetPackageName;
+    private String newName;
+    
+    /** Creates a new instance of CopyClassRefactoring 
+     *
+     */
+    public CopyClassRefactoring(Resource resource) {
+        this.resource = resource;
+    }
+    
+    protected void  link:https://bits.netbeans.org/dev/javadoc/org-netbeans-modules-refactoring/org/netbeans/modules/refactoring/api/AbstractRefactoring.html#setClassPath()[setClassPath()] {
+        // leave the complete classpath
+        Util.setDefaultClassPath();
+    }
+
+    public Resource getResource() {
+        return resource;
+    }
+
+    // --- START PARAMETERS ----------------------------------------------------------
+
+    public FileObject getTargetClassPathRoot() {
+        return targetFolder;
+    }
+
+    public void setTargetClassPathRoot(FileObject targetFolder) {
+        this.targetFolder = targetFolder;
+    }
+    
+    public String getTargetPackageName() {
+        return targetPackageName;
+    }
+    
+    public void setTargetPackageName(String newName) {
+        this.targetPackageName = newName;
+    }
+    
+    public String getNewName() {
+        return newName;
+    }
+    
+    public void setNewName(String newName) {
+        this.newName = newName;
+    }
+
+    // --- END PARAMETERS ----------------------------------------------------------
+
+}
+----
+
+
+[start=2]
+1. *Read the sources.* Hold down the Ctrl key, move the mouse over the  link:https://bits.netbeans.org/dev/javadoc/org-netbeans-modules-refactoring/org/netbeans/modules/refactoring/api/AbstractRefactoring.html[ ``AbstractRefactoring`` ] identifier, and notice that a hyperlink appears:
+
+
+image::images/hyperlink1.png[]
+
+Click the link. The  ``AbstractRefactoring``  class opens in the Source Editor. Familiarize yourself with the source file and understand how it relates to its  ``CopyClassRefactoring``  implementation.
+
+
+=== Creating the Refactoring Plugin Class
+
+Every refactoring should have at least one plugin class, which does all the work. The refactoring module itself should provide the basic plugin class that does the J2SE refactoring. Other modules can add other plugins—this lets them participate in the refactoring. For example, when renaming a method, a J2EE plugin class needs to rename the related methods in other interfaces of an EJB (if necessary) and change the deployment descriptor. The plugin class discussed below is the basic plugin class that does all the basic J2SE work.
+
+There are four methods that need to be implemented by the plugin class:
+
+*  `` link:https://bits.netbeans.org/dev/javadoc/org-netbeans-modules-refactoring/org/netbeans/modules/refactoring/spi/RefactoringPlugin.html#preCheck()[preCheck()]`` . Checks pre-conditions.
+
+*  `` link:https://bits.netbeans.org/dev/javadoc/org-netbeans-modules-refactoring/org/netbeans/modules/refactoring/spi/RefactoringPlugin.html#fastCheckParameters()[fastCheckParameters()]`` . Checks the validity of the parameters—only does the checks that can be performed quickly and that do not require a complex computation.
+
+*  `` link:https://bits.netbeans.org/dev/javadoc/org-netbeans-modules-refactoring/org/netbeans/modules/refactoring/spi/RefactoringPlugin.html#checkParameters()[checkParameters()]`` . Does all the other validity checks of parameters that are not covered by the  ``fastCheckParameters()``  method.
+
+*  `` link:https://bits.netbeans.org/dev/javadoc/org-netbeans-modules-refactoring/org/netbeans/modules/refactoring/spi/RefactoringPlugin.html#prepare(org.netbeans.modules.refactoring.spi.RefactoringElementsBag)[prepare()]`` . Responsible for creating descriptors of changes (instances of implementations of  link:https://bits.netbeans.org/dev/javadocorg-netbeans-modules-refactoring/org/netbeans/modules/refactoring/api/RefactoringElement.html[ ``RefactoringElement`` ]) that will be made by the refactoring. This method is responsible for actually telling the refactoring how it should be performed. It does this by creating instances of specialized implementations of  ``RefactoringElement`` —each of the instances represents a single change that the refactoring should do. So, for example, in case of a Rename Field refactoring, every occurrence of an access to the field being renamed would have a corresponding  ``RefactoringElement``  that would represent renaming of that single occurrence. So, besides implementing the  ``prepare()``  method itself, you also need to create the implementations of the  ``RefactoringElement``  interface that will be used to perform the changes. Refactoring elements are usually created as subclasses of  ``SimpleRefactoringElementImpl`` . These are the methods that you need to implement:
+
+*  `` link:https://bits.netbeans.org/dev/javadoc/org-netbeans-modules-refactoring/org/netbeans/modules/refactoring/spi/RefactoringElementImplementation.html#performChange()[performChange()]`` . Performs the change represented by the refactoring element.
+*  `` link:https://bits.netbeans.org/dev/javadoc/org-netbeans-modules-refactoring/org/netbeans/modules/refactoring/spi/RefactoringElementImplementation.html#getText()[getText()]`` . Returns text for the refactoring element. This usually contains the fragment of code that the refactoring element will change or a text describing what the refactoring element will do.
+*  `` link:https://bits.netbeans.org/dev/javadoc/org-netbeans-modules-refactoring/org/netbeans/modules/refactoring/spi/RefactoringElementImplementation.html#getDisplayText()[getDisplayText()]`` . Usually same as  ``getText()``  but may contain HTML tags. For example, if returning a line containing the code that will be changed, the HTML tags can be used to display the exact piece of code to be changed in bold.
+*  `` link:https://bits.netbeans.org/dev/javadoc/org-netbeans-modules-refactoring/org/netbeans/modules/refactoring/spi/RefactoringElementImplementation.html#getParentFile()[getParentFile()]`` . File that will be affected by the change represented by the refactoring element.
+*  `` link:https://bits.netbeans.org/dev/javadoc/org-netbeans-modules-refactoring/org/netbeans/modules/refactoring/spi/RefactoringElementImplementation.html#getJavaElement()[getJavaElement()]`` . Java element this change relates to.
+*  `` link:https://bits.netbeans.org/dev/javadoc/org-netbeans-modules-refactoring/org/netbeans/modules/refactoring/spi/RefactoringElementImplementation.html#getPosition()[getPosition()]`` . Document position of the related code.
+
+The refactoring elements are instantiated by the  ``prepare()``  method and added to the instance of  `` link:https://bits.netbeans.org/dev/javadoc/org-netbeans-modules-refactoring/org/netbeans/modules/refactoring/spi/RefactoringElementsBag.html[RefactoringElementsBag]``  that serves as an output parameter.
+
+All the above methods return an instance of a class named  `` link:https://bits.netbeans.org/dev/javadoc/org-netbeans-modules-refactoring/org/netbeans/modules/refactoring/api/Problem.html[Problem]`` . Instances of this class represent problems that may be fatal or non-fatal for performing the refactoring. The methods perform various checks (as outlined in the  link:http://refactoring.netbeans.org/refactorings/specifications.html[specification] for a given refactoring) and return the problems they find as the instances of the mentioned  ``Problem``  class. Problems can be chained (using the  ``Problem.setNext()``  method), which makes it possible to return several problems from a single operation. Note that fatal problems must come first in the chain. Creating a problem using  ``JavaRefactoringPlugin.createProblem()``  method will automatically ensure this. All methods, execpt for  ``fastCheckParameters()``  are expected to fire progress events, since they are performing potentially time consuming operations.
+
+Do the following:
+
+
+[start=1]
+1. *Create the file.* Right-click the  ``CopyClassRefactoring``  project node, choose New > Java Class, type  ``CopyClassRefactoringPlugin``  in Class Name, and select  ``org.netbeans.modules.copyclassrefactoring``  from the Package drop-down list. Click Finish. The new Java class opens in the Source Editor. Replace the default code with the following:
+
+[source,java]
+----
+
+package org.netbeans.modules.refactoring.copyclass;
+
+import java.io.IOException;
+import java.text.MessageFormat;
+import java.util.Iterator;
+import java.util.StringTokenizer;
+import org.netbeans.jmi.javamodel.Element;
+import org.netbeans.jmi.javamodel.Import;
+import org.netbeans.jmi.javamodel.ImportClass;
+import org.netbeans.jmi.javamodel.JavaClass;
+import org.netbeans.jmi.javamodel.JavaModelPackage;
+import org.netbeans.jmi.javamodel.Resource;
+import org.netbeans.modules.javacore.JMManager;
+import org.netbeans.modules.javacore.api.JavaModel;
+import org.netbeans.modules.javacore.internalapi.JavaMetamodel;
+import org.netbeans.modules.javacore.internalapi.JavaModelUtil;
+import org.netbeans.modules.refactoring.CheckUtils;
+import org.netbeans.modules.refactoring.api.AbstractRefactoring;
+import org.netbeans.modules.refactoring.api.MoveClassRefactoring;
+import org.netbeans.modules.refactoring.api.Problem;
+import org.netbeans.modules.refactoring.api.RenameRefactoring;
+import org.netbeans.modules.refactoring.plugins.JavaRefactoringPlugin;
+import org.netbeans.modules.refactoring.plugins.MoveClassRefactoringPlugin;
+import org.netbeans.modules.refactoring.spi.SimpleRefactoringElementImpl;
+import org.netbeans.modules.refactoring.spi.RefactoringElementImplementation;
+import org.netbeans.modules.refactoring.spi.RefactoringElementsBag;
+import org.openide.ErrorManager;
+import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
+import org.openide.loaders.DataFolder;
+import org.openide.loaders.DataObject;
+import org.openide.text.PositionBounds;
+import org.openide.util.NbBundle;
+import org.openide.util.Utilities;
+
+
+/** Plugin that implements the core functionality of Copy Class Refactoring.
+ */
+public class CopyClassRefactoringPlugin extends  link:https://bits.netbeans.org/dev/javadoc/org-netbeans-modules-refactoring/org/netbeans/modules/refactoring/spi/RefactoringPlugin.html[JavaRefactoringPlugin] {
+    
+    /** Reference to the parent refactoring instance */
+    private final CopyClassRefactoring refactoring;
+    
+    /** Creates a new instance of PullUpRefactoringPlugin
+     * @param refactoring Parent refactoring instance.
+     */
+    CopyClassRefactoringPlugin(CopyClassRefactoring refactoring) {
+        this.refactoring = refactoring;
+    }
+    
+    /** Checks pre-conditions of the refactoring.
+     * @return Problems found or 
+
+[source,java]
+----
+
+null
+----
+
+.
+     */
+    public Problem  link:https://bits.netbeans.org/dev/javadoc/org-netbeans-modules-refactoring/org/netbeans/modules/refactoring/spi/RefactoringPlugin.html#preCheck()[preCheck()] {
+        fireProgressListenerStart(AbstractRefactoring.PRE_CHECK, 4);
+        try {
+            Resource resource = refactoring.getResource();
+            
+            // check whether the element is valid
+            Problem result = isElementAvail(resource);
+            if (result != null) {
+                // fatal error -> don't continue with further checks
+                return result;
+            }
+            
+            if (!CheckUtils.isElementInOpenProject(resource)) {
+                return new Problem(true, NbBundle.getMessage(JavaRefactoringPlugin.class, "ERR_ProjectNotOpened"));
+            }
+            
+            // increase progress (step 1)
+            fireProgressListenerStep();
+            
+            // increase progress (step 2)
+            fireProgressListenerStep();
+            
+            // increase progress (step 3)
+            fireProgressListenerStep();
+            
+            // all checks passed -> return null
+            return null;
+        } finally {
+            // fire operation end on the registered progress listeners
+            fireProgressListenerStop();
+        }
+    }
+    
+    public Problem  link:https://bits.netbeans.org/dev/javadoc/org-netbeans-modules-refactoring/org/netbeans/modules/refactoring/spi/RefactoringPlugin.html#fastCheckParameters()[fastCheckParameters()] {
+        if (!Utilities.isJavaIdentifier(refactoring.getNewName())) {
+            String msg = new MessageFormat(NbBundle.getMessage(RenameRefactoring.class, "ERR_InvalidIdentifier")).format(
+                new Object[] {refactoring.getNewName()}
+            );
+            return createProblem(null, true, msg);
+        }
+        if (!isValidPackageName(refactoring.getTargetPackageName())) {
+            String msg = new MessageFormat(NbBundle.getMessage(RenameRefactoring.class, "ERR_InvalidPackage")).format(
+                new Object[] {refactoring.getTargetPackageName()}
+            );
+            return createProblem(null, true, msg);
+        }
+        String name = refactoring.getTargetPackageName().replace('.','/') + '/' + refactoring.getNewName() + ".java";
+        if (refactoring.getTargetClassPathRoot().getFileObject(name) != null)
+	    return createProblem(null, true, 
+		new MessageFormat(NbBundle.getMessage(MoveClassRefactoring.class, 
+		"ERR_ClassToMoveClashes")).format(new Object[]{refactoring.getNewName()}));
+        return null;
+    }
+    
+    private static boolean isValidPackageName(String name) {
+        StringTokenizer tokenizer = new StringTokenizer(name, "."); // NOI18N
+        while (tokenizer.hasMoreTokens()) {
+            if (!Utilities.isJavaIdentifier(tokenizer.nextToken())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public Problem  link:https://bits.netbeans.org/dev/javadoc/org-netbeans-modules-refactoring/org/netbeans/modules/refactoring/spi/RefactoringPlugin.html#checkParameters()[checkParameters()] {
+        return null;
+    }
+
+    public Problem  link:https://bits.netbeans.org/dev/javadoc/org-netbeans-modules-refactoring/org/netbeans/modules/refactoring/spi/RefactoringPlugin.html#prepare(org.netbeans.modules.refactoring.spi.RefactoringElementsBag)[prepare(RefactoringElementsBag refactoringElements)] {
+        refactoringElements.add(refactoring, 
+                new CopyClass(
+                    refactoring.getResource(),
+                    refactoring.getTargetClassPathRoot(),
+                    refactoring.getTargetPackageName(),
+                    refactoring.getNewName()
+                ));
+        return null;
+    }
+}
+----
+
+
+[start=2]
+1. *Read the sources.* Hold down the Ctrl key, move the mouse over the  link:https://bits.netbeans.org/dev/javadoc/org-netbeans-modules-refactoring/org/netbeans/modules/refactoring/spi/RefactoringPlugin.html[ ``JavaRefactoringPlugin`` ] identifier, and notice that a hyperlink appears:
+
+
+image::images/hyperlink2.png[]
+
+Click the link. The  ``JavaRefactoringPlugin``  class opens in the Source Editor. Familiarize yourself with the source file and understand how it relates to its  ``CopyClassRefactoringPlugin``  implementation.
+
+
+[start=3]
+1. Next, you create the implementations of the  link:https://bits.netbeans.org/dev/javadoc/org-netbeans-modules-refactoring/org/netbeans/modules/refactoring/api/RefactoringElement.html[ ``RefactoringElement`` ] interface that will be used to perform the changes. Do so by adding the following inner class to the end of the file above:
+
+[source,java]
+----
+
+    private static class CopyClass extends  link:https://bits.netbeans.org/dev/javadoc/org-netbeans-modules-refactoring/org/netbeans/modules/refactoring/spi/SimpleRefactoringElementImpl.html[SimpleRefactoringElementImpl] implements  link:https://bits.netbeans.org/dev/javadocorg-netbeans-modules-refactoring/org/netbeans/modules/refactoring/spi/RefactoringElementImplementation.html[RefactoringElementImplementation]{
+        
+        private DataObject source;
+        private FileObject targetRoot;
+        private String targetPackageName;
+        private String newName;
+        private Resource resource;
+        
+        public CopyClass (Resource resource, FileObject targetRoot, String packageName, String newName) {
+            this.source = ((JMManager) JMManager.getManager()).getDataObject(resource);
+            this.resource = resource;
+            this.targetRoot = targetRoot;
+            this.targetPackageName = packageName;
+            this.newName = newName;
+        }
+        
+	public String  link:https://bits.netbeans.org/dev/javadoc/org-netbeans-modules-refactoring/org/netbeans/modules/refactoring/spi/RefactoringElementImplementation.html#getText()[getText()] {
+            return getDisplayText ();
+        }
+    
+	public String  link:https://bits.netbeans.org/dev/javadoc/org-netbeans-modules-refactoring/org/netbeans/modules/refactoring/spi/RefactoringElementImplementation.html#getDisplayText()[getDisplayText()] {
+            return new MessageFormat (NbBundle.getMessage(CopyClassRefactoringPlugin.class, "TXT_CopyClassToPackage")).format ( // NOI18N
+                new Object[] {newName, targetPackageName, resource.getName()}
+            );
+        }
+
+	public Element  link:https://bits.netbeans.org/dev/javadoc/org-netbeans-modules-refactoring/org/netbeans/modules/refactoring/spi/RefactoringElementImplementation.html#getJavaElement()[getJavaElement()] {
+            return null;
+        }
+
+	public PositionBounds  link:https://bits.netbeans.org/dev/javadoc/org-netbeans-modules-refactoring/org/netbeans/modules/refactoring/spi/RefactoringElementImplementation.html#getPosition()[getPosition()] {
+            return null;
+        }
+
+	public void  link:https://bits.netbeans.org/dev/javadoc/org-netbeans-modules-refactoring/org/netbeans/modules/refactoring/spi/RefactoringElementImplementation.html#performChange()[performChange()] {
+            String nameAfterCopy = null;
+            try {
+                FileObject fo = FileUtil.createFolder(targetRoot, targetPackageName.replace('.','/'));
+                DataFolder folder = DataFolder.findFolder(fo);
+                objectToDelete = source.copy(folder);
+                nameAfterCopy = objectToDelete.getName();
+                objectToDelete.rename(newName);
+            } catch (IOException ioe) {
+                ErrorManager.getDefault().notify(ioe);
+	    }
+            Resource r = JavaModel.getResource(objectToDelete.getPrimaryFile());
+            String name = resource.getPackageName();
+            ImportClass proxy = ((JavaModelPackage) r.refOutermostPackage()).getImport();
+            Import addedImport = proxy.createImport(name, null, false, true);
+            r.addImport(addedImport);
+            for (Iterator i = r.getClassifiers().iterator(); i.hasNext(); ) {
+                JavaClass c = (JavaClass) i.next();
+                if (c.getSimpleName().equals(nameAfterCopy)) {
+                    c.setSimpleName(newName);
+                }
+            }
+            
+        }
+
+        private DataObject objectToDelete = null;
+
+	public FileObject  link:https://bits.netbeans.org/dev/javadoc/org-netbeans-modules-refactoring/org/netbeans/modules/refactoring/spi/RefactoringElementImplementation.html#getParentFile()[getParentFile()] {
+            return source.getPrimaryFile();
+        }
+    }
+----
+
+
+[start=4]
+1. *Read the sources.* Hold down the Ctrl key, move the mouse over the  `` link:https://bits.netbeans.org/dev/javadoc/org-netbeans-modules-refactoring/org/netbeans/modules/refactoring/spi/RefactoringElementImplementation.html[RefactoringElementImplementation]``  identifier, and notice that a hyperlink appears:
+
+
+image::images/hyperlink3.png[]
+
+Click the link. The  ``RefactoringElementImplementation``  class opens in the Source Editor. Familiarize yourself with the source file and understand how it relates to its inner  ``CopyClass``  implementation.
+
+
+=== Creating the Refactoring Plugin Factory
+
+The instantiation of the plugin class is done by a plugin factory. The plugin factory is registered in the NetBeans lookup via an entry in the  ``META-INF/services``  folder that is called by an invocation of the refactoring. To make sure your plugin class is instantiated when a given refactoring is invoked, you need to add the following instantiation code for your plugin class at the beginning of the  ``createInstance()``  method of the factory:
+
+
+[source,java]
+----
+
+if (refactoring instanceof _YourRefactoring_) {
+     return new _YourRefactoringPlugin_((_YourRefactoring_) refactoring);
+}
+----
+
+As you can see, the  ``createInstance()``  method takes the parent refactoring as the parameter. Every plugin class should keep a reference to the parent refactoring to be able to get refactoring parameters from it. That is why the plugin class usually take the refactoring as a constructor parameter.
+
+Do the following:
+
+
+[start=1]
+1. *Create the file.* Right-click the Unit Test Packages node, choose New > Java Class, type  ``PluginsFactory ``  in Class Name, and select  ``org.netbeans.modules.copyclassrefactoring``  from the Package drop-down list. Click Finish. The new Java class opens in the Source Editor. Replace the default code with the following:
+
+
+[source,java]
+----
+
+package org.netbeans.modules.refactoring.copyclass;
+
+import org.netbeans.modules.refactoring.api.AbstractRefactoring;
+import org.netbeans.modules.refactoring.spi.RefactoringPlugin;
+import org.netbeans.modules.refactoring.spi.RefactoringPluginFactory;
+
+public class PluginsFactory implements  link:https://bits.netbeans.org/dev/javadoc/org-netbeans-modules-refactoring/org/netbeans/modules/refactoring/spi/RefactoringPluginFactory.html[RefactoringPluginFactory] {
+    /** Factory method called by a refactoring. Creates and returns a new plugin
+     * instance for a given refactoring. If no plugin for a given refactoring
+     * is present, this method returns null.
+     * @param refactoring Parent refactoring for which a plugin should be created.
+     * @return New instance of a refactoring plugin for the provided refactoring
+     * or 
+
+[source,java]
+----
+
+null
+----
+
+.
+     */
+    public  link:https://bits.netbeans.org/dev/javadoc/org-netbeans-modules-refactoring/org/netbeans/modules/refactoring/spi/RefactoringPlugin.html[RefactoringPlugin]  link:https://bits.netbeans.org/dev/javadocorg-netbeans-modules-refactoring/org/netbeans/modules/refactoring/spi/RefactoringPluginFactory.html#createInstance(org.netbeans.modules.refactoring.api.AbstractRefactoring)[createInstance(AbstractRefactoring refactoring)] {
+        if (refactoring instanceof CopyClassRefactoring) {
+            return new CopyClassRefactoringPlugin((CopyClassRefactoring) refactoring);
+        }
+        return null;
+    }
+}
+----
+
+
+[start=2]
+1. *Read the sources.* Hold down the Ctrl key, move the mouse over the  `` link:https://bits.netbeans.org/dev/javadoc/org-netbeans-modules-refactoring/org/netbeans/modules/refactoring/spi/RefactoringPluginFactory.html[RefactoringPluginFactory]``  identifier, and notice that a hyperlink appears:
+
+
+image::images/hyperlink4.png[]
+
+Click the link. The  ``RefactoringPluginFactory``  class opens in the Source Editor. Familiarize yourself with the source file and understand how it relates to its  ``PluginsFactory``  implementation.
+
+
+[start=3]
+1. *Register the factory in the NetBeans lookup.* Create a folder called  ``META-INF/services`` . Add an empty file called  ``org.netbeans.modules.refactoring.spi.RefactoringPluginFactory``  with this content:
+
+
+[source,java]
+----
+
+org.netbeans.modules.refactoring.copyclass.PluginsFactory
+----
+
+At this stage, the Projects window should look as follows:
+
+
+image::images/partial-projects-window.png[]
+
+
+== Creating the User Interface
+
+The user interface consists of three components:
+
+* *Refactoring action.* Presents the refactoring feature in a menu, to invoke the refactoring:
+
+
+image::images/copyclass-menu-item.png[]
+
+* *RefactoringUI class.* Implementation of RefactoringUI interface. Plugs into the refactoring framework. Provides information such as the refactoring parameters panel, the display name of the refactoring, and reference to the Refactoring Class, as shown below:
+
+
+image::images/refactoring-dialog-box.png[]
+
+* *Refactoring parameters panel.* Refactoring-specific JPanel that will be displayed in the generic refactoring wizard to collect refactoring parameters.
+
+
+image::images/copyclass-dialog-box.png[]
+
+
+=== Creating the CopyClassAction
+
+To implement the refactoring action, you need to create a subclass of  ``org.netbeans.modules.refactoring.spi.ui.AbstractRefactoringAction`` . The interesting parts are the  ``enabled()``  and  ``createRefactoringUI()``  methods:
+
+*  ``enabled()`` . Determines when the action should be enabled based on the currently active (selected) nodes in the IDE. By convention, the implementation of this method should not do anything expensive—preferably it should not touch the Java metadata and decide purely on whether there are JavaDataObjects behind the selected nodes and how many nodes are selected (some actions may be applicable to several nodes at once as in case of Pull Up refactoring, where you can select several members to be pulled up, some actions may be able operate on a single node only). For performance reasons, the  ``enable()``  method does not get information about the position of the caret in the editor—that's why the checks in this method should be weak. Most of the other checks should be done in refactoring  ``preCheck()``  method, which can provide user with a descriptive message for why the refactoring cannot be performed on a selected object and how user can fix it.
+
+*  ``createRefactoringUI()`` . Called when the action is invoked by the user. The method receives active nodes and also the element that represents the text under the cursor. Based on that, the method should construct a set of elements (or a single element) that the refactoring should be performed on and pass that into a new instance of refactoring UI object that should be returned from this method.
+
+Do the following:
+
+
+[start=1]
+1. *Create the file.* Right-click the  ``CopyClassRefactoring``  project node, choose New > Java Class, type  ``CopyClassAction``  in Class Name, and type  ``org.netbeans.modules.copyclassrefactoring.options``  in Package. Click Finish. The new Java class opens in the Source Editor. Replace the default code with the following:
+
+[source,java]
+----
+
+package org.netbeans.modules.refactoring.copyclass.ui;
+
+import org.netbeans.jmi.javamodel.Element;
+import org.netbeans.modules.java.JavaDataObject;
+import org.netbeans.modules.javacore.JMManager;
+import org.netbeans.modules.javacore.api.JavaModel;
+import org.netbeans.modules.javacore.internalapi.JavaMetamodel;
+import org.netbeans.modules.refactoring.spi.ui.AbstractRefactoringAction;
+import org.netbeans.modules.refactoring.spi.ui.RefactoringUI;
+import org.openide.loaders.DataObject;
+import org.openide.nodes.Node;
+import org.openide.util.NbBundle;
+
+public class CopyClassAction extends AbstractRefactoringAction {
+    
+    /** Creates a new instance of PullUpAction
+     */
+    public CopyClassAction() {
+        super(NbBundle.getMessage(CopyClassAction.class, "LBL_CopyClass_Action"), null); // NOI18N
+        putValue("noIconInMenu", Boolean.TRUE); // NOI18N
+    }
+    
+    /** Method responsible for creating RefactoringUI object.
+     * @param nodes Active nodes to perform the refactoring on.
+     * @param selectedElement Element to perform the refactoring on or null if the action
+     *      was not invoked from the editor - in that case the active nodes take
+     *      the precedence.
+     * @return RefactoringUI object for Copy Class refactoring.
+     */
+    protected RefactoringUI createRefactoringUI(Node[] nodes, Element selectedElement) {
+ 
+	if (selectedElement == null) {
+            // selected element is null -> action was invoked on nodes
+            JavaDataObject ob = (JavaDataObject) nodes[0].getCookie(JavaDataObject.class);
+            
+            selectedElement =  JavaModel.getResource(ob.getPrimaryFile());
+        }
+        return new CopyClassRefactoringUI(selectedElement.getResource());
+    }
+    
+    /** Method that determines whether this action is enabled for the active nodes.
+     * @param activatedNodes Active nodes.
+     * @return Boolean indicating whether the action is enabled.
+     */
+    protected boolean enabled(Node[] activatedNodes) {
+       
+	// if no nodes are active, the action should be disabled
+        if (activatedNodes.length != 1) return false;
+        
+        // the action should be enabled only if all selected nodes are associated
+        // with the same JavaDataObject (i.e. they are all declared in the same Java file)
+        // so, let's get dataobject from the first activated node
+        DataObject dobj = (DataObject) activatedNodes[0].getCookie(DataObject.class);
+	
+        // check if the dataobject is instance of JavaDataObejct and that it represents a file
+        // that is on the IDE classpath (belongs to one of open projects)
+        if ((dobj instanceof JavaDataObject) &amp;&amp; ((JMManager) JavaMetamodel.getManager()).mergedCPContains(dobj.getPrimaryFile())) {
+            return true;
+        } else {
+            return false;
+	}
+
+    }
+    
+    protected String iconResource () {
+        return "org/netbeans/modules/refactoring/resources/refactoring.gif"; // NOI18N
+    }
+}
+----
+
+
+[start=2]
+1. *Read the sources.* Hold down the Ctrl key, move the mouse over the  ``AbstractRefactoringAction``  identifier, and notice that a hyperlink appears:
+
+
+image::images/hyperlink6.png[]
+
+Click the link. The  ``AbstractRefactoringAction``  class opens in the Source Editor. Familiarize yourself with the source file and understand how it relates to its  ``CopyClassAction``  implementation.
+
+
+=== Creating the CopyClassRefactoringUI
+
+To plug the module into the refactoring framework, you need to create a subclass of  ``org.netbeans.modules.refactoring.spi.ui.RefactoringUI`` . The interesting parts are the  ``getPanel()``  and  ``checkParameters()``  methods:
+
+*  ``getPanel()`` . Returns a refactoring-specific panel containing input fields for the refactoring parameters. This method is called by ParametersPanel which is responsible for displaying the refactoring parameters dialog box. The name of the panel returned from this method will be used as the dialog box name. This panel can use the  ``setPreviewEnabled``  method of the passed  ``ParametersPanel``  to enable and disable Preview button of the refactoring parameters dialog box.
+
+*  ``checkParameters()`` . Checks parameters entered by the user in the refactoring parameters panel and sets values.
+
+Do the following:
+
+
+[start=1]
+1. *Create the file.* Create the  ``CopyClassRefactoringUI``  file and add it to the  ``org.netbeans.modules.copyclassrefactoring.options``  package. Replace the default code with the following:
+
+[source,java]
+----
+
+package org.netbeans.modules.refactoring.copyclass.ui;
+
+import org.netbeans.jmi.javamodel.JavaClass;
+import org.netbeans.jmi.javamodel.Resource;
+import org.netbeans.modules.javacore.api.JavaModel;
+import org.netbeans.modules.refactoring.api.AbstractRefactoring;
+import org.netbeans.modules.refactoring.api.Problem;
+import org.netbeans.modules.refactoring.copyclass.CopyClassRefactoring;
+import org.netbeans.modules.refactoring.spi.ui.CustomRefactoringPanel;
+import org.netbeans.modules.refactoring.spi.ui.ParametersPanel;
+import org.netbeans.modules.refactoring.spi.ui.RefactoringUI;
+import org.netbeans.modules.refactoring.ui.PullUpRefactoringUI;
+import org.openide.util.HelpCtx;
+import org.openide.util.NbBundle;
+
+public class CopyClassRefactoringUI implements RefactoringUI {
+    // reference to pull up refactoring this UI object corresponds to
+    private final CopyClassRefactoring refactoring;
+    // UI panel for collecting parameters
+    private CopyClassPanel panel;
+    
+    public CopyClassRefactoringUI(Resource resource) {
+        refactoring = new CopyClassRefactoring(resource);
+    }
+    
+    // --- IMPLEMENTATION OF RefactoringUI INTERFACE ---------------------------
+    
+    public boolean isQuery() {
+        return false;
+    }
+
+    public CustomRefactoringPanel getPanel(ParametersPanel parent) {
+        if (panel == null) {
+	    panel = new CopyClassPanel(parent, getName() 
+		+ " - " + ((JavaClass) refactoring.getResource().getClassifiers().get(0)).getName(),
+		refactoring.getResource().getPackageName(), JavaModel.getFileObject(refactoring.getResource()));
+        }
+        return panel;
+    }
+
+    public Problem setParameters() {
+        setupRefactoring();
+        return refactoring.checkParameters();
+    }
+    
+    public Problem checkParameters() {
+        if (panel==null)
+            return null;
+        setupRefactoring();
+        return refactoring.fastCheckParameters();
+    }
+    
+    private void setupRefactoring() {
+        refactoring.setTargetClassPathRoot(panel.getRootFolder());
+        refactoring.setTargetPackageName(panel.getPackageName().replace('/',  '.'));
+        refactoring.setNewName(panel.getNewName());
+    }
+
+    public AbstractRefactoring getRefactoring() {
+        return refactoring;
+    }
+
+    public String getDescription() {
+        return NbBundle.getMessage(CopyClassAction.class, "DSC_CopyClass", refactoring.getNewName()); // NOI18N
+    }
+
+    public String getName() {
+        return NbBundle.getMessage(CopyClassAction.class, "LBL_CopyClass"); // NOI18N
+    }
+
+    public boolean hasParameters() {
+        return true;
+    }
+
+    public HelpCtx getHelpCtx() {
+        return new HelpCtx(PullUpRefactoringUI.class.getName());
+    }
+}
+----
+
+
+[start=2]
+1. *Read the sources.* Hold down the Ctrl key, move the mouse over the  ``RefactoringUI``  identifier, and notice that a hyperlink appears:
+
+
+image::images/hyperlink5.png[]
+
+Click the link. The  ``RefactoringUI``  class opens in the Source Editor. Familiarize yourself with the source file and understand how it relates to its inner  ``CopyClassRefactoringUI``  implementation.
+
+
+=== Creating the CopyClassPanel
+
+Do the following:
+
+
+[start=1]
+1. *Create the file.* Create the  ``CopyClassPanel``  JPanel and add it to the  ``org.netbeans.modules.copyclassrefactoring.ui``  package.
+
+
+[start=2]
+1. *Design the panel.* Add a JTextfield, three JComboBoxes, and four JLabels to the JPanel, as shown below:
+
+
+image::images/copyclass-panel.png[]
+
+
+[start=3]
+1. *Add code.* In the Source view, replace the default code with the following:
+
+[source,java]
+----
+
+package org.netbeans.modules.refactoring.copyclass.ui;
+
+import java.awt.Component;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.JList;
+import javax.swing.JTextField;
+import javax.swing.ListCellRenderer;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import org.netbeans.api.java.project.JavaProjectConstants;
+import org.netbeans.api.project.FileOwnerQuery;
+import org.netbeans.api.project.Project;
+import org.netbeans.api.project.ProjectInformation;
+import org.netbeans.api.project.ProjectUtils;
+import org.netbeans.api.project.SourceGroup;
+import org.netbeans.api.project.Sources;
+import org.netbeans.api.project.ui.OpenProjects;
+import org.netbeans.modules.refactoring.spi.ui.CustomRefactoringPanel;
+import org.netbeans.modules.refactoring.spi.ui.ParametersPanel;
+import org.netbeans.spi.java.project.support.ui.PackageView;
+import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
+
+public class CopyClassPanel extends CustomRefactoringPanel implements ActionListener, DocumentListener {
+  
+    private static final ListCellRenderer GROUP_CELL_RENDERER = new GroupCellRenderer();
+    private static final ListCellRenderer PROJECT_CELL_RENDERER = new ProjectCellRenderer();
+    
+    private Project project;
+    private ParametersPanel parent;
+    private FileObject fo;
+    private SourceGroup[] groups;
+    
+    public CopyClassPanel(final ParametersPanel parent, String title, String startPackage, FileObject f) {
+        setName(title);
+        this.fo = f;
+        this.parent = parent;
+        initComponents();
+        setCombosEnabled(true);
+        setThisClassVisible(true);
+        
+        rootComboBox.setRenderer(GROUP_CELL_RENDERER);
+        packageComboBox.setRenderer(PackageView.listRenderer());
+        projectsComboBox.setRenderer( PROJECT_CELL_RENDERER );
+                
+        rootComboBox.addActionListener( this );
+        packageComboBox.addActionListener( this );
+        projectsComboBox.addActionListener( this );
+        
+        Object textField = packageComboBox.getEditor().getEditorComponent();
+        if (textField instanceof JTextField) {
+            ((JTextField) textField).getDocument().addDocumentListener(this); 
+        }
+        newNameTextField.getDocument().addDocumentListener(this);
+        newNameTextField.setSelectionStart(0);
+        newNameTextField.setSelectionEnd(newNameTextField.getText().length());
+        
+        project = fo != null ? FileOwnerQuery.getOwner(fo):OpenProjects.getDefault().getOpenProjects()[0];
+        initValues(startPackage);
+    }
+    
+    private boolean initialized = false;
+    public void initialize() {
+        if (initialized)
+            return ;
+        //put initialization code here
+        initialized = true;
+    }
+    
+    public void initValues(String preselectedFolder ) {
+        
+        Project openProjects[] = OpenProjects.getDefault().getOpenProjects();
+        DefaultComboBoxModel projectsModel = new DefaultComboBoxModel( openProjects );
+        projectsComboBox.setModel( projectsModel );                
+        projectsComboBox.setSelectedItem( project );
+        
+        updateRoots();
+        updatePackages(); 
+        if (preselectedFolder != null) {
+            packageComboBox.setSelectedItem(preselectedFolder);
+        }
+        // Determine the extension
+    }
+    
+    public void requestFocus() {
+        newNameTextField.requestFocus();
+    }
+    
+    public FileObject getRootFolder() {
+        return ((SourceGroup) rootComboBox.getSelectedItem()).getRootFolder();
+    }
+    
+    public String getPackageName() {
+        String packageName = packageComboBox.getEditor().getItem().toString();
+        return packageName.replace('.', '/'); // NOI18N
+    }
+    
+    private void fireChange() {
+        parent.stateChanged(null);
+    }
+    
+    /** This method is called from within the constructor to
+     * initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is
+     * always regenerated by the Form Editor.
+     */
+    //                           
+    private void initComponents() {
+        java.awt.GridBagConstraints gridBagConstraints;
+
+        labelProject = new javax.swing.JLabel();
+        projectsComboBox = new javax.swing.JComboBox();
+        labelLocation = new javax.swing.JLabel();
+        rootComboBox = new javax.swing.JComboBox();
+        labelPackage = new javax.swing.JLabel();
+        packageComboBox = new javax.swing.JComboBox();
+        bottomPanel = new javax.swing.JPanel();
+        newNameLabel = new javax.swing.JLabel();
+        newNameTextField = new javax.swing.JTextField();
+
+        setLayout(new java.awt.GridBagLayout());
+
+        labelProject.setLabelFor(projectsComboBox);
+	org.openide.awt.Mnemonics.setLocalizedText(labelProject, 
+		org.openide.util.NbBundle.getMessage(CopyClassPanel.class, "LBL_Project"));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 6, 0);
+        add(labelProject, gridBagConstraints);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.gridwidth = java.awt.GridBagConstraints.REMAINDER;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(0, 6, 6, 0);
+        add(projectsComboBox, gridBagConstraints);
+	projectsComboBox.getAccessibleContext().setAccessibleDescription
+		(java.util.ResourceBundle.getBundle("org/netbeans/modules/refactoring/ui/Bundle").
+		getString("ACSD_projectsCombo"));
+        labelLocation.setLabelFor(rootComboBox);
+	org.openide.awt.Mnemonics.setLocalizedText(labelLocation, 
+		org.openide.util.NbBundle.getMessage(CopyClassPanel.class, "LBL_Location"));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 6, 0);
+        add(labelLocation, gridBagConstraints);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.gridwidth = java.awt.GridBagConstraints.REMAINDER;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(0, 6, 6, 0);
+        add(rootComboBox, gridBagConstraints);
+	rootComboBox.getAccessibleContext().setAccessibleDescription
+		(java.util.ResourceBundle.getBundle("org/netbeans/modules/refactoring/ui/Bundle").getString("ACSD_rootCombo"));
+        labelPackage.setLabelFor(packageComboBox);
+	org.openide.awt.Mnemonics.setLocalizedText(labelPackage, 
+		org.openide.util.NbBundle.getMessage(CopyClassPanel.class, "LBL_ToPackage"));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 4;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 12, 0);
+        add(labelPackage, gridBagConstraints);
+
+        packageComboBox.setEditable(true);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 4;
+        gridBagConstraints.gridwidth = java.awt.GridBagConstraints.REMAINDER;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(0, 6, 12, 0);
+        add(packageComboBox, gridBagConstraints);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 5;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        add(bottomPanel, gridBagConstraints);
+
+	org.openide.awt.Mnemonics.setLocalizedText(newNameLabel, 
+		org.openide.util.NbBundle.getMessage(CopyClassPanel.class, "LBL_NewName"));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 6, 0);
+        add(newNameLabel, gridBagConstraints);
+
+        newNameTextField.setText("NewClass");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridwidth = java.awt.GridBagConstraints.REMAINDER;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(0, 6, 6, 0);
+        add(newNameTextField, gridBagConstraints);
+
+    }
+    //                           
+    
+    // Variables declaration - do not modify                     
+    protected javax.swing.JPanel bottomPanel;
+    private javax.swing.JLabel labelLocation;
+    private javax.swing.JLabel labelPackage;
+    private javax.swing.JLabel labelProject;
+    private javax.swing.JLabel newNameLabel;
+    private javax.swing.JTextField newNameTextField;
+    private javax.swing.JComboBox packageComboBox;
+    private javax.swing.JComboBox projectsComboBox;
+    private javax.swing.JComboBox rootComboBox;
+    // End of variables declaration                   
+
+    // ActionListener implementation -------------------------------------------
+        
+    public void actionPerformed(ActionEvent e) {
+        if (projectsComboBox == e.getSource()) {
+            project = (Project) projectsComboBox.getSelectedItem();
+            updateRoots();
+            updatePackages();
+        } else 
+        if ( rootComboBox == e.getSource() ) {            
+            updatePackages();
+        }
+        else if ( packageComboBox == e.getSource() ) {
+        }
+    }    
+    
+    // DocumentListener implementation -----------------------------------------
+    
+    public void changedUpdate(DocumentEvent e) {                
+        fireChange();        
+    }    
+    
+    public void insertUpdate(DocumentEvent e) {
+        fireChange();        
+    }
+    
+    public void removeUpdate(DocumentEvent e) {
+        fireChange();        
+    }
+    
+    // Private methods ---------------------------------------------------------
+        
+    private void updatePackages() {
+        SourceGroup g = (SourceGroup) rootComboBox.getSelectedItem();
+        packageComboBox.setModel(PackageView.createListView(g));
+    }
+    
+    void setCombosEnabled(boolean enabled) {
+        packageComboBox.setEnabled(enabled);
+        rootComboBox.setEnabled(enabled);
+        projectsComboBox.setEnabled(enabled);
+    }
+    
+    void setThisClassVisible(boolean visible) {
+        newNameLabel.setVisible(visible);
+        newNameTextField.setVisible(visible);
+    }
+    
+    public String getNewName() {
+        return newNameTextField.getText();
+    }
+    
+    private void updateRoots() {
+        Sources sources = ProjectUtils.getSources(project);
+        groups = sources.getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
+        if (groups.length == 0) {
+            // XXX why?? This is probably wrong. If the project has no Java groups,
+            // you cannot move anything into it.
+            groups = sources.getSourceGroups( Sources.TYPE_GENERIC ); 
+        }
+
+        int preselectedItem = 0;
+        for( int i = 0; i < groups.length; i++ ) {
+            if (fo!=null) {
+                try {
+                    if (groups[i].contains(fo)) {
+                        preselectedItem = i;
+                    }
+                } catch (IllegalArgumentException e) {
+                    // XXX this is a poor abuse of exception handling
+                }
+            }
+        }
+                
+        // Setup comboboxes 
+        rootComboBox.setModel(new DefaultComboBoxModel(groups));
+        rootComboBox.setSelectedIndex(preselectedItem);
+    }
+    
+    private static class GroupCellRenderer extends DefaultListCellRenderer/**/ {
+        
+        public Component getListCellRendererComponent(
+            JList list,
+            Object value,
+            int index,
+            boolean isSelected,
+            boolean cellHasFocus) {
+        
+	    DefaultListCellRenderer cbr = 
+		(DefaultListCellRenderer)super.getListCellRendererComponent( list, value, index, isSelected, cellHasFocus );   
+            SourceGroup g = (SourceGroup) value;
+            cbr.setText(g.getDisplayName());
+            cbr.setIcon(g.getIcon(false));
+            return cbr;
+        }
+    }
+    
+    private static class ProjectCellRenderer extends DefaultListCellRenderer {
+        
+        public Component getListCellRendererComponent(
+            JList list,
+            Object value,
+            int index,
+            boolean isSelected,
+            boolean cellHasFocus) {
+        
+	    DefaultListCellRenderer cbr = 
+		(DefaultListCellRenderer)super.getListCellRendererComponent( list, value, index, isSelected, cellHasFocus );        
+            if ( value != null ) {
+                ProjectInformation pi = ProjectUtils.getInformation((Project)value);
+                cbr.setText(pi.getDisplayName());
+                cbr.setIcon(pi.getIcon());
+            }
+            return cbr;
+        }
+    }
+}
+----
+
+
+== Registering the Refactoring in the NetBeans System Filesystem
+
+The IDE uses an Ant build script to build and install your module. The build script is created for you when you create the module project.
+
+To register the module in the Options window, you must do the following in the  ``layer.xml``  file:
+
+
+[start=1]
+1. *Update the  ``layer.xml``  file.* Add the following entries to the  ``layer.xml``  file:
+
+[source,xml]
+----
+
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE filesystem PUBLIC "-//NetBeans//DTD Filesystem 1.0//EN" "https://netbeans.org/dtds/filesystem-1_0.dtd">
+
+<filesystem>
+    
+    <folder name="Menu">    
+        <folder name="Refactoring">
+            <attr name="LastSeparator.instance/IntroduceVariableAction.instance" boolvalue="true"/>          
+            <attr name="copyclassSeparator.instance/UndoAction.instance" boolvalue="true"/>
+            <attr name="MoveClassAction.instance/CopyClassAction.instance" boolvalue="true"/>         
+            <file name="CopyClassAction.instance">
+                <attr name="instanceClass" stringvalue="org.netbeans.modules.refactoring.copyclass.ui.CopyClassAction"/>
+            </file>         
+            <attr name="CopyClassAction.instance/CleanUpAction.instance" boolvalue="true"/>
+            <attr name="CopyClassAction.instance/InnerToOuterAction.instance" boolvalue="true"/>
+        </folder>
+    </folder>
+  
+    <folder name="Actions">
+        <folder name="Refactoring">
+            <file name="org-netbeans-modules-refactoring-copyclass-ui-CopyClassAction"/>
+        </folder>
+    </folder>
+
+    <folder name="Services">
+        <folder name="org-netbeans-modules-refactoring">
+            <file name="options">
+                <attr name="previewAll.org.netbeans.modules.refactoring.copyclass.CopyClass" boolvalue="false"/>
+            </file>
+        </folder>
+    </folder>
+    
+</filesystem>
+----
+
+
+[start=2]
+1. *Localize the labels.* In the package where the  ``layer.xml``  file is found, add the following entries to the  ``Bundle.properties``  file:
+
+
+[source,java]
+----
+
+LBL_CopyClass_Action=Copy Class...
+LBL_CopyClass=Copy Class
+DSC_CopyClass=Copy Class *{0}*
+LBL_NewName=&amp;New Name\:
+LBL_Project=P&amp;roject
+LBL_Location=&amp;Location
+LBL_ToPackage=&amp;To Package
+----
+
+
+
+== Building and Installing the Module
+
+The IDE uses an Ant build script to build and install your module. The build script is created for you when you create the module project.
+
+
+=== Installing and Testing the NetBeans Module
+
+
+[start=1]
+1. In the Projects window, right-click the  ``CopyClassRefactoring``  project and choose Install/Reload in Target Platform.
+
+The module is built and installed in the target IDE or Platform. The target IDE or Platform opens so that you can try out your new module. The default target IDE or Platform is the installation used by the current instance of the development IDE.
+
+
+[start=2]
+1. Create a new Java application project, select a Java source file, and choose Refactor > Copy Class, as shown below:
+
+
+image::images/copyclass-menu-item.png[]
+
+For other aspects of this module, see the <<introducing-sample,Introducing the Sample>> section.
+
+
+=== Creating a Shareable Module Binary (NBM File)
+
+An NBM file is a NetBeans module packaged for delivery via the web. The principal differences between NBM files and module JAR files are:
+
+* An NBM file is compressed.
+* An NBM file can contain more than one JAR file—modules can package any libraries they use into their NBM file.
+* An NBM file contains metadata that NetBeans will use to display information about it in the Update Center, such as the manifest contents, the license, etc.
+* An NBM file is typically signed for security purposes.
+
+NBM files are just ZIP files with a special extension. They use the JDK's mechanism for signing JAR files. Unless you are doing something unusual, you will not need to worry about the contents of an NBM file—just let the standard Ant build script for NBM creation take care of it for you. The IDE generates the build script based on the options you enter in the project's Project Properties dialog box. You can set the module's dependencies, versioning, and packaging information in the Project Properties dialog box. You can further customize program execution by editing the Ant script and Ant properties for the project.
+
+
+[start=1]
+1. In the Projects window, right-click the  ``CopyClassRefactoring``  project node and choose Create NBM.
+
+The NBM file is created and you can view it in the Files window (Ctrl-2):
+
+
+image::images/create-nbm.png[]
+
+
+[start=2]
+1. Make it available to others via, for example, e-mail.
+
+
+[start=3]
+1. Use the Update Center to install the NBM file.
+
+
+
+== Contributing Refactoring to NetBeans
+
+Below are the steps to take when contributing a new refactoring to NetBeans.
+
+
+
+== Next Steps
+
+For more information about creating and developing NetBeans Module, see the following resources:
+
+*  link:https://netbeans.apache.org/platform/index.html[Module Developer's Resources]
+
+*  link:https://bits.netbeans.org/dev/javadoc/[NetBeans API List (Current Development Version)]
+
+*  link:http://refactoring.netbeans.org/refactorings/devguide.html[Refactoring Developer Guide]
+
+*  link:http://refactoring.netbeans.org/refactorings/specifications.html[Refactoring Proposals]
+
+*  link:http://refactoring.netbeans.org/refactorings/faq.html[Experimental Refactoring Implementation &amp; JMI - FAQ]
+
+*  link:https://bits.netbeans.org/dev/javadoc/org-netbeans-modules-refactoring/overview-summary.html[NetBeans Refactoring API]
+
+
+== Versioning
+
+|===
+|*Version* |*Date* |*Changes* 
+
+|1 |28 October 2005 |
+
+* Initial version.
+* To do:
+* Add icon and change location in CopyClassAction.
+* Reverse engineer and document CopyClassPanel.
+* Have everything checked by refactoring team.
+* Add steps for contributing own refactorings to NetBeans.
+* Add variation for other refactorings from Experimental module.
+* Add and describe JUnit test for module.
+* Not all APIs used are in the NetBeans API List; why?
+* Talk more about 'refactoring framework'
+* Talk more about 'lookup'
+* No parameter in 'CopyClassRefactoring' for the project; why?
+* Why is the DataObject called 'objectToDelete'?
+* Check that everything in Refactoring Developer Guide is covered here.
+* Provide brief summary of the sources at the start of the tutorial, including variations.
+ 
+|===

@@ -1,0 +1,1203 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= Руководство по созданию приложения для чтения каналов на платформе NetBeans
+:jbake-type: platform-tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:icons: font
+:experimental:
+:description: Руководство по созданию приложения для чтения каналов на платформе NetBeans - Apache NetBeans
+:keywords: Apache NetBeans Platform, Platform Tutorials, Руководство по созданию приложения для чтения каналов на платформе NetBeans
+
+Добро пожаловать в руководство по разработке приложений для чтения каналов на платформе NetBeans. Приложение для чтения каналов, создаваемое в настоящем руководстве, является простейшим обозревателем каналов RSS/Atom, моделируемых после запуска подключаемого модуля Sage для Mozilla Firefox. Он представляет собой дерево каналов с подузлами, отражающими отдельные сообщения каналов, которые могут быть открыты в обозревателе.
+
+Для иллюстрации конечного результата на рисунке показано приложение для чтения каналов, которое будет создано в этом руководстве, с сообщением из канала  link:https://netbeans.org/rss-091.xml[NetBeans Highlights]:
+
+
+image::images/60-result.png[]
+
+
+
+image::images/netbeans-stamp60-61.gif[title="Содержимое на этой странице относится к среде IDE NetBeans 6.1"]
+
+
+*Для работы с этим руководством требуется программное обеспечение и ресурсы, перечисленные в следующей таблице. *
+
+|===
+|Программное обеспечение или ресурс |Требуемая версия 
+
+|Среда IDE NetBeans |версия  link:https://netbeans.apache.org/download/index.html[версия 6.1] или
+версия 6.0 
+
+|Комплект для разработчика на языке Java (JDK) | link:https://www.oracle.com/technetwork/java/javase/downloads/index.html[версия 6] или
+версия 5 
+
+|Служебные программы RSS и atOM ( link:https://rome.dev.java.net/[загрузить] 
+
+|Rome Fetcher ( link:http://wiki.java.net/bin/view/Javawsxml/RomeFetcherRelease06[загрузить]) 
+
+|JDom ( link:http://jdom.org/downloads/index.html[загрузить]) 
+
+|Значок "FeedReader" и экран заставки ( link:https://netbeans.org/files/documents/4/550/feedreader-images.zip[загрузить]). 
+|===
+
+
+==  Необходимые предварительные знания
+
+Для работы с настоящим руководством не требуются знания в области разработки на платформе NetBeans. Опыт программирования на Java может быть полезен, но его наличие не является обязательным условием. Тем не менее, перед работой с руководством желательно ознакомиться со следующими документами, содержащими рекомендуемую базовую информацию:
+
+*  link:https://netbeans.apache.org/tutorials/60/nbm-feedreader_background.html[Подготовка к созданию приложения для чтения каналов]. Этот документ содержит базовую информацию, с которой рекомендуется ознакомиться перед началом работы с данным руководством. В нем представлены концептуальные основы всех операций, описываемых в руководстве. В этом документе также приведены указания по получению исходного кода примера, который будет разработан по мере изучения настоящего руководства.
+*  link:../61/nbm-htmleditor_ru.html[Руководство по началу работы с платформой NetBeans]. Это краткое руководство содержит описание всего процесса создания функционально насыщенного клиентского приложения на платформе NetBeans. В нем рассматриваются основные этапы и средства разработки, при помощи которых в руководстве создается редактор HTML.
+
+
+==  Создание приложения
+
+Создание приложения в среде IDE NetBeans начинается с создания большого количества файлов, используемых в качестве основы для приложения. Например, в среду IDE входит мастер проектов модулей, мастер проектов пакетов модулей и мастер модулей-оберток библиотек, применяемые для создания всех базовых файлов, необходимых для модулей и приложений, основанных на платформе NetBeans.
+
+* *Проект пакета модулей.* Проект, в рамках которого группируются проекты модулей и проекты модулей-оберток библиотек, зависящие друг от друга, которые могут развертываться совместно одним блоком.
+* *Проект модуля-обертки библиотеки.* Проект, устанавливающий путь к классам для архива JAR библиотеки и экспортирующий некоторые или все пакеты архива JAR из модуля в виде общедоступных пакетов.
+* *Проект модуля.* Проект, используемый для внедрения функциональных возможностей, бизнес-логики и интерфейса пользователя модуля или приложения на базе платформы NetBeans.
+
+
+=== Создание проекта пакета модулей
+
+
+[start=1]
+1. Выберите "File > New Project" (Ctrl-Shift-N). В области "Categories" выберите "NetBeans Modules". В области "Projects" выберите "Module Suite Project". Экран должен выглядеть следующим образом:
+
+
+image::images/60-suite-wiz.png[]
+
+Нажмите кнопку "Next".
+
+
+[start=2]
+1. На экране "Name and Location" введите  `` feedreader-suite``  в поле "Project Name". В поле "Project Location" укажите любой каталог на компьютере. Экран должен выглядеть следующим образом:
+
+
+image::images/60-suite-wiz2.png[]
+
+Нажмите кнопку "Finish".
+
+В среде IDE создается проект  `` feedreader-suite`` , который отображается в окне "Projects":
+
+
+image::images/60-suite.png[]
+
+Этот проект будет содержать проект модуля и проекты модулей-оберток библиотек, которые будут созданы в следующих подразделах.
+
+
+=== Обертывание библиотек
+
+Все приложение для чтения каналов может быть выполнено как отдельный модуль. Однако этому приложению требуются библиотеки Rome, Rome Fetcher и JDom:
+
+* *Rome.* Используется для чтения каналов RSS и Atom при помощи очень простого интерфейса API.
+* *Rome Fetcher.* Позволяет получать каналы посредством HTTP.
+* *JDom.* Представляет собой интерфейс API для синтаксического анализа XML. Необходимость наличия этой библиотеки для приложения для чтения каналов обусловлена лишь тем, что она используется библиотекой Rome.
+
+Позднее при необходимости расширить приложение для чтения каналов путем добавления большего числа модулей, которые могут использовать эти библиотеки, целесообразно установить их зависимость от модулей библиотек, а не от всего приложения для чтения каналов. Кроме того, библиотечные модули могут быть "автоматически загружаемыми", т.е. их загрузка будет осуществляться средой NetBeans только в случае необходимости. До этого момента ресурсы памяти на этапе выполнения расходоваться не будут.
+
+
+[start=1]
+1. Щелкните правой кнопкой мыши узел "Modules" в проекте пакета модулей в окне "Projects", как показано ниже, и выберите пункт "Add New Library":
+
+
+image::images/60-add-lib0.png[]
+
+После этого на экране должно отображаться следующее:
+
+
+image::images/60-lib-wiz.png[]
+
+
+[start=2]
+1. На экране "Select Library", показанном выше, найдите папку, в которую была загружена библиотека JDom, и затем выберите  `` jdom.jar``  и  `` LICENSE.txt`` . Нажмите кнопку "Next".
+
+[start=3]
+1. На экране "Name and Location" примите все значения по умолчанию. Экран должен выглядеть следующим образом:
+
+
+image::images/60-lib-wiz3.png[]
+
+NOTE:  Модуль-обертка библиотеки будет сохранен в проекте пакета модулей. Он также может быть сохранен в другом месте, однако в целях управления версиями рекомендуется разместить его в проекте пакета модулей. Поэтому в раскрывающемся списке "Add to Module Suite" выбирается проект пакета модулей  `` feedreader-suite`` .
+
+Нажмите кнопку "Next".
+
+
+[start=4]
+1. На экране "Basic Module Configuration" примите все значения по умолчанию. Экран должен выглядеть следующим образом:
+
+
+image::images/60-lib-wiz2.png[]
+
+Нажмите кнопку "Finish".
+
+Новый модуль-обертка библиотеки открывается в среде IDE и будет отображен в окне "Projects". Окно "Projects" должно выглядеть следующим образом:
+
+
+image::images/60-lib-wiz4.png[]
+
+[start=5]
+1. Вернитесь к действию 1 этого раздела и создайте модуль-обертку для библиотеки Rome. Примите все значения по умолчанию.
+
+[start=6]
+1. Вернитесь к действию 1 этого раздела и создайте модуль-обертку для библиотеки Rome Fetcher. Примите все значения по умолчанию.
+
+В этом разделе был создан проект пакета модулей с тремя модулями-обертками библиотек, содержащий большое количество удобных классов Java, которые могут использоваться по мере изучения руководства.
+
+
+=== Создание проекта модуля
+
+В этом разделе создается проект для реализации функциональных возможностей, которые должны предоставляться приложением. В проекте будут использоваться классы, доступные благодаря применению модулей-оберток библиотек, созданных в предыдущем разделе.
+
+
+[start=1]
+1. Щелкните правой кнопкой мыши узел "Modules" в проекте пакета модулей в окне "Projects", как показано ниже, и выберите "Add New":
+
+
+image::images/60-module-project.png[]
+
+После этого на экране должно отображаться следующее:
+
+
+image::images/60-module-wiz.png[]
+
+
+[start=2]
+1. На экране "Name and Location", показанном выше, введите  `` FeedReader``  в поле "Project Name". Примите все значения по умолчанию. Нажмите кнопку "Next".
+
+[start=3]
+1. На экране "Basic Module Configuration" замените значение  `` yourorghere``  в поле "Code Name Base" на  `` myorg`` , чтобы основа названия кода выглядела как  `` org.myorg.feedreader.``  Введите  ``FeedReader``  в поле "Module Display Name". Не изменяйте местоположение пакета локализации и файла layer.xml для их сохранения в пакете с именем  `` org/myorg/feedreader.``  Экран должен выглядеть следующим образом:
+
+
+image::images/60-module-wiz2.png[]
+
+Нажмите кнопку "Finish".
+
+Средой IDE будет создан проект "FeedReader". Проект содержит все исходные файлы модуля и метаданные проекта, например, сценарий сборки Ant. Проект открывается в среде IDE. Логическую структуру проекта можно просмотреть в окне "Projects" (Ctrl-1), а структуру файлов – в окне "Files" (Ctrl-2). Теперь окно "Projects" должно выглядеть следующим образом:
+
+
+image::images/60-module.png[]
+
+Создана структура исходных файлов нового приложения. В следующем разделе мы приступим к добавлению кода.
+
+
+==  Создание окна приложения для чтения каналов
+
+В этом разделе при помощи мастера оконных элементов генерируются файлы, необходимые для создания пользовательского элемента, а также действия для его вызова. Мастер также регистрирует действие как пункт меню в файле настройки  `` layer.xml ``  и добавляет значения, необходимые для многократного использования оконного элемента. После завершения этого раздела демонстрируется процесс использования некоторых файлов, созданных мастером оконных элементов.
+
+
+[start=1]
+1. Щелкните правой кнопкой мыши узел проекта  `` FeedReader``  и выберите "New > Other". В области "Categories" выберите "Module Development". В области "File Types" выберите "Window Component", как показано ниже:
+
+
+image::images/60-windowcomp-wiz.png[]
+
+Нажмите кнопку "Next".
+
+
+[start=2]
+1. На экране "Basic Settings" выберите  `` explorer``  в раскрывающемся списке и установите флажок "Open on Application Start", как показано ниже:
+
+
+image::images/60-windowcomp-wiz2.png[]
+
+Нажмите кнопку "Next".
+
+
+[start=3]
+1. На экране "Name and Location" введите "Feed" в поле "Class Name Prefix" и укажите местоположение сохраненного файла  `` rss16.gif (
+image::images/rss16.gif[]).``  Файл GIF будет показан в пункте меню, инициирующем действие. Экран должен выглядеть следующим образом:
+
+
+image::images/60-windowcomp-wiz3.png[]
+
+Нажмите кнопку "Finish".
+
+Окно "Projects" должно выглядеть следующим образом:
+
+
+image::images/60-windowcomp.png[]
+
+В среде IDE созданы следующие новые файлы:
+
+*  `` FeedAction.java.``  Определяет действие, отображаемое в меню "Window" с текстом "Open Feed Window" и изображением  `` rss16.gif``  (
+image::images/rss16.gif[]). Оно используется для открытия окна "Feed Window".
+*  `` FeedTopComponent.java.``  Определяет окно "Feed Window".
+*  `` FeedTopComponentSettings.xml.``  Используется для определения всех интерфейсов функционально насыщенного клиентского приложения  `` org.myorg.feedreader`` . Обеспечивает простой поиск экземпляров без необходимости создания каждого из них; позволяет избежать необходимости в загрузке классов или создании объектов и, тем самым, повышает производительность. Регистрируется в папке  `` Windows2/Components``  файла  `` layer.xml`` .
+*  `` FeedTopComponentWstcref.xml.``  Используется для определения ссылки на элемент; дает возможность присвоения элемента более чем одному режиму и регистрируется в папке  ``Windows2/Modes``  файла  `` layer.xml`` .
+
+Средой IDE были изменены следующие существующие файлы:
+
+*  
+ `` project.xml.``  Добавлены две зависимости модулей,  `` Utilities API ``  (щелкните  link:http://bits.netbeans.org/dev/javadoc/org-openide-util/overview-summary.html[здесь] для просмотра документации Javadoc) и  `` Window System API ``  (щелкните  link:http://bits.netbeans.org/dev/javadoc/org-openide-windows/overview-summary.html[здесь] для просмотра документации Javadoc).
+*  `` Bundle.properties.``  
+ Добавлены три пары "ключ-значение":
+*  ``CTL_FeedAction.``  Позволяет локализовать текст пункта меню, определенного в  ``FeedAction.java`` .
+*  ``CTL_FeedTopComponent.``  Позволяет локализовать текст  ``FeedTopComponent.java`` .
+*  ``HINT_FeedTopComponent.``  Позволяет локализовать всплывающую подсказку  ``FeedTopComponent.java`` .
+
+Итак, в файл  ``layer.xml``  добавлены три регистрационных записи.
+
+Эти записи в файле  `` layer.xml``  предназначены для следующего:
+
+*  `` <Actions>``  
+Регистрирует действие в качестве действия в папке "Window".
+*  `` <Menu>``  
+Регистрирует действие в качестве пункта в меню "Window".
+*  `` <Windows2> ``  Регистрирует файл  ``FeedTopComponentSettings.xml`` , используемый для поиска оконного элемента. Регистрирует ссылочный файл элемента  ``FeedTopComponentWstcref.xml``  в области "explorer". 
+
+
+==  Выполнение приложения
+
+Приложение, для которого не была написана ни одна строка кода, уже может быть запущено. Попытка его использования приведет к развертыванию модулей на платформе NetBeans и к последующей проверки корректности отображения пустого окна "Feed Window".
+
+
+[start=1]
+1. Сначала удалим все модули, определяющие среду IDE NetBeans, которые не потребуются в приложении для чтения каналов. Щелкните правой кнопкой мыши проект  ``feedreader-suite`` , выберите "Properties", а затем щелкните пункт "Libraries" в диалоговом окне "Project Properties".
+
+Появится список "кластеров". Каждый кластер представляет собой ряд связанных модулей. Единственным необходимым кластером является кластер "platform", поэтому отмените выбор всех других кластеров и оставьте только один флажок напротив кластера "platform":
+
+
+image::images/60-runapp4.png[]
+
+Разверните кластер "platform" и просмотрите содержащиеся в нем модули:
+
+
+image::images/60-runapp5.png[]
+
+Модули платформы обеспечивают общую платформу приложений Swing. Так как был выбран кластер "platform", создавать "технический" код для инфраструктуры приложения, например, строки меню, системы управления окнами и функциональности для начальной загрузки, не потребуется.
+
+Нажмите кнопку "OK".
+
+
+[start=2]
+1. В окне "Projects" щелкните правой кнопкой мыши проект  `` feedreader-suite``  и выберите "Clean and Build All".
+
+[start=3]
+1. В окне "Projects" щелкните правой кнопкой мыши проект  `` feedreader-suite``  и выберите "Run", как показано ниже:
+
+
+image::images/60-runapp.png[]
+
+Приложение будет запущено. На экране появится заставка. После этого будет открыто приложение и появится новое окно "Feed Window", представляющее собой окно обозревателя, показанное ниже:
+
+
+image::images/60-runapp2.png[]
+
+NOTE:  В настоящий момент в состав приложения входят следующие модули:
+
+* Модули, поставляемые с платформой NetBeans и предназначенные для загрузки приложения, управления жизненным циклом и выполнения других операций, связанных с инфраструктурой.
+* Три модуля-обертки библиотек, созданные в рамках этого руководства.
+* Модуль функциональных возможностей чтения каналов, созданный в рамках этого руководства и предназначенный для вывода окна "Feed Window".
+
+В меню "Window" приложения должен появиться новый пункт (см. ниже), используемый для открытия окна "Feed Window" в случае, если оно закрыто:
+
+
+image::images/60-runapp3.png[]
+
+Итак, нами было создано готовое приложение без написания какого-либо кода. Оно не содержит множества возможностей, однако его инфраструктура существует и функционирует так, как ожидалось. В следующих разделах мы приступим к добавлению кода в приложение при помощи интерфейсов API среды NetBeans.
+
+
+==  Добавление кода к приложению
+
+После создания основы для приложения можно приступить к добавлению собственного кода. Перед этим для приложения необходимо определить зависимости. Зависимости – это модули, предоставляющие интерфейсы API NetBeans, которые будут расширены или реализованы. После этого при помощи мастера создания файла и редактора исходного кода будут созданы и закодированы классы, добавляемые в приложение для чтения каналов.
+
+
+=== Определение зависимостей для приложения
+
+Необходимо создать подклассы нескольких классов, принадлежащих интерфейсам API среды NetBeans. Классы относятся к модулям, которые должны быть объявлены как зависимости приложения для чтения каналов. Для этой цели используйте диалоговое окно "Project Properties", как показано ниже.
+
+
+[start=1]
+1. В окне "Projects" щелкните правой кнопкой мыши проект  `` FeedReader``  и выберите "Properties". В диалоговом окне "Project Properties" выберите "Libraries". Обратите внимание, что некоторые показанные ниже интерфейсы API уже были объявлены в качестве зависимостей (область "Module Dependencies"):
+
+
+image::images/60-add-lib1.png[]
+
+Показанные выше регистрационные записи библиотек были созданы ранее при работе с данным руководством с использованием мастера оконных элементов.
+
+
+[start=2]
+1. Нажмите кнопку "Add Dependency".
+
+[start=3]
+1. Добавьте следующие интерфейсы API:
+
+[source,java]
+----
+
+Actions API
+Datasystems API
+Dialogs API
+Explorer and Property Sheet API
+File System API
+Nodes API
+rome
+rome-fetcher
+----
+
+Экран должен выглядеть следующим образом:
+
+
+image::images/60-add-lib2.png[]
+
+Нажмите кнопку "OK" для закрытия диалогового окна "Project Properties".
+
+
+[start=4]
+1. Разверните узел "Libraries" проекта  ``FeedReader``  и обратите внимание на список модулей, доступных в этом проекте:
+
+
+image::images/60-add-lib5.png[]
+
+
+=== Установка зависимостей между модулями-обертками библиотек
+
+После определения используемых зависимостей модулей интерфейсов API среды NetBeans можно установить зависимости между модулями-обертками библиотек. Например, в файле JAR библиотеки Rome используются классы из файла JAR библиотеки JDom. Теперь, когда они обернуты в отдельных модулях-обертках библиотек, необходимо определить связь между файлами JAR в диалоговом окне "Project Properties" модуля-обертки библиотеки.
+
+
+[start=1]
+1. Сначала установите зависимость библиотеки Rome от библиотеки JDom. Щелкните правой кнопкой мыши проект модуля-обертки библиотеки Rome в окне "Projects" и выберите "Properties". В диалоговом окне "Project Properties" выберите "Libraries" и затем "Add Dependency". Добавьте зависимости  ``jdom`` . Экран должен выглядеть следующим образом:
+
+
+image::images/60-add-lib3.png[]
+
+Нажмите кнопку "OK" для закрытия диалогового окна "Project Properties".
+
+
+[start=2]
+1. Теперь, после установки зависимости библиотеки Rome Fetcher от библиотек Rome и JDom одновременно, необходимо создать зависимость Rome Fetcher от Rome, показанную ниже:
+
+
+image::images/60-add-lib4.png[]
+
+Поскольку библиотека Rome уже зависит от JDom, определять зависимость библиотеки Rome Fetcher от JDom не требуется.
+
+
+=== Создание папки "RssFeeds"
+
+Для добавления папки в файл  ``layer.xml``  будет использоваться интерфейс пользователя среды IDE. Папка будет содержать объекты канала RSS. Затем к объекту  `` FeedTopComponent.java`` , созданному в мастере оконных элементов, будет добавлен код для просмотра содержимого этой папки.
+
+
+[start=1]
+1. В окне "Projects" разверните узел проекта  `` FeedReader`` , а затем разверните узлы "Important Files" и "XML Layer". На экране должны быть представлены следующие узлы:
+
+*  `` <this layer>.``  Используется для вывода на экран папок, содержащихся в текущем модуле. Например, как видно на приведенном ниже рисунке, модуль "FeedReader" содержит папки с именами "Actions", "Menu" и "Windows2", ранее описанные в данном руководстве:
+
+
+image::images/60-feedfolder-1.png[]
+
+*  `` <this layer in context>. ``  Используется для вывода на экран всех папок, доступных во всем приложении. Этот узел будет рассматриваться далее в настоящем руководстве.
+
+
+[start=2]
+1. Щелкните правой кнопкой мыши узел  `` <this layer>``  и выберите "New > Folder", как показано ниже:
+
+
+image::images/60-feedfolder-2.png[]
+
+[start=3]
+1. Введите  `` RssFeeds``  в диалоговом окне "New Folder". Нажмите кнопку "OK". Таким образом, была создана новая папка, показанная ниже:
+
+
+image::images/60-feedfolder-3.png[]
+
+[start=4]
+1. Дважды щелкните узел файла  `` layer.xml``  для его открытия в редакторе исходного кода. Обратите внимание на добавление следующей записи: `` <folder name="RssFeeds"/>`` 
+
+
+=== Создание объекта канала
+
+Затем создайте простой элемент POJO, инкапсулирующий URL-адрес и связанный с ним канал Rome.
+
+
+[start=1]
+1. Щелкните правой кнопкой мыши узел проекта  `` FeedReader``  и выберите "New > Java Class". Нажмите кнопку "Next".
+
+[start=2]
+1. Присвойте классу имя  `` Feed``  и выберите  `` org.myorg.feedreader``  в раскрывающемся списке "Package". Нажмите кнопку "Finish".
+
+[start=3]
+1. В редакторе исходного кода замените класс  `` Feed`` , установленный по умолчанию, на следующий:
+
+[source,java]
+----
+
+public class Feed implements Serializable {
+
+    private static FeedFetcher s_feedFetcher 
+            = new HttpURLFeedFetcher(HashMapFeedInfoCache.getInstance());
+    private transient SyndFeed m_syndFeed;
+    private URL m_url;
+    private String m_name;
+
+    protected Feed() {
+    }
+
+    public Feed(String str) throws MalformedURLException {
+        m_url = new URL(str);
+        m_name = str;
+    }
+
+    public URL getURL() {
+        return m_url;
+    }
+
+    public SyndFeed getSyndFeed() throws IOException {
+        if (m_syndFeed == null) {
+            try {
+                m_syndFeed = s_feedFetcher.retrieveFeed(m_url);
+                if (m_syndFeed.getTitle() != null) {
+                    m_name = m_syndFeed.getTitle();
+                }
+            } catch (Exception ex) {
+                throw new IOException(ex.getMessage());
+            }
+        }
+        return m_syndFeed;
+    }
+
+    @Override
+    public String toString() {
+        return m_name;
+    }
+    
+}
+----
+
+Значительная часть кода подчеркнута, поскольку многие пакеты не были объявлены. Это будет выполнено в дальнейшем.
+
+Для переформатирования файла и объявления его зависимостей выполните следующие действия:
+
+
+[start=1]
+1. Нажмите Alt-Shift-F для форматирования кода.
+
+[start=2]
+1. Нажмите Ctrl-Shift-I и проверьте, что выбраны следующие операторы импорта:
+
+
+image::images/60-imports.png[]
+
+Нажмите кнопку "OK", после чего в класс будут добавлены следующие операторы импорта:
+
+
+[source,java]
+----
+
+import com.sun.syndication.feed.synd.SyndFeed;
+import com.sun.syndication.fetcher.FeedFetcher;
+import com.sun.syndication.fetcher.impl.HashMapFeedInfoCache;
+import com.sun.syndication.fetcher.impl.HttpURLFeedFetcher;
+import java.io.IOException;
+import java.io.Serializable;
+import java.net.MalformedURLException;
+import java.net.URL;
+----
+
+Красное подчеркивание должно исчезнуть. В противном случае не выполняйте следующие действия, указанные в этом руководстве, до разрешения проблемы.
+
+
+=== Добавление окна "Feed Window"
+
+
+[start=1]
+1. Дважды щелкните элемент  `` FeedTopComponent.java``  для его открытия в редакторе исходного кода.
+
+[start=2]
+1. Введите строку  `` implements ExplorerManager.Provider``  в конце объявления класса.
+
+[start=3]
+1. Нажмите Alt-Enter, установив курсор на строке, и щелкните предложенное значение. Средой IDE будет добавлен оператор импорта для требуемого пакета  `` org.openide.explorer.ExplorerManager`` .
+
+[start=4]
+1. Снова нажмите Alt-Enter и щелкните предложенное значение. При этом будет реализован абстрактный метод  `` getExplorerManager()`` .
+
+[start=5]
+1. Введите  `` return manager;``  в теле нового метода  `` getExplorerManager() `` . Нажмите Alt-Enter, установив курсор на строку, после чего будет создано поле под названием  `` manager`` . Замените определение по умолчанию на следующее:
+
+[source,java]
+----
+
+private final ExplorerManager manager = new ExplorerManager();
+----
+
+
+[start=6]
+1. Сразу после объявления поля на предыдущем этапе объявите этот класс:
+
+[source,java]
+----
+
+private final BeanTreeView view = new BeanTreeView();
+----
+
+
+[start=7]
+1. После этого добавьте следующий код в конце конструктора:
+
+[source,java]
+----
+
+setLayout(new BorderLayout());
+add(view, BorderLayout.CENTER);
+view.setRootVisible(true);
+try {
+    manager.setRootContext(new RssNode.RootRssNode());
+} catch (DataObjectNotFoundException ex) {
+    ErrorManager.getDefault().notify(ex);
+}
+ActionMap map = getActionMap();
+map.put("delete", ExplorerUtils.actionDelete(manager, true));
+associateLookup(ExplorerUtils.createLookup(manager, map));
+----
+
+В настоящее время большая часть кода подчеркнута, поскольку соответствующие пакеты не были объявлены. Это будет выполнено в дальнейшем.
+
+Для переформатирования файла и объявления его зависимостей выполните следующие действия:
+
+
+[start=1]
+1. Нажмите Alt-Shift-F для форматирования кода.
+
+[start=2]
+1. Нажмите Ctrl-Shift-I, выберите  ``org.openide.ErrorManager`` , нажмите кнопку "OK", после чего под оператором пакета будет создано несколько операторов импорта. Теперь полный список операторов импорта должен выглядеть следующим образом:
+
+[source,java]
+----
+
+import java.awt.BorderLayout;
+import java.io.Serializable;
+import javax.swing.ActionMap;
+import org.openide.ErrorManager;
+import org.openide.explorer.ExplorerManager;
+import org.openide.explorer.ExplorerUtils;
+import org.openide.explorer.view.BeanTreeView;
+import org.openide.loaders.DataObjectNotFoundException;
+import org.openide.util.NbBundle;
+import org.openide.util.RequestProcessor;
+import org.openide.util.Utilities;
+import org.openide.windows.TopComponent;
+----
+
+
+[start=3]
+1. Следует отметить, что строка  `` manager.setRootContext(new RssNode.RootRssNode());``  по-прежнему подчеркнута красным цветом, поскольку элемент  `` RssNode.java ``  до сих пор не создан. Это будет выполнено в следующем подразделе. Прочие красные линии должны исчезнуть. В противном случае не выполняйте следующие действия, указанные в этом руководстве, до разрешения проблемы.
+
+
+=== Создание класса "RssNode"
+
+Верхний узел приложения для чтения каналов обеспечивается классом "RssNode". Этот класс расширяет  `` link:http://bits.netbeans.org/dev/javadoc/org-openide-nodes/org/openide/nodes/FilterNode.html[FilterNode]`` , используемый в качестве прокси для узла "RssFeeds". На этом этапе будет определено отображаемое имя и объявлены два пункта меню "Add" и "Add Folder", показанные ниже:
+
+
+image::images/60-actions.png[]
+
+Для создания этого класса выполните следующие действия:
+
+
+[start=1]
+1. Создайте элемент  `` RssNode.java``  в пакете  `` org.myorg.feedreader`` .
+
+[start=2]
+1. Замените класс по умолчанию на следующий:
+
+[source,java]
+----
+
+public class RssNode extends FilterNode {
+
+    public RssNode(Node folderNode) throws DataObjectNotFoundException {
+        super(folderNode, new RssFolderChildren(folderNode));
+    }
+
+    @Override
+    public Action[] getActions(boolean popup) {
+    
+        *//Объявление действий и переход к папке данных узла:*
+        DataFolder df = getLookup().lookup(DataFolder.class);
+        return new Action[]{
+            new AddRssAction(df), 
+            new AddFolderAction(df)
+        };
+        
+    }
+
+    public static class RootRssNode extends RssNode {
+
+        *//Узел фильтра будет служить в качестве прокси для узла "RssFeeds", который здесь будет получен из пользовательского каталога NetBeans:*
+        public RootRssNode() throws DataObjectNotFoundException {
+            super(DataObject.find(Repository.getDefault().getDefaultFileSystem().
+                    getRoot().getFileObject("RssFeeds")).getNodeDelegate());
+        }
+
+        *//Определение отображаемого имени узла, относящегося к объединенному файлу, и ключа, который будет определен позже:*
+        @Override
+        public String getDisplayName() {
+            return NbBundle.getMessage(RssNode.class, "FN_title");
+        }
+        
+    }
+
+}
+----
+
+Некоторые строки кода, относящиеся к классу, по-прежнему подчеркиваются красным цветом, поскольку не были созданы действия и класс, определяющий нижестоящие узлы.
+
+
+=== Создание класса "RssFolderChildren"
+
+Теперь обратимся к дочерним узлам узла "RSS/Atom Feeds". Дочерние элементы являются папками или каналами. Все это реализуется посредством кода, приведенного ниже.
+
+Для создания этого класса выполните следующие действия:
+
+
+[start=1]
+1. Создайте элемент  `` RssFolderChildren.java``  в пакете  `` org.myorg.feedreader`` .
+
+[start=2]
+1. Замените класс по умолчанию на следующий:
+
+[source,java]
+----
+
+public class RssFolderChildren extends FilterNode.Children {
+
+    RssFolderChildren(Node rssFolderNode) {
+        super(rssFolderNode);
+    }
+
+    @Override
+    protected Node[] createNodes(Node key) {
+        Node n = key;
+        
+        *//При нахождении папки данных создается узел "RssNode", в противном случае осуществляется поиск канала и создание узла "OneFeedNode":*
+        try {
+            if (n.getLookup().lookup(DataFolder.class) != null) {
+                return new Node[]{new RssNode(n)};
+            } else {
+                Feed feed = getFeed(n);
+                if (feed != null) {
+                    return new Node[]{
+                        new OneFeedNode(n, feed.getSyndFeed())
+                    };
+                } else {
+                    // Лучшее из возможного
+                    return new Node[]{new FilterNode(n)};
+                }
+            }
+        } catch (IOException ioe) {
+            Exceptions.printStackTrace(ioe);
+        } catch (IntrospectionException exc) {
+            Exceptions.printStackTrace(exc);
+        }
+        // Другой тип узла (требует какой-то обработки)
+        return new Node[]{new FilterNode(n)};
+    }
+
+    /** Поиск канала */
+    private static Feed getFeed(Node node) {
+        InstanceCookie ck = node.getCookie(InstanceCookie.class);
+        if (ck == null) {
+            throw new IllegalStateException("Bogus file in feeds folder: " + node.getLookup().lookup(FileObject.class));
+        }
+        try {
+            return (Feed) ck.instanceCreate();
+        } catch (ClassNotFoundException ex) {
+            Exceptions.printStackTrace(ex);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return null;
+    }
+    
+}
+----
+
+Некоторые строки кода, относящегося к классу, подчеркнуты красным цветом, поскольку класс  ``OneFeedNode``  до сих пор не создан.
+
+
+=== Создание класса "OneFeedNode"
+
+В этом разделе рассматривается контейнер узлов статьей, проиллюстрированный ниже на примере узла "NetBeans Highlights":
+
+
+image::images/60-actions2.png[]
+
+Можно отметить, что каждый из этих узлов имеет отображаемое имя, получаемое из канала, значок и пункт меню "Delete".
+
+Для создания этого класса выполните следующие действия:
+
+
+[start=1]
+1. Создайте элемент  `` OneFeedNode.java``  в пакете  `` org.myorg.feedreader`` .
+
+[start=2]
+1. Замените класс по умолчанию на следующий:
+
+[source,java]
+----
+
+public class OneFeedNode extends FilterNode {
+
+    OneFeedNode(Node feedFileNode, SyndFeed feed) throws IOException, IntrospectionException {
+        super(feedFileNode, 
+                new FeedChildren(feed), 
+                new ProxyLookup(
+                new Lookup[]{Lookups.fixed(
+                        new Object[]{feed}), 
+                        feedFileNode.getLookup()
+        }));
+    }
+
+    @Override
+    public String getDisplayName() {
+        SyndFeed feed = getLookup().lookup(SyndFeed.class);
+        return feed.getTitle();
+    }
+
+    @Override
+    public Image getIcon(int type) {
+        return Utilities.loadImage("org/myorg/feedreader/rss16.gif");
+    }
+
+    @Override
+    public Image getOpenedIcon(int type) {
+        return getIcon(0);
+    }
+
+    @Override
+    public Action[] getActions(boolean context) {
+        return new Action[]{SystemAction.get(DeleteAction.class)};
+    }
+    
+}
+----
+
+Некоторые строки кода, относящегося к классу, подчеркнуты красным цветом, поскольку  ``FeedChildren``  до сих пор не создан.
+
+
+=== Создание класса "FeedChildren"
+
+В этом разделе будет добавлена часть кода, необходимого для представления узлов для каждой из статей, содержащихся в канале.
+
+Для создания этого класса выполните следующие действия:
+
+
+[start=1]
+1. Создайте элемент  `` FeedChildren.java``  в пакете  `` org.myorg.feedreader`` .
+
+[start=2]
+1. Замените класс по умолчанию на следующий:
+
+[source,java]
+----
+
+public class FeedChildren extends Children.Keys {
+
+    private final SyndFeed feed;
+
+    public FeedChildren(SyndFeed feed) {
+        this.feed = feed;
+    }
+
+    @SuppressWarnings(value = "unchecked")
+    @Override
+    protected void addNotify() {
+        setKeys(feed.getEntries());
+    }
+
+    public Node[] createNodes(Object key) {
+        
+        *//Возвращение новых узлов на уровне статьи:*
+        try {
+            return new Node[]{
+                new EntryBeanNode((SyndEntry) key)
+            };
+            
+        } catch (final IntrospectionException ex) {
+            Exceptions.printStackTrace(ex);
+            *//Это не должно происходить, причины для сбоя отсутствуют:*
+            return new Node[]{new AbstractNode(Children.LEAF) {
+                @Override
+                public String getHtmlDisplayName() {
+                    return "" + ex.getMessage() + "";
+                }
+            }};
+        }
+    }
+}
+----
+
+Некоторые строки кода, относящегося к классу, подчеркнуты красным цветом, поскольку  ``EntryBeanNode``  до сих пор не создан.
+
+
+=== Создание класса "EntryBeanNode"
+
+Теперь рассмотрим узлы самых нижних уровней, отражающие статьи, содержащиеся в канале.
+
+Для создания этого класса выполните следующие действия:
+
+
+[start=1]
+1. Создайте элемент  `` EntryBeanNode.java``  в пакете  `` org.myorg.feedreader`` .
+
+[start=2]
+1. Замените класс по умолчанию на следующий:
+
+[source,java]
+----
+
+public class EntryBeanNode extends FilterNode {
+
+    private SyndEntry entry;
+
+    @SuppressWarnings(value = "unchecked")
+    public EntryBeanNode(SyndEntry entry) throws IntrospectionException {
+        super(new BeanNode(entry), Children.LEAF, 
+                Lookups.fixed(new Object[]{
+            entry, 
+            new EntryOpenCookie(entry)
+        }));
+        this.entry = entry;
+    }
+
+    */** Использование "HtmlDisplayName" обеспечивает правильность обработки, выхода, получения объектов и т.д. для любого кода HTML в заголовках сообщений RSS.   */*
+    @Override
+    public String getHtmlDisplayName() {
+        return entry.getTitle();
+    }
+
+    */** Создание всплывающей подсказки к описанию сообщения */*
+    @Override
+    public String getShortDescription() {
+        return entry.getDescription().getValue();
+    }
+
+    */** Ввод действия "Open" для сообщения канала */*
+    @Override
+    public Action[] getActions(boolean popup) {
+        return new Action[]{SystemAction.get(OpenAction.class)};
+    }
+
+    @Override
+    public Action getPreferredAction() {
+        return (SystemAction) getActions(false) [0];
+    }
+
+    */** Указание на операцию, выполняемую после вызова пользователем действия "Open" */*
+    private static class EntryOpenCookie implements OpenCookie {
+
+        private final SyndEntry entry;
+
+        EntryOpenCookie(SyndEntry entry) {
+            this.entry = entry;
+        }
+
+        public void open() {
+            try {
+                URLDisplayer.getDefault().showURL(new URL(entry.getUri()));
+            } catch (MalformedURLException mue) {
+                Exceptions.printStackTrace(mue);
+            }
+        }
+        
+    }
+    
+}
+----
+
+
+=== Создание пункта меню "Add Folder"
+
+В этом разделе создается пункт меню, предназначенный для создания объявленных ранее папок.
+
+Для создания этого класса выполните следующие действия:
+
+
+[start=1]
+1. Создайте элемент  `` AddFolderAction.java``  в пакете  `` org.myorg.feedreader`` .
+
+[start=2]
+1. Замените класс по умолчанию на следующий:
+
+[source,java]
+----
+
+public class AddFolderAction extends AbstractAction {
+
+    private DataFolder folder;
+
+    public AddFolderAction(DataFolder df) {
+        folder = df;
+        putValue(Action.NAME, NbBundle.getMessage(RssNode.class, "FN_addfolderbutton"));
+    }
+
+    public void actionPerformed(ActionEvent ae) {
+        NotifyDescriptor.InputLine nd = 
+                new NotifyDescriptor.InputLine(
+                NbBundle.getMessage(RssNode.class, "FN_askfolder_msg"), 
+                NbBundle.getMessage(RssNode.class, "FN_askfolder_title"), 
+                NotifyDescriptor.OK_CANCEL_OPTION, NotifyDescriptor.PLAIN_MESSAGE);
+        Object result = DialogDisplayer.getDefault().notify(nd);
+        if (result.equals(NotifyDescriptor.OK_OPTION)) {
+            final String folderString = nd.getInputText();
+            try {
+                DataFolder.create(folder, folderString);
+            } catch (IOException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+        }
+    }
+}
+----
+
+
+=== Создание пункта меню "Add RSS"
+
+В этом разделе рассматривается создание пункта меню для добавления новых каналов.
+
+Для создания этого класса выполните следующие действия:
+
+
+[start=1]
+1. Создайте элемент  `` AddRssAction.java``  в пакете  `` org.myorg.feedreader`` .
+
+[start=2]
+1. Замените класс по умолчанию на следующий:
+
+[source,java]
+----
+
+public class AddRssAction extends AbstractAction {
+
+    private DataFolder folder;
+
+    public AddRssAction(DataFolder df) {
+        folder = df;
+        putValue(Action.NAME, NbBundle.getMessage(RssNode.class, "FN_addbutton"));
+    }
+
+    public void actionPerformed(ActionEvent ae) {
+    
+        NotifyDescriptor.InputLine nd = new NotifyDescriptor.InputLine(
+                NbBundle.getMessage(RssNode.class, "FN_askurl_msg"),
+                NbBundle.getMessage(RssNode.class, "FN_askurl_title"),
+                NotifyDescriptor.OK_CANCEL_OPTION,
+                NotifyDescriptor.PLAIN_MESSAGE);
+
+        Object result = DialogDisplayer.getDefault().notify(nd);
+
+        if (result.equals(NotifyDescriptor.OK_OPTION)) {
+            String urlString = nd.getInputText();
+            URL url;
+            try {
+                url = new URL(urlString);
+            } catch (MalformedURLException e) {
+                String message = NbBundle.getMessage(RssNode.class, "FN_askurl_err", urlString);
+                Exceptions.attachLocalizedMessage(e, message);
+                Exceptions.printStackTrace(e);
+                return;
+            }
+            try {
+                checkConnection(url);
+            } catch (IOException e) {
+                String message = NbBundle.getMessage(RssNode.class, "FN_cannotConnect_err", urlString);
+                Exceptions.attachLocalizedMessage(e, message);
+                Exceptions.printStackTrace(e);
+                return;
+            }
+            Feed f = new Feed(url);
+            FileObject fld = folder.getPrimaryFile();
+            String baseName = "RssFeed";
+            int ix = 1;
+            while (fld.getFileObject(baseName + ix, "ser") != null) {
+                ix++;
+            }
+            try {
+                FileObject writeTo = fld.createData(baseName + ix, "ser");
+                FileLock lock = writeTo.lock();
+                try {
+                    ObjectOutputStream str = new ObjectOutputStream(writeTo.getOutputStream(lock));
+                    try {
+                        str.writeObject(f);
+                    } finally {
+                        str.close();
+                    }
+                } finally {
+                    lock.releaseLock();
+                }
+            } catch (IOException ioe) {
+                Exceptions.printStackTrace(ioe);
+            }
+    }    
+    
+    private static void checkConnection(final URL url) throws IOException {
+        InputStream is = url.openStream();
+        is.close();
+    }
+    
+}
+----
+
+
+=== Локализация класса "RssNode"
+
+
+[start=1]
+1. Откройте файл  `` Bundle.properties``  модуля  `` FeedReader`` .
+
+[start=2]
+1. Добавьте следующие пары "ключ-значение":
+
+[source,java]
+----
+
+FN_title=RSS/Atom Feeds
+FN_addbutton=Add
+FN_askurl_title=New Feed
+FN_askurl_msg=Enter the URL of an RSS/Atom Feed
+FN_askurl_err=Invalid URL: {0}|
+FN_addfolderbutton=Add Folder
+FN_askfolder_msg=Enter the folder name
+FN_askfolder_title=New Folder
+----
+
+Ниже приведено пояснение новых пар "ключ-значение", локализующих строки, определенные в элементе  `` RssNode.java`` :
+
+* *FN_title.* Локализует текст верхнего узла в окне "Feed Window".
+
+Локализация интерфейса пользователя для добавления канала:
+
+* *FN_addbutton.* Локализует текст пункта меню "Add" в контекстном меню верхнего узла.
+* *FN_askurl_title.* Локализует заголовок диалогового окна "New Feed".
+* *FN_askurl_msg.* Локализует сообщение, появляющееся в диалоговом окне "New Feed".
+* *FN_askurl_err.* Локализует строку ошибки, отображаемую в случае недействительности URL-адреса.
+
+Локализация интерфейса пользователя для добавления папки:
+
+* *FN_addfolderbutton.* Локализует текст пункта меню "Add Folder" в контекстном меню верхнего узла.
+* *FN_askfolder_msg.* Локализует сообщение, появляющееся в диалоговом окне "Add Folder".
+* *FN_askfolder_title. * Локализует заголовок диалогового окна "Add Folder".
+
+
+==  Выбор стиля для приложения
+
+В конце цикла разработки, на этапе заключительной подготовки приложения, необходимо рассмотреть следующие вопросы:
+
+* Каким должно быть имя исполняемого файла приложения?
+* Что должен увидеть пользователь после запуска приложения? Индикатор хода выполнения? Экран заставки? И то, и другое?
+* Что должно отображаться в строке заголовка при запуске приложения?
+* Являются ли все меню и кнопки панелей инструментов, предоставляемые платформой NetBeans по умолчанию, действительно необходимыми?
+
+Эти вопросы относятся к сфере выбора стиля, персонализации приложения, построенного на базе платформы NetBeans. В среде IDE в диалоговом окне "Project Properties" проектов пакетов модулей предусмотрена специальная панель, упрощающая выбор стиля.
+
+
+[start=1]
+1. Щелкните правой кнопкой мыши узел проекта  `` feedreader-suite``  (а не узел проекта  `` FeedReader`` ) и выберите "Properties". В диалоговом окне "Project Properties" выберите "Build".
+
+[start=2]
+1. На экране "Build" введите значение  `` feedreader``  в поле "Branding Name". Введите  `` Feed Reader Application``  в поле "Application Title". Значение поля "Branding Name" определяет имя исполняемой программы, а значение поля "Application Title" – строку заголовка приложения.
+
+[start=3]
+1. Нажмите кнопку "Browse" и найдите значок  `` rss16.gif``  (
+image::images/rss16.gif[]). Значок будет отображаться в диалоговом окне "Help > About".
+
+Экран должен выглядеть следующим образом:
+
+
+image::images/60-brand1.png[]
+
+[start=4]
+1. На экране "Splash Screen" нажмите кнопку "Browse" и найдите файл  `` splash.gif``  . Кроме того, можно изменить цвет и размер текста индикатора хода выполнения. Если индикатор хода выполнения не требуется, снимите флажок "Enabled".
+
+Экран должен выглядеть следующим образом:
+
+
+image::images/60-brand2.png[]
+
+[start=5]
+1. Нажмите кнопку "OK".В проекте  `` FeedReader Application``  будет создана папка  `` branding`` . Она будет отображена в окне "Files" (Ctrl-2).
+
+[start=6]
+1. В окне "Files" разверните узел проекта  `` FeedReader Application`` . После этого продолжайте разворачивать узлы до тех пор, пока не найдете следующий узел: `` branding/modules/org-netbeans-core-window.jar/org/netbeans/core/windows`` 
+
+[start=7]
+1. Щелкните правой кнопкой мыши этот узел, выберите "New > Other", а затем пункт "Folder" в категории "Other". Нажмите кнопку "Next" и присвойте папке имя  `` resources``  . Нажмите кнопку "Finish".
+
+[start=8]
+1. Щелкните правой кнопкой мыши новый узел  `` resources`` , выберите "New > Other", а затем "XML Document" в категории XML. Нажмите кнопку "Next". Присвойте файлу имя  `` layer``  . Нажмите кнопку "Next", а затем кнопку "Finish". Замените содержимое нового файла  `` layer.xml``  на следующий текст:
+
+[source,xml]
+----
+
+<?xml version="1.0" encoding="UTF-8"? >
+<!DOCTYPE filesystem PUBLIC "-//NetBeans//DTD Filesystem 1.1//EN" "https://netbeans.org/dtds/filesystem-1_1.dtd">
+<!--
+Это уровень "стиля".  Он объединяется с файлом layer.xml, для настройки которого используется.
+В данном случае осуществляется скрытие нежелательных пунктов меню и панелей инструментов.
+-->
+<filesystem>
+
+	<!-- Скрытие неиспользуемых панелей инструментов -->
+	<folder name="Toolbars">
+		<folder name="File_hidden"/>
+		<folder name="Edit_hidden"/>
+	</folder>
+
+	<folder name="Menu">
+		<folder name="File">
+			<file name="org-openide-actions-SaveAction.instance_hidden"/>
+			<file name="org-openide-actions-SaveAllAction.instance_hidden"/>
+			<file name="org-netbeans-core-actions-RefreshAllFilesystemsAction.instance_hidden"/>            
+			<file name="org-openide-actions-PageSetupAction.instance_hidden"/>
+			<file name="org-openide-actions-PrintAction.instance_hidden"/>
+		</folder>
+		<folder name="Edit_hidden"/>
+		<folder name="Tools_hidden"/>
+	</folder>
+
+</filesystem>
+----
+
+
+==  Подготовка дистрибутива приложения
+
+Для создания дистрибутива приложения в среде IDE используется сценарий сборки Ant. Сценарий сборки создается при создании проекта.
+
+
+[start=1]
+1. В окне "Projects" щелкните правой кнопкой мыши узел проекта  `` FeedReader Application``  и выберите "Build ZIP Distribution". В окне "Output" отображается местоположение созданного ZIP-файла дистрибутива.
+
+[start=2]
+1. В файловой системе найдите дистрибутив  `` feedreader.zip``  в папке  `` dist``  каталога проекта. Разархивируйте его. Запустите приложение, находящееся в папке  `` bin`` . При запуске на экране отобразится заставка. После запуска приложения вызовите диалоговое окно "Help > About" и обратите внимание на значок и экран заставки, которые были настроены в разделе <<branding,Выбор стиля для приложения>>.
+
+После запуска и в ходе работы в приложении для чтения каналов отображается окно "RSS/Atom Feeds", содержащее узел под названием "RSS/Atom Feeds".
+
+Поздравляем! Изучение руководства по созданию приложения для чтения каналов завершено.
+
+
+link:http://netbeans.apache.org/community/mailing-lists.html[Мы ждем ваших отзывов]
+
+

@@ -1,0 +1,424 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= NetBeans Platform Testing Tutorial
+:jbake-type: platform-tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:icons: font
+:experimental:
+:description: NetBeans Platform Testing Tutorial - Apache NetBeans
+:keywords: Apache NetBeans Platform, Platform Tutorials, NetBeans Platform Testing Tutorial
+
+During development of NetBeans Platform 6.5, an effort was made to improve the testing infrastructure provided for NetBeans Platform applications. Prior to that, many small magical build scripts and other configuration files were needed when setting up the test infrastructure for NetBeans Platform applications. Since then, however, there is inherent support for testing NetBeans Platform application within the NetBeans Platform's build harness scripts. Therefore, unit and functional tests for NetBeans Platform applications are now supported out of the box. This simplification of the testing infrastructure is sometimes referred to as "simpletests", since it greatly simplifies the work necessary to set up such tests for your application.
+
+In this tutorial, you are introduced to setting up the "simpletests" infrastructure and to using the NetBeans Platform's unit testing and functional testing frameworks. These are:
+
+* * link:http://bits.netbeans.org/dev/javadoc/org-netbeans-modules-nbjunit/overview-summary.html[NB Junit.]* NetBeans Platform extension to the  link:http://www.junit.org/[JUnit] testing framework.
+* * link:http://www.java2s.com/Open-Source/Java-Document/IDE-Netbeans/jellytools/org.netbeans.jellytools.htm[Jelly Tools.]* NetBeans Platform extension to the  link:https://hg.openjdk.java.net/code-tools/jemmy/v2/file/7f1077e65e78/[Jemmy] testing framework.
+
+By the end of this tutorial, you should know how to set up the NetBeans Platform testing infrastructure, how to create unit tests, and how to create functional tests.
+
+
+
+image::images/netbeans-stamp69.png[title="Content on this page applies to NetBeans IDE 6.9"]
+
+
+*To follow this tutorial, you need the software and resources listed in the following table.*
+
+|===
+|Software or Resource |Version Required 
+
+| link:https://netbeans.apache.org/download/index.html[NetBeans IDE] |version 6.9 or above 
+
+| link:https://www.oracle.com/technetwork/java/javase/downloads/index.html[Java Developer Kit (JDK)] |Version 6 
+|===
+
+
+
+== Setting Up the Testing Infrastructure
+
+When setting up the testing frameworks, you need to enable certain modules that are disabled by default. Then you need to create folders and files in your source structure, where the libraries and tests will live.
+
+If you want to try out these instructions on an actual application prior to trying them out on your own sources, you can use the NetBeans Platform Paint Application, which you can get from the Samples category in the New Project wizard (Ctrl-Shift-N).
+
+
+[start=1]
+1. In the Projects window, right-click your application and choose Properties. In the Project Properties dialog, click "Libraries".
+
+[start=2]
+1. 
+Check the "harness" box, adding the entire harness cluster, which provides all the testing modules provided by the NetBeans Platform:
+
+
+image::images/enable-harness.png[]
+
+
+[start=3]
+1. Click the Resolve button, which will add modules from the "platform" cluster to your application, as needed by the modules in the "harness" cluster. Notice that there are now no messages about excluded modules and that the Resolve button has disappeared:
+
+
+image::images/enable-harness2.png[]
+
+Now you must set up a source structure for unit testing and functional testing in your module. In other words, the steps below do not apply to the application's source structure, but to the module that you need to test.
+
+
+[start=1]
+1. Switch to the Files window (Ctrl-2), and expand your module's main node.
+
+[start=2]
+1. If it does not exist, create a new folder named "test", within the module's main folder.
+
+[start=3]
+1. 
+Within the "test" folder, create a folder named "qa-functional". Underneath "qa-functional", create a folder named "src". You can use the New Folder wizard for these purposes, as follows:
+
+
+image::images/create-folder.png[]
+
+
+[start=4]
+1. Within the "test" folder, create a folder named "unit". Underneath "unit", create a folder named "src".
+
+[start=5]
+1. 
+Check that the Files window shows the "test" folder structure as shown below:
+
+
+image::images/test-folders.png[]
+
+
+[start=6]
+1. Restart the IDE.
+
+[start=7]
+1. 
+In the Projects window notice that there are now two new nodes for your test packages and two new nodes for adding the test libraries to the classpath of the module:
+
+
+image::images/new-nodes.png[]
+
+
+[start=8]
+1. Right-click the "Unit Test Libraries" node and choose "Add Missing Test Dependencies". Then add "JUnit 4" and "NB JUnit". Right-click the "Functional Test Libraries" node and choose "Add Missing Test Dependencies". Then add "JUnit 4", "NB JUnit", "Jemmy", and "Jelly Tools Platform".
+
+If you use "Add Missing Test Dependencies" instead of "Add Unit Test Dependency" and "Add Functional Test Dependency", NB JUnit's recursive dependencies are properly configured. Otherwise  link:http://performance.netbeans.org/insane/index.html[INSANE] will not be available, which can cause linkage errors when running tests.
+
+
+[start=9]
+1. Check that the Projects window shows the test library dependencies as shown below:
+
+
+image::images/new-libs-in-nodes.png[]
+
+You have now set up everything needed for creating unit tests and functional tests on the NetBeans Platform.
+
+
+== Unit Testing on the NetBeans Platform
+
+The NetBeans Platform's extension to JUnit is named " link:http://bits.netbeans.org/dev/javadoc/org-netbeans-modules-nbjunit/overview-summary.html[NB JUnit]". It is a separate library with additional support for memory leak tests, deadlock tests, and extended use of logging. More info and motivation can be found at  link:http://openide.netbeans.org/tutorial/test-patterns.html[Test Patterns in Java]. The basic test class for NB JUnit is  link:http://bits.netbeans.org/dev/javadoc/org-netbeans-modules-nbjunit/org/netbeans/junit/NbTestCase.html[NbTestCase].
+
+An example unit test for the NetBeans Platform Paint sample:
+
+
+[source,java]
+----
+
+import org.netbeans.junit.*;
+import org.netbeans.paint.PaintCanvas;
+
+public class PaintCanvasTest extends  link:http://bits.netbeans.org/dev/javadoc/org-netbeans-modules-nbjunit/org/netbeans/junit/NbTestCase.html[NbTestCase] {
+
+    public PaintCanvasTest(java.lang.String testName) {
+        super(testName);
+    }
+
+    public void testSetDiam() {
+        PaintCanvas paintCanvas = new PaintCanvas();
+        paintCanvas.setBrush(10);
+        assertEquals("Brush diameter should be set.", 10, paintCanvas.getBrushDiameter());
+    }
+
+}
+----
+
+Create the class above in a package in the Unit Test Packages node in the Projects window. Then right-click the "Paint" project node and choose "Test". If the test is successful, you will see this:
+
+
+image::images/result-1.png[]
+
+If the test fails, you will see this:
+
+
+image::images/result-2.png[]
+
+In the Files window (Ctrl-2), you can find the test results:
+
+
+image::images/result-3.png[]
+
+Typical questions relating to unit testing on the NetBeans Platform relate to specific NetBeans API objects and the central registry (also known as "System FileSystem"). For information on how to test these parts of your application, see the following resources:
+
+*  link:http://openide.netbeans.org/tutorial/test-patterns.html[Typical Test Patterns]
+*  link:http://wiki.netbeans.org/TestingThingsThatUseFileObjectDataObjectDataFolder[Writing Tests with FileObjects, DataObjects, and DataFolders]
+*  link:https://netbeans.apache.org/wiki/devfaqtestdataobject[Writing Tests with DataObjects and DataLoaders]
+*  link:http://wiki.netbeans.org/InitializationOfDefaultLookup[Writing Tests with Lookup]
+*  link:https://netbeans.apache.org/wiki/devfaqtestusingsystemfilesystem[How do I test something which uses the System Filesystem?]
+
+
+== Functional Testing on the NetBeans Platform
+
+The NetBeans Platform's extension to Jemmy is named  link:http://www.java2s.com/Open-Source/Java-Document/IDE-Netbeans/jellytools/org.netbeans.jellytools.htm[Jelly]. It provides a set of operators that are tailored to UI components used specifically in the NetBeans Platform, such as  ``TopComponentOperator`` .
+
+An example functional test for the NetBeans Platform Paint sample.
+
+
+[source,java]
+----
+
+import junit.framework.Test;
+import org.netbeans.jellytools.JellyTestCase;
+import org.netbeans.jellytools.MainWindowOperator;
+import org.netbeans.jellytools.TopComponentOperator;
+import org.netbeans.jellytools.actions.Action;
+import org.netbeans.jemmy.operators.JButtonOperator;
+import org.netbeans.jemmy.operators.JSliderOperator;
+import org.netbeans.junit.NbModuleSuite;
+import org.netbeans.junit.NbModuleSuite.Configuration;
+
+/**
+ * A Test based on JellyTestCase. JellyTestCase redirects Jemmy output
+ * to a log file provided by NbTestCase. It can be inspected in results.
+ * It also sets timeouts necessary for NetBeans GUI testing.
+ *
+ * Any JemmyException (which is normally thrown as a result of an unsuccessful
+ * operation in Jemmy) going from a test is treated by JellyTestCase as a test
+ * failure; any other exception - as a test error.
+ *
+ * Additionally it:
+ *    - closes all modal dialogs at the end of the test case (property jemmy.close.modal - default true)
+ *    - generates component dump (XML file containing components information) in case of test failure (property jemmy.screen.xmldump - default false)
+ *    - captures screen into a PNG file in case of test failure (property jemmy.screen.capture - default true)
+ *    - waits at least 1000 ms between test cases (property jelly.wait.no.event - default true)
+ *
+ */
+
+public class OverallTest extends JellyTestCase {
+
+    /** Constructor required by JUnit */
+    public OverallTest(String name) {
+        super(name);
+    }
+
+    /** Creates suite from particular test cases. You can define order of testcases here. */
+    public static Test suite() {
+
+        Configuration testConfig = NbModuleSuite.createConfiguration(OverallTest.class);
+        testConfig.addTest("testBrushSize", "testPainting", "testClear", "testColorChooser");
+        testConfig.clusters(".*").enableModules(".*");
+        testConfig.gui(true);
+
+        return NbModuleSuite.create(testConfig);
+
+    }
+
+    /** Called before every test case. */
+    public void setUp() {
+        System.out.println("########  "+getName()+"  #######");
+    }
+
+    // Add test methods here, they have to start with 'test' name:
+
+    /** Test brush size setting. */
+    public void testBrushSize() {
+        new Action("File|New Canvas", null).perform();
+        JSliderOperator slider = new JSliderOperator(MainWindowOperator.getDefault());
+        slider.scrollToMaximum();
+        slider.scrollToMinimum();
+        slider.scrollToMaximum();
+    }
+
+    /** Test painting. */
+    public void testPainting() {
+        TopComponentOperator tcOper = new TopComponentOperator("Image");
+        tcOper.clickMouse(tcOper.getCenterX(), tcOper.getCenterY(), 1);
+        tcOper.dragNDrop(tcOper.getCenterX(), tcOper.getCenterY(), tcOper.getWidth()-1, tcOper.getHeight()-1);
+        tcOper.dragNDrop(tcOper.getWidth()-1, tcOper.getHeight()-1, 0, tcOper.getHeight()-1);
+        tcOper.dragNDrop(0, tcOper.getHeight()-1, tcOper.getCenterX(), tcOper.getCenterY());
+    }
+
+    /** Test clear button. */
+    public void testClear() {
+        new JButtonOperator(new TopComponentOperator("Image"), "Clear").push();
+    }
+
+    public void testColorChooser() {
+        fail("Not yet implemented.");
+    }
+
+}
+----
+
+Create the class above in a package in the Functional Test Packages node in the Projects window. Then right-click the "Paint" project node and choose "Test". The application starts up and the specified functional tests are performed:
+
+
+image::images/result-4.png[]
+
+Then the test results are shown:
+
+
+image::images/result-5.png[]
+
+In the Files window (Ctrl-2), you can find the test results:
+
+
+image::images/result-6.png[]
+
+
+== Code Coverage on the NetBeans Platform
+
+Out of the box, the NetBeans Platform is integrated with  link:http://cobertura.sourceforge.net/[Cobertura].
+
+Take the following steps to use Cobertura for calculating the percentage of code accessed during unit testing and functional testing:
+
+
+[start=1]
+1. Go to the command line and browse to the "Paint" project folder, that is, browse to the module project folder where the tests have been run.
+
+[start=2]
+1. 
+Enter the following on the command line:
+
+
+[source,java]
+----
+
+ant coverage-report
+----
+
+
+[start=3]
+1. You will see output such as the following:
+
+[source,java]
+----
+
+...
+...
+...
+ [junit] Cobertura: Loaded information on 8 classes.
+    [junit] Cobertura: Saved information on 8 classes.
+    [junit] Test tests.PaintCanvasTest FAILED
+
+test-coverage:
+
+coverage-report:
+[cobertura-report] Cobertura 1.9.3 - GNU GPL License (NO WARRANTY) - See COPYRIGHT file
+[cobertura-report] Cobertura: Loaded information on 8 classes.
+[cobertura-report] Report time: 448ms
+
+BUILD SUCCESSFUL
+Total time: 9 seconds
+----
+
+
+[start=4]
+1. In the IDE, within the Paint project, expand the "Important Files" node and then expand the "Build Script" node. A list of nodes is displayed for the targets defined in the build script. Find the target named "display-coverage-report", right-click it, and choose "Run Target". The following is displayed in the browser:
+
+
+image::images/coverage.png[]
+
+
+[start=5]
+1. Enter the following on the command line:
+
+
+[source,java]
+----
+
+ant coverage-report-qa-functional
+----
+
+
+[start=6]
+1. You will see output such as the following:
+
+[source,java]
+----
+
+...
+...
+...
+ testcoverage-restore-default:
+   [delete] Deleting: /home/geertjan/PaintApp/build/cluster/modules/org-netbeans-paint.jar
+     [copy] Copying 1 file to /home/geertjan/PaintApp/build/cluster
+
+testcoverage-restore-specified:
+
+test-coverage-restore:
+
+test-coverage-qa-functional:
+
+coverage-report-qa-functional:
+[cobertura-report] Cobertura 1.9.3 - GNU GPL License (NO WARRANTY) - See COPYRIGHT file
+[cobertura-report] Cobertura: Loaded information on 8 classes.
+[cobertura-report] Report time: 563ms
+
+BUILD SUCCESSFUL
+Total time: 23 seconds
+----
+
+
+[start=7]
+1. The results can be found in the Files window (Ctrl-2):
+
+
+image::images/result-7.png[]
+
+
+[start=8]
+1. Open the index file to see the result:
+
+
+image::images/result-8.png[]
+
+Further reading, advice, and warnings related to code coverage can be found  link:http://wiki.netbeans.org/CodeCoverage[here].
+
+
+== See Also
+
+This concludes the NetBeans Platform Testing Tutorial. This document has described how to add unit testing and functional testing functionality to a NetBeans Platform application. For more information about testing on the NetBeans Platform, see the following resources:
+
+*  link:http://openide.netbeans.org/tutorial/test-patterns.html[Typical Test Patterns]
+*  link:http://wiki.netbeans.org/NetBeansDeveloperTestFAQ[ NetBeans Developer Test FAQ]
+*  link:http://blogs.oracle.com/coreqa/entry/xtest_is_dead_long_live[XTest is Dead Long Live Simpletests]
+*  link:http://wiki.netbeans.org/FitnessTestsWithoutX[FitnessTestsWithoutX]
+*  link:https://netbeans.apache.org/wiki/devfaqusingsimpletests[Using Simpletests]
+*  link:http://forums.netbeans.org/topic10210.html[http://forums.netbeans.org/topic10210.html]
+*  link:http://wiki.netbeans.org/JellyTools[JellyTools]
+*  link:https://netbeans.apache.org/wiki/devrunningtestsplatformapp[Running tests on a platform application]
+*  link:http://wiki.netbeans.org/TestingThingsThatUseFileObjectDataObjectDataFolder[ Testing things that use FileObjects]
+*  link:https://netbeans.apache.org/wiki/devfaqtestdataobject[ Writing Tests for DataObjects and DataLoaders]
+*  link:https://netbeans.apache.org/wiki/devfaqtestusingsystemfilesystem[ How do I test something which uses the System Filesystem?]
+*  link:http://performance.netbeans.org/insane/index.html[INSANE]
+*  link:http://wiki.netbeans.org/CodeCoverage[Code Coverage]

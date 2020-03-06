@@ -1,0 +1,935 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= NetBeans Platform Login Tutorial
+:jbake-type: platform-tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:icons: font
+:experimental:
+:description: NetBeans Platform Login Tutorial - Apache NetBeans
+:keywords: Apache NetBeans Platform, Platform Tutorials, NetBeans Platform Login Tutorial
+
+This tutorial demonstrates how to create a login form for a NetBeans Platform application with very simple user and password management. The login will be implemented with the  ``DialogDisplayer``  class of the NetBeans APIs.
+
+The dialog that you create in this tutorial will be visible whenever the user starts the application. The passwords and usernames will be stored in a preferences file, which is not very safe. Therefore, this tutorial will provide a solution to encrypt the passwords with "Message-Digest Algorithm 5" (MD5). MD5 is a cryptographic hash-function invented by Roland L. Rivest. To use MD5 in our application, the  ``java.security``  package will help us.
+
+
+== Contents
+
+|===
+|* <<installing,Installing The Software>>
+* <<creatingthemodulesuite,Setting Up The Module Suite>>
+* <<usermanagement,Creating A Simple User And Password Management>>
+* <<optionpanel,Create Option Panel For The User Management>>
+* <<md5,Use MD5 To Encrypt Password>>
+* <<poss,Other Possibilities>>
+* <<login,Creating The Login Module>>
+* <<code,All The Code At Once>>
+* <<loginform,LoginForm.java>>
+* <<installer,Installer.java>>
+* <<user,UsermanagementPanel.java>>
+* <<nextsteps,Next Steps >>
+* <<version,Versioning>>
+ |  
+|===
+
+For more information on working with modules, see the  link:https://netbeans.apache.org/platform/index.html[ NetBeans Development Project home] on the NetBeans website. If you have questions, visit the  link:http://wiki.netbeans.org/wiki/view/NetBeansDeveloperFAQ[NetBeans Developer FAQ] or use the feedback link at the bottom of this page.
+
+
+
+== Installing The Software
+
+Before you begin, you need to install the following software on your computer:
+
+* NetBeans IDE 6.0 ( link:https://netbeans.apache.org/download/index.html[download])
+* Java Standard Development Kit (JDK™) version 1.4.2 ( link:https://www.oracle.com/technetwork/java/javase/downloads/index.html[download]) or 5.0 ( link:https://www.oracle.com/technetwork/java/javase/downloads/index.html[download]) or later
+
+
+
+== Setting Up The Module Suite
+
+The first thing you have to do is to create a sample project. We will use a Module Suite. Here you can use the wizard that the IDE provides.
+
+
+[start=1]
+1. Choose File > New Project (Ctrl-Shift-N). Under Categories, select NetBeans Modules. Under projects, select  ``Module Suite``  and click Next.
+
+[start=2]
+1. In the next panel you have to give the suite a proper name, such as  ``LoginSuite`` , and set the location to any directory on your computer. Click Finish.
+
+[start=3]
+1. Now the IDE has created an empty suite for you. You can even test it when you right-click the module suite name and choose run. There will start a whole new IDE. But we do not need a complete IDE. So if you like, you can make the start of your application faster by following these few optional steps:
+
+[start=4]
+1. Right-click the module suite name. Choose 'Properties'. Select 'Libraries'. Now you see on the right side a list of 'Platfom Modules'. Deselect all except of 'platform7'. Click OK.
+
+[start=5]
+1. If you run the application again there will only be a window with the essential buttons and menus. It should look like this:
+
+
+image::images/1_newapp.png[]
+
+
+== Creating A Simple User And Password Management
+
+To have as little work as possible, we will use some very interesting features of NetBeans IDE to create our simple user management. This management will only be able to store one username and one password in a preferences file.
+
+
+=== Create Option Panel For The User Management
+
+In this section we will show you how to create an option panel to handle your username and password.
+
+
+[start=1]
+1. At first we create a new module by right-clicking on the Modules folder in our suite and choosing  ``Add New...`` .
+
+
+image::images/2_newmod.png[]
+
+
+[start=2]
+1. Now a wizard for adding a new module appears. You have to enter a name for your module, for example 'UserManagement'. Click Next.
+
+[start=3]
+1. Change now the Code Base name, so that it fits into your application. Click Finish.
+
+After that the NetBeans IDE has created a new module for you. So, now we have to create a so called options panel to easily set our password and username.
+
+
+[start=1]
+1. Right-click on the Source Packages of your new module and select New > Other... .
+
+
+image::images/3_newopt.png[]
+
+
+[start=2]
+1. A wizard appears and you should select the category 'Module Development' and in the list of filetypes you should select 'Options Panel'. Click Next.
+
+[start=3]
+1. Here we can choose whether we want a whole new panel category or a new panel in the 'Miscellaneous' category. In our case we will use the 'Miscellaneous' one. To complete this task enter a name and a tool tip text. Click Next.
+
+
+image::images/4_optpan.png[]
+
+
+[start=4]
+1. On this panel you can now choose a class name prefix. I recommend to accept the IDE suggestion. Click Finish.
+
+Next there are some files opened by the IDE. For now we only need the  ``<ClassNamePrefix>Panel.java`` . Go to this file and go into the Design-View and follow the instructions below.
+
+
+[start=1]
+1. Use the Palette and add two labels and two textfields.
+
+
+image::images/5_tex.png[]
+
+
+[start=2]
+1. Then rename the top label to 'Username' and the bottom one to 'Password'. Delete the texts of the textfields and rename the variables to 'user' and 'pass'.
+
+[start=3]
+1. Now go to the Source-View and look for two methods called  ``load``  and  ``store`` . These two methods are used to initialize the textfields and to store changes.
+
+[start=4]
+1. Change the source code of 'store' to the following:
+
+[source,java]
+----
+
+void store() {
+   NbPreferences.forModule(UsermanagementPanel.class).put("user", user.getText());
+   NbPreferences.forModule(UsermanagementPanel.class).put("pass", pass.getText());
+}   
+----
+
+With this code a new NetBeans Preferences file is created and the information of the textfields is stored into it with the written keys. Then add imports for  ``org.openide.util.NbPreferences`` .
+
+[start=5]
+1. Now change the source code for 'load' in the following way:
+
+[source,java]
+----
+
+void load() {
+   user.setText(NbPreferences.forModule(UsermanagementPanel.class).get("user", ""));
+   pass.setText(NbPreferences.forModule(UsermanagementPanel.class).get("pass", ""));
+}
+----
+
+In that part of the code the NetBeans Preferences are used to fill the textfields.
+
+When you start your application you will find your new options panel in 'Tools > Options > Miscellaneous'. You can also enter a password and an username now. When your restart your application you will see that these changes are persistant.
+
+
+image::images/6_opt.png[]
+
+Now our mini user management is complete. We have one user with one password.
+
+
+=== [tutorial]#Use MD5 To Encrypt Password#
+
+Here we will show you the encryption of your password with the MD5 algorithm.
+
+A very good possibility to make your system safer is to encrypt your password with an algorithm called MD5. The 'Message-Digest Algorithm 5' is a cryptographic hash-function that was invented by Roland L. Rivest. To use MD5 in our application we can use some features of Java. The  ``java.security``  package will help us.
+
+But we have a problem with our created options panel. A MD5-Hash cannot be decrypted in a string. It is only possible to compare two MD5 values. So if you want to use this, you have to do some changes on your code in the 'store' method.
+
+
+[source,java]
+----
+
+void store() {
+   NbPreferences.forModule(UsermanagementPanel.class).put("user", user.getText());
+   if(NbPreferences.forModule(UsermanagementPanel.class).get("pass", "").equals(pass.getText())){
+      //do nothing with password
+   } else {
+      try {
+         String passwordMD5 = null;
+         MessageDigest md5 = MessageDigest.getInstance("MD5");
+         byte[] tmp = pass.getText().getBytes();
+         md5.update(tmp);
+         passwordMD5 = byteArrToString(md5.digest());
+
+         NbPreferences.forModule(UsermanagementPanel.class).put("pass", passwordMD5);
+      } catch (NoSuchAlgorithmException ex) {
+         Exceptions.printStackTrace(ex);
+      }
+   } 
+}
+    
+private static String byteArrToString(byte[] b){
+   String res = null;
+   StringBuffer sb = new StringBuffer(b.length * 2);
+   for (int i = 0; i < b.length; i++){
+      int j = b[i] &amp; 0xff;
+      if (j < 16) {
+         sb.append('0');
+      }
+      sb.append(Integer.toHexString(j));
+   }
+   res = sb.toString();
+   return res.toUpperCase();
+}
+----
+
+Your entered password will now be created as a MD5-hash. The second method creates a proper string representation and it is needed to avoid non-printable characters.
+
+ 
+
+
+=== [tutorial]#Other Possibilities#
+
+In this section we will show you the encryption of your password with the SHA-1 algorithm.
+
+ 
+
+Another possibility is to use the SHA-1 instead of the MD5. SHA-1 (secure hash algorithm) was decrypted in 2006 but for our purpose it is safe enough. You just have to do some little changes on the MD5 code shown above.
+
+
+[source,java]
+----
+
+void store() {
+   NbPreferences.forModule(UsermanagementPanel.class).put("user", user.getText());
+   if(NbPreferences.forModule(UsermanagementPanel.class).get("pass", "").equals(pass.getText())){
+      //do nothing with password
+   } else {
+      try {
+         String passwordSHA = null;
+         MessageDigest sha = MessageDigest.getInstance("SHA-1");
+         byte[] tmp = pass.getText().getBytes();
+         sha.update(tmp);
+         passwordMD5 = byteArrToString(sha.digest());
+         NbPreferences.forModule(UsermanagementPanel.class).put("pass", passwordMD5);
+      } catch (NoSuchAlgorithmException ex) {
+         Exceptions.printStackTrace(ex);
+      }
+   } 
+}
+----
+
+The only real change is to use the java  ``MessageDigist``  to create an instance of a SHA-1 instead of a MD5.
+
+To secure the application a little bit you should save your usernames and passwords somewhere else than in a preferences file. Maybe a database or a file on a safe server will be a better way.
+
+
+== Creating The Login Module
+
+Now we are ready to start with the actual login module.
+
+
+[start=1]
+1. First we have to create a new module again, by right-clicking on the 'Modules' folder in the Module Suite. Choose 'Add new...'.
+
+[start=2]
+1. Give the new module a name like 'Login' and click Next.
+
+[start=3]
+1. Change the 'Code Base Name' if it is needed. Click Finish.
+
+[start=4]
+1. When the new module is located in the Projects window, right-click on the 'Source Packages' and choose 'New' > 'Other...'.
+
+[start=5]
+1. In the appearing wizard select 'Module Development' as a category and then 'Module Installer' as file-type. Click Next.
+
+[start=6]
+1. Now you see again which files are changed or created. Click Finish.
+
+Now your Projects window should look as follows:
+
+
+image::images/7_loo.png[]
+
+If you open the  ``Installer.java``  you should see this:
+
+
+[source,java]
+----
+
+package org.yourorghere.login;
+
+import org.openide.modules.ModuleInstall;
+
+/**
+ * Manages a module's lifecycle. Remember that an installer is optional and
+ * often not needed at all.
+ */
+public class Installer extends ModuleInstall {
+   @Override
+   public void restored() {
+      // By default, do nothing.
+      // Put your startup code here.
+   }
+}
+----
+
+The code that we will write in the  ``restored()``  method will be called before the application starts. So we will use this to show our login form. But this form has to be created first.
+
+
+[start=1]
+1. Right-click the 'Source Packages' and choose 'New' > 'Other...'.
+
+[start=2]
+1. Select 'Swing GUI Forms' as category and 'JPanel Form' as filetype. Click Next.
+
+[start=3]
+1. Give the form a name like 'LoginFrame' and select the correct package. Click Finish.
+
+[start=4]
+1. If it has not been opened yet, open the LoginFrame and go to the Design-View.
+
+[start=5]
+1. Get two labels, a textfield and a password field.
+
+[start=6]
+1. Name the labels 'Username' and 'Password', delete the text in the fields and rename the variables of the fields to 'user' and 'pass'.
+
+
+image::images/8_log.png[]
+
+Now we can call our  ``LoginForm``  in the  ``Installer.java`` . Go to the Installer.java and add a private field  ``LoginForm form = new LoginForm()`` .
+
+Now we have to call something in the  ``restored()`` method. For our login dialog we will use the  ``NotifyDescriptor``  from the NetBeans API.
+
+
+[start=1]
+1. Add the following code to the  ``restored()``  method in the Installer.java:
+
+[source,java]
+----
+
+NotifyDescriptor nd = new NotifyDescriptor.Message("Ok");
+DialogDisplayer.getDefault().notifyLater(nd);
+
+----
+
+And then fix the imports.
+
+[start=2]
+1. But you will see that the import cannot be fixed. The reason for this is that we must add the specific packages to our project. Right-click the 'Login' module name and choose 'Properties'.
+
+[start=3]
+1. Go to the 'Libraries' category and click 'Add Dependency...'.
+
+[start=4]
+1. In the filter textfield write 'notify'.
+
+[start=5]
+1. Now you will see that there is a 'Dialogs API'. Select it and click OK.
+
+[start=6]
+1. Close the 'Properties' window by clicking OK.
+
+[start=7]
+1. Now try to fix the imports again and you will see that it works.
+
+When you start the application you will see that there is a dialog with an 'OK' button in it. This will be the dialog where we will call our LoginForm.
+To create a better structure we will create a new method that will be called in the  ``restored()``  method.
+
+We do not want to have a simple dialog, but a diaolg with an 'OK' and a 'Cancel' button. For this purpose we will use the Confirmation method instead of the Message method of the NotifyDescriptor. The changed class Installer should look like this:
+
+
+[source,java]
+----
+
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package org.yourorghere.login;
+
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
+import org.openide.modules.ModuleInstall;
+
+/**
+ * Manages a module's lifecycle. Remember that an installer is optional and
+ * often not needed at all.
+ */
+public class Installer extends ModuleInstall {
+	private LoginForm form = new LoginForm();
+   @Override
+   public void restored() {
+      createLoginDialog();
+
+   }
+    
+   private void createLoginDialog(){
+      NotifyDescriptor nd = new NotifyDescriptor.Confirmation(form, "Login");
+      DialogDisplayer.getDefault().notifyLater(nd);
+   }
+}
+
+----
+
+There you see that our 'LoginForm' form is given to the  ``NotifyDescriptor.Confirmation()``  method as a parameter. The second parameter is the title of the dialog window. If we now look at our created login panel we will see that the NotifyDescriptor has created some buttons for us. That is great but these are not the buttons we actually want.
+
+
+image::images/9_but.png[]
+
+For a login we only want to have an 'OK' and a 'Cancel' button. So we have to create them. This time we cannot use the graphical designer, so we have to code it ourselves which is not as difficult as it maybe sounds. You only have to change our  ``createLoginDialog()``  method.
+
+
+[source,java]
+----
+
+private void createLoginDialog(){
+   JButton ok = new JButton();
+   ok.setText("OK");
+   JButton cancel = new JButton();
+   cancel.setText("Cancel");
+
+   cancel.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent arg0) {
+         //close whole application
+      }
+   });
+
+   ok.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent arg0) {
+         //authenicate username and password
+      }
+   });
+        
+   NotifyDescriptor nd = new NotifyDescriptor.Confirmation(form, "Login");
+   nd.setOptions(new Object[]{ok, cancel});
+   DialogDisplayer.getDefault().notifyLater(nd);
+}
+----
+
+These new changes will create two new buttons and the  ``setOptions()``  method will add them to our NotifyDescriptor. Of course, these buttons do actually nothing. The 'Cancel' button should close the whole application. So we will write an  ``exit()``  method that is called in the  ``actionPerformed()``  method.
+
+
+[source,java]
+----
+
+private void exit(){
+   LifecycleManager.getDefault().exit();
+}
+----
+
+This method will close the application immediately. So when you look at your application closely you will see that we have three buttons. The 'x' is also a button and closes the dialog window, but not the whole application. So we have to listen to an action that closes this dialog. We will do this if we add the following code to our  ``createLoginDialog()``  method.
+
+
+[source,java]
+----
+
+nd.addPropertyChangeListener(new PropertyChangeListener(){
+   public void propertyChange(PropertyChangeEvent evt){
+      if(NotifyDescriptor.CLOSED_OPTION.equals(evt.getNewValue())){
+         exit();
+      }
+   }           
+});
+----
+
+This listener will close the whole application if the dialog is closed in another way than with the 'Cancel' or the 'OK' button.
+
+Now we have to deal with our 'OK' button and what to happen when clicking on it. We will create a new method that we will call  ``authenticate()`` . In this method we need to compare our given passwords and usernames of the formular and the ones of the options panel. For this purpose we will call the  ``authenticate()``  method with two parameters, namely the username and the password of our LoginForm. If we want to do so we need to alter the LoginForm.java and add two getters for the values of the textfields. In this term we must not forget that we need a MD5 compatible form (of course, only when you have added a security mechanism). But our getters should only return a normal string for the username and a char-array from the password field.
+
+
+[source,java]
+----
+
+public String getUsername(){
+   return this.user.getText();
+}
+    
+public char[] getPassword(){
+   return this.pass.getPassword();
+}
+----
+
+As mentioned before we now have to create a method called  ``authenticate()``  where we compare usernames and passwords.
+
+
+[source,java]
+----
+
+private void authenticate(){if(NbPreferences.forModule(UsermanagementPanel.class).get("user", "").equals(this.form.getUsername())){try {char[] passwordFromForm = null;char[] passwordFromPref = NbPreferences.forModule(UsermanagementPanel.class).get("pass", "").toCharArray();String passwordPref = new String(this.form.getPassword());MessageDigest [examplecode]#md5# = MessageDigest.getInstance("MD5");byte[] tmp = passwordPref.getBytes();[examplecode]#md5#.update(tmp);passwordFromForm = byteArrToString([examplecode]#md5#.digest()).toCharArray();int correctCount = 0;if(passwordFromForm.length != passwordFromPref.length){exit();}for (int i = 0; i < passwordFromPref.length; i++) {if (passwordFromPref[i] == passwordFromForm[i]) { correctCount++;}}if (passwordFromPref.length == correctCount) {//do nothing here} else {exit();}} catch (NoSuchAlgorithmException ex) {Exceptions.printStackTrace(ex);}} else {exit();}}
+----
+
+In this method the usernames are compared at first. If the username is wrong the password will not be checked at all. If the username is correct then the password will be compared character by character. But at first it has to be converted in a MD5 hash. This works exactly like in the  ``UsermanagementPanel.java`` . We also need the  ``byteArrToString()``  method in this class we have created above.
+
+A problem that might occurs is that the Preference file cannot be read. To get the file access follow these steps.
+
+
+[start=1]
+1. Right-click our 'UserManagement' module and select 'Properties'.
+
+[start=2]
+1. Choose 'API-Versioning' as category.
+
+[start=3]
+1. Select our usermanagement-package as 'Punlic Package'. Click OK.
+
+[start=4]
+1. Right-click the 'Login' module and select 'Properties'.
+
+[start=5]
+1. Choose 'Libraries' as category.
+
+[start=6]
+1. Click 'Add dependency...'.
+
+[start=7]
+1. Search in the filter for 'usermanagement'.
+
+[start=8]
+1. If you find it, select our 'UserManagement' module and click OK.
+
+[start=9]
+1. Click OK.
+
+[start=10]
+1. Open the  ``UsermanagementPanel.java``  and alter the class definition by adding 'public' before the 'final' keyword.
+
+Now you should be able to get the correct imports.
+
+If you run the application it should work with your given password.
+
+
+== All The Code At Once
+
+ 
+
+
+=== UsermanagementPanel.java
+
+In the  ``UsermanagementPanel.java``  we create a panel in the options dialog of the NetBeans Platform to manage our username and password. Most of the code is created by the NetBeans IDE.
+
+
+[source,java]
+----
+
+package org.yourorghere.usermanagement;
+
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import org.openide.util.Exceptions;
+import org.openide.util.NbPreferences;
+
+public final class UsermanagementPanel extends javax.swing.JPanel {
+   private final UsermanagementOptionsPanelController controller;
+
+   UsermanagementPanel(UsermanagementOptionsPanelController controller) {
+      this.controller = controller;
+      initComponents();
+      // TODO listen to changes in form fields and call controller.changed()
+   }
+
+   /** This method is called from within the constructor to
+    * initialize the form.
+    * WARNING: Do NOT modify this code. The content of this method is
+    * always regenerated by the Form Editor.
+    */                           
+   private void initComponents() {
+      jLabel1 = new javax.swing.JLabel();
+      jLabel2 = new javax.swing.JLabel();
+      user = new javax.swing.JTextField();
+      pass = new javax.swing.JTextField();
+
+      org.openide.awt.Mnemonics.setLocalizedText(jLabel1, "Username");
+      org.openide.awt.Mnemonics.setLocalizedText(jLabel2, "Password");
+
+      org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
+      this.setLayout(layout);
+      layout.setHorizontalGroup(
+         layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(layout.createSequentialGroup()
+               .add(21, 21, 21)
+               .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                   .add(jLabel2)
+                   .add(jLabel1))
+               .add(18, 18, 18)
+               .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                   .add(pass, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 157, Short.MAX_VALUE)
+                   .add(user, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 157, Short.MAX_VALUE))
+               .addContainerGap())
+       );
+       layout.setVerticalGroup(
+          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+          .add(layout.createSequentialGroup()
+             .addContainerGap()
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                   .add(jLabel1)
+                      .add(user, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 
+                            org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 
+                            org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .add(18, 18, 18)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel2)
+                    .add(pass, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 
+                        org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 
+                        org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(35, Short.MAX_VALUE))
+       );
+   }//                         
+
+   void load() {
+      user.setText(NbPreferences.forModule(UsermanagementPanel.class).get("user", ""));
+      pass.setText(NbPreferences.forModule(UsermanagementPanel.class).get("pass", ""));
+   }
+    
+   private static String byteArrToString(byte[] b){
+      String res = null;
+      StringBuffer sb = new StringBuffer(b.length * 2);
+         for (int i = 0; i < b.length; i++){
+            int j = b[i] &amp; 0xff;
+               if (j < 16) {
+                  sb.append('0');
+               }
+               sb.append(Integer.toHexString(j));
+         }
+      res = sb.toString();
+      return res.toUpperCase();
+   }
+
+   void store() {
+      NbPreferences.forModule(UsermanagementPanel.class).put("user", user.getText());
+      if(NbPreferences.forModule(UsermanagementPanel.class).get("pass", "").equals(pass.getText())){
+          //do nothing with password
+      } else {
+         try {
+            String passwordMD5 = null;
+            MessageDigest [examplecode]#md5# = MessageDigest.getInstance("MD5");
+            byte[] tmp = pass.getText().getBytes();
+            [examplecode]#md5#.update(tmp);
+            passwordMD5 = byteArrToString([examplecode]#md5#.digest());
+
+            NbPreferences.forModule(UsermanagementPanel.class).put("pass", passwordMD5);
+          } catch (NoSuchAlgorithmException ex) {
+             Exceptions.printStackTrace(ex);
+          }
+      } 
+   }
+
+   boolean valid() {
+      // TODO check whether form is consistent and complete
+      return true;
+   }
+
+   // Variables declaration - do not modify                     
+   private javax.swing.JLabel jLabel1;
+   private javax.swing.JLabel jLabel2;
+   private javax.swing.JTextField pass;
+   private javax.swing.JTextField user;
+   // End of variables declaration                   
+
+}
+
+----
+
+
+=== LoginForm.java
+
+The  ``LoginForm.java``  creates a dialog in which the password and username can be entered to start your application. This class is also quickly created when you use the tools of the NetBeans IDE.
+
+
+[source,java]
+----
+
+/*
+ * LoginForm.java
+ *
+ * Created on 03. Dezember 2007, 21:39
+ */
+
+package org.yourorghere.login;
+
+/**
+ *
+ * @author  Christof and Sabine
+ */
+public class LoginForm extends javax.swing.JPanel {
+    
+   /** Creates new form LoginForm */
+   public LoginForm() {
+      initComponents();
+   }
+    
+   /** This method is called from within the constructor to
+    * initialize the form.
+    * WARNING: Do NOT modify this code. The content of this method is
+    * always regenerated by the Form Editor.
+    */
+   //                           
+   private void initComponents() {
+
+      jLabel1 = new javax.swing.JLabel();
+      jLabel2 = new javax.swing.JLabel();
+      user = new javax.swing.JTextField();
+      pass = new javax.swing.JPasswordField();
+
+      jLabel1.setText(org.openide.util.NbBundle.getMessage(LoginForm.class, "LoginForm.jLabel1.text")); // NOI18N
+
+      jLabel2.setText(org.openide.util.NbBundle.getMessage(LoginForm.class, "LoginForm.jLabel2.text")); // NOI18N
+
+      user.setText(org.openide.util.NbBundle.getMessage(LoginForm.class, "LoginForm.user.text")); // NOI18N
+
+      pass.setText(org.openide.util.NbBundle.getMessage(LoginForm.class, "LoginForm.pass.text")); // NOI18N
+
+      javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+      this.setLayout(layout);
+      layout.setHorizontalGroup(
+         layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+         .addGroup(layout.createSequentialGroup()
+            .addContainerGap()
+               .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                  .addComponent(jLabel2)
+                  .addComponent(jLabel1))
+              .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+              .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                  .addComponent(pass)
+                  .addComponent(user, javax.swing.GroupLayout.DEFAULT_SIZE, 148, Short.MAX_VALUE))
+              .addContainerGap(31, Short.MAX_VALUE))
+      );
+      layout.setVerticalGroup(
+      layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+         .addGroup(layout.createSequentialGroup()
+            .addContainerGap()
+               .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                  .addComponent(jLabel1)
+                     .addComponent(user, javax.swing.GroupLayout.PREFERRED_SIZE, 
+                            javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel2)
+                    .addComponent(pass, javax.swing.GroupLayout.PREFERRED_SIZE, 
+                            javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(30, Short.MAX_VALUE))
+      );
+   }//                         
+    
+   public String getUsername(){
+      return this.user.getText();
+   }
+    
+   public char[] getPassword(){
+      return this.pass.getPassword();
+   }
+    
+    
+   // Variables declaration - do not modify                     
+   private javax.swing.JLabel jLabel1;
+   private javax.swing.JLabel jLabel2;
+   private javax.swing.JPasswordField pass;
+   private javax.swing.JTextField user;
+   // End of variables declaration                     
+}
+
+----
+
+
+=== Installer.java
+
+This class starts the  ``LoginPanel.java``  and handels the response to this dialog. It also takes care about the authentication.
+
+
+[source,java]
+----
+
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package org.yourorghere.login;
+
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import javax.swing.JButton;
+import org.openide.DialogDisplayer;
+import org.openide.LifecycleManager;
+import org.openide.NotifyDescriptor;
+import org.openide.modules.ModuleInstall;
+import org.openide.util.Exceptions;
+import org.openide.util.NbPreferences;
+import org.yourorghere.usermanagement.UsermanagementPanel;
+
+/**
+ * Manages a module's lifecycle. Remember that an installer is optional and
+ * often not needed at all.
+ */
+public class Installer extends ModuleInstall {
+    
+   private LoginForm form = new LoginForm();
+
+   @Override
+   public void restored() {
+      createLoginDialog();
+   }
+    
+   private void createLoginDialog(){
+      JButton ok = new JButton();
+      ok.setText("OK");
+
+      JButton cancel = new JButton();
+      cancel.setText("Cancel");
+
+      cancel.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent arg0) {
+            exit();
+         }
+      });
+
+      ok.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent arg0) {
+            authenticate();
+         }
+      });
+        
+      NotifyDescriptor nd = new NotifyDescriptor.Confirmation(form, "Login");
+      nd.setOptions(new Object[]{ok, cancel});
+      DialogDisplayer.getDefault().notifyLater(nd);
+        
+      nd.addPropertyChangeListener(new PropertyChangeListener(){
+         public void propertyChange(PropertyChangeEvent evt){
+            if(NotifyDescriptor.CLOSED_OPTION.equals(evt.getNewValue())){
+               exit();
+            }
+         }           
+      });
+   }
+    
+   private void authenticate(){
+      if(NbPreferences.forModule(UsermanagementPanel.class).get("user", "").equals(this.form.getUsername())){
+         try {
+            char[] passwordFromForm = null;
+            char[] passwordFromPref = NbPreferences.forModule(UsermanagementPanel.class).get("pass", "").toCharArray();
+                
+            String passwordPref = new String(this.form.getPassword());
+            MessageDigest MD5 = MessageDigest.getInstance("MD5");
+            byte[] tmp = passwordPref.getBytes();
+            MD5.update(tmp);
+            passwordFromForm = byteArrToString(MD5.digest()).toCharArray();
+            int correctCount = 0;
+            if(passwordFromForm.length != passwordFromPref.length){
+               exit();
+            }
+            for (int i = 0; i < passwordFromPref.length; i++) {
+               if (passwordFromPref[i] == passwordFromForm[i]) { 
+                  correctCount++;
+               }
+            }
+            if (passwordFromPref.length == correctCount) {
+               //do nothing here
+            } else {
+               exit();
+            }
+          } catch (NoSuchAlgorithmException ex) {
+             Exceptions.printStackTrace(ex);
+          }
+      } else {
+         exit();
+      }
+   }
+    
+   private static String byteArrToString(byte[] b){
+      String res = null;
+      StringBuffer sb = new StringBuffer(b.length * 2);
+         for (int i = 0; i < b.length; i++){
+            int j = b[i] &amp; 0xff;
+            if (j < 16) {
+               sb.append('0');
+            }
+               sb.append(Integer.toHexString(j));
+            }
+            res = sb.toString();
+            return res.toUpperCase();
+         }
+    
+   final private void exit(){
+      LifecycleManager.getDefault().exit();
+   }
+}
+
+----
+
+link:http://netbeans.apache.org/community/mailing-lists.html[Send Us Your Feedback]
+
+
+== Next Steps
+
+For more information about creating and developing NetBeans modules, see the following resources:
+
+*  link:https://netbeans.apache.org/kb/docs/platform.html[Other Related Tutorials]
+*  link:https://bits.netbeans.org/dev/javadoc/[NetBeans API Javadoc]
+
+
+== Versioning
+
+Christof Höll, Sabine Weiss; Johannes Kepler University Linz, Austria
+
+|===
+|*Version* |*Date* |*Changes* |*Open Issues* 
+
+|1 |05 January 2008 |Initial version |  
+|===

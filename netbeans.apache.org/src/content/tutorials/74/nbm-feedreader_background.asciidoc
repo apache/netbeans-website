@@ -1,0 +1,156 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= Preparing to Create the Feed Reader Application
+:jbake-type: platform-tutorial
+:jbake-tags: tutorials 
+:jbake-status: published
+:syntax: true
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:icons: font
+:experimental:
+:description: Preparing to Create the Feed Reader Application - Apache NetBeans
+:keywords: Apache NetBeans Platform, Platform Tutorials, Preparing to Create the Feed Reader Application
+
+Before beginning to code the FeedReader application, it's a good idea to familiarize yourself with some of the frequently used terms in the area of application development in NetBeans IDE. In the process, you will build a general understanding of the application that you will create, find out about what you are about to learn, and set up everything that you are going to need.
+
+
+== Table of Contents
+
+* <<15328,About Frequently Used Terms>>
+* <<95124,About the Feed Reader Application>>
+* <<73148,About this Tutorial>>
+* <<75087,Playing with the Application>>
+
+* <<77950,Installing the Application>>
+* <<88314,Introducing the Application>>
+* <<85058,Introducing the Sources>>
+
+
+== About Frequently Used Terms
+
+This tutorial assumes that you have a basic conceptual understanding of the infrastructure that is built right into NetBeans. There is less to understand than you might think. Common terms to be familiar with are as follows:
+
+* * NetBeans Platform.* The application framework that provides everything most desktop applications need and nothing superfluous. The NetBeans Platform provides an application's common requirements, such as standard menus, toolbars, document management, and settings, right out-of-the-box. Building an application "on top of NetBeans" means that, instead of writing applications from scratch, you only provide the parts of your application that the NetBeans Platform does not already have. And you exclude the parts of the NetBeans Platform that you do not need. At the end of the development cycle, you bundle your application with the NetBeans Platform, but with your own executable and splash screen. Doing so saves you a lot of time and energy and results in a solid, reliable application.
+* * System Filesystem.* The general registry that contains NetBeans configuration information, built from the  `` layer.xml``  configuration files of the registered modules. NetBeans stores a wide variety of configuration information in the System Filesystem. For example, the System Filesystem contains a folder called  `` Menu``  , which contains subfolders with names such as  `` File``  and  `` Edit``  . These subfolders contain files that represent Java classes which implement the actions that appear in the "File" and "Edit" menus in the IDE.
+* * Module.* A group of Java classes that provides an application with a specific feature. For example, the feature provided by the Java classes in the plug-in module that you build in this tutorial is an RSS/Atom feed reader. The Java classes use the  `` manifest.mf``  file to declare the module and the  `` layer.xml``  configuration file to register their functionality in the System Filesystem.
+
+As an aside: in NetBeans terminology, "plug-in" is an adjective while "module" is a noun. There is no semantic difference between them.
+
+* * NetBeans APIs.* The public interfaces and classes which are available to module writers and application writers. They are divided into specific APIs for dealing with different types of functionality. The contents and behavior of the Java source packages and their subpackages, as specified in the API reference documentation, are the APIs. For the full NetBeans API List, click  link:https://bits.netbeans.org/dev/javadoc/[here] .
+* * Module Suite.* A group of interdependent modules that are deployed together. The IDE helps you to brand the suite -- for example, you can add a splash screen and you can specify the parts of the NetBeans Platform that you don't want your application to provide.
+
+
+== About the Feed Reader Application
+
+While writing the Feed Reader Application, you will leverage a lot of the NetBeans infrastructure. The first piece you leverage is the System Filesystem. As pointed out earlier, the System Filesystem consists of configuration data: it is built from the configuration files (each of which is stored on disk as  `` layer.xml``  files) of all the modules in the system, which it writes into the user's settings directory.
+
+The System Filesystem uses the same infrastructure for recognizing files that is used for recognizing a user's files on disk. That means you can show a view of a folder inside the configuration data of the IDE just as easily as you can show a folder on disk. This way you can use all of the plumbing that is built into NetBeans for viewing files and showing trees and so forth. In fact, many views you see in the IDE use the same technique. For example, the Favorites window is a view of a folder in the System Filesystem, which contains links to files on disk. The contents of the Runtime window are also a view of a folder in the System Filesystem, which is why plug-in modules are able to add nodes to it. Since it uses the same mechanisms as are used for recognizing files on disk, the objects inside a folder can have whatever icons and display names you choose to give them.
+
+The other piece you use is the  link:https://bits.netbeans.org/dev/javadoc/org-openide-nodes/overview-summary.html[Nodes API] . The Nodes API is a generalization of TreeNode, though Nodes can be displayed in a variety of viewer components, not just trees. Nodes typically represent DataObjects. A DataObject is basically a parsed file, in other words, a Java object that knows the meaning of what is in a file or what the file represents and can do something with it. Nodes add features to DataObjects that the user interacts with, such as actions, localized display names, and icons.
+
+So, after using wizards to generate some basic templates, you will use the  `` layer.xml``  file to create a folder in the System Filesystem for RSS feed objects ( <<34280,Creating the RssFeeds Folder>> ). Next, you will provide a view of the folder, similar to the IDE's Projects window or Files window, by building on top of one of the generated files ( <<22179,Extending the Feed Window>> ). The view is rooted in your folder for RSS feed objects. Then you get the DataObject representing that folder, and its Node. You will wrap that node in a FilterNode ( <<34280,Creating the RssFeeds Folder>> ). A FilterNode is a node that can act as a wrapper for another node; by default it behaves exactly as the other node does, but you can override methods on it to change things, so that you can give it your own icon, display name and actions. Then you wrap each of the node's children as well, doing the same thing for them as for the node.
+
+Next, you will create an Add Feed action on the root node. When the user adds an RSS feed, you do something very simple: you create a new Feed object (really just an object that contains the URL, <<62391,Creating the Feed Object>> ) and then serialize that Feed object as a file in your RSSFeeds folder. Since you're using NetBeans built-in infrastructure for visualizing files (because you're just getting the standard node for the folder, which can notice when files are added or removed), in a split second the node for the newly added feed will appear in the user interface. Using the System Filesystem this way means that the amount of code you have to write to save the list of RSS feeds on exit is... none at all! You save a feed when the user creates it, and that data is persisted to disk automatically. So, basically, you are just dropping Feed POJOs into a folder, and you happen to be showing a view of that folder. The system takes care of virtually everything else.
+
+
+== About this Tutorial
+
+This tutorial intends to teach you the following:
+
+* Creating an application on top of the NetBeans Platform, using wizards and other facilities provided by NetBeans IDE 6.0.
+* Creating a skeleton windowing component and a skeleton menu item, using wizards in NetBeans IDE 6.0.
+* Using the NetBeans  link:https://bits.netbeans.org/dev/javadoc/org-openide-nodes/overview-summary.html[Nodes API] to create nodes for feeds and feed entries.
+* Registering the application in the NetBeans System Filesystem.
+* Branding the application with items such as your own splash screen and titlebar.
+* Providing a distribution of the application.
+
+
+== Playing with the Application
+
+Before you start writing the application, you might want to acquaint yourself with the final product. Fortunately, the Feed Reader Application is an official NetBeans sample, bundled with the IDE, and waiting for you to pull it from the New Project wizard.
+
+
+=== Installing the Application
+
+Take the following steps to install the sample:
+
+
+[start=1]
+1. Start the IDE.
+
+[start=2]
+1. Choose File > New Project (Ctrl-Shift-N), then expand Samples, then select NetBeans Modules, and choose FeedReader. Click Next.
+
+[start=3]
+1. Name the project whatever you like, choose a location to store your project, and click Finish. The IDE opens the FeedReader sample.
+
+[start=4]
+1. Right-click the  `` Feed Reader Application ``  project node and choose Run Project. The application starts up. During installation, notice that a splash screen is displayed.
+
+
+=== Introducing the Application
+
+The Feed Reader Application displays the RSS/Atom Feeds window, containing a node called RSS/Atom Feeds.
+
+
+[start=1]
+1. Right-click RSS/Atom Feeds node, choose Add, and enter a URL to an RSS/Atom feed. For example:
+* NetBeans.org RSS feed, which is  `` https://netbeans.org/rss-091.xml`` 
+* PlanetNetBeans RSS feed, which is  `` http://www.planetnetbeans.org/rss20.xml`` 
+
+[start=2]
+1. Click OK. A node is added for the feed; its children are the feed entries. Normally, feed entries are articles or topics that the feed makes available.
+
+[start=3]
+1. Repeat the process and add more feeds.
+
+[start=4]
+1. Double-click a feed entry to open it in the IDE's default browser.
+
+Other functionality provided by the rich-client application:
+
+* Right-click a node and choose Add Folder to create a new folder, which you can use to organize your feeds.
+* Right-click a feed and choose Delete to remove a feed.
+* Right-click a feed entry and choose Open to open it in the editor pane.
+
+
+=== Introducing the Sources
+
+The FeedReader sample consists of main files (Java classes) and supporting files.
+
+Main files:
+
+*  `` Feed.java``  Encapsulates a URL and its associated Rome feed.
+*  `` FeedAction.java``  Defines the action that appears in the Window menu with the label Open Feed Window. It opens the Feed Window.
+*  `` FeedTopComponent.java``  Defines the action that appears in the Window menu with the label Open Feed Window. It opens the Feed Window.
+*  `` RssNode.java``  Node class for the RSS feeds folder and its children. Note that mainly you proxy the actual DataNode/DataFolder for the RssFeeds folder in the System Filesystem. This gives you a lot of functionality for free, like the ability to delete, listening for changes, etc. So when you add a new RSS feed, all you do is create a new Feed object and serialize it into that folder.
+
+Supporting files:
+
+*  `` build.xml``  Provides Ant targets for common tasks, such as building and running the application.
+*  `` Bundle.properties``  Localization key-value pairs.
+*  `` FeedTopComponentSettings.xml``  Specifies all the interfaces of the Feed Reader Application.
+*  `` FeedTopComponentWstcref.xml``  Specifies a reference to the component.
+*  `` layer.xml``  Registers folders and files in the System Filesystem. You will be shown how to use the System Filesystem Browser to work with this file.
+*  `` project.xml``  Declares project metadata, such as module dependencies. You will be shown how to use the Project Properties dialog box to work with this file.
+*  `` rss16.gif``  Icon displayed by the application's menu item and in its Help > About dialog box.
+*  `` splash.gif``  Splash screen.
