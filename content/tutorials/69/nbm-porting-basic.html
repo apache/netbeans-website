@@ -1,0 +1,1370 @@
+
+<!DOCTYPE html>
+<html class="no-js" lang="en" dir="ltr">
+    
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>NetBeans Platform Porting Tutorial</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="NetBeans Platform Porting Tutorial - Apache NetBeans">
+    <meta name="author" content="Apache NetBeans">
+    <meta name="keywords" content="Apache NetBeans Platform, Platform Tutorials, NetBeans Platform Porting Tutorial">
+    <meta name="generator" content="Apache NetBeans">
+    <link rel="stylesheet" href="/css/font-awesome.min.css">
+     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/styles/default.min.css"> 
+    <link rel="stylesheet" href="/css/netbeans.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#ffc40d">
+    <meta name="theme-color" content="#ffffff">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700" rel="stylesheet"> 
+    <!--
+        Licensed to the Apache Software Foundation (ASF) under one
+        or more contributor license agreements.  See the NOTICE file
+        distributed with this work for additional information
+        regarding copyright ownership.  The ASF licenses this file
+        to you under the Apache License, Version 2.0 (the
+        "License"); you may not use this file except in compliance
+        with the License.  You may obtain a copy of the License at
+        http://www.apache.org/licenses/LICENSE-2.0
+        Unless required by applicable law or agreed to in writing,
+        software distributed under the License is distributed on an
+        "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+        KIND, either express or implied.  See the License for the
+        specific language governing permissions and limitations
+        under the License.
+    -->
+</head>
+
+
+    <body>
+        
+
+<div class="title-bar" data-responsive-toggle="responsive-menu" data-hide-for="medium">
+    <button type="button" data-toggle="responsive-menu"><i style='font-size: 32px; color: #fff; padding: 8px' class='fa fa-bars'></i></button>
+    <div class="title-bar-title">Apache NetBeans</div>
+</div>
+<div class="top-bar" id="responsive-menu">
+    <div class='top-bar-left'>
+        <a class='title' href="/"><img src='/images/apache-netbeans.svg' style='padding: 8px; height: 48px;'></img> Apache NetBeans</a>
+    </div>
+    <div class="top-bar-right">
+        <ul class="vertical medium-horizontal menu" data-responsive-menu="drilldown medium-dropdown">
+            <li> <a href="/community/index.html">Community</a> </li>
+            <li> <a href="/participate/index.html">Participate</a> </li>
+            <li> <a href="https://blogs.apache.org/netbeans/">Blog</a></li>
+            <li> <a href="/help/index.html">Get Help</a> </li>
+            <li> <a href="/plugins/index.html">Plugins</a> </li>
+            <li> <a href="/download/index.html">Download</a> </li>
+        </ul>
+    </div>
+</div>
+
+
+        
+<!-- src/templates/news -->
+<section class="hero news alternate">
+    <div class='grid-container'>
+        <div class='cell'>
+            <div class="annotation">Just released!</div>
+            <h1 syle='font-size: 2rem'>Apache NetBeans 11.3</h1>
+            <p><a class="button success" href="/download/nb113/index.html">Find out more</a></p>
+        </div>
+    </div>
+</section>
+
+        <div class='grid-container main-content tutorial'>
+            <h1 class="sect0">NetBeans Platform Porting Tutorial</h1>
+            
+            <div class="sectionbody">
+              <div class="admonitionblock note">
+                <table>
+                  <tbody><tr>
+                  <td class="icon"><i class="fa icon-note" title="Note"></i></td>
+                  <td class="content">This tutorial needs a review. 
+                     You can <a href="https://issues.apache.org/jira/projects/NETBEANS/issues">open a JIRA issue</a>, 
+                     or <a href="https://github.com/apache/netbeans-website/blob/master/netbeans.apache.org/src/content/tutorials/69/nbm-porting-basic.asciidoc" title="Edit this tutorial in github">edit it in GitHub </a>
+                     following these <a href="/kb/docs/contributing.html">contribution guidelines.</a></td>
+                  </tr></tbody>
+                </table>
+              </div>
+            </div>
+            
+            <div id="toc" class="toc">
+<div id="toctitle"></div>
+<ul class="sectlevel1">
+<li><a href="#_introduction_to_porting">Introduction to Porting</a></li>
+<li><a href="#_getting_the_anagram_game">Getting the Anagram Game</a></li>
+<li><a href="#_levels_of_compliance">Levels of Compliance</a>
+<ul class="sectlevel2">
+<li><a href="#section-LevelsOfCompliance-Level0Launchable">Level 0: Launchable</a></li>
+</ul>
+</li>
+<li><a href="#_creating_the_netbeans_platform_application">Creating the NetBeans Platform Application</a></li>
+<li><a href="#_porting_level_0_launchable">Porting Level 0: Launchable</a></li>
+<li><a href="#_porting_level_1_integration">Porting Level 1: Integration</a></li>
+<li><a href="#_porting_level_2_use_case_support">Porting Level 2: Use Case Support</a></li>
+<li><a href="#_porting_level_3_aligned">Porting Level 3: Aligned</a></li>
+<li><a href="#_porting_tips_tricks">Porting Tips &amp; Tricks</a></li>
+<li><a href="#_next_steps">Next Steps</a></li>
+</ul>
+</div>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>This tutorial demonstrates how to port a simple Swing application to the  <a href="https://netbeans.apache.org/platform/screenshots.html">NetBeans Platform</a>. Though the scenario below is simple, the basic concepts of "porting" an application to the NetBeans Platform will become clear. In the end, some general principles will be identified, based on the steps taken in the tutorial. Hopefully, they will be useful to you when porting your own Swing applications to the NetBeans Platform.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/netbeans-stamp69.png" alt="netbeans stamp69">
+</div>
+<div class="title">Figure 1. Content on this page applies to NetBeans IDE 6.5, 6.7, 6.8</div>
+</div>
+<div class="paragraph">
+<p><strong>To follow this tutorial, you need the software and resources listed in the following table.</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Software or Resource</th>
+<th class="tableblock halign-left valign-top">Version Required</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">NetBeans IDE</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">version 6.9 or above</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Java Developer Kit (JDK)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.oracle.com/technetwork/java/javase/downloads/index.html">version 6</a></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_introduction_to_porting">Introduction to Porting</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Before beginning this procedure, it makes sense to ask why one would want to do so in the first place. A typical Swing application consists of a domain-specific layer on top of a general framework. The general framework normally provides features dealing with an application&#8217;s infrastructure, such as an application&#8217;s menu bar, windowing system (also known as "docking framework"), and lifecycle management. Typically this framework is very generic and is (or could be) reused by many applications within the same organization. The NetBeans Platform exists specifically to cater to these infrastructural concerns. You do not need to create these on your own for your own Swing applications. You can simply move the useful domain-specific parts of your application to the NetBeans Platform and then, from that point onwards, the NetBeans Platform will be the new underlying 'plumbing' layer of your application. You can then focus on the more interesting parts of your application, specifically, the domain-specific parts. This will speed up your development process and give you a consistent basis for all your applications.</p>
+</div>
+<div class="paragraph">
+<p>In this tutorial, we will begin with the Anagram Game, which is a standard Swing application sample that is distributed with NetBeans IDE. We will, step by step, move it to the NetBeans Platform and gradually see the advantages of doing so.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_getting_the_anagram_game">Getting the Anagram Game</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>We begin by getting the Anagram Game, which is one of the IDE&#8217;s standard Java samples, from the New Project wizard. Then we run it and analyze its parts.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="1">
+<li>
+<p>Choose File &gt; New Project (Ctrl-Shift-N). Under Categories, select Samples &gt; Java. Under Projects, select Anagram Game. Click Next and Finish.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>You should now see the Anagram Game application outlined in the Projects window, as shown here:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/ag0.png" alt="ag0">
+</div>
+</div>
+<div class="paragraph">
+<p>The application contains the following classes:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>* <code>WordLibrary.java</code> *. Provides an abstract class, with abstract methods like <code>getWord(int idx)</code>, <code>getScrambledWord(int idx)</code>, and <code>isCorrect(int idx, String userGuess)</code>.</p>
+</li>
+<li>
+<p>* <code>StaticWordLibrary.java</code> *. Extends <code>WordLibrary.java</code>, providing a list of scrambled words, as well as their unscrambled equivalents, together with the getters and setters for accessing them and for evaluating them.</p>
+</li>
+<li>
+<p>* <code>Anagrams.java</code> *. Provides the main user interface of the application, principally consisting of a <code>JFrame</code> with a  <code>JPanel</code>  containing labels and text fields. Also included is a menu bar containing a File menu, with the menu items 'About' and 'Exit'.</p>
+</li>
+<li>
+<p>* <code>About.java</code> *. Provides the About box, accessed from the File menu.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>1.
+Run the application and you should see the following:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/ag1.png" alt="ag1">
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="3">
+<li>
+<p>When you specify the correctly unscrambled word, you will see this:</p>
+</li>
+</ol>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/ag2.png" alt="ag2">
+</div>
+</div>
+<div class="paragraph">
+<p>Before porting this application to the NetBeans Platform, we need to think about <em>the stages in which we want to port our application</em>. In other words, you do not need to port everything at once. And there are different levels to which you can integrate your application, from a mostly superfical level to a level that aligns your application completely with the paradigms and purposes of the NetBeans Platform. The next section will show the levels of compliance your application can have with the NetBeans Platform.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_levels_of_compliance">Levels of Compliance</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Converting an application to be fit for a framework such as the NetBeans Platform can be done on various levels. The integration can be shallow and use just a few integration points or it can be deeper, tightly following the paradigms of the NetBeans Platform.</p>
+</div>
+<div class="paragraph">
+<p>The stages can be described as follows:</p>
+</div>
+<div class="sect2">
+<h3 id="section-LevelsOfCompliance-Level0Launchable">Level 0: Launchable</h3>
+<div class="paragraph">
+<p>One or more of the following can be done to make your application launchable with as few changes as possible:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Enhance your manifest with NetBeans key/value pairs so that your JAR is recognized as an OSGi bundle or as a NetBeans module.</p>
+</li>
+<li>
+<p>Set dependencies between modules. In the manifest, with instances of plain Class-Path you can set dependencies between modules.</p>
+</li>
+<li>
+<p>Register a menu item in the declarative layer file ( <code>layer.xml</code> ) of your module, to invoke your original application. This file can be created automatically when you create a new module project in NetBeans IDE, as you will see later.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>In this tutorial, we will do all of the above. We will enhance the manifest, which the module project wizard will do for us. We will create a menu item that will invoke our application. To do so, we will move our application&#8217;s classes into a module source structure. Then we will use the New Action wizard to create a new menu item, which will automatically be registered for us, and a dependency will be set on the UI Utilities API, which we will need to implement the Action. From that action, we will invoke our application.</p>
+</div>
+<div class="sect3">
+<h4 id="section-LevelsOfCompliance-Level1Integrated">Level 1: Integrated</h4>
+<div class="paragraph">
+<p>Here are some pointers for integrating the application more tightly with the NetBeans Platform:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Integrate visually to get the benefits of the NetBeans Window System, which is its docking framework.</p>
+</li>
+<li>
+<p>Use NetBeans Window System API and the Dialog APIs, primarily the  <code>TopComponent</code>  class and the  <code>DialogDisplayer</code>  class.</p>
+</li>
+<li>
+<p>Change initialization code of your application, use the  <code>ModuleInstall</code>  class or declarative registrations, through the layer file or the META-INF/services folder.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>In this tutorial, we will move the relevant parts of the  <code>JPanel</code>  from the  <code>JFrame</code>  to a new  <code>TopComponent</code> . The  <code>TopComponent</code>  class creates a window on the NetBeans Platform, which in our case will show our  <code>JPanel</code> .</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="section-LevelsOfCompliance-Level2UseCaseSupport">Level 2: Use Case Support</h4>
+<div class="paragraph">
+<p>This level of compliance with the NetBeans Platform is concerned with one or more of the following activities:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Bind your application to other modules by inspecting existing functionality and trying to use it.</p>
+</li>
+<li>
+<p>Simplify the workflow to fit into the NetBeans Platform paradigms.</p>
+</li>
+<li>
+<p>Listen to the global selection to discover what other modules are doing and update your state accordingly.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>In this tutorial, we will listen for the existence of  <code> <a href="http://bits.netbeans.org/dev/javadoc/org-openide-text/org/openide/cookies/EditorCookie.html">EditorCookie</a>s</code> . A cookie is a <em>capability</em>. With a Java interface, your object&#8217;s capabilities are fixed at compile time, while NetBeans Platform cookies allow your object to behave dynamically because your object can expose capabilities, or not, based on its state. An  <code>EditorCookie</code>  defines an editor, with interfaces for common activities such as opening a document, closing the editor, background loading of files, document saving, and modification notifications. We will listen for the existence of such a cookie and then we will pass the content of the editor to the  <code>TopComponent</code> , in the form of words. By doing this, we are doing what the first item above outlines, i.e., inspecting existing functionality and reusing it within the context of our ported application. This is a modest level of integration. However, it pays off because you are reusing functionality provided by the NetBeans Platform.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="section-LevelsOfCompliance-Level3Aligned">Level 3: Aligned</h4>
+<div class="paragraph">
+<p>In this final stage of your porting activity, you are concerned with the following thoughts, first and foremost:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Become a good citizen of the NetBeans Platform, by exposing your own state to other modules so that they know what you are doing.</p>
+</li>
+<li>
+<p>Eliminate duplicated functionality, by reusing the Navigator, Favorites window, Task List, Progress API, etc., instead of creating or maintaining your own.</p>
+</li>
+<li>
+<p>Cooperate with other modules and adapt your application to the NetBeans Platform way of doing things.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Towards the end of this tutorial, we will adopt this level of compliance by letting our  <code>TopComponent</code>  expose a  <code>SaveCookie</code>  when changes are made to the "Guessed Word" text field. By doing this, we will enable the Save menu item under the Tools menu. This kind of integration brings the full benefits of the NetBeans Platform, however it also requires some effort to attain.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_creating_the_netbeans_platform_application">Creating the NetBeans Platform Application</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>First, let&#8217;s create the basis of our application. We use a wizard to do so. This is the typical first practical step of creating a new application on top of the NetBeans Platform application.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="1">
+<li>
+<p>Choose File &gt; New Project (Ctrl-Shift-N). Under Categories, select NetBeans Modules. Under Projects, select NetBeans Platform Application, as shown below:</p>
+</li>
+</ol>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/agp0.png" alt="agp0">
+</div>
+</div>
+<div class="paragraph">
+<p>Click Next.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="2">
+<li>
+<p>Name the application <code>AnagramApplication</code>, as shown below:</p>
+</li>
+</ol>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/agp01.png" alt="agp01">
+</div>
+</div>
+<div class="paragraph">
+<p>Click Finish</p>
+</div>
+<div class="paragraph">
+<p>You now have a NetBeans Platform application. You can run it and you will see an empty main window, with a menu bar and a tool bar. Look under some of the menus, click a few toolbar buttons, and explore the basis of your new application.</p>
+</div>
+<div class="paragraph">
+<p>Next, we create our first custom module. We will name it <code>AnagramUI</code> because, in the end, it will only contain the user interface (UI) of the application. In a subsequent tutorial, we will add additional modules, which will provide an API and an implementation of the business logic. But, for the moment, we will port everything into the module that will ultimately provide only the UI of the application.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="3">
+<li>
+<p>Choose File &gt; New Project (Ctrl-Shift-N) again. Under Categories, select NetBeans Modules. Under Projects, select Module, as shown below:</p>
+</li>
+</ol>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/agp1.png" alt="agp1">
+</div>
+</div>
+<div class="paragraph">
+<p>Click Next.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="4">
+<li>
+<p>Type  <code>AnagramGameUI</code>  in Project Name and choose somewhere to store the module, as shown below:</p>
+</li>
+</ol>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/agp2.png" alt="agp2">
+</div>
+</div>
+<div class="paragraph">
+<p>Click Next.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="5">
+<li>
+<p>Type a unique name in the Code Name Base field, which provides the unique identifier for your module. It could be anything, but here it is  <code>org.anagram.ui</code> .</p>
+</li>
+</ol>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/agp3.png" alt="agp3">
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Optionally, check "Generate XML Layer". If you do not select it, that&#8217;s fine, because later in this tutorial you will be shown how to create it manually and you will also learn what it is used for.
+</td>
+</tr>
+</table>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="6">
+<li>
+<p>Click Finish.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>Below the Anagram Game sample, you should now see the source structure of your new module, as shown here:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/agp4.png" alt="agp4">
+</div>
+</div>
+<div class="paragraph">
+<p>Above, we can see that we now have the original application, together with the module to which it will be ported. In the next sections, we will begin porting the application to the module, using the porting levels described earlier.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_porting_level_0_launchable">Porting Level 0: Launchable</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>At this stage, we simply want to be able to launch our application from a module. To do that we will create a menu item that invokes the application. We begin by copying the application&#8217;s sources into the module source structure.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="1">
+<li>
+<p>Copy the two packages from the Anagram Game into the module. Below, the new packages and classes in the module are highlighted:</p>
+</li>
+</ol>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/agport0.png" alt="agport0">
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="2">
+<li>
+<p>In the <code>org.anagram.ui</code> package, create a new Java class named <code>OpenAnagramGameAction</code>, implementing the standard JDK <code>ActionListener</code> as follows:</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">import com.toy.anagrams.ui.Anagrams;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+public class OpenAnagramGameAction implements ActionListener {
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        new Anagrams().setVisible(true);
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>When the user invokes the <code>OpenAnagramGameAction</code>, the <code>JFrame</code> from the Anagram Game will open.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="3">
+<li>
+<p>Next, we need to register the new <code>OpenAnagramGameAction</code> in the NetBeans central registry, which is also known as the "System FileSystem".</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>If you do not have a file named <code>layer.xml</code> yet, create one in the <code>org.anagram.ui</code> package, with this content:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;!DOCTYPE filesystem PUBLIC "-//NetBeans//DTD Filesystem 1.2//EN" "https://netbeans.org/dtds/filesystem-1_2.dtd"&gt;
+&lt;filesystem&gt;
+
+    &lt;folder name="Actions"&gt;
+        &lt;folder name="Window"&gt;
+            &lt;file name="org-anagram-ui-OpenAnagramGameAction.instance"&gt;
+                &lt;attr name="delegate" newvalue="org.anagram.ui.OpenAnagramGameAction"/&gt;
+                &lt;attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/&gt;
+                &lt;attr name="displayName" bundlevalue="org.anagram.ui.Bundle#CTL_OpenAnagramGameAction"/&gt;
+            &lt;/file&gt;
+        &lt;/folder&gt;
+    &lt;/folder&gt;
+    &lt;folder name="Menu"&gt;
+        &lt;folder name="Window"&gt;
+            &lt;file name="OpenLibraryViewerWindowAction.shadow"&gt;
+                &lt;attr name="originalFile" stringvalue="Actions/Window/org-anagram-ui-OpenAnagramGameAction.instance"/&gt;
+            &lt;/file&gt;
+        &lt;/folder&gt;
+    &lt;/folder&gt;
+
+&lt;/filesystem&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Each module in your application can have, at most, one <code>layer.xml</code> file. The file is used to register contributions to the NetBeans Platform application. For example, new windows and new Actions are registered here, in folders specifically dedicated to the contribution in question. Above, you can see we are dealing with the "Actions" folder and the "Menu" folder. Some notes on the elements and attributes above:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Above, in the "delegate" attribute, you have registered the <code>OpenAnagramGameAction</code> class. In the "instanceCreate" attribute, you have specified that the NetBeans Platform method ` <a href="http://bits.netbeans.org/dev/javadoc/org-openide-awt/org/openide/awt/Actions.html#alwaysEnabled%28java.awt.event.ActionListener,%20java.lang.String,%20java.lang.String,%20boolean%29">org.openide.awt.Actions.alwaysEnabled</a>` will be called when the <code>OpenAnagramGameAction</code> is invoked. This is a NetBeans Platform method that creates an Action that is always enabled, regardless of the context of the application. Since you want the Anagram Game to be able to be started at any time, it makes sense for the Action to always be enabled.</p>
+</li>
+<li>
+<p>The "displayName" attribute above points to a key in the <code>Bundle.properties</code> file, which is the central file for storing all the localizable strings in the module.</p>
+</li>
+<li>
+<p>While the "Actions" folder registers the Action, the "Menu" folder specifies where the Action will be displayed. Above, you can see that the Action will be displayed in the Window menu.</p>
+</li>
+</ul>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="4">
+<li>
+<p>In the <code>Bundle.properties</code> file, add the following key/value pair, based on the "displayName" attribute above:</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">CTL_OpenAnagramGameAction=Open Anagram Game</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="5">
+<li>
+<p>In the Module Manifest, which you can find in the Important Files node in the module, and which is <code>manifest.mf</code> on disk, register the <code>layer.xml</code> file as follows:</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">OpenIDE-Module-Layer: org/anagram/ui/layer.xml</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="6">
+<li>
+<p>In the Projects window, right-click the AnagramApplication project node and choose Run. The application starts up, installing all the modules provided by the application, which includes our custom module.</p>
+</li>
+</ol>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="7">
+<li>
+<p>Under the Window menu, you should find the menu item "Open Anagram Game". Choose it and your application appears.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>The application is displayed, but note that it is not well integrated with the NetBeans Platform. For example, it is not modal and it is impossible to close the <code>JFrame</code>, unless you close the entire application. The latter is because the entire application now manages the lifecycle of the <code>JFrame</code>. In the next section, we will integrate the Anagram Game more tightly with the NetBeans Platform.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+In the section above, you manually created and registered a <code>layer.xml</code> file and you manually created an <code>ActionListener</code> and you manually registered the <code>ActionListener</code> in the <code>layer.xml</code> file. Now that you know how and why and where these activities occur, you can automate the process. Whenever you create a new module, select the "Generate XML Layer" checkbox, which will let the IDE automatically create the <code>layer.xml</code> file and the IDE will also register it in the <code>manifest.mf</code> file for you. In addition, you can automate the creation and registration of Actions by using the "New Action" wizard, which is available in the New File dialog (Ctrl-N). Also, whenever you use a wizard that registers something in the <code>layer.xml</code> file, such as the New Action wizard does, and the <code>layer.xml</code> file does not exist, the <code>layer.xml</code> file will automatically be created for you.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_porting_level_1_integration">Porting Level 1: Integration</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>In this section, we integrate the application more tightly by creating a new window, so that we have a user interface, that is., a window, to which we can move those contents of the  <code>JFrame</code>  that are useful to our new application.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="1">
+<li>
+<p>Right-click the <code>org.anagram.ui</code> package in the Projects window and then choose New &gt; Other. Under Categories, select Module Development. Under File Types, select Window.</p>
+</li>
+</ol>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/agport4.png" alt="agport4">
+</div>
+</div>
+<div class="paragraph">
+<p>Click Next.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="2">
+<li>
+<p>Choose the position where you would like the window to appear. For purposes of this tutorial choose "editor", which will place the Anagram Game in the main part of the application:</p>
+</li>
+</ol>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/agport5.png" alt="agport5">
+</div>
+</div>
+<div class="paragraph">
+<p>Optionally, specify whether the window should open automatically when the application starts up.</p>
+</div>
+<div class="paragraph">
+<p>Click Next.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="3">
+<li>
+<p>Type  <code>Anagram</code>  in Class Name Prefix and select  <code>org.anagram.ui</code>  in Package, as shown here:</p>
+</li>
+</ol>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/agport6.png" alt="agport6">
+</div>
+</div>
+<div class="paragraph">
+<p>Above, notice that the IDE shows the files it will create and modify.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="4">
+<li>
+<p>Click Finish.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>Now you have a set of new Java and XML source files, as shown here:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/agport7.png" alt="agport7">
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="5">
+<li>
+<p>Open the  <code>Anagrams</code>  class in the <code>com.toy.anagrams.ui</code> package. Also open the  <code>AnagramTopComponent</code> , which was created in the previous step. When you click the mouse in the Anagram class, notice that the labels and text fields are in a Swing container, in this case a  <code>JPanel</code> , as shown here:</p>
+</li>
+</ol>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/agport8.png" alt="agport8">
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Tip:</strong> If the Swing components were not within a container, you could select them all with the mouse, then right-click and choose "Enclose In", to let the IDE create a container within which all the selected components would be enclosed.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="6">
+<li>
+<p>Right-click the  <code>JPanel</code>  and copy it. Paste it in the TopComponent and you should see the old user interface in your new <code>TopComponent</code> class:</p>
+</li>
+</ol>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/agport9.png" alt="agport9">
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="7">
+<li>
+<p>You have now ported the user interface of the Anagram Game. A few variables need still to be moved from the <code>Anagrams</code> class to the new <code>AnagramTopComponent</code> class. Declare these two, which are in the <code>Anagrams</code> class, at the top of your new <code>AnagramTopComponent</code> class.</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">private int wordIdx = 0;
+private WordLibrary wordLibrary;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Next, look in the constructor of the <code>Anagrams</code> class. The first line in the constructor is as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">wordLibrary = WordLibrary.getDefault();</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Copy that statement. Paste it into the <code>TopComponent</code> class, making it the new first statement in the constructor of the <code>TopComponent</code> class.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="8">
+<li>
+<p>Next, open the <code>Bundle.properties</code> file. The content should be something similar to this:</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">CTL_AnagramAction=Anagram
+CTL_AnagramTopComponent=Anagram Window
+HINT_AnagramTopComponent=This is a Anagram window
+OpenIDE-Module-Name=AnagramGameUI
+CTL_OpenAnagramGameAction=Open Anagram Game
+AnagramTopComponent.feedbackLabel.text=\
+AnagramTopComponent.guessLabel.text=Your Guess:
+AnagramTopComponent.scrambledLabel.text=Scrambled Word:
+AnagramTopComponent.nextTrial.toolTipText=Fetch a new word.
+AnagramTopComponent.nextTrial.text=New Word
+AnagramTopComponent.guessButton.toolTipText=Guess the scrambled word.
+AnagramTopComponent.guessButton.text=Guess</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Notice line 6 above. The IDE erroneously created a backslash instead of a space in the key/value pair in line 6 above. If you have a line where the value is set to be a backslash, simply delete the backslash.</p>
+</div>
+<div class="paragraph">
+<p>If you do not delete the backslash, when you run the application, in the next step, you will see error messages such as these:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">--java.util.MissingResourceException: Can't find resource for bundle
+org.openide.util.NbBundle$PBundle, key AnagramTopComponent.guessLabel.text
+
+--java.lang.AssertionError: Component cannot be created for {component=null,
+displayName=Anagram, instanceCreate=AlwaysEnabledAction[Anagram]}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If you see the above error messages, open the <code>Bundle.properties</code> file and remove the erroneously generated backslash. This is a known bug.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="9">
+<li>
+<p>Run the application again. When the application starts up, you should now see the Anagram Game window, which you defined in this section. You will also find a new menu item that opens the window, under the Window menu. Also notice that the game works as before. You need to click the "New Word" button once, to have the module call up a new word, and then you can use it as before:</p>
+</li>
+</ol>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/agport10.png" alt="agport10">
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="10">
+<li>
+<p>As a final step in this section, you can simply delete the <code>com.toy.anagrams.ui</code> package. That package contains the two UI classes from the original Anagram Game. You do not need either of these two classes anymore. Simply delete the package that contains them, since you have ported everything of interest to the NetBeans Platform.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>Then also delete the <code>OpenAnagramGameAction</code> class, as well as the registration entries you manually added to the <code>layer.xml</code> file earlier in this tutorial. Be careful when you delete these entries, since others have been added to the <code>layer.xml</code> file in the meantime and you do not want to delete entries that do not relate to this specific Action that you are deleting!</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_porting_level_2_use_case_support">Porting Level 2: Use Case Support</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>In this section, we are concerned with listening to the global selection and making use of data we find there. The global selection is the registry for global singletons and instances of objects which have been registered in the system by modules. Here we query the lookup for  <code> <a href="http://bits.netbeans.org/dev/javadoc/org-openide-text/org/openide/cookies/EditorCookie.html">EditorCookie</a></code> s and make use of the  <code>EditorCookie</code> 's document to fill the string array that defines the scrambled words displayed in the  <code>TopComponent</code> .</p>
+</div>
+<div class="paragraph">
+<p>A cookie is a capability. With a Java interface, your object&#8217;s capabilities are fixed at compile time, while NetBeans Platform cookies allow your object to behave dynamically because your object can expose capabilities, or not, based on its state. An <code>EditorCookie</code> defines an editor, with interfaces for common activities such as opening a document, closing the editor, background loading of files, document saving, and modification notifications. We will listen for the existence of such a cookie and then we will pass the content of the editor to the TopComponent, in the form of words. By doing this, we are inspecting existing functionality and reusing it within the context of our ported application. This is a modest level of integration. However, it pays off because you are reusing functionality provided by the NetBeans Platform.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="1">
+<li>
+<p>We begin by tweaking the  <code>StaticWordLibrary</code>  class. We do this so that we can set its list of words externally. The sample provides a hardcoded list, but we want to be able to set that list ourselves, via an external action. Therefore, add this method to  <code>StaticWordLibrary</code> :</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public static void setScrambledWordList(String[] inScrambledWordList) {
+    SCRAMBLED_WORD_LIST = inScrambledWordList;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Importantly, change the class signature of  <code>StaticWordLibrary</code>  to <code>public class</code> and remove the <code>final</code> from the signature of <code>SCRAMBLED_WORD_LIST</code></p>
+</div>
+<div class="paragraph">
+<p>Next, we will create an action that will obtain the content of a Manifest file, break the content down into words, and fill the  <code>SCRAMBLED_WORD_LIST</code>  string array with these words.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="2">
+<li>
+<p>Right-click the module, choose Properties, and then open the Libraries tab in the Project Properties dialog. Click "Add Dependency" and then set dependencies on the Text API and the Nodes API.</p>
+</li>
+</ol>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="3">
+<li>
+<p>In the Source Editor, create a Java class named <code>SetScrambledAnagramsAction</code> and define it as follows:</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public final class SetScrambledAnagramsAction implements ActionListener {
+
+    private final EditorCookie context;
+
+    public SetScrambledAnagramsAction(EditorCookie context) {
+        this.context = context;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent ev) {
+        try {
+            //Get the EditorCookie's document:
+            StyledDocument doc = context.getDocument();
+            //Get the complete textual content:
+            String all = doc.getText(0, doc.getLength());
+            //Make words from the content:
+            String[] tokens = all.split(" ");
+            //Pass the words to the WordLibrary class:
+            StaticWordLibrary.setScrambledWordList(tokens);
+            //Open the TopComponent:
+            TopComponent win = AnagramTopComponent.findInstance();
+            win.open();
+            win.requestActive();
+        } catch (BadLocationException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="4">
+<li>
+<p>Register the Action above in the layer file. Unlike the previous Action, the Action above should not always be enabled. It should be available for Manifest files only, since that is the file type we happen to be interested in. Furthermore, the Action should only be enabled if an <code>EditorCookie</code> is present. The result of these requirements is a registration with this content:</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;folder name="Actions"&gt;
+    &lt;folder name="Window"&gt;
+        &lt;file name="org-anagram-ui-SetScrambledAnagramsAction.instance"&gt;
+            &lt;attr name="delegate" methodvalue="org.openide.awt.Actions.inject"/&gt;
+            &lt;attr name="displayName" bundlevalue="org.anagram.ui.Bundle#CTL_SetScrambledAnagramsAction"/&gt;
+            &lt;attr name="injectable" stringvalue="org.anagram.ui.SetScrambledAnagramsAction"/&gt;
+            &lt;attr name="instanceCreate" methodvalue="org.openide.awt.Actions.context"/&gt;
+            &lt;attr name="noIconInMenu" boolvalue="false"/&gt;
+            &lt;attr name="selectionType" stringvalue="EXACTLY_ONE"/&gt;
+            &lt;attr name="type" stringvalue="org.openide.cookies.EditorCookie"/&gt;
+        &lt;/file&gt;
+    &lt;/folder&gt;
+&lt;/folder&gt;
+&lt;folder name="Editors"&gt;
+    &lt;folder name="text"&gt;
+        &lt;folder name="x-manifest"&gt;
+            &lt;folder name="Popup"&gt;
+                &lt;file name="org-anagram-ui-SetScrambledAnagramsAction.shadow"&gt;
+                    &lt;attr name="originalFile" stringvalue="Actions/Window/org-anagram-ui-SetScrambledAnagramsAction.instance"/&gt;
+                    &lt;attr name="position" intvalue="900"/&gt;
+                &lt;/file&gt;
+            &lt;/folder&gt;
+        &lt;/folder&gt;
+    &lt;/folder&gt;
+&lt;/folder&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Many of the attributes above you have used previously. For example, the "displayName" attribute points to a key in the <code>Bundle.properties</code> file. This key does not exist yet. Create it now, in the <code>Bundle.properties</code> file, as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">CTL_SetScrambledAnagramsAction=Set Scrambled Words</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>instanceCreate</code> attribute specifies that the  <a href="http://bits.netbeans.org/dev/javadoc/org-openide-awt/org/openide/awt/Actions.html#context%28java.lang.Class,%20boolean,%20boolean,%20org.openide.util.ContextAwareAction,%20java.lang.String,%20java.lang.String,%20java.lang.String,%20boolean%29">org.openide.awt.Actions.context</a> method handles the Action.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Above, you manually created an Action class and registered it in the <code>layer.xml</code> file. Now that you know how to do this, feel free to use the New Action wizard (in the New File dialog, Ctrl-N) instead to create context-sensitive Actions from now onwards.
+</td>
+</tr>
+</table>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="5">
+<li>
+<p>As discussed above, when we run the application we want to be able to right-click within a Manifest file, choose a menu item, and invoke our Action. Right now, however, the NetBeans Platform is unable to distinguish Manifest files from any other file. Therefore, we need to enable Manifest support in our application.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>For demonstration purposes, we will enable ALL the modules in the NetBeans Platform, as well as those provided by NetBeans IDE. As a result, when we run the application, a new instance of NetBeans IDE will start up, together with our custom module.</p>
+</div>
+<div class="paragraph">
+<p>To achieve the above, expand the Important Files node, then open the NetBeans Platform Config file, which on disk is named <code>platform.properties</code>. Notice that many modules have been disabled. You can enable them via the Project Properties dialog of the NetBeans Platform application. Since we are simply going to enable ALL of them, we need only change the content of the <code>platform.properties</code> file to the following:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">cluster.path=\
+    ${nbplatform.active.dir}/apisupport:\
+    ${nbplatform.active.dir}/harness:\
+    ${nbplatform.active.dir}/ide:\
+    ${nbplatform.active.dir}/java:\
+    ${nbplatform.active.dir}/nb:\
+    ${nbplatform.active.dir}/platform:\
+    ${nbplatform.active.dir}/profiler:\
+    ${nbplatform.active.dir}/websvccommon
+disabled.modules=
+nbplatform.active=default</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In the next step, when we run the application, all the groups of modules (called "clusters") will be enabled, nothing will be excluded, and you will see NetBeans IDE started up.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="6">
+<li>
+<p>Run the application. Go to the Window menu and choose Favorites. In the Favorites window, browse to a Manifest file. Open the file. Inside the file, i.e., in the Manifest Editor, right-click, and invoke the Set Scrambled Words action via the menu item.</p>
+</li>
+</ol>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/ageditorcookie3.png" alt="ageditorcookie3">
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>AnagramTopComponent</code> is displayed and, when you click the Next Word button, you will see that the scrambled words all come from the selected Manifest file.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/ageditorcookie4.png" alt="ageditorcookie4">
+</div>
+</div>
+<div class="paragraph">
+<p>The result of this exercise is that you now see the content of the Manifest file in the Scrambled Word text field. Of course, these words are not really scrambled and you cannot really unscramble them. However, your module is making use of the content of a file that is supported by a different set of modules altogether, that is, the Manifest support modules, as well as related editor modules.</p>
+</div>
+<div class="paragraph">
+<p>Optionally, before continuing, you can now remove all the groups of modules (known as "clusters") provided by NetBeans IDE, which may not be relevant for your own application. To do so, right-click the <code>AnagramApplication</code> node in the Projects window, choose Properties, go to the Libraries tab, and uncheck all the checkboxes, except for <code>harness</code> and <code>platform</code>. Run the application again and you will see that all the project-related and editor-related features of the application have now been removed.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_porting_level_3_aligned">Porting Level 3: Aligned</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>In this section, we are concerned with becoming a "good citizen" of the NetBeans Platform. We are going to expose the state of the TopComponent to the other modules, so that we can cooperate with them.</p>
+</div>
+<div class="paragraph">
+<p>As an example of this, we will modify the TopComponent to offer a  <code>SaveCookie</code> , which gives the user a way to store the text typed in the text field. By offering the  <code>SaveCookie</code>  when changes are made in the text field, the Save button and the Save menu item under the File menu will become enabled. That is because the NetBeans Platform provides a context-sensitive Action called <code>SaveAction</code>. The <code>SaveAction</code> becomes enabled whenever the capability of being saved, in other words, the <code>SaveCookie</code>, is available. In this case, we will make the <code>SaveCookie</code> available whenever the user types something in the <code>guessedWord</code> text field. Then the <code>SaveAction</code> will automatically become enabled.</p>
+</div>
+<div class="paragraph">
+<p>When the user selects the enabled button or menu item, a dialog will be displayed and the button and menu item will become disabled, until the next time that a change is made to the text field.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="1">
+<li>
+<p>Begin by setting a dependency on the Dialogs API. Do this by right-clicking the project node in the Projects window, choosing Properties, and then using the Libraries tab to add the Dialogs API as a dependency of the module.</p>
+</li>
+</ol>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="2">
+<li>
+<p>Next, we define an implementation of the <code>SaveCookie</code>, somewhere within the <code>AnagramTopComponent</code> class:</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">private class SaveCookieImpl implements SaveCookie {
+
+    @Override
+    public void save() throws IOException {
+
+        Confirmation msg = new NotifyDescriptor.Confirmation("Do you want to save \""
+                + guessedWord.getText() + "\"?", NotifyDescriptor.OK_CANCEL_OPTION,
+                NotifyDescriptor.QUESTION_MESSAGE);
+
+        Object result = DialogDisplayer.getDefault().notify(msg);
+
+        //When user clicks "Yes", indicating they really want to save,
+        //we need to disable the Save button and Save menu item,
+        //so that it will only be usable when the next change is made
+        //to the text field:
+        if (NotifyDescriptor.YES_OPTION.equals(result)) {
+            fire(false);
+            //Implement your save functionality here.
+        }
+
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We have not defined the <code>fire</code> method yet, so the related statement above will be underlined in red until we do so.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="3">
+<li>
+<p>In the constructor, call the as-yet-undefined <code>fire</code> method, passing in true this time, whenever a change is detected in the <code>guessedWord</code> text field:</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">guessedWord.getDocument().addDocumentListener(new DocumentListener() {
+
+    @Override
+    public void insertUpdate(DocumentEvent arg0) {
+        fire(true);
+    }
+
+    public void removeUpdate(DocumentEvent arg0) {
+        fire(true);
+    }
+
+    public void changedUpdate(DocumentEvent arg0) {
+        fire(true);
+    }
+
+});</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="4">
+<li>
+<p>Now we declare an ` <a href="http://bits.netbeans.org/dev/javadoc/org-openide-util-lookup/org/openide/util/lookup/InstanceContent.html">InstanceContent</a>` at the top of the class. The <code>InstanceContent</code> class is a very powerful class in the NetBeans Platform, enabling you to update the Lookup on the fly, at runtime. We also declare the implementation of our <code>SaveCookie</code>:</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">InstanceContent ic;
+SaveCookieImpl impl;</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="5">
+<li>
+<p>Next, at the end of the constructor, we instantiate the <code>SaveCookie</code> and the <code>InstanceContent</code>, while adding the <code>InstanceContent</code> to the <code>Lookup</code> of the <code>AnagramTopComponent</code>:</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">impl = new SaveCookieImpl();
+
+ic = new InstanceContent();
+
+associateLookup(new AbstractLookup(ic));</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="6">
+<li>
+<p>Now we can add the <code>fire</code> method, which dynamically adds and removes the <code>SaveCookie</code> from the <code>InstanceContent</code>:</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public void fire(boolean modified) {
+    if (modified) {
+        //If the text is modified,
+        //we add the SaveCookie implementation
+        //to the InstanceContent, which
+        //is in the Lookup of the TopComponent:
+        ic.add(impl);
+    } else {
+        //Otherwise, we remove the SaveCookie
+        //from the InstanceContent:
+        ic.remove(impl);
+    }
+}</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="7">
+<li>
+<p>By default, you have a Save menu item under the File menu, but no Save button in the toolbar. For testing purposes, that is, to simplify checking whether the <code>SaveAction</code> is enabled, you may want a Save button in the toolbar. For this purpose, add the following to the layer:</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;folder name="Toolbars"&gt;
+    &lt;folder name="File"&gt;
+        &lt;file name="org-openide-actions-SaveAction.shadow"&gt;
+            &lt;attr name="originalFile" stringvalue="Actions/System/org-openide-actions-SaveAction.instance"/&gt;
+            &lt;attr name="position" intvalue="444"/&gt;
+        &lt;/file&gt;
+    &lt;/folder&gt;
+&lt;/folder&gt;</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="8">
+<li>
+<p>Run the application again. Make a change in the "Guessed Word" text field and notice that the Save button and the Save menu item become enabled:</p>
+</li>
+</ol>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/ageditorcookie2.png" alt="ageditorcookie2">
+</div>
+</div>
+<div class="paragraph">
+<p>Select either the button or the menu item, click the "OK" button in the dialog&#8230;&#8203;</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/ageditorcookie5.png" alt="ageditorcookie5">
+</div>
+</div>
+<div class="paragraph">
+<p>&#8230;&#8203;and notice that the Save functionality is disabled afterwards.</p>
+</div>
+<div class="paragraph">
+<p>Congratulations! Now that your application is making use of existing NetBeans Platform functionality, you have taken one further step in successfully aligning it with the NetBeans Platform. Other modules can be now be plugged into the NetBeans Platform to take advantage of, or even extend, features added by your application. Hence, not only can your application benefit from what the NetBeans Platform provides, but you can create features that other modules can use as well.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_porting_tips_tricks">Porting Tips &amp; Tricks</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>There are several next steps one can take at this point, aside from further aligning the application with the NetBeans Platform, as outlined above:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Attain a thorough understanding of what the NetBeans Platform provides.</strong> As you port your application, you will learn more and more about the various features that the NetBeans Platform makes available. A central problem is that the NetBeans Platform is quite large and attaining a thorough overview of all that it offers can be a lengthy process. A quick shortcut is to download and print out the  <a href="http://refcardz.dzone.com/refcardz/essential-netbeans-platform">Essential NetBeans Platform Refcard</a>, which is a free DZone document that highlights all the NetBeans Platform benefits, features, APIs, and many tips and tricks in an easy to digest format.</p>
+</li>
+<li>
+<p><strong>Become aware of the differences between standard Swing applications and the NetBeans Platform.</strong> For the most part, the standard Swing approach to creating a user interface will continue to work for your NetBeans Platform application. However, the NetBeans Platform approach is better, easier, or both in some cases. One example is that of the NetBeans Dialogs API. The standard Swing approach, via, for example, the  <code>JOptionsPane</code> , works OK, but using the NetBeans Dialogs API is easier, because it automatically centers your dialog in the application and allows you to dismiss it with the ESC key. Using the Dialogs API also lets you plug in a different DialogDisplayer, which can make it easier to customize or test your application.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Below is a list of the principle differences between the typical Swing approach and that of the NetBeans Platform:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Loading of images</p>
+</li>
+<li>
+<p>Loading of resource bundles and localized string</p>
+</li>
+<li>
+<p>Assigning of mnemonics to labels and buttons</p>
+</li>
+<li>
+<p>Showing dialogs</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>For details on all of the above items, read this FAQ:  <a href="https://netbeans.apache.org/wiki/devfaqnbideosyncracies">Common calls that should be done slightly differently in NetBeans than standard Swing apps (loading images, localized strings, showing dialogs)</a>.</p>
+</div>
+<div class="paragraph">
+<p>In addition, note that, since the NetBeans Platform now handles the lifecycle of your module, since it is now part of the whole application, you can no longer use  <code>System.exit</code> . Instead, you need to use  <code>LifecycleManager</code> . To run code on start up, which should only be done when absolutely necessary, you need to use the NetBeans  <code>ModuleInstall</code>  class and, specifically, its  <code>restored</code>  method. A useful reference in this context is  <a href="http://www.ociweb.com/jnb/jnbOct2005.html#porting">Porting a Java Swing Application to the NetBeans Platform</a>, by Tom Wheeler, in  <a href="http://www.ociweb.com/jnb/jnbOct2005.html#porting">Building A Complete NetBeans Platform Application</a>.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Create a module project for each distinct part of your application.</strong> The NetBeans Platform provides a modular architecture out of the box. Break your application into one or more modules. Doing so requires some analysis of your original application and an assessment of which parts could best fit within a new module and how to communicate between them. Since the example in this tutorial was simple, we only needed one module. A next step might be to put the  <code>WordLibrary</code>  class in a separate module and expose it as a public API. The  <code>StaticWordLibrary</code>  would be put into another module, providing an implementation of the  <code>WordLibrary</code>  API. Doing so would let other modules provide user interfaces on top of the API provided by the first module, without depending in any way on the implementations.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>As shown above, you need to put the modules in a module suite. Then set a dependency in the plugin module on the API module, using the Libraries panel in the plugin module&#8217;s Project Properties dialog box. The size of each module, i.e., when one should create a new module or continue developing within an existing one, is a question of debate. Smaller is better, in general.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Always keep reevaluating what you really need to port.</strong> Look at the NetBeans Platform and decide where there is overlap with your own application. Where there is overlap, such as the menu bar and About box, decide what you want to do. Typically, you want to leverage as much as possible from the NetBeans Platform. Therefore, you would port as little as possible from your own application, while keeping as much of it as is useful to you.</p>
+</li>
+<li>
+<p><strong>Move distinct parts of your user interface to one or more TopComponents.</strong> On the NetBeans Platform, the  <code>TopComponent</code>  class provides the top level Swing container. In effect, it is a window. Move the user interface from your original application to one or more of these windows and discard your original  <code>JFrame</code> s.</p>
+</li>
+<li>
+<p><strong>Copy the Java classes that do not provide user interface elements.</strong> We simply copied the original  <code>WordLibrary.java</code>  class. You can do the same with the model of your own Swing applications. You might need to tweak some code to smoothen the transition between the old Swing application and the new NetBeans Platform application, but (as in the case shown in this tutorial) this might not even be necessary.</p>
+</li>
+<li>
+<p><strong>Learn from others.</strong> Aside from joining the <a href="mailto:dev@platform.netbeans.org">dev@platform.netbeans.org</a> mailing list, also read the following two crucial articles:</p>
+</li>
+<li>
+<p><a href="http://netbeans.dzone.com/10-tips-4-porting-2-netbeans">Top 10 Tips for Porting to the NetBeans Platform</a></p>
+</li>
+<li>
+<p><a href="http://java.dzone.com/news/how-to-split-into-modules">How to Split an Application into Modules?</a></p>
+</li>
+<li>
+<p><strong>Watch the Top 10 NetBeans APIs Screencast.</strong> The  <a href="https://netbeans.apache.org/tutorials/nbm-10-top-apis.html">screencast series</a> gives a good overview of the NetBeans Platform, with many useful code snippets and coding patterns.
+<a href="http://netbeans.apache.org/community/mailing-lists.html">Send Us Your Feedback</a></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_next_steps">Next Steps</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>For more information about creating and developing NetBeans modules, see the following resources:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://netbeans.apache.org/kb/docs/platform.html">Other Related Tutorials</a></p>
+</li>
+<li>
+<p><a href="https://bits.netbeans.org/dev/javadoc/">NetBeans API Javadoc</a></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+            
+<section class='tools'>
+    <ul class="menu align-center">
+        <li><a title="Facebook" href="https://www.facebook.com/NetBeans"><i class="fa fa-md fa-facebook"></i></a></li>
+        <li><a title="Twitter" href="https://twitter.com/netbeans"><i class="fa fa-md fa-twitter"></i></a></li>
+        <li><a title="Github" href="https://github.com/apache/netbeans"><i class="fa fa-md fa-github"></i></a></li>
+        <li><a title="YouTube" href="https://www.youtube.com/user/netbeansvideos"><i class="fa fa-md fa-youtube"></i></a></li>
+        <li><a title="Slack" href="https://tinyurl.com/netbeans-slack-signup/"><i class="fa fa-md fa-slack"></i></a></li>
+        <li><a title="JIRA" href="https://issues.apache.org/jira/projects/NETBEANS/summary"><i class="fa fa-mf fa-bug"></i></a></li>
+    </ul>
+    <ul class="menu align-center">
+        
+        <li><a href="https://github.com/apache/netbeans-website/blob/master/netbeans.apache.org/src/content/tutorials/69/nbm-porting-basic.asciidoc" title="See this page in github"><i class="fa fa-md fa-edit"></i> See this page in GitHub.</a></li>
+    </ul>
+</section>
+
+        </div>
+        
+
+<div class='grid-container incubator-area' style='margin-top: 64px'>
+    <div class='grid-x grid-padding-x'>
+        <div class='large-auto cell text-center'>
+            <a href="https://www.apache.org/">
+                <img style="width: 320px" title="Apache Software Foundation" src="/images/asf_logo_wide.svg" />
+            </a>
+        </div>
+        <div class='large-auto cell text-center'>
+            <a href="https://www.apache.org/events/current-event.html">
+               <img style="width:234px; height: 60px;" title="Apache Software Foundation current event" src="https://www.apache.org/events/current-event-234x60.png"/>
+            </a>
+        </div>
+    </div>
+</div>
+<footer>
+    <div class="grid-container">
+        <div class="grid-x grid-padding-x">
+            <div class="large-auto cell">
+                
+                <h1><a href="/about/index.html">About</a></h1>
+                <ul>
+                    <li><a href="https://netbeans.apache.org/community/who.html">Who's Who</a></li>
+                    <li><a href="https://www.apache.org/foundation/thanks.html">Thanks</a></li>
+                    <li><a href="https://www.apache.org/foundation/sponsorship.html">Sponsorship</a></li>
+                    <li><a href="https://www.apache.org/security/">Security</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/community/index.html">Community</a></h1>
+                <ul>
+                    <li><a href="/community/mailing-lists.html">Mailing lists</a></li>
+                    <li><a href="/community/committer.html">Becoming a committer</a></li>
+                    <li><a href="/community/events.html">NetBeans Events</a></li>
+                    <li><a href="https://www.apache.org/events/current-event.html">Apache Events</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/participate/index.html">Participate</a></h1>
+                <ul>
+                    <li><a href="/participate/submit-pr.html">Submitting Pull Requests</a></li>
+                    <li><a href="/participate/report-issue.html">Reporting Issues</a></li>
+                    <li><a href="/participate/index.html#documentation">Improving the documentation</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/help/index.html">Get Help</a></h1>
+                <ul>
+                    <li><a href="/help/index.html#documentation">Documentation</a></li>
+                    <li><a href="/wiki/index.asciidoc">Wiki</a></li>
+                    <li><a href="/help/index.html#support">Community Support</a></li>
+                    <li><a href="/help/commercial-support.html">Commercial Support</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/download/nb110/nb110.html">Download</a></h1>
+                <ul>
+                    <li><a href="/download/index.html">Releases</a></li>                    
+                    <li><a href="/plugins/index.html">Plugins</a></li>
+                    <li><a href="/download/index.html#source">Building from source</a></li>
+                    <li><a href="/download/index.html#previous">Previous releases</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</footer>
+<div class='footer-disclaimer'>
+    <div class="footer-disclaimer-content">
+        <p>Copyright &copy; 2017-2019 <a href="https://www.apache.org">The Apache Software Foundation</a>.</p>
+        <p>Licensed under the Apache <a href="https://www.apache.org/licenses/">license</a>, version 2.0</p>
+        <div style='max-width: 40em; margin: 0 auto'>
+            <p>Apache, Apache NetBeans, NetBeans, the Apache feather logo and the Apache NetBeans logo are trademarks of <a href="https://www.apache.org">The Apache Software Foundation</a>.</p>
+            <p>Oracle and Java are registered trademarks of Oracle and/or its affiliates.</p>
+        </div>
+        
+    </div>
+</div>
+
+
+
+        <script src="/js/vendor/jquery-3.2.1.min.js"></script>
+        <script src="/js/vendor/what-input.js"></script>
+        <script src="/js/vendor/jquery.colorbox-min.js"></script>
+        <script src="/js/vendor/foundation.min.js"></script>
+        <script src="/js/netbeans.js"></script>
+        <script>
+            
+            $(function(){ $(document).foundation(); });
+        </script>
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/highlight.min.js"></script>
+        <script>
+         $(document).ready(function() { $("pre code").each(function(i, block) { hljs.highlightBlock(block); }); }); 
+        </script>
+        
+    </body>
+</html>

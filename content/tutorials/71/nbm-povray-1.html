@@ -1,0 +1,602 @@
+
+<!DOCTYPE html>
+<html class="no-js" lang="en" dir="ltr">
+    
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>Writing POV-Ray Support for NetBeans I—Application Structure &amp; File Support</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Writing POV-Ray Support for NetBeans I—Application Structure &amp;amp; File Support - Apache NetBeans">
+    <meta name="author" content="Apache NetBeans">
+    <meta name="keywords" content="Apache NetBeans Platform, Platform Tutorials, Writing POV-Ray Support for NetBeans I—Application Structure &amp;amp; File Support">
+    <meta name="generator" content="Apache NetBeans">
+    <link rel="stylesheet" href="/css/font-awesome.min.css">
+     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/styles/default.min.css"> 
+    <link rel="stylesheet" href="/css/netbeans.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#ffc40d">
+    <meta name="theme-color" content="#ffffff">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700" rel="stylesheet"> 
+    <!--
+        Licensed to the Apache Software Foundation (ASF) under one
+        or more contributor license agreements.  See the NOTICE file
+        distributed with this work for additional information
+        regarding copyright ownership.  The ASF licenses this file
+        to you under the Apache License, Version 2.0 (the
+        "License"); you may not use this file except in compliance
+        with the License.  You may obtain a copy of the License at
+        http://www.apache.org/licenses/LICENSE-2.0
+        Unless required by applicable law or agreed to in writing,
+        software distributed under the License is distributed on an
+        "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+        KIND, either express or implied.  See the License for the
+        specific language governing permissions and limitations
+        under the License.
+    -->
+</head>
+
+
+    <body>
+        
+
+<div class="title-bar" data-responsive-toggle="responsive-menu" data-hide-for="medium">
+    <button type="button" data-toggle="responsive-menu"><i style='font-size: 32px; color: #fff; padding: 8px' class='fa fa-bars'></i></button>
+    <div class="title-bar-title">Apache NetBeans</div>
+</div>
+<div class="top-bar" id="responsive-menu">
+    <div class='top-bar-left'>
+        <a class='title' href="/"><img src='/images/apache-netbeans.svg' style='padding: 8px; height: 48px;'></img> Apache NetBeans</a>
+    </div>
+    <div class="top-bar-right">
+        <ul class="vertical medium-horizontal menu" data-responsive-menu="drilldown medium-dropdown">
+            <li> <a href="/community/index.html">Community</a> </li>
+            <li> <a href="/participate/index.html">Participate</a> </li>
+            <li> <a href="https://blogs.apache.org/netbeans/">Blog</a></li>
+            <li> <a href="/help/index.html">Get Help</a> </li>
+            <li> <a href="/plugins/index.html">Plugins</a> </li>
+            <li> <a href="/download/index.html">Download</a> </li>
+        </ul>
+    </div>
+</div>
+
+
+        
+<!-- src/templates/news -->
+<section class="hero news alternate">
+    <div class='grid-container'>
+        <div class='cell'>
+            <div class="annotation">Just released!</div>
+            <h1 syle='font-size: 2rem'>Apache NetBeans 11.3</h1>
+            <p><a class="button success" href="/download/nb113/index.html">Find out more</a></p>
+        </div>
+    </div>
+</section>
+
+        <div class='grid-container main-content tutorial'>
+            <h1 class="sect0">Writing POV-Ray Support for NetBeans I—Application Structure &amp; File Support</h1>
+            
+            <div class="sectionbody">
+              <div class="admonitionblock note">
+                <table>
+                  <tbody><tr>
+                  <td class="icon"><i class="fa icon-note" title="Note"></i></td>
+                  <td class="content">This tutorial needs a review. 
+                     You can <a href="https://issues.apache.org/jira/projects/NETBEANS/issues">open a JIRA issue</a>, 
+                     or <a href="https://github.com/apache/netbeans-website/blob/master/netbeans.apache.org/src/content/tutorials/71/nbm-povray-1.asciidoc" title="Edit this tutorial in github">edit it in GitHub </a>
+                     following these <a href="/kb/docs/contributing.html">contribution guidelines.</a></td>
+                  </tr></tbody>
+                </table>
+              </div>
+            </div>
+            
+            <div id="toc" class="toc">
+<div id="toctitle"></div>
+<ul class="sectlevel1">
+<li><a href="#_creating_the_application_and_modules">Creating the Application and Modules</a>
+<ul class="sectlevel2">
+<li><a href="#_creating_the_code_povfile_code_module_project">Creating the  <code>povfile</code>  Module Project</a></li>
+<li><a href="#_creating_the_code_povproject_code_module_project">Creating the  <code>povproject</code>  Module Project</a></li>
+</ul>
+</li>
+<li><a href="#_creating_a_file_type_basic_support_for_pov_files">Creating a File Type—Basic Support for .pov Files</a></li>
+<li><a href="#_next_steps">Next Steps</a></li>
+</ul>
+</div>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>The POV-Ray tutorial is an advanced NetBeans Platform tutorial showing how to build an application for rendering POV-Ray files. In the process of creating the application, you will build on top of your existing NetBeans Platform knowledge, extending that knowledge into new areas, such as modular intercommunication and API design. You will touch upon many NetBeans APIs and learn how their best features can be combined in the creation of a real application.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+For a quick visual impression of the application you&#8217;ll be creating, see the screenshot in the  <a href="nbm-povray-10.html">Conclusion</a> of this tutorial.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p><a href="http://povray.org">POV-Ray</a>—the Persistence Of Vision Raytracer—is an open-source 3D rendering engine and one that only a programmer could love. Rather than having a graphical modeling tool, it is based around a <em>scene</em> language which is "compiled" into an image.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/netbeans-stamp.png" alt="netbeans stamp">
+</div>
+<div class="title">Figure 1. Content on this page applies to NetBeans IDE 7.1</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Part 1: Application Structure &amp; File Support</p>
+</li>
+<li>
+<p>Part 2:  <a href="nbm-povray-2.html">Project Type Design</a></p>
+</li>
+<li>
+<p>Part 3:  <a href="nbm-povray-3.html">Implementing a Project Type</a></p>
+</li>
+<li>
+<p>Part 4:  <a href="nbm-povray-4.html">Providing Project Templates</a></p>
+</li>
+<li>
+<p>Part 5:  <a href="nbm-povray-5.html">Creating an API</a></p>
+</li>
+<li>
+<p>Part 6:  <a href="nbm-povray-6.html">Implementing the API</a></p>
+</li>
+<li>
+<p>Part 7:  <a href="nbm-povray-7.html">Support For Running POV-Ray</a></p>
+</li>
+<li>
+<p>Part 8:  <a href="nbm-povray-8.html">Implementing ViewService and its Actions</a></p>
+</li>
+<li>
+<p>Part 9:  <a href="nbm-povray-9.html">Build Support</a></p>
+</li>
+<li>
+<p>Part 10:  <a href="nbm-povray-10.html">Conclusion</a></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>For troubleshooting purposes, you can download the code sources of this tutorial here:</p>
+</div>
+<div class="paragraph">
+<p><a href="http://web.archive.org/web/20170409072842/http://java.net/projects/nb-api-samples/show/versions/7.1/tutorials/PovSuite">http://java.net/projects/nb-api-samples/sources/api-samples/show/versions/7.1/tutorials/PovSuite</a></p>
+</div>
+<div class="paragraph">
+<p><strong>To follow this tutorial, you need the software and resources listed in the following table.</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Software or Resource</th>
+<th class="tableblock halign-left valign-top">Version Required</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://netbeans.apache.org/download/index.html">NetBeans IDE</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">version 7.1 or above</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.oracle.com/technetwork/java/javase/downloads/index.html">Java Developer Kit (JDK)</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">version 6 or above</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+If you haven&#8217;t developed a NetBeans Platform application before, you are advised to work through several other tutorials before working on this one—doing so will familiarize you with the basic concepts presented here. Particularly recommended are:
+</td>
+</tr>
+</table>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>* <a href="http://wiki.netbeans.org/NbmIdioms">Introduction to NetBeans Idioms and Infrastructure</a>*—covers a lot of the concepts you will encounter here</p>
+</li>
+<li>
+<p>* <a href="https://netbeans.apache.org/tutorials/nbm-quick-start.html">NetBeans Platform Quick Start</a>*—the essential starting point for anyone interested in working with the NetBeans Platform</p>
+</li>
+<li>
+<p>* <a href="https://netbeans.apache.org/tutorials/nbm-selection-1.html">Selection in NetBeans</a>*—not directly relevant to writing project types, which is the focus of this tutorial, but will familiarize you with using the Lookup API which pops up in a number of places here</p>
+</li>
+<li>
+<p>* <a href="https://netbeans.apache.org/tutorials/nbm-filetype.html">File Type</a>*—the tutorial describing how new file types are supported in the NetBeans Platform</p>
+</li>
+<li>
+<p><a href="https://netbeans.apache.org/wiki/">NetBeans Developer FAQ</a>—contains essential definitions and descriptions of API classes and concepts, and how to perform the typical tasks you will need to do when using the NetBeans Platform</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_creating_the_application_and_modules">Creating the Application and Modules</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Since support for POV-Ray will be made up of multiple modules, we will start by creating a "NetBeans Platform Application" container, which holds multiple interdependent modules, while providing a subset of NetBeans modules containing features common to most desktop applications. Then we will walk through creating two modules. The first implements support for  <a href="http://povray.org">POV-Ray Scene Files</a>. The second provides a POV-Ray project type, and allows scene files to be rendered into image files.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="1">
+<li>
+<p>Select File &gt; New Project from the main menu. In the New Project dialog, select NetBeans Modules &gt; NetBeans Platform Application and click Next or press Enter:</p>
+</li>
+</ol>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/pic-1.png" alt="pic 1">
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="2">
+<li>
+<p>Name the suite "povsuite" on the next screen, choose a location on your hard disk to put it.</p>
+</li>
+</ol>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/pic-2.png" alt="pic 2">
+</div>
+</div>
+<div class="paragraph">
+<p>Then press Enter or click Finish.</p>
+</div>
+<div class="sect2">
+<h3 id="_creating_the_code_povfile_code_module_project">Creating the  <code>povfile</code>  Module Project</h3>
+<div class="paragraph">
+<p>Now we will create the first module for our suite—support for <code>.pov</code> files—POV-Ray scene language files.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="1">
+<li>
+<p>Select File &gt; New Project again from the main menu.</p>
+</li>
+</ol>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="2">
+<li>
+<p>This time, select NetBeans Modules &gt; Module in the New Project wizard, and click Next or press Enter.</p>
+</li>
+</ol>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="3">
+<li>
+<p>On the next page of the wizard, give the module the project name "povfile" and then click Next.</p>
+</li>
+</ol>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="4">
+<li>
+<p>Now specify, for code name base, "org.netbeans.examples.modules.povfile" and the display name "Povray File Support".</p>
+</li>
+</ol>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="5">
+<li>
+<p>Click Finish or press Enter to create the project. It should automatically be added to the application we just created.</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_creating_the_code_povproject_code_module_project">Creating the  <code>povproject</code>  Module Project</h3>
+<div class="paragraph">
+<p>We will now repeat the last few steps to create another project, in which we will implement a special POV-Ray project type, whose compile actions will generate an image from a scene file.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="1">
+<li>
+<p>Select File &gt; New Project again from the main menu.</p>
+</li>
+</ol>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="2">
+<li>
+<p>This time, select NetBeans Modules &gt; Module in the New Project wizard, and click Next or press Enter.</p>
+</li>
+</ol>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="3">
+<li>
+<p>On the next page of the wizard, give the module the project name "povproject" and then click Next.</p>
+</li>
+</ol>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="4">
+<li>
+<p>On the next page of the wizard, give the module the code name "org.netbeans.examples.modules.povproject" and the display name "Povray Projects".</p>
+</li>
+</ol>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="5">
+<li>
+<p>Click Finish or press Enter to create the project. It should automatically be added to the application we just created.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>Your application should now look as follows:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/pic-3.png" alt="pic 3">
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_creating_a_file_type_basic_support_for_pov_files">Creating a File Type—Basic Support for .pov Files</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The first thing we will want to create is basic support that enables NetBeans to recognize .pov files and open them in the editor—which will give us a place to hang Actions, provide special icons, and other special support specific to .pov files.</p>
+</div>
+<div class="paragraph">
+<p>A ` <a href="https://netbeans.apache.org/wiki/devfaqdataloader">DataLoader</a>` is a factory which is registered against a particular MIME type or file extension. It creates ` <a href="https://netbeans.apache.org/wiki/devfaqdataobject">DataObject</a><code>s—typically one per file. So, when you expand a folder in the Projects or Files tab in the IDE, what happens under the hood is that all of the files in the folder you expanded are found, and for each file, the system locates the `DataLoader</code> for its file type and asks it to create a <code>DataObject</code> for it.</p>
+</div>
+<div class="paragraph">
+<p><code>DataObject`s contain logic that enables them to actually parse or understand a files contents, or know what to do with that particular type of file. So there is a 1:1 mapping between files and `DataObjects</code> and a 1:1 mapping between <em>file types</em> and `DataLoader`s.</p>
+</div>
+<div class="paragraph">
+<p>NetBeans IDE has a template called "File Type" that makes it very easy to generate basic support for a new file type:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="1">
+<li>
+<p>Expand the Povray File Support Module and its Source Packages subnode.</p>
+</li>
+</ol>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="2">
+<li>
+<p>Right-click the package <code>org.netbeans.examples.modules.povfile</code> and choose New &gt; Other from the popup menu.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>1.
+Select NetBeans Module Development &gt; File Type in the New File wizard:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/pic-4.png" alt="pic 4">
+</div>
+</div>
+<div class="paragraph">
+<p>Click Next or press Enter.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="4">
+<li>
+<p>On the next screen, you are asked to supply a MIME type and a file extension. Enter "text/x-povray" for the MIME type, and two file extensions, ".pov,.inc" for the file extensions:</p>
+</li>
+</ol>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/pic-5.png" alt="pic 5">
+</div>
+</div>
+<div class="paragraph">
+<p>Click Next or press Enter.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="5">
+<li>
+<p>On the next screen, you are asked to supply a prefix for a the names of several Java classes that will be generated. Enter "Povray". This screen also requests an icon. Any 16x16 gif or png will do, or you can use</p>
+</li>
+</ol>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="imageblock left">
+<div class="content">
+<a class="image" href="images/povicon.gif"><img src="images/povicon.gif" alt="povicon"></a>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/pic-6.png" alt="pic 6">
+</div>
+</div>
+<div class="paragraph">
+<p>When you have entered the icon and the name, press Enter or click Finish and the IDE will generate the Java classes and metadata files needed for basic POV-Ray file support in NetBeans.</p>
+</div>
+<div class="paragraph">
+<p>You should now have the following file structure in the <code>povfile</code> package:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/pic-7.png" alt="pic 7">
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code><strong>org.netbeans.examples.modules.povfile/</strong></code></p>
+</li>
+<li>
+<p><code><strong>Bundle.properties</strong></code> A resource bundle for miscellaneous localized strings</p>
+</li>
+<li>
+<p><code><strong>PovrayDataObject.java</strong></code> This is the object that understands what a .pov file is. If we were to provide advanced support for POV-Ray files, we would probably parse those files here, and provide some sort of model of the structure of the file that could be shown in Navigator or manipulated programmatically</p>
+</li>
+<li>
+<p><code><strong>PovrayResolver.xml</strong></code> This is a small bit of XML that declares that <code>.pov</code> and <code>.inc</code> files map to the MIME type <code>text/x-povray</code> (which we have invented for purposes of this tutorial). This XML file is referenced from the module&#8217;s <code>layer.xml</code> file.</p>
+</li>
+<li>
+<p><code><strong>PovrayTemplate.pov</strong></code> This is an empty template POV-Ray file which can be modified and will be used as the basis of new POV-Ray files in the New File wizard</p>
+</li>
+<li>
+<p><code><strong>layer.xml</strong></code> A module layer file which allows the module to install some objects declaratively.</p>
+</li>
+<li>
+<p><code><strong>povicon.gif</strong></code> The icon you chose in the wizard, which will appear on editor tabs for <code>.pov</code> and <code>.inc</code> files</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>At this point we have basic support for POV-Ray files—if you right-click the module suite and click Run, NetBeans will install with both of the modules installed—and if you create a fake <code>.pov</code> file in your home directory and then browse, for example, in the Favorites tab (Window &gt; Favorites from the main menu), you will see that it is indeed recognized by NetBeans, and has the icon that you specified.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_next_steps">Next Steps</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The  <a href="nbm-povray-2.html">next section</a> will cover designing and planning our project type and file support and how they will interrelate.</p>
+</div>
+</div>
+</div>
+            
+<section class='tools'>
+    <ul class="menu align-center">
+        <li><a title="Facebook" href="https://www.facebook.com/NetBeans"><i class="fa fa-md fa-facebook"></i></a></li>
+        <li><a title="Twitter" href="https://twitter.com/netbeans"><i class="fa fa-md fa-twitter"></i></a></li>
+        <li><a title="Github" href="https://github.com/apache/netbeans"><i class="fa fa-md fa-github"></i></a></li>
+        <li><a title="YouTube" href="https://www.youtube.com/user/netbeansvideos"><i class="fa fa-md fa-youtube"></i></a></li>
+        <li><a title="Slack" href="https://tinyurl.com/netbeans-slack-signup/"><i class="fa fa-md fa-slack"></i></a></li>
+        <li><a title="JIRA" href="https://issues.apache.org/jira/projects/NETBEANS/summary"><i class="fa fa-mf fa-bug"></i></a></li>
+    </ul>
+    <ul class="menu align-center">
+        
+        <li><a href="https://github.com/apache/netbeans-website/blob/master/netbeans.apache.org/src/content/tutorials/71/nbm-povray-1.asciidoc" title="See this page in github"><i class="fa fa-md fa-edit"></i> See this page in GitHub.</a></li>
+    </ul>
+</section>
+
+        </div>
+        
+
+<div class='grid-container incubator-area' style='margin-top: 64px'>
+    <div class='grid-x grid-padding-x'>
+        <div class='large-auto cell text-center'>
+            <a href="https://www.apache.org/">
+                <img style="width: 320px" title="Apache Software Foundation" src="/images/asf_logo_wide.svg" />
+            </a>
+        </div>
+        <div class='large-auto cell text-center'>
+            <a href="https://www.apache.org/events/current-event.html">
+               <img style="width:234px; height: 60px;" title="Apache Software Foundation current event" src="https://www.apache.org/events/current-event-234x60.png"/>
+            </a>
+        </div>
+    </div>
+</div>
+<footer>
+    <div class="grid-container">
+        <div class="grid-x grid-padding-x">
+            <div class="large-auto cell">
+                
+                <h1><a href="/about/index.html">About</a></h1>
+                <ul>
+                    <li><a href="https://netbeans.apache.org/community/who.html">Who's Who</a></li>
+                    <li><a href="https://www.apache.org/foundation/thanks.html">Thanks</a></li>
+                    <li><a href="https://www.apache.org/foundation/sponsorship.html">Sponsorship</a></li>
+                    <li><a href="https://www.apache.org/security/">Security</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/community/index.html">Community</a></h1>
+                <ul>
+                    <li><a href="/community/mailing-lists.html">Mailing lists</a></li>
+                    <li><a href="/community/committer.html">Becoming a committer</a></li>
+                    <li><a href="/community/events.html">NetBeans Events</a></li>
+                    <li><a href="https://www.apache.org/events/current-event.html">Apache Events</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/participate/index.html">Participate</a></h1>
+                <ul>
+                    <li><a href="/participate/submit-pr.html">Submitting Pull Requests</a></li>
+                    <li><a href="/participate/report-issue.html">Reporting Issues</a></li>
+                    <li><a href="/participate/index.html#documentation">Improving the documentation</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/help/index.html">Get Help</a></h1>
+                <ul>
+                    <li><a href="/help/index.html#documentation">Documentation</a></li>
+                    <li><a href="/wiki/index.asciidoc">Wiki</a></li>
+                    <li><a href="/help/index.html#support">Community Support</a></li>
+                    <li><a href="/help/commercial-support.html">Commercial Support</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/download/nb110/nb110.html">Download</a></h1>
+                <ul>
+                    <li><a href="/download/index.html">Releases</a></li>                    
+                    <li><a href="/plugins/index.html">Plugins</a></li>
+                    <li><a href="/download/index.html#source">Building from source</a></li>
+                    <li><a href="/download/index.html#previous">Previous releases</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</footer>
+<div class='footer-disclaimer'>
+    <div class="footer-disclaimer-content">
+        <p>Copyright &copy; 2017-2019 <a href="https://www.apache.org">The Apache Software Foundation</a>.</p>
+        <p>Licensed under the Apache <a href="https://www.apache.org/licenses/">license</a>, version 2.0</p>
+        <div style='max-width: 40em; margin: 0 auto'>
+            <p>Apache, Apache NetBeans, NetBeans, the Apache feather logo and the Apache NetBeans logo are trademarks of <a href="https://www.apache.org">The Apache Software Foundation</a>.</p>
+            <p>Oracle and Java are registered trademarks of Oracle and/or its affiliates.</p>
+        </div>
+        
+    </div>
+</div>
+
+
+
+        <script src="/js/vendor/jquery-3.2.1.min.js"></script>
+        <script src="/js/vendor/what-input.js"></script>
+        <script src="/js/vendor/jquery.colorbox-min.js"></script>
+        <script src="/js/vendor/foundation.min.js"></script>
+        <script src="/js/netbeans.js"></script>
+        <script>
+            
+            $(function(){ $(document).foundation(); });
+        </script>
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/highlight.min.js"></script>
+        <script>
+         $(document).ready(function() { $("pre code").each(function(i, block) { hljs.highlightBlock(block); }); }); 
+        </script>
+        
+    </body>
+</html>

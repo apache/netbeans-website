@@ -1,0 +1,584 @@
+
+<!DOCTYPE html>
+<html class="no-js" lang="en" dir="ltr">
+    
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>Writing POV-Ray Support for NetBeans V—Creating an API</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Writing POV-Ray Support for NetBeans V—Creating an API - Apache NetBeans">
+    <meta name="author" content="Apache NetBeans">
+    <meta name="keywords" content="Apache NetBeans Platform, Platform Tutorials, Writing POV-Ray Support for NetBeans V—Creating an API">
+    <meta name="generator" content="Apache NetBeans">
+    <link rel="stylesheet" href="/css/font-awesome.min.css">
+     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/styles/default.min.css"> 
+    <link rel="stylesheet" href="/css/netbeans.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#ffc40d">
+    <meta name="theme-color" content="#ffffff">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700" rel="stylesheet"> 
+    <!--
+        Licensed to the Apache Software Foundation (ASF) under one
+        or more contributor license agreements.  See the NOTICE file
+        distributed with this work for additional information
+        regarding copyright ownership.  The ASF licenses this file
+        to you under the Apache License, Version 2.0 (the
+        "License"); you may not use this file except in compliance
+        with the License.  You may obtain a copy of the License at
+        http://www.apache.org/licenses/LICENSE-2.0
+        Unless required by applicable law or agreed to in writing,
+        software distributed under the License is distributed on an
+        "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+        KIND, either express or implied.  See the License for the
+        specific language governing permissions and limitations
+        under the License.
+    -->
+</head>
+
+
+    <body>
+        
+
+<div class="title-bar" data-responsive-toggle="responsive-menu" data-hide-for="medium">
+    <button type="button" data-toggle="responsive-menu"><i style='font-size: 32px; color: #fff; padding: 8px' class='fa fa-bars'></i></button>
+    <div class="title-bar-title">Apache NetBeans</div>
+</div>
+<div class="top-bar" id="responsive-menu">
+    <div class='top-bar-left'>
+        <a class='title' href="/"><img src='/images/apache-netbeans.svg' style='padding: 8px; height: 48px;'></img> Apache NetBeans</a>
+    </div>
+    <div class="top-bar-right">
+        <ul class="vertical medium-horizontal menu" data-responsive-menu="drilldown medium-dropdown">
+            <li> <a href="/community/index.html">Community</a> </li>
+            <li> <a href="/participate/index.html">Participate</a> </li>
+            <li> <a href="https://blogs.apache.org/netbeans/">Blog</a></li>
+            <li> <a href="/help/index.html">Get Help</a> </li>
+            <li> <a href="/plugins/index.html">Plugins</a> </li>
+            <li> <a href="/download/index.html">Download</a> </li>
+        </ul>
+    </div>
+</div>
+
+
+        
+<!-- src/templates/news -->
+<section class="hero news alternate">
+    <div class='grid-container'>
+        <div class='cell'>
+            <div class="annotation">Just released!</div>
+            <h1 syle='font-size: 2rem'>Apache NetBeans 11.3</h1>
+            <p><a class="button success" href="/download/nb113/index.html">Find out more</a></p>
+        </div>
+    </div>
+</section>
+
+        <div class='grid-container main-content tutorial'>
+            <h1 class="sect0">Writing POV-Ray Support for NetBeans V—Creating an API</h1>
+            
+            <div class="sectionbody">
+              <div class="admonitionblock note">
+                <table>
+                  <tbody><tr>
+                  <td class="icon"><i class="fa icon-note" title="Note"></i></td>
+                  <td class="content">This tutorial needs a review. 
+                     You can <a href="https://issues.apache.org/jira/projects/NETBEANS/issues">open a JIRA issue</a>, 
+                     or <a href="https://github.com/apache/netbeans-website/blob/master/netbeans.apache.org/src/content/tutorials/74/nbm-povray-5.asciidoc" title="Edit this tutorial in github">edit it in GitHub </a>
+                     following these <a href="/kb/docs/contributing.html">contribution guidelines.</a></td>
+                  </tr></tbody>
+                </table>
+              </div>
+            </div>
+            
+            <div id="toc" class="toc">
+<div id="toctitle"></div>
+<ul class="sectlevel1">
+<li><a href="#_creating_the_api">Creating the API</a></li>
+<li><a href="#_using_the_api_from_povraydatanode">Using the API from PovrayDataNode</a></li>
+<li><a href="#_next_steps">Next Steps</a></li>
+</ul>
+</div>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>This is a continuation of the tutorial for building a POV-Ray rendering application on the NetBeans Platform. If you have not read the  <a href="nbm-povray-1.html">first</a>,  <a href="nbm-povray-2.html">second</a>,  <a href="nbm-povray-3.html">third</a>, and  <a href="nbm-povray-4.html">fourth</a> parts of this tutorial, you may want to start there.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_creating_the_api">Creating the API</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>As discussed when we  <a href="nbm-povray-2.html">designed POV-Ray support</a>, we will need an API—there will be some intercommunication between POV-Ray files and the project. In particular, we will need some interfaces:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>MainFileProvider</code>—find the main file of a project—the one to render when the whole file is built, and allow a POV-Ray scene file node to find out if it <em>is</em> the main file (so it can bold-face its display name).</p>
+</li>
+<li>
+<p><code>RendererService</code>—an API a POV-Ray file node can call to ask that it be rendered as an image</p>
+</li>
+<li>
+<p><code>ViewService</code>—an API a POV-Ray file can call to ask that its associated image be shown in the IDE, rendering it if necessary.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>For this, we will actually create a separate module. That way we avoid a dependency between file support and project support—either module will be loadable by itself as long as the module providing the API is there. Also, this helps in delivering updates—the API presumably will remain stable, and psychologically having it in a separate module helps the developer to be aware when they are making API changes. It also means that a completely different module supporting POV-Ray files could still get them rendered via this API, and completely different project support could be provided with no changes to the file support module.</p>
+</div>
+<div class="paragraph">
+<p>So it&#8217;s generally healthy for the codebase to do it this way.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="1">
+<li>
+<p>Right-click the application&#8217;s Modules node and choose Add New, as shown below:</p>
+</li>
+</ol>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/pic1.png" alt="pic1">
+</div>
+</div>
+<div class="paragraph">
+<p>This is a faster mechanism for creating new modules, compared to going to File | New Project and then clicking through to the New Module wizard.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="2">
+<li>
+<p>Name the project "api" and click Next or press Enter.</p>
+</li>
+</ol>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="3">
+<li>
+<p>Provide the code name "org.netbeans.examples.api.povray"—this follows the NetBeans package naming conventions that public packages shall have the name <code>org.netbeans.api&#8230;&#8203;</code> to indicate visually that they are intended to be API (and thus kept backward compatible). Provide the display name "Povray API". Click Finish or press Enter to create the project</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>1.
+Right-click the Libraries node of the Povray API project and choose Add Module Dependency.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/pic2.png" alt="pic2">
+</div>
+</div>
+<div class="paragraph">
+<p>This is a faster mechanism for setting new module dependencies, compared to going to using the Project Properties window to do so.</p>
+</div>
+<div class="paragraph">
+<p>Add a new dependency on the File System API module (look for <code>FileObject</code> for a fast way to find it).</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="5">
+<li>
+<p>Create a new abstract Java class in <code>org.netbeans.modules.examples.api.povray</code> called <code>MainFileProvider</code>, and implement it as follows:</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">package org.netbeans.examples.api.povray;
+
+import org.openide.filesystems.FileObject;
+
+public abstract class MainFileProvider {
+
+    public abstract FileObject getMainFile();
+
+    public abstract void setMainFile (FileObject file);
+
+    public boolean isMainFile (FileObject file) {
+        return file.equals(getMainFile());
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="6">
+<li>
+<p>Create a new abstract Java class in <code>org.netbeans.modules.examples.api.povray</code> called <code>RendererService</code>, and implement it as follows:</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">package org.netbeans.examples.api.povray;
+
+import java.util.Properties;
+import org.openide.filesystems.FileObject;
+
+public abstract class RendererService {
+
+    public static final String PROJECT_RENDERER_KEY_PREFIX = "renderer.";
+    public static final String PRODUCTION_RENDERER_SETTINGS_NAME = "production";
+
+    public abstract FileObject render(FileObject scene, String propertiesName);
+
+    public abstract FileObject render(FileObject scene, Properties renderSettings);
+
+    public abstract FileObject render(FileObject scene);
+
+    public abstract FileObject render();
+
+    public abstract String[] getAvailableRendererSettingsNames();
+
+    public abstract Properties getRendererSettings(String name);
+
+    public abstract String getPreferredRendererSettingsNames();
+
+    public abstract String getDisplayName(String settingsName);
+
+}</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="7">
+<li>
+<p>Create a new Java interface in <code>org.netbeans.modules.examples.api.povray</code> called <code>ViewService</code>, and implement it as follows:</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">package org.netbeans.examples.api.povray;
+
+import org.openide.filesystems.FileObject;
+
+public interface ViewService {
+
+    boolean isRendered(FileObject file);
+
+    boolean isUpToDate(FileObject file);
+
+    void view(FileObject file);
+
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If you are wondering why the first two are abstract classes instead of interfaces, the answer is simple. In the case of <code>MainFileProvider</code>, it allows us to implement <code>isMainFile()</code>; in the case of <code>RendererService</code>, it is highly probable that there will be new requirements for it in the future, and you can add methods [with some sort of default implementation] to an abstract class semi-backward-compatibly [name collisions with subclasses are still possible], but not to an interface. ViewService is simple and well-defined enough that it will probably never change.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="8">
+<li>
+<p>Right-click the Povray API project in the Projects window and choose Properties. Go to the API Versioning page in the dialog.</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Fill in "1" for the Major Version Number
+*
+Click the Autoload radio button—this means this module is a library—it will only be loaded if something else starts to use a class from it, which is more effecient.</p>
+</li>
+<li>
+<p>In the Public Packages list, put a checkmark into the checkbox for the API package. This means the package will be available to any module that has set a dependency on this one.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>The dialog should now look as follows:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/pic3.png" alt="pic3">
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="9">
+<li>
+<p>Finally, right-click the Povray Projects project and add a dependency on our new module—just search for one of the classes we&#8217;ve added. Then do the same for the Povray File Support module, so both of these modules can see API classes (but not each others' classes).</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_using_the_api_from_povraydatanode">Using the API from PovrayDataNode</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>We haven&#8217;t implemented the API yet, but we can set up some code that will use it—we know we want the node for the file which is the "main file" of our project to be shown in bold text. And having some code that uses the API will help to test it once it is written, which will be a bit of work.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="1">
+<li>
+<p>In the Povray File Support module, add a new module dependency on the Project API. You need this API because we need to use the  <code>FileOwnerQuery</code>  class. This class is part of the Project API—a class with static methods that will return the project (if any) which owns a given file. Our <code>Node</code> will need to look up the project it belongs to, and then query the project&#8217;s <code>Lookup</code> to try to find an implementation of our API classes.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>1.
+In the  <code>org.netbeans.examples.modules.povfile</code>  package, create a new class named <code>PovrayDataNode</code>. Let it extend  <code>DataNode</code>  and create a constructor that receives our  <code>PovrayDataObject</code> . The class should now look as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">package org.netbeans.examples.modules.povfile;
+
+import org.openide.loaders.DataNode;
+import org.openide.nodes.Children;
+
+public class PovrayDataNode extends DataNode {
+
+    public PovrayDataNode(PovrayDataObject obj) {
+        super(obj, Children.LEAF);
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="3">
+<li>
+<p>Add the following methods to <code>PovrayDataNode</code>:</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">    private FileObject getFile() {
+        return getDataObject().getPrimaryFile();
+    }
+
+    private Object getFromProject (Class clazz) {
+        Object result;
+        Project p = FileOwnerQuery.getOwner(getFile());
+        if (p != null) {
+            result = p.getLookup().lookup (clazz);
+        } else {
+            result = null;
+        }
+        return result;
+    }
+
+    private boolean isMainFile() {
+        MainFileProvider prov = (MainFileProvider)getFromProject (MainFileProvider.class);
+        boolean result;
+        if (prov == null) {
+            result = false;
+        } else {
+            FileObject myFile = getFile();
+            result = prov.isMainFile(myFile);
+        }
+        return result;
+    }
+
+    @Override
+    public String getHtmlDisplayName() {
+        return isMainFile() ? "&lt;b&gt;" + getDisplayName() + "&lt;/b&gt;" : null;
+    }</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>What the above code does is fairly straightforward. <code>getFile()</code> returns a <code>FileObject</code>, which is a virtual filesystem file, that this <code>Node</code> represents. <code>getFromProject</code> tries to find the project that owns the file, and if it finds one, queries its ` <a href="https://netbeans.apache.org/wiki/devfaqlookup">Lookup</a><code>, asking it for an instance of the `Class</code> that was passed into this method (i.e., one of the classes in the API we just defined). <code>isMainFile()</code> uses the above two methods to decide if this <code>Node</code> represents the "main file" of the project (the one that should be rendered by POV-Ray if the user chooses to "build" the project—POV-Ray supports file includes, so there may be many files in a project, but only one master image). <code>getHtmlDisplayName()</code> is where the rubber meets the road—this method will return a boldface HTML string if this <code>Node</code> represents the main file.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="4">
+<li>
+<p>Check that the  <code>PovrayDataNode</code>  has this content:</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">package org.netbeans.examples.modules.povfile;
+
+import org.netbeans.api.project.FileOwnerQuery;
+import org.netbeans.api.project.Project;
+import org.netbeans.examples.api.povray.MainFileProvider;
+import org.openide.filesystems.FileObject;
+import org.openide.loaders.DataNode;
+import org.openide.nodes.Children;
+
+public class PovrayDataNode extends DataNode {
+
+    public PovrayDataNode(PovrayDataObject obj) {
+        super(obj, Children.LEAF);
+    }
+
+    private FileObject getFile() {
+        return getDataObject().getPrimaryFile();
+    }
+
+    private Object getFromProject (Class clazz) {
+        Object result;
+        Project p = FileOwnerQuery.getOwner(getFile());
+        if (p != null) {
+            result = p.getLookup().lookup (clazz);
+        } else {
+            result = null;
+        }
+        return result;
+    }
+
+    private boolean isMainFile() {
+        MainFileProvider prov = (MainFileProvider)getFromProject (MainFileProvider.class);
+        boolean result;
+        if (prov == null) {
+            result = false;
+        } else {
+            FileObject myFile = getFile();
+            result = prov.isMainFile(myFile);
+        }
+        return result;
+    }
+
+    @Override
+    public String getHtmlDisplayName() {
+        return isMainFile() ? "&lt;b&gt;" + getDisplayName() + "&lt;/b&gt;" : null;
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="5">
+<li>
+<p>Finally, we want to use the above  <code>Node</code>  class instead of the default  <code>Node</code>  class that the  <code>PovrayDataObject</code>  has been using thus far. Open the  <code>PovrayDataObject</code>  class and add the following method to register our new  <code>Node</code> :</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Override
+protected Node createNodeDelegate() {
+    return new PovrayDataNode(this);
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_next_steps">Next Steps</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>In the  <a href="nbm-povray-6.html">next section</a> we will implement the API we have created. But, from the above code, you can see how the API will be used by our  <code>Node</code>  class, to determine whether a  <code>Node</code>  should be boldfaced. Here we don&#8217;t need to know nor care how the API is implemented. We simply ask for the availability of the  <code>MainFileProvider</code>  and, depending on its availability, we change the display name of the  <code>Node</code> .</p>
+</div>
+</div>
+</div>
+            
+<section class='tools'>
+    <ul class="menu align-center">
+        <li><a title="Facebook" href="https://www.facebook.com/NetBeans"><i class="fa fa-md fa-facebook"></i></a></li>
+        <li><a title="Twitter" href="https://twitter.com/netbeans"><i class="fa fa-md fa-twitter"></i></a></li>
+        <li><a title="Github" href="https://github.com/apache/netbeans"><i class="fa fa-md fa-github"></i></a></li>
+        <li><a title="YouTube" href="https://www.youtube.com/user/netbeansvideos"><i class="fa fa-md fa-youtube"></i></a></li>
+        <li><a title="Slack" href="https://tinyurl.com/netbeans-slack-signup/"><i class="fa fa-md fa-slack"></i></a></li>
+        <li><a title="JIRA" href="https://issues.apache.org/jira/projects/NETBEANS/summary"><i class="fa fa-mf fa-bug"></i></a></li>
+    </ul>
+    <ul class="menu align-center">
+        
+        <li><a href="https://github.com/apache/netbeans-website/blob/master/netbeans.apache.org/src/content/tutorials/74/nbm-povray-5.asciidoc" title="See this page in github"><i class="fa fa-md fa-edit"></i> See this page in GitHub.</a></li>
+    </ul>
+</section>
+
+        </div>
+        
+
+<div class='grid-container incubator-area' style='margin-top: 64px'>
+    <div class='grid-x grid-padding-x'>
+        <div class='large-auto cell text-center'>
+            <a href="https://www.apache.org/">
+                <img style="width: 320px" title="Apache Software Foundation" src="/images/asf_logo_wide.svg" />
+            </a>
+        </div>
+        <div class='large-auto cell text-center'>
+            <a href="https://www.apache.org/events/current-event.html">
+               <img style="width:234px; height: 60px;" title="Apache Software Foundation current event" src="https://www.apache.org/events/current-event-234x60.png"/>
+            </a>
+        </div>
+    </div>
+</div>
+<footer>
+    <div class="grid-container">
+        <div class="grid-x grid-padding-x">
+            <div class="large-auto cell">
+                
+                <h1><a href="/about/index.html">About</a></h1>
+                <ul>
+                    <li><a href="https://netbeans.apache.org/community/who.html">Who's Who</a></li>
+                    <li><a href="https://www.apache.org/foundation/thanks.html">Thanks</a></li>
+                    <li><a href="https://www.apache.org/foundation/sponsorship.html">Sponsorship</a></li>
+                    <li><a href="https://www.apache.org/security/">Security</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/community/index.html">Community</a></h1>
+                <ul>
+                    <li><a href="/community/mailing-lists.html">Mailing lists</a></li>
+                    <li><a href="/community/committer.html">Becoming a committer</a></li>
+                    <li><a href="/community/events.html">NetBeans Events</a></li>
+                    <li><a href="https://www.apache.org/events/current-event.html">Apache Events</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/participate/index.html">Participate</a></h1>
+                <ul>
+                    <li><a href="/participate/submit-pr.html">Submitting Pull Requests</a></li>
+                    <li><a href="/participate/report-issue.html">Reporting Issues</a></li>
+                    <li><a href="/participate/index.html#documentation">Improving the documentation</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/help/index.html">Get Help</a></h1>
+                <ul>
+                    <li><a href="/help/index.html#documentation">Documentation</a></li>
+                    <li><a href="/wiki/index.asciidoc">Wiki</a></li>
+                    <li><a href="/help/index.html#support">Community Support</a></li>
+                    <li><a href="/help/commercial-support.html">Commercial Support</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/download/nb110/nb110.html">Download</a></h1>
+                <ul>
+                    <li><a href="/download/index.html">Releases</a></li>                    
+                    <li><a href="/plugins/index.html">Plugins</a></li>
+                    <li><a href="/download/index.html#source">Building from source</a></li>
+                    <li><a href="/download/index.html#previous">Previous releases</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</footer>
+<div class='footer-disclaimer'>
+    <div class="footer-disclaimer-content">
+        <p>Copyright &copy; 2017-2019 <a href="https://www.apache.org">The Apache Software Foundation</a>.</p>
+        <p>Licensed under the Apache <a href="https://www.apache.org/licenses/">license</a>, version 2.0</p>
+        <div style='max-width: 40em; margin: 0 auto'>
+            <p>Apache, Apache NetBeans, NetBeans, the Apache feather logo and the Apache NetBeans logo are trademarks of <a href="https://www.apache.org">The Apache Software Foundation</a>.</p>
+            <p>Oracle and Java are registered trademarks of Oracle and/or its affiliates.</p>
+        </div>
+        
+    </div>
+</div>
+
+
+
+        <script src="/js/vendor/jquery-3.2.1.min.js"></script>
+        <script src="/js/vendor/what-input.js"></script>
+        <script src="/js/vendor/jquery.colorbox-min.js"></script>
+        <script src="/js/vendor/foundation.min.js"></script>
+        <script src="/js/netbeans.js"></script>
+        <script>
+            
+            $(function(){ $(document).foundation(); });
+        </script>
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/highlight.min.js"></script>
+        <script>
+         $(document).ready(function() { $("pre code").each(function(i, block) { hljs.highlightBlock(block); }); }); 
+        </script>
+        
+    </body>
+</html>
