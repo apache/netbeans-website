@@ -20,6 +20,7 @@
 = Writing POV-Ray Support for NetBeans VII—Support For Running POV-Ray
 :jbake-type: platform-tutorial
 :jbake-tags: tutorials 
+:markup-in-source: verbatim,quotes,macros
 :jbake-status: published
 :syntax: true
 :source-highlighter: pygments
@@ -65,7 +66,7 @@ The first part is just being able to invoke the external executable. NetBeans ha
 1. Add the following constructor and fields to the `Povray` class:
 
 
-[source,java]
+[source,java,subs="{markup-in-source}"]
 ----
 
     private final RendererServiceImpl renderService;
@@ -85,7 +86,7 @@ The first part is just being able to invoke the external executable. NetBeans ha
 1. Next we will implement a method that will find the file to render. We were passed a `FileObject`, but now we need an actual `java.io.File` to get the path from, to pass on the command line to POV-Ray. There are two caveats: 1. The file passed to the constructor may be null—in that case we should find the main file of the project and use that; and 2. It is conceivable that the file will not exist on disk—NetBeans filesystems are virtual, after all, and the file could exist in a remote FTP filesystem or such. Since NetBeans 4.0, this is rather unlikely, but we should still test for this condition (`FileUtil.toFile()` returns null). So we will add a method to `Povray` as follows:
 
 
-[source,java]
+[source,java,subs="{markup-in-source}"]
 ----
 
 private File getFileToRender() throws IOException {
@@ -124,7 +125,7 @@ private File getFileToRender() throws IOException {
 1. Next we need to assemble the command-line arguments that need to be passed to POV-Ray. These take the form of `+[some character][somevalue]`, for example, `+A0.9` sets the anti-aliasing parameter to 0.9 pixels. So we need to iterate the `Properties` object passed to the constructor and assemble from it a set of command line arguments:
 
 
-[source,java]
+[source,java,subs="{markup-in-source}"]
 ----
 
 private String getCmdLineArgs(File includesDir) {
@@ -148,7 +149,7 @@ private String getCmdLineArgs(File includesDir) {
 1. Next we need to implement a couple of utility methods that the rendering method will use:
 
 
-[source,java]
+[source,java,subs="{markup-in-source}"]
 ----
 
 private File getImagesDir() {
@@ -178,7 +179,7 @@ Neither is terribly exciting—one gets the images directory from the project as
 Implement the following method, and then add a dependency on the UI Utilities API module from the Povray Projects module:
 
 
-[source,java]
+[source,java,subs="{markup-in-source}"]
 ----
 
 private void showMsg (String msg) {
@@ -191,7 +192,7 @@ private void showMsg (String msg) {
 1. At this point, we've added a bunch of status messages our code can display, so it is time to add actual text for those messages to the resource bundle. Note that in a number of cases we call:
 
 
-[source,java]
+[source,java,subs="{markup-in-source}"]
 ----
 
 NbBundle.getMessage(SomeClass.class, "MSG_Something", _[.underline]#someStringArgument#_);
@@ -200,7 +201,7 @@ NbBundle.getMessage(SomeClass.class, "MSG_Something", _[.underline]#someStringAr
 to fetch a localized string. `NbBundle` supports embedding arguments inside of a localized string—you can either use the above method, or a variant that takes an array of arguments to embed. So you can define strings in a resource bundle using the syntax:
 
 
-[source,java]
+[source,java,subs="{markup-in-source}"]
 ----
 
 Could not delete {0} because {1}
@@ -211,7 +212,7 @@ and `{0}` and `{1}` will be replaced by arguments passed to `getMessage()`. This
 So let's go ahead and add the warning messages we need to `Bundle.properties` in the same package as `PovrayProject`:
 
 
-[source,java]
+[source,java,subs="{markup-in-source}"]
 ----
 
 MSG_NoMainFile=Main scene file not set for {0}
@@ -239,7 +240,7 @@ MSG_CantDelete=Could not delete {0}, it is locked or in use
 So we will need some kind of `Runnable` which will wait for data from each output stream and route it to the output window in NetBeans as it becomes available. Writing to the output window is quite easy—you get an `InputOutput` object from `IOProvider.getDefault()` and then write to one of its streams—for example:
 
 
-[source,java]
+[source,java,subs="{markup-in-source}"]
 ----
 
     InputOutput io = IOProvider.getDefault().getIO ("Hello", true);
@@ -253,7 +254,7 @@ is all it takes to make the output window pop up and display some output.
 So before we implement the code that will create the process, lets create the runnable that will wait for output from the process and route it to the output window—it will be a static nested class inside the `Povray` class:
 
 
-[source,java]
+[source,java,subs="{markup-in-source}"]
 ----
 
     static class OutHandler implements Runnable {
@@ -319,7 +320,7 @@ So before we implement the code that will create the process, lets create the ru
 Then we compute the command line that should be passed to POV-Ray. Then we call `Runtime.exec()` with that argument, wire up the output window to the output streams from the resulting process, and wait for the process to exit. Once it exits, we determine if it succeeded or failed, show an appropriate message, and if it succeeded, return a `FileObject` representing the file that was created.
 
 
-[source,java]
+[source,java,subs="{markup-in-source}"]
 ----
 
 public FileObject render () throws IOException {
@@ -443,7 +444,7 @@ public FileObject render () throws IOException {
 1. The last thing is to fix our implementation of `RendererService` to call `Povray.render()`. Open `RendererServiceImpl` in the code editor, and modify the render method:
 
 
-[source,java]
+[source,java,subs="{markup-in-source}"]
 ----
 
 @Override
@@ -463,7 +464,7 @@ public FileObject render(FileObject scene, Properties renderSettings) {
 1. The last step is to open the image when the rendering process is complete. This is quite simple to implement—we just need to look for an `OpenCookie` on the `Node` for the image that was rendered. If you are running a standard configuration of the NetBeans IDE, you already have the Image module installed—it will provide support for opening an image, displaying it in the editor area. So implement `RendererAction.RenderWithSettingsAction.run()` like this:
 
 
-[source,java]
+[source,java,subs="{markup-in-source}"]
 ----
 
 public void run() {
