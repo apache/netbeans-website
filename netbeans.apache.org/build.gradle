@@ -39,38 +39,55 @@ loadGlobals(globalsFile)
 //...this means in either the content or the assets folders, and this will be the
 //generatedAssetsDir and generatedContentDir
 
+jsass {
+    indent = '  '
+    linefeed = System.lineSeparator()
+    omitSourceMapUrl = false
+    outputStyle = io.bit3.jsass.OutputStyle.COMPRESSED
+    precision = 3
+    sourceComments = false
+    sourceMapContents = false
+    sourceMapEmbed = false
+    sourceMapEnabled = true
+}
+
 task compileContentSass(type: io.freefair.gradle.plugins.jsass.SassCompile,
     description: "Compiles the projects SaSS files to the build directory.",
     group: "Build") {
-    sourceDir = file("$contentDir/scss")
+    source = file("$contentDir/scss")
     destinationDir = file("$generatedAssetDir/css")
-    // Compile netbeans.scss, which imports all requirements
-    includePaths = files(file("$contentDir/scss/netbeans.scss"))
-    // @TODO - source maps not currently working
-    omitSourceMapUrl = true
-    // Compress the generated CSS
-    outputStyle = io.bit3.jsass.OutputStyle.COMPRESSED
-    // Precission to 3 digits
-    precision = 3
+    exclude '_vendor/*.scss'
 }
 
 task preprocessContentAssets(type: Copy,
     description: "Pre-processes all .css, .js (not in the minimize list), images, etc from the content directory into the generated assets directory",
     group: "Build") {
-    from contentDir
     into generatedAssetDir
     filteringCharset 'UTF-8'
     includeEmptyDirs false
     
-    include "**/*.js", "**/*.css", "**/css/*.css", 
-        "dtds/**",
-        "**/*.png", "**/*.gif",
-        "**/*.jpeg", "**/*.jpg",
-        "**/*.svg", "**/*.ttf",
-        "**/*.woff", "**/.htaccess",
-        "fonts/**","**/*.cgi"
-    
-    exclude "/templates/**"
+    from(contentDir) {
+        exclude(["/templates/**"])
+        include "**/*.cgi",
+                "**/*.css", 
+                "**/css/*.css", 
+                "dtds/**",
+                "fonts/**",
+                "**/*.gif",
+                "**/.htaccess",
+                "**/*.jpeg", 
+                "**/*.jpg",
+                "**/*.js", 
+                "**/*.png", 
+                "**/*.svg", 
+                "**/*.ttf",
+                "**/*.woff"
+    }
+
+    from("$contentDir/scss") {
+        into('css')
+        include "**/*.scss"
+    }
 }
 
 task preprocessContentStatics(type: Copy,
