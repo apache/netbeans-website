@@ -44,5 +44,11 @@
             <% // NOTE: Plain jquery stuff needs to be quoted in gsp pages %>
             ${'$(function(){ $(document).foundation(); });'}
         </script>
+        <% if (content.syntax) { %>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/highlight.min.js"></script>
+        <script>
+        ${' $(document).ready(function() { $("pre code").each(function(i, block) { hljs.highlightBlock(block); }); }); '}
+        </script>
+        <% } %>
     </body>
 </html>
