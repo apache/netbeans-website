@@ -33,7 +33,7 @@
             <li> <a href="/participate/index.html">Participate</a> </li>
             <li> <a href="https://blogs.apache.org/netbeans/">Blog</a></li>
             <li> <a href="/help/index.html">Get Help</a> </li>
-            <li> <a href="https://netbeans-vm.apache.org/pluginportal/">Plugins</a> </li>
+            <li> <a href="https://plugins.netbeans.apache.org/">Plugins</a> </li>
             <li> <a href="/download/index.html">Download</a> </li>
         </ul>
     </div>
