@@ -22,9 +22,9 @@
 <section class="hero news alternate">
     <div class='grid-container'>
         <div class='cell'>
-            <div class="annotation">Just released!</div>
-            <h1 syle='font-size: 2rem'>Apache NetBeans 11.2</h1>
-            <p><a class="button success" href="/download/nb112/index.html">Find out more</a></p>
+            <div class="annotation">Latest release</div>
+            <h1>Apache NetBeans 12.1</h1>
+            <p><a class="button success" href="/download/nb121/index.html">Find out more</a></p>
         </div>
     </div>
 </section>
