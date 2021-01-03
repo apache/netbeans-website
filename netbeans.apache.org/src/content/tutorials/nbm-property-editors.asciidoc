@@ -17,7 +17,7 @@
 //     under the License.
 //
 
-= NetBeans Property Editor Tutorial
+= NetBeans Property Editors Tutorial
 :jbake-type: platform-tutorial
 :jbake-tags: tutorials 
 :jbake-status: published
@@ -27,30 +27,23 @@
 :toc-title:
 :icons: font
 :experimental:
-:description: NetBeans Property Editor Tutorial - Apache NetBeans
-:keywords: Apache NetBeans Platform, Platform Tutorials, NetBeans Property Editor Tutorial
+:reviewed: 2021-01-03
+:description: NetBeans Property Editors Tutorial - Apache NetBeans
+:keywords: Apache NetBeans Platform, Platform Tutorials, NetBeans Property Editors Tutorial
 
-This tutorial shows techniques for using property editors in NetBeans, including providing custom editors and custom inplace editors. Specifically, the following will be covered:
+This tutorial shows techniques for using property editors in NetBeans, including providing custom editors and custom in-place editors. Specifically, the following will be covered:
 
 * Providing your own property editor for an individual Node
 * Creating a custom editor
-* Creating a custom inplace editor
+* Creating a custom in-place editor
 * Registering a custom property editor globally
 
-NOTE: If you are using an earlier version of Apache NetBeans, see  link:74/nbm-nodesapi2.html[the previous version of this document].
-
-
-
-
-
-
-
-For troubleshooting purposes, you are welcome to download the  link:http://web.archive.org/web/20170409072842/http://java.net/projects/nb-api-samples/show/versions/8.0/tutorials/selection-management/4-of-4/EventManager[completed tutorial source code].
+For troubleshooting purposes, you are welcome to download the  link:https://github.com/bradh/NetBeansPropertyEditors[completed tutorial source code].
 
 Related community tutorials:
 
-*  link:http://netbeans.dzone.com/nb-custom-float-propertyeditor[Custom Float Property Editor (1)]
-*  link:http://netbeans.dzone.com/nb-custom-float-propertyeditor-2[Custom Float Property Editor (2)]
+*  link:https://dzone.com/articles/nb-custom-float-propertyeditor[Custom Float Property Editor (1)]
+*  link:https://dzone.com/articles/nb-custom-float-propertyeditor-2[Custom Float Property Editor (2)]
 
 
 == Introduction to Custom Property Editors
@@ -59,29 +52,31 @@ Often you may have a property for which either the standard property editor is n
 
 This tutorial is intended as a follow-on to these preceding tutorials, and its code is based on the code from them:
 
-*  link:nbm-selection-1.html[Selection Management Tutorial I—Using a TopComponent's Lookup]
-*  link:nbm-selection-2.html[NetBeans Selection Management Tutorial II—Using Nodes]
+*  link:nbm-selection-1.html[Selection Management Tutorial I - Using a TopComponent's Lookup]
+*  link:nbm-selection-2.html[NetBeans Selection Management Tutorial II - Using Nodes]
 *  link:nbm-nodesapi2.html[Using the Nodes API]
 
-You'll pick up where you left off in the previous tutorial, with the class `EventNode`, which wraps an `Event` object, and offers a read-only property for its `index` property and a read/write one for its `date` property.
+If you have not yet done these tutorials, you should do them first; or at least ensure you are familiar with the content and approach used, and download the completed result of the third tutorial. 
+
+You'll pick up where you left off in the previous tutorial, with the class `EventNode`, which wraps an `Event` object, and offers a read-only property for its `index` property and a read/write one for its `date` property. 
 
 
 == Creating a Property Editor
 
 The basics of creating a property editor are pretty simple. The JavaBeans API offers a base class, `PropertyEditorSupport`, which covers most of the basics, and can be used to create a simple property editor with little work.
 
-Property editors serve two purposes—converting values to and from strings for display in the property sheet, and validating new values when they are set. To start out, you will create a property editor which simply provides and accepts a differently formatted date.
+Property editors serve two purposes — converting values to and from strings for display in the property sheet, and validating new values when they are set. To start out, you will create a property editor which handles ZonedDateTime, which the Apache NetBeans Platform does not (as of 12.2) support, as seen in the previous tutorial. This new property editor will avoid the `String` based hacks in the Event model class.
 
 
 [start=1]
 1. Right click the `org.myorg.myeditor` package, and choose New > Java Class. In the wizard, name the class `DatePropertyEditor`.
+
 
 [start=2]
 1. In the code editor, change the class signature to extend `PropertyEditorSupport`:
 
 [source,java]
 ----
-
 public class DatePropertyEditor extends PropertyEditorSupport {
 ----
 
@@ -91,35 +86,32 @@ public class DatePropertyEditor extends PropertyEditorSupport {
 
 [source,java]
 ----
-
 @Override
 public String getAsText() {
-    Date d = (Date) getValue();
+    ZonedDateTime d = (ZonedDateTime) getValue();
     if (d == null) {
         return "No Date Set";
     }
-    return new SimpleDateFormat("MM/dd/yy HH:mm:ss").format(d);
+    return DateTimeFormatter.ISO_ZONED_DATE_TIME.format(d);
 }
 
 @Override
 public void setAsText(String s) {
     try {
-        setValue (new SimpleDateFormat("MM/dd/yy HH:mm:ss").parse(s));
-    } catch (ParseException pe) {
-        IllegalArgumentException iae = new IllegalArgumentException ("Could not parse date");
+        setValue(ZonedDateTime.parse(s));
+    } catch (DateTimeParseException ex) {
+        IllegalArgumentException iae = new IllegalArgumentException("Could not parse date");
         throw iae;
     }
 }
 ----
 
-
 [start=4]
-1. Open `EventNode` in the code editor. Change the line that declares `dateProperty` so that the variable is declared as `PropertySupport.Reflection` rather than `Property`. You will be calling a method specific to `PropertySupport.Reflection`:
+1. Open `EventNode` in the code editor. Change the line that declares `dateProperty` (in the `createSheet()` method) so that the variable is declared as `PropertySupport.Reflection` rather than `Property`. You will be calling a method specific to `PropertySupport.Reflection`:
 
 [source,java]
 ----
-
-PropertySupport.Reflection dateProp = new PropertySupport.Reflection(obj, Date.class, "date");
+PropertySupport.Reflection dateProp = new PropertySupport.Reflection(obj, ZonedDateTime.class, "date");
 ----
 
 
@@ -128,17 +120,28 @@ PropertySupport.Reflection dateProp = new PropertySupport.Reflection(obj, Date.c
 
 [source,java]
 ----
-
 dateProp.setPropertyEditorClass(DatePropertyEditor.class);
 ----
 
 
 [start=6]
-1. Run the Event Manager and note the new format of the Date property, as shown here:
+1. Run the Event Manager and note the new format of the ZonedDateTime property, as shown here:
 
 
-image::images/date-editor-1.png[]
+image::images/nbm-property-editor/date-editor-1.png[]
 
+
+[start=7]
+1. Because we are no longer reliant on the String conversion in the Event API class, we have much better separation of the model and view. To see this, change the `getAsText()` implementation in `DatePropertyEditor` to return a localised format, as shown below:
+
+[source,java]
+----
+return DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL).format(d);
+----
+
+Now when you run again, the property is displayed with a different format, which will depend on your locale, but might look similar to this:
+
+image::images/nbm-property-editor/date-editor-2.png[]
 
 == Creating a Custom Editor
 
@@ -170,97 +173,97 @@ public boolean supportsCustomEditor() {
 1. Run the Event Manager, and now you have a "..." button beside the property in the property sheet, as shown below:
 
 
-image::images/date-editor-2.png[]
+image::images/nbm-property-editor/date-editor-3.png[]
 
 Click it, and your JLabel appears:
 
 
-image::images/date-editor-3.png[]
+image::images/nbm-property-editor/date-editor-4.png[]
 
 If you were doing this for real, you would create a JPanel, and embed some sort of calendar and/or clock component to make it easy to set the properties; the code necessary to do it right would be a distraction here.
+
+This custom editor approach might be appropriate where the value is non-obvious, and you are providing a wizard or other domain-specific support to the user.
 
 
 [start=3]
 1. Remove both of the above two methods before continuing because we're going to create a real date editor in the next section.
 
 
-== Creating a Custom Inplace Editor
+== Creating a Custom In-place Editor
 
 What would be really useful is to have a better date editor embedded in the property sheet itself. NetBeans has an API that makes this possible. It involves a bit of code, but the result is worth it.
 
-Since the SwingX project includes a nice date picker component, you will simply reuse that. So the first thing you need to do is to get SwingX into the Event Manager. Since NetBeans IDE bundles SwingX, we will use the bundled  ``swingx.jar``  by browsing into the NetBeans IDE installation directory and creating a new module from the swingx.jar that we will find there.
-
+We'll take the opportunity to explore adding an external library for the Date/Time picker that will be used. In a larger application, you'll likely use a combination of in-built Swing controls (perhaps with JavaFX components embedded), third-party libraries, and custom components you develop.
 
 [start=1]
-1. Expand the Event Manager, right-click the Modules node, and choose Add New Library, as shown here:
-
-
-image::images/date-editor-4.png[]
+1. Download a recent release of LGoodDatePicker (as a jar) from link:https://github.com/LGoodDatePicker/LGoodDatePicker/releases[its Project site].
 
 
 [start=2]
-1. Browse for `swingx-all-1.6.4.jar` (or whatever version of the JAR is available) in "ide/modules/ext" in the NetBeans IDE installation directory.
+1. Expand the Event Manager, right-click the Modules node, and choose Add New Library. 
 
 
-image::images/date-editor-5.png[]
+[start=3]
+1. Click Browse next to the Library text field, and select the jar file you just download.
+
+image::images/nbm-property-editor/date-editor-5.png[]
 
 Click Next.
 
 
-[start=3]
-1. Click Next again without making any changes to the below:
-
-
-image::images/date-editor-6.png[]
-
-
 [start=4]
-1. Set the code name base to  ``org.jdesktop.swingx`` :
+1. Your paths will look different, but you should see something similar to:
 
+image::images/nbm-property-editor/date-editor-6.png[]
 
-image::images/date-editor-7.png[]
-
-Click Finish and you should see the new module, wrapping the selected JAR:
-
-
-image::images/date-editor-8.png[]
+Click Next again.
 
 
 [start=5]
-1. Right click the My Editor project node in the Projects tab in the main window, and choose Properties. In the Libraries page, click the Add Dependency button, and add a dependency on your new "swingx-all" module. When you click OK, you will see the new dependency:
+1. Set the code name base to  ``org.github.lgooddatepicker`` :
+
+image::images/nbm-property-editor/date-editor-7.png[]
+
+Click Finish and you should see the new module, wrapping the selected JAR:
+
+image::images/nbm-property-editor/date-editor-8.png[]
 
 
-image::images/date-editor-9.png[]
+[start=6]
+1. Right click the My Editor project node in the Projects tab in the main window, and choose Properties. In the Libraries page, click the Add Dependency button, and select your new "LGoodDatePicker" module.
+
+image::images/nbm-property-editor/date-editor-9.png[]
+
+When you click OK, you will see the new dependency:
+
+image::images/nbm-property-editor/date-editor-10.png[]
 
 Now you are ready to make use of the date picker. This will involve implementing a couple of NetBeans-specific interfaces:
 
-* ExPropertyEditor—a property editor interface through which the property sheet can pass an "environment" (`PropertyEnv`) object that gives the editor access to the `Property` object it is editing and more.
-* InplaceEditor.Factory—an interface for objects that own an `InplaceEditor`.
-* InplaceEditor—an interface that allows a custom component to be provided for display in the property sheet.
+* ExPropertyEditor - a property editor interface through which the property sheet can pass an "environment" (`PropertyEnv`) object that gives the editor access to the `Property` object it is editing and more.
+* InplaceEditor.Factory - an interface for objects that own an `InplaceEditor`.
+* InplaceEditor - an interface that allows a custom component to be provided for display in the property sheet.
 
 You will implement `InplaceEditor.Factory` and `ExPropertyEditor` directly on `DatePropertyEditor`, and then create an `InplaceEditor` nested class:
 
-
-[start=1]
+[start=7]
 1. Change the signature of `DatePropertyEditor` as follows:
 
 [source,java]
 ----
-
-public class DatePropertyEditor extends PropertyEditorSupport *implements ExPropertyEditor, InplaceEditor.Factory* {
+public class DatePropertyEditor extends PropertyEditorSupport implements ExPropertyEditor, InplaceEditor.Factory {
 ----
 
 
-[start=2]
-1. As in earlier examples, press Ctrl-Shift-I to Fix Imports and then use the "Implement All Abstract Methods" to cause the missing methods to be added.
+[start=8]
+1. As in earlier examples, press Ctrl-Shift-I to Fix Imports.
 
 
-[start=3]
+[start=9]
 1. Add the following methods to `DatePropertyEditor`:
 
 [source,java]
 ----
-
 @Override
 public void attachEnv(PropertyEnv env) {
     env.registerInplaceEditorFactory(this);
@@ -278,15 +281,16 @@ public InplaceEditor getInplaceEditor() {
 ----
 
 
-[start=4]
-1. Now you need to implement the `InplaceEditor` itself. This will be an object that owns a swingx `JXDatePicker` component, and some plumbing methods to set up its value, and dispose of resources when it is no longer in use. It requires a bit of code, but it's all quite straightforward. Just create `Inplace` as a static nested class inside `DatePropertyEditor`:
+[start=10]
+1. Now you need to implement the `InplaceEditor` itself. This will be an object that owns a DateTimePicker component, and some plumbing methods to set up its value, and dispose of resources when it is no longer in use. It requires a bit of code, but it's all quite straightforward. 
+
+Just create `Inplace` as a static nested class inside `DatePropertyEditor`:
 
 [source,java]
 ----
-
 private static class Inplace implements InplaceEditor {
 
-    private final JXDatePicker picker = new JXDatePicker();
+    private final DateTimePicker picker = new DateTimePicker();
     private PropertyEditor editor = null;
 
     @Override
@@ -309,12 +313,17 @@ private static class Inplace implements InplaceEditor {
 
     @Override
     public Object getValue() {
-        return picker.getDate();
+        LocalDateTime d = picker.getDateTimePermissive();
+        ZonedDateTime zdt = d.atZone(ZoneId.systemDefault());
+        return zdt;
     }
 
     @Override
     public void setValue(Object object) {
-        picker.setDate((Date) object);
+        ZonedDateTime zdt = (ZonedDateTime) object;
+        if (zdt != null) {
+            picker.setDateTimePermissive(zdt.toLocalDateTime());
+        }
     }
 
     @Override
@@ -324,9 +333,9 @@ private static class Inplace implements InplaceEditor {
 
     @Override
     public void reset() {
-        Date d = (Date) editor.getValue();
-        if (d != null) {
-            picker.setDate(d);
+        ZonedDateTime zdt = (ZonedDateTime) editor.getValue();
+        if (zdt != null) {
+            picker.setDateTimePermissive(zdt.toLocalDateTime());
         }
     }
 
@@ -366,39 +375,37 @@ private static class Inplace implements InplaceEditor {
     public void removeActionListener(ActionListener actionListener) {
         //do nothing - not needed for this component
     }
-
 }
 ----
 
 
-[start=5]
+[start=11]
 1. If you haven't already, press Ctrl-Shift-I to Fix Imports.
 
 
-[start=6]
-1. Run the Event Manager again, select an instance of `EventNode`, and click the value of the date property in the property sheet. Notice that the date picker popup appears, and behaves exactly as it should, as shown below:
+[start=12]
+1. Run the Event Manager again, select an instance of `EventNode`, and click the value of the date property in the property sheet. Notice that the date-time picker popup appears, and behaves exactly as it should, as shown below:
 
-
-image::images/date-editor-result-1.png[]
+image::images/nbm-property-editor/date-editor-11.png[]
 
 
 == Registering DatePropertyEditor Globally
 
-Often it is useful to register a property editor to be used for all properties of a given type. Indeed, your `DatePropertyEditor` is generally useful for any property of the type `java.util.Date`. While usefulness is not the primary determinant of whether such a property editor should be registered, if your application or module will regularly deal with Date properties, it might be useful to do so.
+Often it is useful to register a property editor to be used for all properties of a given type. Indeed, your `DatePropertyEditor` is generally useful for any property of the type `java.time.ZonedDateTime`. While usefulness is not the primary determinant of whether such a property editor should be registered, if your application or module will regularly deal with date/time properties, it might be useful to do so.
 
-Here is how to register `DatePropertyEditor` so that any property of the type `java.util.Date` will use `DatePropertyEditor` in the property sheet:
+Here is how to register `DatePropertyEditor` so that any property of the type `java.time.ZonedDateTime` will use `DatePropertyEditor` in the property sheet:
 
 
 [start=1]
-1. Annotate the  ``DatePropertyEditor``  class as follows: link:http://bits.netbeans.org/dev/javadoc/org-openide-nodes/org/openide/nodes/PropertyEditorRegistration.html[@PropertyEditorRegistration(targetType = Date.class)]
+1. Annotate the  ``DatePropertyEditor``  class with link:http://bits.netbeans.org/dev/javadoc/org-openide-nodes/org/openide/nodes/PropertyEditorRegistration.html[@PropertyEditorRegistration(targetType = ZonedDateTime.class)] so that it looks like:
 
 [source,java]
 ----
-
+@PropertyEditorRegistration(targetType = ZonedDateTime.class)
 public class DatePropertyEditor extends PropertyEditorSupport implements ExPropertyEditor, InplaceEditor.Factory {
 ----
 
-This code will register your custom `DatePropertyEditor` as the default editor for all properties of the type `java.util.Date` throughout the system.
+This annotation will register your custom `DatePropertyEditor` as the default editor for all properties of the type `java.time.ZonedDateTime` throughout the application.
 
 
 [start=2]
@@ -406,13 +413,13 @@ This code will register your custom `DatePropertyEditor` as the default editor f
 
 [source,java]
 ----
-
 dateProp.setPropertyEditorClass(DatePropertyEditor.class);
 ----
 
+Now when you run, the application behaviour will be unchanged, but the EventNode implementation is no longer coupled to a specific property editor implementation.
 
 == Using PropertyPanel
 
 While we won't cover it, it is worth mentioning that the property sheet is not the only place that `Node.Property` objects are useful; there is also a convenient UI class in the `org.openide.explorer.PropertySheet` class called `PropertyPanel`. It's function is to display one property, much as it is displayed in the property sheet, providing an editor field and a custom editor button, or you have called `somePropertyPanel.setPreferences(PropertyPanel.PREF_CUSTOM_EDITOR)`, it will display the custom editor for a `Property`. It is useful as a convenient way to get an appropriate UI component for editing any getter/setter pair for which there is a property editor.
 
-link:http://netbeans.apache.org/community/mailing-lists.html[Send Us Your Feedback]
+link:https://netbeans.apache.org/community/mailing-lists.html[Send Us Your Feedback]
