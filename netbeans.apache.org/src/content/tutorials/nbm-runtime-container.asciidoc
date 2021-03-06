@@ -26,155 +26,151 @@
 :toc: left
 :toc-title:
 :icons: font
-:experimental:
+:reviewed: 2020-12-19
 :description: NetBeans Platform Runtime Container Tutorial - Apache NetBeans
 :keywords: Apache NetBeans Platform, Platform Tutorials, NetBeans Platform Runtime Container Tutorial
 
-This tutorial covers the most fundamental concept in the NetBeans Platform—the runtime container. The runtime container is the execution environment for the modules that define a NetBeans Platform application. It consists of six modules provided by the NetBeans Platform. In this tutorial, we will look at these six modules, and use them in a very simple modular application.
+This tutorial covers the most fundamental concept in the NetBeans Platform: the runtime container. The runtime container is the execution environment for the modules that make up a NetBeans Platform application. It consists of modules provided by the NetBeans Platform. In this tutorial, we will look at these modules, and use them in a very simple modular application.
 
 Before going further, you can watch this video series, which covers the same material as the rest of this tutorial:  link:nbm-10-top-apis.html[Top 10 NetBeans APIs]
 
-NOTE: If you are using an earlier version of Apache NetBeans, see  link:74/nbm-runtime-container.html[the previous version of this document].
-
-
-
-
-
-
-
-For troubleshooting purposes, you are welcome to download the  link:http://web.archive.org/web/20170409072842/http://java.net/projects/nb-api-samples/show/versions/8.0/tutorials/container[completed tutorial source code].
+For troubleshooting purposes, you are welcome to download the link:https://github.com/bradh/NetBeansRuntimeTutorial[completed tutorial source code].
 
 
 == Introduction to the Runtime Container
 
-The "NetBeans runtime container" is the collective name for these NetBeans Platform modules:
+The "NetBeans runtime container" is the collective name for the core parts of the NetBeans Platform.
 
+Brief overview of each of these nine modules:
 
-image::images/container80.png[]
-
-Brief overview of each of these six modules:
-
-* Startup (org-netbeans-core-startup)—Provides the main method of your application, as well as all the code needed for starting it up.
-* Bootstrap (org-netbeans-bootstratp)—Enables the runtime container to understand what a module is and how to load and compose them into one application.
-* Filesystem API (org-openide-filesystems)—Gives your application a virtual filesystem.
-* Module System API (org-openide-modules)—Gives you access to the lifecycle of the modules in your application.
-* Lookup API (org-openide-util-lookup)—Provides a generic communication mechanism for inter-modular interaction.
-* Utilities API (org-openide-util)—Includes several utility classes shared between the other modules in the runtime container.
-
+* Startup (org-netbeans-core-startup) : Provides the main method of your application, as well as all the code needed for starting it up.
+* Startup Base (org-netbeans-core-startup-base): Private implementation details supporting Startup.
+* Bootstrap (org-netbeans-bootstrap) : Enables the runtime container to understand what a module is, and how to load and compose modules into an application.
+* Filesystem API (org-openide-filesystems): Gives your application a virtual filesystem.
+* Module System API (org-openide-modules): Provides access to the lifecycle of the modules in your application.
+* Lookup API (org-openide-util-lookup): Provides a generic communication mechanism for inter-modular interaction.
+* Base Utilities API (org-openide-util): Includes several utility classes shared between the other modules in the runtime container.
+* Utilities API (org-openide-util-ui): User Interface utility classes.
+* OW2 ASM (): Used for bytecode manipulation. Private implementation detail.
 
 == Setting up the Runtime Container
 
-In this section, we will create an absolutely minimal NetBeans Platform application. It will consist of only those modules that every NetBeans Platform application must have—the six modules that make up the runtime container. Once we have created an application that consists of nothing more than these six modules, we will run it. There will be no specific output from this application. However, it will build and run successfully because all the fundamental requirements of a NetBeans Platform application will have been met.
+In this section, we will create an absolutely minimal NetBeans Platform application. It will consist of only those modules that every NetBeans Platform application must have - the modules that make up the runtime container. Once we have created an application that consists of nothing more than these none modules, we will run it. There will be no specific output from this application. However, it will build and run successfully because all the fundamental requirements of a NetBeans Platform application will have been met.
 
 
 [start=1]
-1. Go to File > New Project. In the New Project dialog, choose NetBeans Modules > NetBeans Platform Application:
+1.  Choose menu:File[New Project] (kbd:[Ctrl+Shift+N]). Under Categories, expand Java with Ant, and select NetBeans Modules. Under Projects, select Module: 
 
+image::images/nbm-runtime-container/new_project1.png[]
 
-image::images/maven-minimal-nb-dep-graph-72-1.png[]
-
-Click Next.
+Click btn:[Next].
 
 
 [start=2]
 1. Name your application 'HelloWorld' and specify where to store it:
 
+image::images/nbm-runtime-container/new_project2.png[]
 
-image::images/maven-minimal-nb-dep-graph-72-2.png[]
+Click btn:[Finish]. You now have a minimal NetBeans Platform application:
 
-Click Finish. You now have your first NetBeans Platform application:
-
-
-image::images/maven-minimal-nb-dep-graph-72-3.png[]
+image::images/nbm-runtime-container/new_project3.png[]
 
 
 [start=3]
-1. Right-click the main project node in the Projects window, choose Properties, and go to the Libraries tab. There you can see all the modules that are part of this application:
+1. Right-click the main project node in the Projects window (`HelloWorld`), choose Properties:
 
+image::images/nbm-runtime-container/new_project4.png[]
 
-image::images/maven-minimal-nb-dep-graph-72-4.png[]
+The Project Properties dialog appears. Go to the Libraries tab. There you can see all the modules that are part of this application:
 
-NOTE:  Notice that the template you used in step 1 above preselected several modules for you. Also notice that the preselected modules all come from the "platform" cluster.
+image::images/nbm-runtime-container/new_project5.png[]
 
-In addition to the six modules making up the runtime container, many other modules are included. We are going to exclude them in the next step because the purpose of this tutorial is to create a minimal NetBeans Platform application, that is, one that contains nothing more than the runtime container.
+NOTE:  The template you used in step 1 above preselected several modules for you, all of which come from the "platform" cluster.
+
+In addition to the modules making up the runtime container, many other modules are included. We are going to exclude them in the next step because the purpose of this tutorial is to create a minimal NetBeans Platform application, that is, one that contains nothing more than the runtime container.
 
 
 [start=4]
-1. Click the checkbox next to "platform". Now all modules are unselected, that is, there are now no modules in the application. Next, scroll down the list, find "Startup", and click the corresponding checkbox, as shown below: 
+1. Click the checkbox next to "platform" to deselect it. There are now no modules in the application.
+
+image::images/nbm-runtime-container/new_project6.png[]
 
 
-image::images/maven-minimal-nb-dep-graph-72-5.png[]
+[start=5]
+1. Next, scroll down the list, find "Startup", and click the corresponding checkbox, as shown below: 
 
-Click the Resolve button, because the Startup module depends on code found in five other modules, that is, the other modules making up the runtime container. Now you should see that the Resolve button disappears, together with the warning messages:
+image::images/nbm-runtime-container/new_project7.png[]
 
+Click btn:[Resolve], because the Startup module depends on code found in eight other modules that make up the runtime container. Now you should see that the Resolve button disappears, together with the warning messages:
 
-image::images/maven-minimal-nb-dep-graph-72-6.png[]
+image::images/nbm-runtime-container/new_project8.png[]
 
-Scroll up and down the list and notice that ONLY the six modules that make up the runtime container are included.
+Scroll up and down the list and notice that ONLY the nine modules that make up the runtime container are included.
 
-You now have a minimal NetBeans Platform application. It does not contain a user interface. It has six modules that provide the low level plumbing mandatory in any NetBeans Platform application.
+Click btn:[OK] to close the Project Properties dialog.
 
-Right-click the application and choose Run. The application successfully executes but doesn't do or display anything special yet.
+You now have a minimal NetBeans Platform application. It does not contain a user interface. It has nine modules that provide the low level plumbing required in any NetBeans Platform application.
+
+Right-click the application and choose Run (F6). The application successfully executes but doesn't do or display anything special yet.
 
 
 == Loading a New Module into the Runtime Container
 
-In this section, we add one custom module to the NetBeans runtime container. The custom module will do nothing special; it will only print a message to System.out. The only reason for adding the custom module will be so that you can see that it will be an equal partner to the existing six modules in your application. At the end of this section, you will have seven modules instead of the six that you already have, that is, you will have included your own custom module.
+In this section, we add a custom module to the NetBeans runtime container. The custom module will do nothing special: it will only print a message to System.out. The only reason for adding the custom module will be so that you can see that it will be an equal partner to the existing modules in your application. At the end of this section, your application will have ten modules, made up of the nine modules that you already have plus your custom module.
 
 
 [start=1]
 1. Right-click the application's Modules node and choose 'Add New...'.
 
-
-image::images/maven-minimal-nb-dep-graph-72-7.png[]
+image::images/nbm-runtime-container/custom_module1.png[]
 
 
 [start=2]
 1. Give your module a project name, such as 'HelloModule' and specify a location to store the module:
 
+image::images/nbm-runtime-container/custom_module2.png[]
 
-image::images/maven-minimal-nb-dep-graph-72-8.png[]
-
-Click Next.
+Click btn:[Next].
 
 
 [start=3]
-1. Specify a code name base, which is a unique string that identifies the module: 
+1. Specify a code name base (e.g. `org.myorg.hellomodule`), which is a unique string that identifies the module: 
 
+image::images/nbm-runtime-container/custom_module3.png[]
 
-image::images/maven-minimal-nb-dep-graph-72-9.png[]
+Click btn:[Finish]. You now have a new module:
 
-Click Finish. You now have a new module:
-
-
-image::images/maven-minimal-nb-dep-graph-72-91.png[]
+image::images/nbm-runtime-container/custom_module4.png[]
 
 
 [start=4]
-1. Right-click the module, choose New > Other, and then choose Module Development > Installer/Activator: 
+1. Right-click the module, choose New > Other:
 
+image::images/nbm-runtime-container/custom_module5.png[]
 
-image::images/maven-minimal-nb-dep-graph-72-92.png[]
+Then choose Module Development > Installer/Activator: 
 
-Click Next.
+image::images/nbm-runtime-container/custom_module6.png[]
+
+Click btn:[Next].
 
 
 [start=5]
-1. Click Finish below to complete the wizard: 
+1. The module activator details are shown:
 
+image::images/nbm-runtime-container/custom_module7.png[]
 
-image::images/maven-minimal-nb-dep-graph-72-93.png[]
+Click btn:[Finish] to create the class.
 
 You now have a new class that extends the NetBeans ModuleInstall class, which is from the Module System API.
 
 
 [start=6]
-1. Add a new 'System.out.println' message in the 'restored' method of the Installer class, as shown in the highlighted line below:
+1. Add a new 'System.out.println' message in the `restored` method of the Installer class, as shown in the highlighted line below:
 
-[source,java]
+[source,javaline, nums,highlight=9]
 ----
-
-package org.mycompany.hello;
+package org.myorg.hellomodule;
 
 import org.openide.modules.ModuleInstall;
 
@@ -182,56 +178,56 @@ public class Installer extends ModuleInstall {
 
     @Override
     public void restored() {
-        *System.out.println("hello world!");*
+        System.out.println("hello world!");
     }
-    
+
 }
 ----
 
 
 [start=7]
-1. Run the application again and notice the 'Hello World' message in the application's output, in the Output window, which can be opened from the Window menu. The end of the stack trace, which includes the 'hello world' message, should be something like this:
+1. Run the application again and notice the 'Hello World' message in the application's output (Output window, which can be opened from the Window menu if required). The end of the stack trace, which includes the 'hello world' message, should be something like this:
 
-[source,java]
+[source]
 ----
-
-org.mycompany.hello.netbeans:
-Generating Auto Update information for org.mycompany.hello
-run:
-run.run:
-hello world!
--------------------------------------------------------------------------------
->Log Session: Friday, June 27, 2014 5:05:32 PM CEST
+>Log Session: Saturday, December 19, 2020 at 3:02:09 PM Australian Eastern Daylight Time
 >System Info: 
-  Product Version         = HelloWorld-Ant nbms-and-javadoc-1540-on-20140411
-  Operating System        = Linux version 3.11.0-23-generic running on i386
-  Java; VM; Vendor        = 1.8.0; Java HotSpot(TM) Server VM 25.0-b70; Oracle Corporation
-  Runtime                 = Java(TM) SE Runtime Environment 1.8.0-b132
-  Java Home               = /home/geertjan/jdk1.8.0/jre
-  System Locale; Encoding = en_US (helloworld_ant); UTF-8
-  Home Directory          = /home/geertjan
-  Current Directory       = /home/geertjan/NetBeansProjects/api-samples/versions/8.0/tutorials/container/HelloWorld-Ant
-  User Directory          = /home/geertjan/NetBeansProjects/api-samples/versions/8.0/tutorials/container/HelloWorld-Ant/build/testuserdir
-  Cache Directory         = /home/geertjan/NetBeansProjects/api-samples/versions/8.0/tutorials/container/HelloWorld-Ant/build/testuserdir/var/cache
-  Installation            = /home/geertjan/NetBeansProjects/api-samples/versions/8.0/tutorials/container/HelloWorld-Ant/build/cluster
-                            /home/geertjan/netbeans-8.0/platform
-                            /home/geertjan/netbeans-8.0/platform
-  Boot &amp; Ext. Classpath   = /home/geertjan/jdk1.8.0/jre/lib/resources.jar:/home/geertjan/jdk1.8.0/jre/lib/rt.jar:/home/geertjan/jdk1.8.0/jre/lib/sunrsasign.jar:/home/geertjan/jdk1.8.0/jre/lib/jsse.jar:/home/geertjan/jdk1.8.0/jre/lib/jce.jar:/home/geertjan/jdk1.8.0/jre/lib/charsets.jar:/home/geertjan/jdk1.8.0/jre/lib/jfr.jar:/home/geertjan/jdk1.8.0/jre/classes:/home/geertjan/jdk1.8.0/jre/lib/ext/nashorn.jar:/home/geertjan/jdk1.8.0/jre/lib/ext/dnsns.jar:/home/geertjan/jdk1.8.0/jre/lib/ext/sunec.jar:/home/geertjan/jdk1.8.0/jre/lib/ext/localedata.jar:/home/geertjan/jdk1.8.0/jre/lib/ext/sunjce_provider.jar:/home/geertjan/jdk1.8.0/jre/lib/ext/jfxrt.jar:/home/geertjan/jdk1.8.0/jre/lib/ext/sunpkcs11.jar:/home/geertjan/jdk1.8.0/jre/lib/ext/zipfs.jar:/home/geertjan/jdk1.8.0/jre/lib/ext/cldrdata.jar:/usr/java/packages/lib/ext/jpcap.jar
-  Application Classpath   = /home/geertjan/netbeans-8.0/platform/lib/boot.jar:/home/geertjan/netbeans-8.0/platform/lib/org-openide-modules.jar:/home/geertjan/netbeans-8.0/platform/lib/org-openide-util-lookup.jar:/home/geertjan/netbeans-8.0/platform/lib/org-openide-util.jar:/home/geertjan/netbeans-8.0/platform/lib/locale/boot_ja.jar:/home/geertjan/netbeans-8.0/platform/lib/locale/boot_pt_BR.jar:/home/geertjan/netbeans-8.0/platform/lib/locale/boot_ru.jar:/home/geertjan/netbeans-8.0/platform/lib/locale/boot_zh_CN.jar:/home/geertjan/netbeans-8.0/platform/lib/locale/org-openide-modules_ja.jar:/home/geertjan/netbeans-8.0/platform/lib/locale/org-openide-modules_pt_BR.jar:/home/geertjan/netbeans-8.0/platform/lib/locale/org-openide-modules_ru.jar:/home/geertjan/netbeans-8.0/platform/lib/locale/org-openide-modules_zh_CN.jar:/home/geertjan/netbeans-8.0/platform/lib/locale/org-openide-util-lookup_ja.jar:/home/geertjan/netbeans-8.0/platform/lib/locale/org-openide-util-lookup_pt_BR.jar:/home/geertjan/netbeans-8.0/platform/lib/locale/org-openide-util-lookup_ru.jar:/home/geertjan/netbeans-8.0/platform/lib/locale/org-openide-util-lookup_zh_CN.jar:/home/geertjan/netbeans-8.0/platform/lib/locale/org-openide-util_ja.jar:/home/geertjan/netbeans-8.0/platform/lib/locale/org-openide-util_pt_BR.jar:/home/geertjan/netbeans-8.0/platform/lib/locale/org-openide-util_ru.jar:/home/geertjan/netbeans-8.0/platform/lib/locale/org-openide-util_zh_CN.jar:/home/geertjan/jdk1.8.0/lib/dt.jar:/home/geertjan/jdk1.8.0/lib/tools.jar
-  Startup Classpath       = /home/geertjan/netbeans-8.0/platform/core/core.jar:/home/geertjan/netbeans-8.0/platform/core/org-openide-filesystems.jar:/home/geertjan/netbeans-8.0/platform/core/locale/core_ru.jar:/home/geertjan/netbeans-8.0/platform/core/locale/core_zh_CN.jar:/home/geertjan/netbeans-8.0/platform/core/locale/org-openide-filesystems_ru.jar:/home/geertjan/netbeans-8.0/platform/core/locale/org-openide-filesystems_ja.jar:/home/geertjan/netbeans-8.0/platform/core/locale/org-openide-filesystems_zh_CN.jar:/home/geertjan/netbeans-8.0/platform/core/locale/org-openide-filesystems_pt_BR.jar:/home/geertjan/netbeans-8.0/platform/core/locale/core_ja.jar:/home/geertjan/netbeans-8.0/platform/core/locale/core_pt_BR.jar:/home/geertjan/NetBeansProjects/api-samples/versions/8.0/tutorials/container/HelloWorld-Ant/build/cluster/core/locale/core_helloworld_ant.jar
+  Product Version         = HelloWorld 12.2-d73d3dd898acc440c460924dabf8ad5feb90369f
+  Operating System        = Linux version 5.4.0-58-generic running on amd64
+  Java; VM; Vendor        = 11.0.9.1; OpenJDK 64-Bit Server VM 11.0.9.1+1-Ubuntu-0ubuntu1.20.04; Ubuntu
+  Runtime                 = OpenJDK Runtime Environment 11.0.9.1+1-Ubuntu-0ubuntu1.20.04
+  Java Home               = /usr/lib/jvm/java-11-openjdk-amd64
+  System Locale; Encoding = en_AU (helloworld); UTF-8
+  Home Directory          = /home/bradh
+  Current Directory       = /home/bradh/NetBeansProjects/HelloWorld
+  User Directory          = /home/bradh/NetBeansProjects/HelloWorld/build/testuserdir
+  Cache Directory         = /home/bradh/NetBeansProjects/HelloWorld/build/testuserdir/var/cache
+  Installation            = /home/bradh/NetBeansProjects/HelloWorld/build/cluster
+                            /snap/netbeans/41/netbeans/platform
+                            /snap/netbeans/41/netbeans/platform
+  Boot & Ext. Classpath   = 
+  Application Classpath   = /snap/netbeans/41/netbeans/platform/lib/boot.jar:/snap/netbeans/41/netbeans/platform/lib/org-openide-modules.jar:/snap/netbeans/41/netbeans/platform/lib/org-openide-util-lookup.jar:/snap/netbeans/41/netbeans/platform/lib/org-openide-util-ui.jar:/snap/netbeans/41/netbeans/platform/lib/org-openide-util.jar
+  Startup Classpath       = /snap/netbeans/41/netbeans/platform/core/asm-8.0.1.jar:/snap/netbeans/41/netbeans/platform/core/asm-commons-8.0.1.jar:/snap/netbeans/41/netbeans/platform/core/asm-tree-8.0.1.jar:/snap/netbeans/41/netbeans/platform/core/core-base.jar:/snap/netbeans/41/netbeans/platform/core/core.jar:/snap/netbeans/41/netbeans/platform/core/org-netbeans-libs-asm.jar:/snap/netbeans/41/netbeans/platform/core/org-openide-filesystems-compat8.jar:/snap/netbeans/41/netbeans/platform/core/org-openide-filesystems.jar:/home/bradh/NetBeansProjects/HelloWorld/build/cluster/core/locale/core_helloworld.jar
 -------------------------------------------------------------------------------
+hello world!
 INFO [org.netbeans.core.startup.NbEvents]: Turning on modules:
-	org.openide.util.lookup [8.24.1 201403101706]
-	org.openide.util [8.37.1 201403101706]
-	org.openide.modules [7.42.1 201403101706]
-	org.openide.filesystems [8.10.1 201403101706]
-	org.netbeans.bootstrap/1 [2.67.1 201403101706]
-	org.netbeans.core.startup/1 [1.54 nbms-and-javadoc-1540-on-20140411]
-	org.mycompany.hello [1.0 140627]
-BUILD SUCCESSFUL (total time: 18 seconds)
+	org.openide.util.lookup [8.44 12.2-d73d3dd898acc440c460924dabf8ad5feb90369f]
+	org.openide.util [9.17 12.2-d73d3dd898acc440c460924dabf8ad5feb90369f]
+	org.openide.util.ui [9.18 12.2-d73d3dd898acc440c460924dabf8ad5feb90369f]
+	org.openide.modules [7.58 12.2-d73d3dd898acc440c460924dabf8ad5feb90369f]
+	org.openide.filesystems [9.20 12.2-d73d3dd898acc440c460924dabf8ad5feb90369f]
+	org.openide.filesystems.compat8 [9.19 12.2-d73d3dd898acc440c460924dabf8ad5feb90369f]
+	org.netbeans.libs.asm [5.13 12.2-d73d3dd898acc440c460924dabf8ad5feb90369f]
+	org.netbeans.core.startup.base [1.72.0.1 1 12.2-d73d3dd898acc440c460924dabf8ad5feb90369f]
+	org.netbeans.bootstrap/1 [2.88 12.2-d73d3dd898acc440c460924dabf8ad5feb90369f]
+	org.netbeans.core.startup/1 [1.72.0.1 12.2-d73d3dd898acc440c460924dabf8ad5feb90369f]
+	org.myorg.hellomodule [1.0 201219]
+BUILD SUCCESSFUL (total time: 20 seconds)
 ----
 
-In this tutorial, you have used the least amount of NetBeans Platform modules that any NetBeans Platform application requires, that is, the NetBeans runtime container, consisting of six modules. You added a custom module, that is, a module that you created yourself. The custom module printed a message into the Output window.
+== Summary
+
+In this tutorial, you have used the minimal set of NetBeans Platform modules that any NetBeans Platform application requires, that is, the NetBeans runtime container, consisting of nine modules. You added a custom module, that is, a module that you created yourself. The custom module printed a message into the Output window.
 
 Notice that you did not need to create a main method because the NetBeans runtime container contains one already. The "module" concept was also predefined in the NetBeans runtime container. Other features of the NetBeans runtime container will be introduced as you take the next steps outlined below.
 
