@@ -32,49 +32,26 @@
 
 This tutorial demonstrates how to create a NetBeans module that provides one or more Java hints. At the end of the first scenario covered in this tutorial, whenever the user types " ``JOptionPane.showMessageDialog`` ", a Java hint will appear, asking the user whether the statement is needed (or whether it is there because the user needed it for debugging):
 
-
-image::images/result-1.png[]
-
 At the end of the second scenario, the user will be able to click the hint to delete the superfluous statement:
-
-
-image::images/result-7.png[]
 
 In addition, the user will be able to find and replace multiple instances of the superfluous statement, after using the "Inspect &amp; Transform" dialog in the Refactor menu, which displays all found instances in the Refactoring window:
 
-
-image::images/result-3.png[]
-
 NOTE:  This document is applicable to NetBeans IDE 8.0 and NetBeans Platform 8.0. If you are using an earlier version, see  link:74/nbm-java-hint.html[the previous version of this document].
 
-
-
-
-
-
-
 For troubleshooting purposes, you are welcome to download the  link:http://web.archive.org/web/20170409072842/http://java.net/projects/nb-api-samples/show/versions/8.0/tutorials/MyCustomHints[completed tutorial source code].
-
 
 == Learning About Java Hints
 
 The best way to learn about the Java hint infrastructure is to read the sources of the Java hints that are part of the IDE. Start by identifying a hint that does something similar to what you would like to achieve, then check out the NetBeans sources, and read the source code of the related hint.
-
 
 [start=1]
 1. Use Mercurial to clone the NetBeans sources:  link:https://netbeans.apache.org/wiki/devfaqaccesssourcesusingmercurial[http://wiki.netbeans.org/DevFaqAccessSourcesUsingMercurial]
 
 [start=2]
 1. 
-In the NetBeans sources, browse to the "java.hints" folder, expand it, and read the sources relevant to the hint you want to create:
-
-
-image::images/hint-list.png[]
-
-The list of classes you see above is only the tip of the iceberg!
+In the NetBeans sources, browse to the "java.hints" folder, expand it, and read the sources relevant to the hint you want to create.
 
 The remainder of the tutorial shows you how to put a Java hint together generally, from scratch, but remember that the best place to look for useful snippets of code is in the sources above, if there is anything specific that you don't know how to do.
-
 
 == Setting Up the Module Project
 
@@ -97,16 +74,13 @@ The IDE creates the  ``MyCustomHints``  project. The project contains all of you
 
 In this section, you provide the Java code for the Java hint.
 
-
 [start=1]
-1. Right-click the project node and choose New > Other > Module Development > Java Hint: 
-image::images/new-hint-1.png[]
-
-Click Next.
-
+1. Right-click the project node and choose New > Other > Module Development > Java Hint. Click Next.
 
 [start=2]
 1. In the New Java Hint Description panel, fill out the fields as follows: 
+
+
 image::images/new-hint-2.png[]
 
 Click Next.
@@ -114,6 +88,8 @@ Click Next.
 
 [start=3]
 1. In the New Java Hint Location panel, fill out the fields as follows: 
+
+
 image::images/new-hint-3.png[]
 
 Click Finish.
@@ -134,24 +110,24 @@ import org.netbeans.spi.java.hints.HintContext;
 import org.netbeans.spi.java.hints.TriggerPattern;
 import org.openide.util.NbBundle.Messages;
 
-link:http://bits.netbeans.org/dev/javadoc/org-netbeans-spi-java-hints/org/netbeans/spi/java/hints/Hint.html[@Hint](displayName = "#DN_JOptionPaneHint",
+@Hint(displayName = "#DN_JOptionPaneHint",
       description = "#DESC_JOptionPaneHint", 
       category = "general")
-link:http://bits.netbeans.org/dev/javadoc/org-openide-util/org/openide/util/NbBundle.Messages.html[@Messages]({
+@Messages({
     "DN_JOptionPaneHint=JOptionPane.showMessageDialog",
     "DESC_JOptionPaneHint=Checks for JOptionPane.showMessageDialog."
 })
 public class JOptionPaneHint {
 
-link:http://bits.netbeans.org/dev/javadoc/org-netbeans-spi-java-hints/org/netbeans/spi/java/hints/TriggerPattern.html[@TriggerPattern](
+@TriggerPattern(
             value = "$str.equals(\"\")", //Specify a pattern as needed
             constraints =
-link:http://bits.netbeans.org/dev/javadoc/org-netbeans-spi-java-hints/org/netbeans/spi/java/hints/ConstraintVariableType.html[@ConstraintVariableType](
+@ConstraintVariableType(
                     variable = "$str", 
                     type = "java.lang.String"))
-link:http://bits.netbeans.org/dev/javadoc/org-openide-util/org/openide/util/NbBundle.Messages.html[@Messages]("ERR_JOptionPaneHint=Is JOptionPane.showMessageDialog needed?")
-    public static  link:http://bits.netbeans.org/dev/javadoc/org-netbeans-spi-editor-hints/org/netbeans/spi/editor/hints/ErrorDescription.html[ErrorDescription] computeWarning( link:http://bits.netbeans.org/dev/javadoc/org-netbeans-spi-java-hints/org/netbeans/spi/java/hints/HintContext.html[HintContext] ctx) {
-        return  link:http://bits.netbeans.org/dev/javadoc/org-netbeans-spi-java-hints/org/netbeans/spi/java/hints/ErrorDescriptionFactory.html[ErrorDescriptionFactory].forName(
+@Messages("ERR_JOptionPaneHint=Is JOptionPane.showMessageDialog needed?")
+    public static  ErrorDescription computeWarning(HintContext ctx) {
+        return  ErrorDescriptionFactory.forName(
                 ctx, 
                 ctx.getPath(), 
                 Bundle.ERR_JOptionPaneHint());
@@ -267,7 +243,7 @@ In this section, you learn how to fix statements of interest that have been iden
 [source,java]
 ----
 
-private static final class FixImpl extends  link:http://bits.netbeans.org/dev/javadoc/org-netbeans-spi-java-hints/org/netbeans/spi/java/hints/JavaFix.html[JavaFix] {
+private static final class FixImpl extends JavaFix {
 
     public FixImpl(CompilationInfo info, TreePath tp) {
         super(info, tp);
@@ -318,7 +294,7 @@ The code above comes from the NetBeans sources, where it is used in the SystemOu
 ----
 
 public static ErrorDescription computeWarning(HintContext ctx) {
-    * link:http://bits.netbeans.org/dev/javadoc/org-netbeans-spi-editor-hints/org/netbeans/spi/editor/hints/Fix.html?is-external=true[Fix] fix = new FixImpl(ctx.getInfo(), ctx.getPath()).toEditorFix();*
+    Fix fix = new FixImpl(ctx.getInfo(), ctx.getPath()).toEditorFix();
     return ErrorDescriptionFactory.forName(
             ctx,
             ctx.getPath(),
