@@ -20,7 +20,7 @@
 */%>
 <%/*
 
-    page-noaside.gsp: A main area with no aside.
+    page_noaside.gsp: A main area with no aside.
 
 */%>
 <!doctype html>
