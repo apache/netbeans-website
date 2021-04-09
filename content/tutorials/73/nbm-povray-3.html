@@ -1,0 +1,1123 @@
+
+<!DOCTYPE html>
+<html class="no-js" lang="en" dir="ltr">
+    
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>Writing POV-Ray Support for NetBeans III—Implementing a Project Type</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Writing POV-Ray Support for NetBeans III—Implementing a Project Type - Apache NetBeans">
+    <meta name="author" content="Apache NetBeans">
+    <meta name="keywords" content="Apache NetBeans Platform, Platform Tutorials, Writing POV-Ray Support for NetBeans III—Implementing a Project Type">
+    <meta name="generator" content="Apache NetBeans">
+    <link rel="stylesheet" href="/css/font-awesome.min.css">
+     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/styles/default.min.css"> 
+    <link rel="stylesheet" href="/css/netbeans.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#ffc40d">
+    <meta name="theme-color" content="#ffffff">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700" rel="stylesheet"> 
+    <!--
+        Licensed to the Apache Software Foundation (ASF) under one
+        or more contributor license agreements.  See the NOTICE file
+        distributed with this work for additional information
+        regarding copyright ownership.  The ASF licenses this file
+        to you under the Apache License, Version 2.0 (the
+        "License"); you may not use this file except in compliance
+        with the License.  You may obtain a copy of the License at
+        http://www.apache.org/licenses/LICENSE-2.0
+        Unless required by applicable law or agreed to in writing,
+        software distributed under the License is distributed on an
+        "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+        KIND, either express or implied.  See the License for the
+        specific language governing permissions and limitations
+        under the License.
+    -->
+</head>
+
+
+    <body>
+        
+
+<div class="title-bar" data-responsive-toggle="responsive-menu" data-hide-for="medium">
+    <button type="button" data-toggle="responsive-menu"><i style='font-size: 32px; color: #fff; padding: 8px' class='fa fa-bars'></i></button>
+    <div class="title-bar-title">Apache NetBeans</div>
+</div>
+<div class="top-bar" id="responsive-menu">
+    <div class='top-bar-left'>
+        <a class='title' href="/"><img src='/images/apache-netbeans.svg' style='padding: 8px; height: 48px;'></img> Apache NetBeans</a>
+    </div>
+    <div class="top-bar-right">
+        <ul class="vertical medium-horizontal menu" data-responsive-menu="drilldown medium-dropdown">
+            <li> <a href="/community/index.html">Community</a> </li>
+            <li> <a href="/participate/index.html">Participate</a> </li>
+            <li> <a href="https://blogs.apache.org/netbeans/">Blog</a></li>
+            <li> <a href="/help/index.html">Get Help</a> </li>
+            <li> <a href="https://plugins.netbeans.apache.org/">Plugins</a> </li>
+            <li> <a href="/download/index.html">Download</a> </li>
+        </ul>
+    </div>
+</div>
+
+
+        
+<!-- src/templates/news -->
+<section class="hero news alternate">
+    <div class='grid-container'>
+        <div class='cell'>
+            <div class="annotation">Latest release</div>
+            <h1>Apache NetBeans 12.3</h1>
+            <p><a class="button success" href="/download/nb123/nb123.html">Find out more</a></p>
+        </div>
+    </div>
+</section>
+
+        <div class='grid-container main-content tutorial'>
+            <h1 class="sect0">Writing POV-Ray Support for NetBeans III—Implementing a Project Type</h1>
+            
+            <div class="sectionbody">
+              <div class="admonitionblock note">
+                <table>
+                  <tbody><tr>
+                  <td class="icon"><i class="fa icon-note" title="Note"></i></td>
+                  <td class="content">This tutorial needs a review. 
+                     You can <a href="https://issues.apache.org/jira/projects/NETBEANS/issues">open a JIRA issue</a>, 
+                     or <a href="https://github.com/apache/netbeans-website/blob/master/netbeans.apache.org/src/content/tutorials/73/nbm-povray-3.asciidoc" title="Edit this tutorial in github">edit it in GitHub </a>
+                     following these <a href="/kb/docs/contributing.html">contribution guidelines.</a></td>
+                  </tr></tbody>
+                </table>
+              </div>
+            </div>
+            
+            <div id="toc" class="toc">
+<div id="toctitle"></div>
+<ul class="sectlevel1">
+<li><a href="#_setting_up_dependencies">Setting Up Dependencies</a></li>
+<li><a href="#_creating_the_project_factory">Creating the Project Factory</a></li>
+<li><a href="#_implementing_povrayproject">Implementing PovrayProject</a></li>
+<li><a href="#_implementing_the_logical_view">Implementing the Logical View</a></li>
+<li><a href="#_registering_the_project_factory">Registering the Project Factory</a></li>
+<li><a href="#_trying_out_the_new_project">Trying Out the New Project</a></li>
+<li><a href="#_next_steps">Next Steps</a></li>
+</ul>
+</div>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>This is a continuation of the tutorial for building a POV-Ray rendering application on the NetBeans Platform. If you have not read the  <a href="nbm-povray-1.html">first</a> and  <a href="nbm-povray-2.html">second</a> parts of this tutorial, you may want to start there.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_setting_up_dependencies">Setting Up Dependencies</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>There are a few APIs which we will need to use classes from—so before starting to code, let&#8217;s add dependencies from the Povray Projects module to those:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="1">
+<li>
+<p>The Project APIs are not part of the NetBeans Platform, but of NetBeans IDE. The NetBeans Platform Application template we used, at the start of part 1, only included modules into our application from the NetBeans Platform. Therefore, to start with, we need to include the Project APIs into our application, before we can set dependencies on them in our modules.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>Right-click the  <code>povsuite</code>  application, choose Properties, and then select the Libraries tab. In the Libraries tab, expand the "ide" node, and select Project API, Project UI, and Project UI API, as shown below:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/pic0.png" alt="pic0">
+</div>
+</div>
+<div class="paragraph">
+<p>Finally, click the Resolve button, which includes a number of additional modules into your application.</p>
+</div>
+<div class="paragraph">
+<p>Click OK above.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="2">
+<li>
+<p>Right-click the  <code>povsuite</code>  project and choose Run. The application starts up. Now that it includes several project-related modules, you should see a number of new features, accessed from many new menu items, as shown below:</p>
+</li>
+</ol>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/pic2.png" alt="pic2">
+</div>
+</div>
+<div class="paragraph">
+<p>Now we&#8217;re going to extend the project functionality to include support for a new project type for PovRay projects. That means we&#8217;ll need to use several APIs, on which we need to set dependencies in the Povray Projects module.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="3">
+<li>
+<p>Right-click the Povray Projects module in the Projects window in the IDE package, and choose Properties from the popup menu. Open the Libraries tab of the dialog:</p>
+</li>
+</ol>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/pic1.png" alt="pic1">
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="4">
+<li>
+<p>On the Libraries page of the project properties dialog, shown above, click the Add Dependency button.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>1.
+In the dialog that appears, type "ProjectFactory". The Projects API module should become selected in the list below—it is the module that provides this class, so we need a dependency on it to be able to use the class.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/pic3.png" alt="pic3">
+</div>
+</div>
+<div class="paragraph">
+<p>Press Enter or Click OK, and then either press Tab and then Space, or click the Add Dependency button to add another dependency.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="6">
+<li>
+<p>Repeat the steps above with the following classes:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>In the add dependency dialog, type "FileObject". When "FileSystems API" becomes selected, press Enter or click OK.</p>
+</li>
+<li>
+<p>Repeat these steps again, typing the name "Lookup", and adding a dependency on the Lookup API.</p>
+</li>
+<li>
+<p>Repeat these steps yet again, typing the name "AbstractNode", and adding a dependency on the Nodes API.</p>
+</li>
+<li>
+<p>Repeat these steps once again, typing the name "DataFolder", and adding a dependency on the Loaders API.</p>
+</li>
+<li>
+<p>Repeat these steps once more, typing the name "LogicalViewProvider", and adding a dependency on the Project UI API.</p>
+</li>
+<li>
+<p>Repeat these steps once more, typing the name "HelpCtx", and adding a dependency on the Utilities API.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>1.
+You should now see the following:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/pic4.png" alt="pic4">
+</div>
+</div>
+<div class="paragraph">
+<p>Click OK to dismiss the dialog. The Libraries node of the project should now show you the dependencies you have set:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/pic5.png" alt="pic5">
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_creating_the_project_factory">Creating the Project Factory</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>As with <code>DataObjects</code> and <code>DataLoaders</code>, the system keeps a registry of things that can identify a directory as being a project and creates a <code>Project</code> object to represent it. So, the first step in creating a our own project type is to create a factory—an implementation of <code>ProjectFactory</code> from the Projects API—which can figure out if a directory is a POV-Ray project and, if it is one, make an instance of our <code>Project</code> implementation for it.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="1">
+<li>
+<p>Right-click the <code>org.netbeans.examples.modules.povproject</code> package, and choose New &gt; Java Class:</p>
+</li>
+</ol>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/pic6.png" alt="pic6">
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="2">
+<li>
+<p>In the New File wizard that appears, enter the name  <code>PovProjectFactory</code> . Press Enter or click OK to create the new file.</p>
+</li>
+</ol>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="3">
+<li>
+<p>In the code editor, modify the class signature of  <code>PovProjectFactory</code>  as follows:</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code data-lang="java">public class PovProjectFactory implements ProjectFactory {</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Press Alt-Shift-F (Ctrl-Shift-F on Macintosh) to Fix Imports.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="4">
+<li>
+<p>Position the caret somewhere in the class signature line. When the lightbulb glyph appears in the margin, press Alt-Enter, and then Enter again to accept the hint "Implement All Abstract Methods". The class definition should now be as follows:</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code data-lang="java">package org.netbeans.examples.modules.povproject;
+
+import java.io.IOException;
+import org.netbeans.api.project.Project;
+import org.netbeans.spi.project.ProjectFactory;
+import org.netbeans.spi.project.ProjectState;
+import org.openide.filesystems.FileObject;
+
+public class PovProjectFactory implements ProjectFactory {
+
+    @Override
+    public boolean isProject(FileObject projectDirectory) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public Project loadProject(FileObject projectDirectory, ProjectState state) throws IOException {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void saveProject(Project project) throws IOException, ClassCastException {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="5">
+<li>
+<p>Add the following constants to the head of the <code>PovProjectFactory</code> class definition, as follows:</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code data-lang="java">public class PovProjectFactory implements ProjectFactory {
+
+    *public static final String PROJECT_DIR = "pvproject";
+    public static final String PROJECT_PROPFILE = "project.properties";*</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="6">
+<li>
+<p>The first method we will implement is the <code>isProject()</code> method. This method needs to be very fast—it should determine whether or not a directory is a project as quickly as possible, because it will be called once for each directory shown in the file chooser when the user selects File &gt; Open Project.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>Implement the method as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code data-lang="java">@Override
+public boolean isProject(FileObject projectDirectory) {
+    *return projectDirectory.getFileObject(PROJECT_DIR) != null;*
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This simple test for the presence of a subdirectory called "pvproject" is all we need to determine that something is <em>not</em> one of our projects.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="7">
+<li>
+<p>Next, we will implement the code that actually loads a project, given a directory. The project system handles caching of projects, so all that&#8217;s needed here is to create a new project:</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code data-lang="java">@Override
+public Project loadProject(FileObject projectDirectory, ProjectState state) throws IOException {
+    *return isProject (projectDirectory) ? new PovrayProject (projectDirectory, state) : null;*
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The only interesting thing here is the <code>ProjectState</code> object, which we pass along with the directory to our project&#8217;s constructor. It is provided to us by the project system, and can be used to mark a project as needing to be saved. We will use it later to do that when the user changes the main file of the project, which will be written to disk in the <code>project.properties</code> when our project is closed.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="8">
+<li>
+<p>The final thing to implement is <code>saveProject()</code>—this is what will write out any unsaved changes to disk when a POV-Ray project is closed, or when the application shuts down:</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code data-lang="java">@Override
+public void saveProject(Project project) throws IOException, ClassCastException {
+
+    FileObject projectRoot = project.getProjectDirectory();
+    if (projectRoot.getFileObject(PROJECT_DIR) == null) {
+        throw new IOException ("Project dir " + projectRoot.getPath() + " deleted," +
+                " cannot save project");
+    }
+
+    //Force creation of the scenes/ dir if it was deleted
+    project.getLookup(PovrayProject.class).getScenesFolder(true);
+
+    //Find the properties file pvproject/project.properties,
+    //creating it if necessary
+    String propsPath = PROJECT_DIR + "/" + PROJECT_PROPFILE;
+    FileObject propertiesFile = projectRoot.getFileObject(propsPath);
+    if (propertiesFile == null) {
+        //Recreate the properties file if needed
+        propertiesFile = projectRoot.createData(propsPath);
+    }
+
+    Properties properties = (Properties) project.getLookup().lookup (Properties.class);
+    File f = FileUtil.toFile(propertiesFile);
+    properties.store(new FileOutputStream(f), "NetBeans Povray Project Properties");
+
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We haven&#8217;t written the <code>PovrayProject</code> yet, which is why you have some red underline error marks in your code, but from this code it&#8217;s pretty clear what it will look like—we are creating the <code>scenes/</code> directory if it does not exist or was deleted; we fetch a Properties object out of the project&#8217;s <code>Lookup</code>, and save it into <code>pvproject/project.properties</code>—that&#8217;s all there is or will be to saving a POV-Ray project.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_implementing_povrayproject">Implementing PovrayProject</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Now we need to create the Java class that represents a POV-Ray project—this is what our <code>PovProjectFactory</code> will create if the user opens a project that it owns. The Project API in NetBeans is quite simple. A "project", programmatically is the association of a directory on disk with a <code>Lookup</code> - a bag-o-stuff that can be queried for known interfaces. The Project API then defines some interfaces and classes that should be available from a `Project&#8217;s Lookup.</p>
+</div>
+<div class="paragraph">
+<p>So the first thing will be to create our implementation of <code>org.netbeans.api.project.Project</code>.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="1">
+<li>
+<p>Right-click the <code>org.netbeans.examples.modules.povproject</code> package in the Povray Projects project, and choose New &gt; Java Class again. In the New File wizard that appears, enter the name  <code>PovrayProject</code> . Press Enter or click OK to create the new file.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>1.
+In the code editor, modify the signature line of <code>PovrayProject</code> as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code data-lang="java">public final class PovrayProject implements Project {</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Press Alt-Shift-F (Ctrl-Shift-F on Macintosh) to Fix Imports.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="3">
+<li>
+<p>Position the caret somewhere in the class signature line. When the lightbulb glyph appears in the margin, press Alt-Enter, and then Enter again to accept the hint "Implement All Abstract Methods". You should now see the following:</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code data-lang="java">package org.netbeans.examples.modules.povproject;
+
+import org.netbeans.api.project.Project;
+import org.openide.filesystems.FileObject;
+import org.openide.util.Lookup;
+
+public class PovrayProject implements Project {
+
+    @Override
+    public FileObject getProjectDirectory() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public Lookup getLookup() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="4">
+<li>
+<p>Implement the top of the class as follows:</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code data-lang="java">public class PovrayProject implements Project {
+
+    public static final String SCENES_DIR = "scenes"; //NOI18N
+    public static final String IMAGES_DIR = "images"; //NOI18N
+
+    private final FileObject projectDir;
+    LogicalViewProvider logicalView = new PovrayLogicalView(this);
+    private final ProjectState state;
+
+    public PovrayProject(FileObject projectDir, ProjectState state) {
+        this.projectDir = projectDir;
+        this.state = state;
+    }
+
+    @Override
+    public FileObject getProjectDirectory() {
+        return projectDir;
+    }
+
+    FileObject getScenesFolder(boolean create) {
+        FileObject result =
+            projectDir.getFileObject(SCENES_DIR);
+
+        if (result == null &amp;amp;&amp;amp; create) {
+            try {
+                result = projectDir.createFolder (SCENES_DIR);
+            } catch (IOException ioe) {
+                Exceptions.printStackTrace(ioe);
+            }
+        }
+        return result;
+    }
+
+    FileObject getImagesFolder(boolean create) {
+        FileObject result =
+            projectDir.getFileObject(IMAGES_DIR);
+        if (result == null &amp;amp;&amp;amp; create) {
+            try {
+                result = projectDir.createFolder (IMAGES_DIR);
+            } catch (IOException ioe) {
+                Exceptions.printStackTrace(ioe);
+            }
+        }
+        return result;
+    }</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The last two methods we will use later on in this tutorial—they define (and can create) the <code>scenes</code> code and <code>images</code> folders that POV-Ray source files and their resulting image files will go into when the project is rendered.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="5">
+<li>
+<p>The actually interesting code goes into our implementation of <code>getLookup()</code>. Eventually we will put some of our own interfaces into the project&#8217;s <code>Lookup</code>; for now it will be mainly standard stuff—interfaces provided by the Project API module which we will implement. Implement <code>getLookup()</code> as follows:</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code data-lang="java">    private Lookup lkp;
+
+    @Override
+    public Lookup getLookup() {
+        if (lkp == null) {
+            lkp = Lookups.fixed(new Object[]{
+                        this, //handy to expose a project in its own lookup
+                        state, //allow outside code to mark the project as needing saving
+                        new ActionProviderImpl(), //Provides standard actions like Build and Clean
+                        loadProperties(), //The project properties
+                        new Info(), //Project information implementation
+                        logicalView, //Logical view of project implementation
+                    });
+        }
+        return lkp;
+    }</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="6">
+<li>
+<p>The one interesting thing in the code above is the call to <code>loadProperties()</code>—for storing project settings, we will use a properties file. So all we do here is read it into a <code>Properties</code> object, and make that object available through the project&#8217;s <code>Lookup</code>. We will want to save any changes made to this properties object, so we&#8217;ll use a bit of cleverness and create a <code>Properties</code> subclass that will mark the project as needing saving whenever something calls <code>put()</code>:</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code data-lang="java">    private Properties loadProperties() {
+
+        FileObject fob = projectDir.getFileObject(PovProjectFactory.PROJECT_DIR
+                + "/" + PovProjectFactory.PROJECT_PROPFILE);
+
+        Properties properties = new NotifyProperties(state);
+        if (fob != null) {
+            try {
+                properties.load(fob.getInputStream());
+            } catch (Exception e) {
+                Exceptions.printStackTrace(e);
+            }
+        }
+
+        return properties;
+
+    }
+
+    private static class NotifyProperties extends Properties {
+
+        private final ProjectState state;
+
+        NotifyProperties(ProjectState state) {
+            this.state = state;
+        }
+
+        @Override
+        public Object put(Object key, Object val) {
+
+            Object result = super.put(key, val);
+
+            if (((result == null) != (val == null)) || (result != null
+                    &amp;amp;&amp;amp; val != null &amp;amp;&amp;amp; !val.equals(result))) {
+                state.markModified();
+            }
+
+            return result;
+
+        }
+
+    }</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Other than that, the things in the <code>Lookup</code> are what should typically be found in the <code>Lookup</code> of any project—the project itself (the project infrastructure reserves the right to wrap any Project type in a wrapper Project object, so this guarantees being able to get at the real project instance), its state, an <code>ActionProvider</code> to handle standard commands like Build and Clean, a <code>ProjectInformation</code> implementation that supplies the display name and icon for the project. The last thing in the lookup is the <em>logical view</em> which we will come to next—this is what provides a <code>Node</code> for the project that will be displayed on the <em>Projects</em> tab in NetBeans.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="7">
+<li>
+<p>There are two remaining classes we need to create—the implementations of <code>ActionProvider</code> and <code>ProjectInformation</code>. We will simply stub these for now—add these two classes as inner classes of <code>PovrayProject</code>:</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code data-lang="java">private final class ActionProviderImpl implements ActionProvider {
+
+    @Override
+    public String[] getSupportedActions() {
+        return new String[0];
+    }
+
+    @Override
+    public void invokeAction(String string, Lookup lookup) throws IllegalArgumentException {
+        //do nothing
+    }
+
+    @Override
+    public boolean isActionEnabled(String string, Lookup lookup) throws IllegalArgumentException {
+        return false;
+    }
+
+}
+
+/**
+ * Implementation of project system's ProjectInformation class
+ */
+private final class Info implements ProjectInformation {
+
+    @Override
+    public Icon getIcon() {
+        return new ImageIcon(ImageUtilities.loadImage(
+                "org/netbeans/examples/modules/povrayproject/resources/scenes.gif"));
+    }
+
+    @Override
+    public String getName() {
+        return getProjectDirectory().getName();
+    }
+
+    @Override
+    public String getDisplayName() {
+        return getName();
+    }
+
+    @Override
+    public void addPropertyChangeListener(PropertyChangeListener pcl) {
+        //do nothing, won't change
+    }
+
+    @Override
+    public void removePropertyChangeListener(PropertyChangeListener pcl) {
+        //do nothing, won't change
+    }
+
+    @Override
+    public Project getProject() {
+        return PovrayProject.this;
+    }
+
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_implementing_the_logical_view">Implementing the Logical View</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>One line in the code you entered above should still be marked as being an error:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code data-lang="java">LogicalViewProvider logicalView = new PovrayLogicalView(this);</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In NetBeans IDE, what you see in the Projects window is a "logical view" of your project. This is a view that may not exactly reflect the structure of files on disk (the Files window and Favorites window is for that), but is more convenient to work with—for example, collapsing a tree of directories into a single node with a Java package name.</p>
+</div>
+<div class="paragraph">
+<p>What we will implement now is a <code>LogicalViewProvider</code>. This is basically a factory that produces a <code>Node</code> that represents the project. What child <code>Node`s that `Node</code> has, and what actions are available on them is up to us.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="1">
+<li>
+<p>Right-click the <code>org.netbeans.examples.modules.povproject</code> package in the Povray Projects project, and choose New &gt; Java Class. In the New File wizard that appears, enter the name "PovrayLogicalView". Press Enter or click OK to create the new file.</p>
+</li>
+</ol>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="2">
+<li>
+<p>In the code editor, modify the signature line of <code>PovrayLogicalView</code> as follows:</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code data-lang="java">class PovrayLogicalView implements LogicalViewProvider {</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Press Alt-Shift-F (Ctrl-Shift-F on Macintosh) to Fix Imports.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="3">
+<li>
+<p>Position the caret somewhere in the class signature line. When the lightbulb glyph appears in the margin, press Alt-Enter, and then Enter again to accept the hint "Implement All Abstract Methods".</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>We now have a skeleton implementation of our logical view:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code data-lang="java">class PovrayLogicalView implements LogicalViewProvider {
+
+    public PovrayLogicalView(PovrayProject aThis) {
+    }
+
+    @Override
+    public Node createLogicalView() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public Node findPath(Node root, Object target) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Part of the value of having a concept of a project is the ability to present data in a way that is closer to the way a user will <em>think</em> about their project than the structure of files on disk may be. The logical view of a project should present a simplified structure showing users what they need to get their work done.
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+In our case, we  <a href="nbm-povray-2.html#phys">already decided</a> that the user did not need to see the <code>images/</code> subdirectory, they should just be able to click a scene file and choose <em>View</em>, and that we want to put scene files in a <code>scenes/</code> subdirectory. So the logical thing to do for our logical view is to have it show the contents of that <code>scenes/</code> directory. We can return whatever <code>Node</code> we want as the root of our logical view of the project, and NetBeans makes using the content of the <code>scenes/</code> subdirectory very easy.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>In the Nodes API is a class called <code>FilterNode</code>. What it does is wrap an existing <code>Node</code>, and by default, simply expose the same child nodes, display name, icon, actions, etc. as the original. We can subclass <code>FilterNode</code> to change its icon and the set of actions available on it. The <code>DataLoader</code> infrastructure already provides a loader that recognizes Filesystem folders—an API class called <code>DataFolder</code>. So we get the original node for the folder for free—we just need to provide a subclass that uses our icon and (eventually) actions.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="4">
+<li>
+<p>We can now implement <code>PovrayLogicalView</code> as follows:</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code data-lang="java">class PovrayLogicalView implements LogicalViewProvider {
+
+    private final PovrayProject project;
+
+    public PovrayLogicalView(PovrayProject project) {
+        this.project = project;
+    }
+
+    @Override
+    public Node createLogicalView() {
+
+        try {
+
+            //Get the scenes directory, creating if deleted:
+            FileObject scenes = project.getScenesFolder(true);
+
+            //Get the DataObject that represents it:
+            DataFolder scenesDataObject =
+                    DataFolder.findFolder(scenes);
+
+            //Get its default node—we'll wrap our node around it to change the
+            //display name, icon, etc:
+            Node realScenesFolderNode = scenesDataObject.getNodeDelegate();
+
+            //This FilterNode will be our project node:
+            return new ScenesNode(realScenesFolderNode, project);
+
+        } catch (DataObjectNotFoundException donfe) {
+
+            Exceptions.printStackTrace(donfe);
+
+            //Fallback—the directory couldn't be created -
+            //read-only filesystem or something evil happened:
+            return new AbstractNode (Children.LEAF);
+
+        }
+
+    }
+
+    /**
+     * This is the node you actually see in the Projects window for the project
+     */
+    private static final class ScenesNode extends FilterNode {
+
+        final PovrayProject project;
+
+        public ScenesNode(Node node, PovrayProject project) throws DataObjectNotFoundException {
+            super(node, new FilterNode.Children(node),
+                    //The projects system wants the project in the Node's lookup.
+                    //NewAction and friends want the original Node's lookup.
+                    //Make a merge of both:
+                    new ProxyLookup(
+                        Lookups.singleton(project),
+                        node.getLookup())
+                    );
+            this.project = project;
+        }
+
+        @Override
+        public Image getIcon(int type) {
+            return ImageUtilities.loadImage(
+                    "org/netbeans/examples/modules/povproject/resources/scenes.gif");
+        }
+
+        @Override
+        public Image getOpenedIcon(int type) {
+            return getIcon(type);
+        }
+
+        @Override
+        public String getDisplayName() {
+            return project.getProjectDirectory().getName();
+        }
+
+    }
+
+    @Override
+    public Node findPath(Node root, Object target) {
+        //leave unimplemented for now
+        return null;
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The interesting code above is in the method <code>createLogicalView()</code>. What we do there is quite simple and elegant—we have already decided that there will be a <code>scenes/</code> directory in our project, and that&#8217;s where new <code>.pov</code> and <code>.inc</code> files will be created. And that is all we want to expose to the user when they interact with one of our projects. So, we simply find the <code>Node</code> for that folder in the real filesystem on disk, and wrap it in our own <code>FilterNode</code>, which can expose whatever actions, icon, child `Node`s or properties we choose. Essentially, the logical view of the project is a view of a subdirectory of the project, with a special icon and (eventually) set of actions.</p>
+</div>
+<div class="paragraph">
+<p>The final method, <code>findPath()</code> allows a user to use a keystroke to select whatever they&#8217;re editing in the <em>Projects</em> tab in the main window - we will leave that unimplemented for now.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="5">
+<li>
+<p>One final thing we need to do is to provide the icon referenced from <code>PovrayLogicalView.ScenesNode.getIcon()</code> above. Any 16x16 <code>.gif</code> or <code>.png</code> file will do, or you can use</p>
+</li>
+</ol>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="paragraph">
+<p>imageone
+image::images/scenes.gif[role="left", link="images/scenes.gif"]</p>
+</div>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Create a new java package "resources" underneath <code>org.netbeans.examples.modules.povproject</code>, and copy or save the image file there, modifying the file name in the source code if necesary.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_registering_the_project_factory">Registering the Project Factory</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The system needs to know about our project type, for this module to do anything. We will register our project type into the default lookup using the technique of adding a file to <code>META-INF/services</code> in our module&#8217;s JAR:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="1">
+<li>
+<p>Add the @ServiceProvider annotation above the class signature of the factory class:</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code data-lang="java">@ServiceProvider(service=ProjectFactory.class)
+public class PovProjectFactory implements ProjectFactory {</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="2">
+<li>
+<p>Right-click the Povray Project and choose Build.</p>
+</li>
+</ol>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="3">
+<li>
+<p>In the Files window, expand the 'build' folder and notice that the META-INF/services folder has been created for you, via the build process, at which time a NetBeans annotation processor processed the @ServiceProvider annotation:</p>
+</li>
+</ol>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/pic7.png" alt="pic7">
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="4">
+<li>
+<p>When you open the file above, notice that it consists of one line, which is the name of the implementing class:</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code data-lang="java">org.netbeans.examples.modules.povproject.PovProjectFactory</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>That&#8217;s all it takes to register our project type, so that when our module is loaded, the NetBeans Platform will start recognizing POV-Ray projects.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_trying_out_the_new_project">Trying Out the New Project</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>We now have a working (albeit not terribly useful) implementation of POV-Ray projects. As yet we have no way to create such a project on disk, but if you were to have one, you could open it and view it.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="1">
+<li>
+<p>To try out your code at this point, download  <a href="images/Wonderland.zip">Wonderland.zip</a> which contains such a project, unpack it to a temporary directory and attempt to open it as a project, following the steps below.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>1.
+Run the application, go to File | Open Project, and when you browse to the temporary directory created above, you should see that your project is recognized:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/pic8.png" alt="pic8">
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="3">
+<li>
+<p>Open the project. In the Projects window, you will see the logical view created above:</p>
+</li>
+</ol>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/pic9.png" alt="pic9">
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic" start="4">
+<li>
+<p>In the Files window, you will see all the files in the project:</p>
+</li>
+</ol>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/pic10.png" alt="pic10">
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_next_steps">Next Steps</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The  <a href="nbm-povray-4.html">next tutorial</a> will begin to add truly useful functionality to our projects.</p>
+</div>
+</div>
+</div>
+            
+<section class='tools'>
+    <ul class="menu align-center">
+        <li><a title="Facebook" href="https://www.facebook.com/NetBeans"><i class="fa fa-md fa-facebook"></i></a></li>
+        <li><a title="Twitter" href="https://twitter.com/netbeans"><i class="fa fa-md fa-twitter"></i></a></li>
+        <li><a title="Github" href="https://github.com/apache/netbeans"><i class="fa fa-md fa-github"></i></a></li>
+        <li><a title="YouTube" href="https://www.youtube.com/user/netbeansvideos"><i class="fa fa-md fa-youtube"></i></a></li>
+        <li><a title="Slack" href="https://tinyurl.com/netbeans-slack-signup/"><i class="fa fa-md fa-slack"></i></a></li>
+        <li><a title="JIRA" href="https://issues.apache.org/jira/projects/NETBEANS/summary"><i class="fa fa-mf fa-bug"></i></a></li>
+    </ul>
+    <ul class="menu align-center">
+        
+        <li><a href="https://github.com/apache/netbeans-website/blob/master/netbeans.apache.org/src/content/tutorials/73/nbm-povray-3.asciidoc" title="See this page in github"><i class="fa fa-md fa-edit"></i> See this page in GitHub.</a></li>
+    </ul>
+</section>
+
+        </div>
+        
+
+<div class='grid-container incubator-area' style='margin-top: 64px'>
+    <div class='grid-x grid-padding-x'>
+        <div class='large-auto cell text-center'>
+            <a href="https://www.apache.org/">
+                <img style="width: 320px" title="Apache Software Foundation" src="/images/asf_logo_wide.svg" />
+            </a>
+        </div>
+        <div class='large-auto cell text-center'>
+            <a href="https://www.apache.org/events/current-event.html">
+               <img style="width:234px; height: 60px;" title="Apache Software Foundation current event" src="https://www.apache.org/events/current-event-234x60.png"/>
+            </a>
+        </div>
+    </div>
+</div>
+<footer>
+    <div class="grid-container">
+        <div class="grid-x grid-padding-x">
+            <div class="large-auto cell">
+                
+                <h1><a href="/about/index.html">About</a></h1>
+                <ul>
+                    <li><a href="https://netbeans.apache.org/community/who.html">Who's Who</a></li>
+                    <li><a href="https://www.apache.org/foundation/thanks.html">Thanks</a></li>
+                    <li><a href="https://www.apache.org/foundation/sponsorship.html">Sponsorship</a></li>
+                    <li><a href="https://www.apache.org/security/">Security</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/community/index.html">Community</a></h1>
+                <ul>
+                    <li><a href="/community/mailing-lists.html">Mailing lists</a></li>
+                    <li><a href="/community/committer.html">Becoming a committer</a></li>
+                    <li><a href="/community/events.html">NetBeans Events</a></li>
+                    <li><a href="https://www.apache.org/events/current-event.html">Apache Events</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/participate/index.html">Participate</a></h1>
+                <ul>
+                    <li><a href="/participate/submit-pr.html">Submitting Pull Requests</a></li>
+                    <li><a href="/participate/report-issue.html">Reporting Issues</a></li>
+                    <li><a href="/participate/index.html#documentation">Improving the documentation</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/help/index.html">Get Help</a></h1>
+                <ul>
+                    <li><a href="/help/index.html#documentation">Documentation</a></li>
+                    <li><a href="/wiki/index.asciidoc">Wiki</a></li>
+                    <li><a href="/help/index.html#support">Community Support</a></li>
+                    <li><a href="/help/commercial-support.html">Commercial Support</a></li>
+                </ul>
+            </div>
+            <div class="large-auto cell">
+                <h1><a href="/download/nb110/nb110.html">Download</a></h1>
+                <ul>
+                    <li><a href="/download/index.html">Releases</a></li>                    
+                    <li><a href="/plugins/index.html">Plugins</a></li>
+                    <li><a href="/download/index.html#source">Building from source</a></li>
+                    <li><a href="/download/index.html#previous">Previous releases</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</footer>
+<div class='footer-disclaimer'>
+    <div class="footer-disclaimer-content">
+        <p>Copyright &copy; 2017-2020 <a href="https://www.apache.org">The Apache Software Foundation</a>.</p>
+        <p>Licensed under the Apache <a href="https://www.apache.org/licenses/">license</a>, version 2.0</p>
+        <div style='max-width: 40em; margin: 0 auto'>
+            <p>Apache, Apache NetBeans, NetBeans, the Apache feather logo and the Apache NetBeans logo are trademarks of <a href="https://www.apache.org">The Apache Software Foundation</a>.</p>
+            <p>Oracle and Java are registered trademarks of Oracle and/or its affiliates.</p>
+        </div>
+        
+    </div>
+</div>
+
+
+
+        <script src="/js/vendor/jquery-3.2.1.min.js"></script>
+        <script src="/js/vendor/what-input.js"></script>
+        <script src="/js/vendor/jquery.colorbox-min.js"></script>
+        <script src="/js/vendor/foundation.min.js"></script>
+        <script src="/js/netbeans.js"></script>
+        <script>
+            
+            $(function(){ $(document).foundation(); });
+        </script>
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/highlight.min.js"></script>
+        <script>
+         $(document).ready(function() { $("pre code").each(function(i, block) { hljs.highlightBlock(block); }); }); 
+        </script>
+        
+    </body>
+</html>
