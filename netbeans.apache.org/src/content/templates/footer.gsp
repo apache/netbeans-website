@@ -83,7 +83,7 @@
                 <h1><a href="/download/nb110/nb110.html">Download</a></h1>
                 <ul>
                     <li><a href="/download/index.html">Releases</a></li>                    
-                    <li><a href="/plugins/index.html">Plugins</a></li>
+                    <li><a href="https://plugins.netbeans.apache.org/">Plugins</a></li>
                     <li><a href="/download/index.html#source">Building from source</a></li>
                     <li><a href="/download/index.html#previous">Previous releases</a></li>
                 </ul>
