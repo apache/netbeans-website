@@ -106,6 +106,8 @@ cp -R ../master-branch/netbeans.apache.org/src/content/.htaccess content
 echo "Copying wiki/.htaccess..."
 cp -R ../master-branch/netbeans.apache.org/src/content/wiki/.htaccess content/wiki
 echo "All files copied"
+cp  ../master-branch/.asf.yaml .
+echo "Copying asf yaml file to publish branch"
 
 '''
                 }
