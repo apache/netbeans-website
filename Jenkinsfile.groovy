@@ -122,6 +122,8 @@ echo "Checking git status"
 git status
 echo "Adding content..."
 git add -v content/
+echo "Adding asf file"
+git add -v .asf.yaml
 echo "Commit to gitbox..."
 git status
 git commit -v -m "Automated site publishing by Jenkins build ${BUILD_NUMBER}"
