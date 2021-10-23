@@ -32,9 +32,10 @@ The rules file consists of any number of transformation rules.
 The rule is defined as follows:
 [source,java]
 ----
-     <pattern>
- => <fix-pattern>
- => <fix-pattern>
+"description text":
+    <pattern>      :: <rule-condition>
+ => <fix-pattern>  :: <fix-condition>
+ => <fix-pattern>  :: <fix-condition>
  ;;
 ----
 
@@ -62,6 +63,8 @@ to:
 ----
 
 Note: `$1` is a variable, explained in the <<variables>> section.
+
+Note: conditions are explained in the <<conditions>> section.
 
 Note: batch refactoring will typically use only the first applicable fix patterns of each applicable rule.
 
@@ -313,7 +316,32 @@ Note: Special variable `$_` represents the whole matching region.
 
 === Custom Conditions
 
-TBD
+The following rule finds variables of the type `com.whatever.Option` and name "foo" or "bar" and renames them.
+
+[source,java]
+----
+<?
+import java.util.Set;
+?>
+
+    $opt    :: $opt instanceof com.whatever.Option && matchName($opt)
+=>  $optNew :: changeVariableName($opt, $optNew)
+;;
+
+<?
+    public boolean matchName(Variable v) {
+        return names.contains(context.name(v));
+    }
+
+    public boolean changeVariableName(Variable v, Variable target) {
+        String name = context.name(v);
+        context.createRenamed(v, target, name + "Renamed");
+        return true;
+    }
+
+    private final static Set<String> names = Set.of("foo", "bar");
+?>
+----
 
 == Display Names and Localization
 
@@ -321,6 +349,23 @@ TBD
 
 [[custom-imports]]
 == Custom Imports
+
+[source,java]
+----
+<?
+import java.util.LinkedList;
+import java.util.ArrayList;
+?>
+
+   new LinkedList()
+=> new ArrayList()
+;;
+
+   LinkedList $0;
+=> ArrayList $0;
+;;
+----
+
 
 == Notable Patterns
 
