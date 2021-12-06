@@ -24,7 +24,7 @@
         <div class='cell'>
             <div class="annotation">Latest release</div>
             <h1>Apache NetBeans 12.6</h1>
-            <p><a class="button success" href="/download/nb126/nb126.html">Find out more</a></p>
+            <p><a class="button success" href="/download/nb126/nb126.html">Download</a></p>
         </div>
     </div>
 </section>
