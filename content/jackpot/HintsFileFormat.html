@@ -88,9 +88,10 @@ The rule is defined as follows:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="prettyprint highlight"><code data-lang="java">     &lt;pattern&gt;
- =&gt; &lt;fix-pattern&gt;
- =&gt; &lt;fix-pattern&gt;
+<pre class="prettyprint highlight"><code data-lang="java">"description text":
+    &lt;pattern&gt;      :: &lt;rule-condition&gt;
+ =&gt; &lt;fix-pattern&gt;  :: &lt;fix-condition&gt;
+ =&gt; &lt;fix-pattern&gt;  :: &lt;fix-condition&gt;
  ;;</code></pre>
 </div>
 </div>
@@ -126,6 +127,9 @@ The rule is defined as follows:</p>
 </div>
 <div class="paragraph">
 <p>Note: <code>$1</code> is a variable, explained in the <a href="#variables">Variables</a> section.</p>
+</div>
+<div class="paragraph">
+<p>Note: conditions are explained in the <a href="#conditions">[conditions]</a> section.</p>
 </div>
 <div class="paragraph">
 <p>Note: batch refactoring will typically use only the first applicable fix patterns of each applicable rule.</p>
@@ -484,7 +488,32 @@ one statement considered equivalent to single statement.</p>
 <div class="sect2">
 <h3 id="_custom_conditions">Custom Conditions</h3>
 <div class="paragraph">
-<p>TBD</p>
+<p>The following rule finds variables of the type <code>com.whatever.Option</code> and name "foo" or "bar" and renames them.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code data-lang="java">&lt;?
+import java.util.Set;
+?&gt;
+
+    $opt    :: $opt instanceof com.whatever.Option &amp;&amp; matchName($opt)
+=&gt;  $optNew :: changeVariableName($opt, $optNew)
+;;
+
+&lt;?
+    public boolean matchName(Variable v) {
+        return names.contains(context.name(v));
+    }
+
+    public boolean changeVariableName(Variable v, Variable target) {
+        String name = context.name(v);
+        context.createRenamed(v, target, name + "Renamed");
+        return true;
+    }
+
+    private final static Set&lt;String&gt; names = Set.of("foo", "bar");
+?&gt;</code></pre>
+</div>
 </div>
 </div>
 </div>
@@ -500,7 +529,22 @@ one statement considered equivalent to single statement.</p>
 <div class="sect1">
 <h2 id="custom-imports">Custom Imports</h2>
 <div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code data-lang="java">&lt;?
+import java.util.LinkedList;
+import java.util.ArrayList;
+?&gt;
 
+   new LinkedList()
+=&gt; new ArrayList()
+;;
+
+   LinkedList $0;
+=&gt; ArrayList $0;
+;;</code></pre>
+</div>
+</div>
 </div>
 </div>
 <div class="sect1">
