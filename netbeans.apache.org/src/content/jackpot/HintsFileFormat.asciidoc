@@ -285,6 +285,7 @@ Can be also used to express an optional variable initializer:
  $modifiers$ $variableType $name = $init$;
 ----
 
+[[conditions]]
 == Conditions
 
 Conditions are specified after `::`, their result can be negated using `!` and result of multiple conditions can be and-ed using `&&`. Conditions can appear both on the whole rule, in which case the rule will only match if the expression will evaluate to true, or on fixes, in which case the fix will noly be shown if the expression will evaluate to true. There is no "or" currently. Specifying multiple fixes or multiple rules works as an implicit "or".
@@ -297,7 +298,7 @@ The conditions defined directly by the language are:
 [source,java]
 ----
     $str.equals("")
- => $str.isEmpty() :: sourceVersionGE(SourceVersion.RELEASE_6)
+ => $str.isEmpty() :: sourceVersionGE(6)
  => $str.length() == 0 :: otherwise
  ;;
 ----
@@ -305,18 +306,21 @@ will rewrite `var.equals("")` to `var.isEmpty()` for source levels >= 1.6, but t
 
 === Standard Conditions
 
-Other standard conditions are defined in link:https://github.com/apache/netbeans/blob/master/java/java.hints.declarative/src/org/netbeans/modules/java/hints/declarative/conditionapi/DefaultRuleUtilities.java[DefaultRuleUtilities]. The notable ones are:
+Some notable predefined conditions:
 
+* `sourceVersionGE(version)` true if the source version of the file is greater or equals the specified java feature version (see `java.lang.Runtime.Version::feature()`).
 * `matchesAny(variable, one-or-more-patterns)` true if and only if at least one of the given patterns matches the tree bound to the given variable
 * `containsAny(variable, one-or-more-patterns)` true if and only if at least one of the given patterns matches the tree bound to the given variable, or any of its subtrees
 * `matchesWithBind(variable, one-patterns)` similar to `matchesAny`, but if the pattern matches, any free variables inside it will be bound as if it was specified as a normal pattern/rule.
 * `matches(one-patterns)` do not use - semi-deprecated. Use `matchesAny($_, the-pattern)` instead.
+* `referencedIn(variable, other-variable)` true if `variable` is referenced at least once in `other-variable`.
+* for more see link:https://github.com/apache/netbeans/blob/master/java/java.hints.declarative/src/org/netbeans/modules/java/hints/declarative/conditionapi/DefaultRuleUtilities.java[DefaultRuleUtilities]
 
 Note: Special variable `$_` represents the whole matching region.
 
 === Custom Conditions
 
-The following rule finds variables of the type `com.whatever.Option` and name "foo" or "bar" and renames them.
+The following rule finds variables of the type `com.Foobar` and name "foo" or "bar" and renames them.
 
 [source,java]
 ----
@@ -324,12 +328,14 @@ The following rule finds variables of the type `com.whatever.Option` and name "f
 import java.util.Set;
 ?>
 
-    $opt    :: $opt instanceof com.whatever.Option && matchName($opt)
-=>  $optNew :: changeVariableName($opt, $optNew)
+    $var     :: $var instanceof com.Foobar && isFooOrBar($var)
+=>  $renamed :: changeVariableName($var, $renamed)
 ;;
 
 <?
-    public boolean matchName(Variable v) {
+    private final static Set<String> names = Set.of("foo", "bar");
+    
+    public boolean isFooOrBar(Variable v) {
         return names.contains(context.name(v));
     }
 
@@ -338,8 +344,6 @@ import java.util.Set;
         context.createRenamed(v, target, name + "Renamed");
         return true;
     }
-
-    private final static Set<String> names = Set.of("foo", "bar");
 ?>
 ----
 
