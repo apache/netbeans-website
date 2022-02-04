@@ -129,7 +129,7 @@ The rule is defined as follows:</p>
 <p>Note: <code>$1</code> is a variable, explained in the <a href="#variables">Variables</a> section.</p>
 </div>
 <div class="paragraph">
-<p>Note: conditions are explained in the <a href="#conditions">[conditions]</a> section.</p>
+<p>Note: conditions are explained in the <a href="#conditions">Conditions</a> section.</p>
 </div>
 <div class="paragraph">
 <p>Note: batch refactoring will typically use only the first applicable fix patterns of each applicable rule.</p>
@@ -436,7 +436,7 @@ one statement considered equivalent to single statement.</p>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_conditions">Conditions</h2>
+<h2 id="conditions">Conditions</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>Conditions are specified after <code>::</code>, their result can be negated using <code>!</code> and result of multiple conditions can be and-ed using <code>&amp;&amp;</code>. Conditions can appear both on the whole rule, in which case the rule will only match if the expression will evaluate to true, or on fixes, in which case the fix will noly be shown if the expression will evaluate to true. There is no "or" currently. Specifying multiple fixes or multiple rules works as an implicit "or".</p>
@@ -451,7 +451,7 @@ one statement considered equivalent to single statement.</p>
 <div class="listingblock">
 <div class="content">
 <pre class="prettyprint highlight"><code data-lang="java">    $str.equals("")
- =&gt; $str.isEmpty() :: sourceVersionGE(SourceVersion.RELEASE_6)
+ =&gt; $str.isEmpty() :: sourceVersionGE(6)
  =&gt; $str.length() == 0 :: otherwise
  ;;</code></pre>
 </div>
@@ -463,10 +463,13 @@ one statement considered equivalent to single statement.</p>
 <div class="sect2">
 <h3 id="_standard_conditions">Standard Conditions</h3>
 <div class="paragraph">
-<p>Other standard conditions are defined in <a href="https://github.com/apache/netbeans/blob/master/java/java.hints.declarative/src/org/netbeans/modules/java/hints/declarative/conditionapi/DefaultRuleUtilities.java">DefaultRuleUtilities</a>. The notable ones are:</p>
+<p>Some notable predefined conditions:</p>
 </div>
 <div class="ulist">
 <ul>
+<li>
+<p><code>sourceVersionGE(version)</code> true if the source version of the file is greater or equals the specified java feature version (see <code>java.lang.Runtime.Version::feature()</code>).</p>
+</li>
 <li>
 <p><code>matchesAny(variable, one-or-more-patterns)</code> true if and only if at least one of the given patterns matches the tree bound to the given variable</p>
 </li>
@@ -479,6 +482,12 @@ one statement considered equivalent to single statement.</p>
 <li>
 <p><code>matches(one-patterns)</code> do not use - semi-deprecated. Use <code>matchesAny($_, the-pattern)</code> instead.</p>
 </li>
+<li>
+<p><code>referencedIn(variable, other-variable)</code> true if <code>variable</code> is referenced at least once in <code>other-variable</code>.</p>
+</li>
+<li>
+<p>for more see <a href="https://github.com/apache/netbeans/blob/master/java/java.hints.declarative/src/org/netbeans/modules/java/hints/declarative/conditionapi/DefaultRuleUtilities.java">DefaultRuleUtilities</a></p>
+</li>
 </ul>
 </div>
 <div class="paragraph">
@@ -488,7 +497,7 @@ one statement considered equivalent to single statement.</p>
 <div class="sect2">
 <h3 id="_custom_conditions">Custom Conditions</h3>
 <div class="paragraph">
-<p>The following rule finds variables of the type <code>com.whatever.Option</code> and name "foo" or "bar" and renames them.</p>
+<p>The following rule finds variables of the type <code>com.Foobar</code> and name "foo" or "bar" and renames them.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -496,12 +505,14 @@ one statement considered equivalent to single statement.</p>
 import java.util.Set;
 ?&gt;
 
-    $opt    :: $opt instanceof com.whatever.Option &amp;&amp; matchName($opt)
-=&gt;  $optNew :: changeVariableName($opt, $optNew)
+    $var     :: $var instanceof com.Foobar &amp;&amp; isFooOrBar($var)
+=&gt;  $renamed :: changeVariableName($var, $renamed)
 ;;
 
 &lt;?
-    public boolean matchName(Variable v) {
+    private final static Set&lt;String&gt; names = Set.of("foo", "bar");
+
+    public boolean isFooOrBar(Variable v) {
         return names.contains(context.name(v));
     }
 
@@ -510,8 +521,6 @@ import java.util.Set;
         context.createRenamed(v, target, name + "Renamed");
         return true;
     }
-
-    private final static Set&lt;String&gt; names = Set.of("foo", "bar");
 ?&gt;</code></pre>
 </div>
 </div>
