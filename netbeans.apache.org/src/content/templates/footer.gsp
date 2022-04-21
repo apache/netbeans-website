@@ -98,6 +98,7 @@
         <div style='max-width: 40em; margin: 0 auto'>
             <p>Apache, Apache NetBeans, NetBeans, the Apache feather logo and the Apache NetBeans logo are trademarks of <a href="https://www.apache.org">The Apache Software Foundation</a>.</p>
             <p>Oracle and Java are registered trademarks of Oracle and/or its affiliates.</p>
+            <p>The Apache NetBeans website conforms to the <a href="https://privacy.apache.org/policies/privacy-policy-public.html">Apache Software Foundation Privacy Policy</a></p>
         </div>
         <%
             /* This is used for debugging the website rendering, it displays the 'content' variable. Just set the "debug" metadata to a not null value (in asciidoc documents add ":debug: yes") to render this area. */
