@@ -145,7 +145,8 @@ echo "Done."
     }
     post {
         cleanup {
-            println "Cleanup todo"
+            println "Cleanup todo (using cleanWS to test)"
+            cleanWs()
         }
         success {
             //echo "Success?"
