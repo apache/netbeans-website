@@ -75,9 +75,10 @@ pipeline {
                     }
                 }
                 dir('asf-site-branch') {
-                    sh('git checkout asf-site')
-                    sh('git pull')
-                    sh('git status')
+                    sh 'git fetch'
+                    sh 'git checkout asf-site'
+                    sh 'git pull'
+                    sh 'git status'
                 }
             }
         }
