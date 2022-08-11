@@ -8,7 +8,7 @@
    (just increment its number). This will help avoid confusion and
    possible parse errors.
 
-3. See <http://openide.netbeans.org/versioning-policy.html#dtds> for
+3. See <https://netbeans.apache.org/wiki/VersioningPolicy#XML_DTDs_and_Schemas> for
    further hints.
 
-Comments, questions to nbdev@netbeans.org. -jglick
+Comments, questions to dev@apache.netbeans.org. -jglick
