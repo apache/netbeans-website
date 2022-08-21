@@ -46,8 +46,7 @@
                   <tbody><tr>
                   <td class="icon"><i class="fa icon-note" title="Note"></i></td>
                   <td class="content">This tutorial needs a review. 
-                     You can <a href="https://issues.apache.org/jira/projects/NETBEANS/issues">open a JIRA issue</a>, 
-                     or <a href="https://github.com/apache/netbeans-website/blob/master/netbeans.apache.org/src${tutorial_file}" title="Edit this tutorial in github">edit it in GitHub </a>
+                     You can <a href="https://github.com/apache/netbeans-website/blob/master/netbeans.apache.org/src${tutorial_file}" title="Edit this tutorial in github">edit it in GitHub </a>
                      following these <a href="/kb/docs/contributing.html">contribution guidelines.</a></td>
                   </tr></tbody>
                 </table>
