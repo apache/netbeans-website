@@ -62,6 +62,8 @@ to:
  }
 ----
 
+In NetBeans, the description text will appear as tool tip on light bulbs marking all occurences which match the rule, or in other places in the UI, dependant on how the code inspection is used. Longer descriptions can be added with the description tag, see <<options>> section.
+
 Note: `$1` is a variable, explained in the <<variables>> section.
 
 Note: conditions are explained in the <<conditions>> section.
@@ -73,8 +75,10 @@ Note: batch refactoring will typically use only the first applicable fix pattern
 The pattern is a Java expression, statement or several statements.
 All references to classes in the pattern need to be resolvable, i.e. either fully qualified names need to be used, or the custom import section must be used (see <<custom-imports>>).
 
+////
 TODO: equivalence - static elements are checked only against themselves, blocks with
 one statement considered equivalent to single statement.
+////
 
 Note: variable declaration is a Java statement.
 
@@ -293,12 +297,13 @@ Conditions are specified after `::`, their result can be negated using `!` and r
 === Language Conditions
 
 The conditions defined directly by the language are:
+
 * `instanceof`: which allows to specify a type of an expression variable. Only expressions assignable to the given type will be bound to the specified variable.
 * `otherwise`: valid only on the "fixes". Will evaluate to true if no fix above was used. E.g. (note the constant matching - will match only if the string literal in the subject code will match the literal given in the pattern):
 [source,java]
 ----
     $str.equals("")
- => $str.isEmpty() :: sourceVersionGE(6)
+ => $str.isEmpty()     :: sourceVersionGE(6)
  => $str.length() == 0 :: otherwise
  ;;
 ----
@@ -308,17 +313,22 @@ will rewrite `var.equals("")` to `var.isEmpty()` for source levels >= 1.6, but t
 
 Some notable predefined conditions:
 
-* `sourceVersionGE(version)` true if the source version of the file is greater or equals the specified java feature version (see `java.lang.Runtime.Version::feature()`).
-* `matchesAny(variable, one-or-more-patterns)` true if and only if at least one of the given patterns matches the tree bound to the given variable
-* `containsAny(variable, one-or-more-patterns)` true if and only if at least one of the given patterns matches the tree bound to the given variable, or any of its subtrees
-* `matchesWithBind(variable, one-patterns)` similar to `matchesAny`, but if the pattern matches, any free variables inside it will be bound as if it was specified as a normal pattern/rule.
-* `matches(one-patterns)` do not use - semi-deprecated. Use `matchesAny($_, the-pattern)` instead.
-* `referencedIn(variable, other-variable)` true if `variable` is referenced at least once in `other-variable`.
+* `sourceVersionGE(int version)` Returns true if the source version of the file is greater or equals the specified java feature version (see `java.lang.Runtime.Version::feature()`).
+* `matchesAny(Variable v, String... oneOrMorePatterns)` Returns true if and only if at least one of the given patterns matches the tree bound to the given variable.
+* `containsAny(Variable v, String... oneOrMorePatterns)` Returns true if and only if at least one of the given patterns matches the tree bound to the given variable, or any of its subtrees.
+* `matchesWithBind(Variable v, String pattern)` Similar to `matchesAny`, but if the pattern matches, any free variables inside `pattern` will be bound as if it was specified as a normal pattern/rule.
+* `referencedIn(Variable v, Variable in)` Returns true if `v` is referenced at least once in `in`.
+* `inClass(String... oneOrMoreClassNames)` Tests whether the current occurrence is enclosed (directly or indirectly) by any of the specified classes.
+* `hasModifier(Variable v, javax.lang.model.element.Modifier modifier)` Tests if the variable has the given `modifier`.
+* `elementKindMatches(Variable v, javax.lang.model.element.ElementKind... oneOrMoreKinds)` Tests if the `v` matches any of the specified `ElementKind`s.
+* `isNullLiteral(Variable v)` Tests if `v` is `null` (in the litteral sense, this is no null check).
 * for more see link:https://github.com/apache/netbeans/blob/master/java/java.hints.declarative/src/org/netbeans/modules/java/hints/declarative/conditionapi/DefaultRuleUtilities.java[DefaultRuleUtilities]
 
 Note: Special variable `$_` represents the whole matching region.
 
 === Custom Conditions
+
+Additionaly to the predefined conditions mentioned above, it is also possible to define custom conditions in Java code sections. A code section begins with `<?` and ends with `?>`.
 
 The following rule finds variables of the type `com.Foobar` and name "foo" or "bar" and renames them.
 
@@ -346,10 +356,6 @@ import java.util.Set;
     }
 ?>
 ----
-
-== Display Names and Localization
-
-TBD
 
 [[custom-imports]]
 == Custom Imports
