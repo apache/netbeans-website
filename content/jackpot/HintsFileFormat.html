@@ -9,10 +9,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Java Declarative Hints Language">
     <meta name="author" content="Apache NetBeans">
-    <meta name="keywords" content="Apache NetBeans, Jackpot">
+    <meta name="keywords" content="Apache NetBeans, Jackpot, code inspection, refactoring">
     <meta name="generator" content="Apache NetBeans">
     <link rel="stylesheet" href="/css/font-awesome.min.css">
-    
+     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/styles/default.min.css"> 
     <link rel="stylesheet" href="/css/netbeans.css">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
@@ -79,7 +79,41 @@
 
         <div class='grid-container main-content'>
             <h1 class="sect0">Java Declarative Hints Language</h1>
-            <div class="sect1">
+            <div id="toc" class="toc">
+<div id="toctitle"></div>
+<ul class="sectlevel1">
+<li><a href="#_basic_structure">Basic Structure</a></li>
+<li><a href="#_patterns">Patterns</a></li>
+<li><a href="#variables">Variables</a>
+<ul class="sectlevel2">
+<li><a href="#_repeating_variables">Repeating Variables</a></li>
+<li><a href="#_multi_variables">Multi Variables</a></li>
+<li><a href="#_modifiers">Modifiers</a></li>
+<li><a href="#_patterns_with_multiple_statements">Patterns with Multiple Statements</a></li>
+<li><a href="#_zero_or_one">Zero-or-one</a></li>
+</ul>
+</li>
+<li><a href="#conditions">Conditions</a>
+<ul class="sectlevel2">
+<li><a href="#_language_conditions">Language Conditions</a></li>
+<li><a href="#_standard_conditions">Standard Conditions</a></li>
+<li><a href="#_custom_conditions">Custom Conditions</a></li>
+</ul>
+</li>
+<li><a href="#custom-imports">Custom Imports</a></li>
+<li><a href="#_notable_patterns">Notable Patterns</a>
+<ul class="sectlevel2">
+<li><a href="#_catch_pattern">Catch Pattern</a></li>
+<li><a href="#_full_variable">Full Variable</a></li>
+<li><a href="#_full_method">Full Method</a></li>
+<li><a href="#_full_class">Full Class</a></li>
+</ul>
+</li>
+<li><a href="#_options">Options</a></li>
+<li><a href="#_known_bugs">Known Bugs</a></li>
+</ul>
+</div>
+<div class="sect1">
 <h2 id="_basic_structure">Basic Structure</h2>
 <div class="sectionbody">
 <div class="paragraph">
@@ -126,6 +160,9 @@ The rule is defined as follows:</p>
 </div>
 </div>
 <div class="paragraph">
+<p>In NetBeans, the description text will appear as tool tip on light bulbs marking all occurences which match the rule, or in other places in the UI, dependant on how the code inspection is used. Longer descriptions can be added with the description tag, see <a href="#options">[options]</a> section.</p>
+</div>
+<div class="paragraph">
 <p>Note: <code>$1</code> is a variable, explained in the <a href="#variables">Variables</a> section.</p>
 </div>
 <div class="paragraph">
@@ -142,10 +179,6 @@ The rule is defined as follows:</p>
 <div class="paragraph">
 <p>The pattern is a Java expression, statement or several statements.
 All references to classes in the pattern need to be resolvable, i.e. either fully qualified names need to be used, or the custom import section must be used (see <a href="#custom-imports">Custom Imports</a>).</p>
-</div>
-<div class="paragraph">
-<p>TODO: equivalence - static elements are checked only against themselves, blocks with
-one statement considered equivalent to single statement.</p>
 </div>
 <div class="paragraph">
 <p>Note: variable declaration is a Java statement.</p>
@@ -444,16 +477,24 @@ one statement considered equivalent to single statement.</p>
 <div class="sect2">
 <h3 id="_language_conditions">Language Conditions</h3>
 <div class="paragraph">
-<p>The conditions defined directly by the language are:
-* <code>instanceof</code>: which allows to specify a type of an expression variable. Only expressions assignable to the given type will be bound to the specified variable.
-* <code>otherwise</code>: valid only on the "fixes". Will evaluate to true if no fix above was used. E.g. (note the constant matching - will match only if the string literal in the subject code will match the literal given in the pattern):</p>
+<p>The conditions defined directly by the language are:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>instanceof</code>: which allows to specify a type of an expression variable. Only expressions assignable to the given type will be bound to the specified variable.</p>
+</li>
+<li>
+<p><code>otherwise</code>: valid only on the "fixes". Will evaluate to true if no fix above was used. E.g. (note the constant matching - will match only if the string literal in the subject code will match the literal given in the pattern):</p>
+</li>
+</ul>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="prettyprint highlight"><code data-lang="java">    $str.equals("")
- =&gt; $str.isEmpty() :: sourceVersionGE(6)
+<pre>    $str.equals("")
+ =&gt; $str.isEmpty()     :: sourceVersionGE(6)
  =&gt; $str.length() == 0 :: otherwise
- ;;</code></pre>
+ ;;</pre>
 </div>
 </div>
 <div class="paragraph">
@@ -468,22 +509,31 @@ one statement considered equivalent to single statement.</p>
 <div class="ulist">
 <ul>
 <li>
-<p><code>sourceVersionGE(version)</code> true if the source version of the file is greater or equals the specified java feature version (see <code>java.lang.Runtime.Version::feature()</code>).</p>
+<p><code>sourceVersionGE(int version)</code> Returns true if the source version of the file is greater or equals the specified java feature version (see <code>java.lang.Runtime.Version::feature()</code>).</p>
 </li>
 <li>
-<p><code>matchesAny(variable, one-or-more-patterns)</code> true if and only if at least one of the given patterns matches the tree bound to the given variable</p>
+<p><code>matchesAny(Variable v, String&#8230;&#8203; oneOrMorePatterns)</code> Returns true if and only if at least one of the given patterns matches the tree bound to the given variable.</p>
 </li>
 <li>
-<p><code>containsAny(variable, one-or-more-patterns)</code> true if and only if at least one of the given patterns matches the tree bound to the given variable, or any of its subtrees</p>
+<p><code>containsAny(Variable v, String&#8230;&#8203; oneOrMorePatterns)</code> Returns true if and only if at least one of the given patterns matches the tree bound to the given variable, or any of its subtrees.</p>
 </li>
 <li>
-<p><code>matchesWithBind(variable, one-patterns)</code> similar to <code>matchesAny</code>, but if the pattern matches, any free variables inside it will be bound as if it was specified as a normal pattern/rule.</p>
+<p><code>matchesWithBind(Variable v, String pattern)</code> Similar to <code>matchesAny</code>, but if the pattern matches, any free variables inside <code>pattern</code> will be bound as if it was specified as a normal pattern/rule.</p>
 </li>
 <li>
-<p><code>matches(one-patterns)</code> do not use - semi-deprecated. Use <code>matchesAny($_, the-pattern)</code> instead.</p>
+<p><code>referencedIn(Variable v, Variable in)</code> Returns true if <code>v</code> is referenced at least once in <code>in</code>.</p>
 </li>
 <li>
-<p><code>referencedIn(variable, other-variable)</code> true if <code>variable</code> is referenced at least once in <code>other-variable</code>.</p>
+<p><code>inClass(String&#8230;&#8203; oneOrMoreClassNames)</code> Tests whether the current occurrence is enclosed (directly or indirectly) by any of the specified classes.</p>
+</li>
+<li>
+<p><code>hasModifier(Variable v, javax.lang.model.element.Modifier modifier)</code> Tests if the variable has the given <code>modifier</code>.</p>
+</li>
+<li>
+<p><code>elementKindMatches(Variable v, javax.lang.model.element.ElementKind&#8230;&#8203; oneOrMoreKinds)</code> Tests if the <code>v</code> matches any of the specified `ElementKind`s.</p>
+</li>
+<li>
+<p><code>isNullLiteral(Variable v)</code> Tests if <code>v</code> is <code>null</code> (in the litteral sense, this is no null check).</p>
 </li>
 <li>
 <p>for more see <a href="https://github.com/apache/netbeans/blob/master/java/java.hints.declarative/src/org/netbeans/modules/java/hints/declarative/conditionapi/DefaultRuleUtilities.java">DefaultRuleUtilities</a></p>
@@ -496,6 +546,9 @@ one statement considered equivalent to single statement.</p>
 </div>
 <div class="sect2">
 <h3 id="_custom_conditions">Custom Conditions</h3>
+<div class="paragraph">
+<p>Additionaly to the predefined conditions mentioned above, it is also possible to define custom conditions in Java code sections. A code section begins with <code>&lt;?</code> and ends with <code>?&gt;</code>.</p>
+</div>
 <div class="paragraph">
 <p>The following rule finds variables of the type <code>com.Foobar</code> and name "foo" or "bar" and renames them.</p>
 </div>
@@ -524,14 +577,6 @@ import java.util.Set;
 ?&gt;</code></pre>
 </div>
 </div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_display_names_and_localization">Display Names and Localization</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>TBD</p>
 </div>
 </div>
 </div>
