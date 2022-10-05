@@ -18,7 +18,7 @@
     under the License.
 
 */%>
-<head>
+  <head>
     <meta charset="utf-8">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <title><%if (content.title) {%>${content.title}<% } else { %>Apache NetBeans<% }%></title>
@@ -28,7 +28,7 @@
     <meta name="keywords" content="${content.keywords}">
     <meta name="generator" content="Apache NetBeans">
     <link rel="stylesheet" href="/css/font-awesome.min.css">
-    <% if (content.syntax) { %> <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/styles/default.min.css"> <% } %>
+    <% if (content.syntax) { %><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/styles/default.min.css"> <% } %>
     <link rel="stylesheet" href="/css/netbeans.css">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
@@ -54,5 +54,4 @@
         specific language governing permissions and limitations
         under the License.
     -->
-</head>
-
+  </head>

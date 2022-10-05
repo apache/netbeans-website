@@ -25,32 +25,16 @@
 */%>
 <!doctype html>
 <html class="no-js" lang="en" dir="ltr">
-    <%include "head.gsp"%>
-    <body>
-        <%include "menu.gsp"%>
-        <%include "news.gsp"%>
-        <div class='grid-container main-content'>
-            <%include "wiki-index.gsp"%>
-            ${content.body}
-            <%include "tools.gsp"%>
-        </div>
-        <%include "footer.gsp"%>
-
-        <script src="/js/vendor/jquery-3.2.1.min.js"></script>
-        <script src="/js/vendor/what-input.js"></script>
-        <script src="/js/vendor/jquery.colorbox-min.js"></script>
-        <script src="/js/vendor/foundation.min.js"></script>
-        <script src="/js/netbeans.js"></script>
-        <script>
-            <% // NOTE: Plain jquery stuff needs to be quoted in gsp pages %>
-            ${'$(function(){ $(document).foundation(); });'}
-        </script>
-        <% if (content.syntax) { %>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/highlight.min.js"></script>
-        <script>
-        ${' $(document).ready(function() { $("pre code").each(function(i, block) { hljs.highlightBlock(block); }); }); '}
-        </script>
-        <% } %>
-
-    </body>
+  <%include "templatesparts/head.gsp"%>
+  <body>
+    <%include "templatesparts/menu.gsp"%>
+    <%include "templatesparts/news.gsp"%>
+    <div class='grid-container main-content'>
+      <%include "templatesparts/wiki-index.gsp"%>
+      ${content.body}
+      <%include "templatesparts/tools.gsp"%>
+    </div>
+    <%include "templatesparts/footer.gsp"%>
+    <%include "templatesparts/scripts.gsp"%>
+  </body>
 </html>
