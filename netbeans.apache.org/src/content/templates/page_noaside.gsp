@@ -27,7 +27,7 @@
 <html class="no-js" lang="en" dir="ltr">
   <%include "templatesparts/head.gsp"%>
   <body>
-    <%include "menu.gsp"%>
+    <%include "templatesparts/menu.gsp"%>
     <div class='grid-container main-content'>
       <h1 class="sect0">${content.title}</h1>
       ${content.body}
