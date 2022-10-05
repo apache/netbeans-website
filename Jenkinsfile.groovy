@@ -17,7 +17,7 @@
 pipeline {
     // 'git-websites' as set by ASF Infra. This is the label used to build websites.
     agent { node { label 'git-websites' } }
-    tools { jdk 'jdk_1.8_latest' }
+    tools { jdk 'jdk_11_latest' }
     triggers {
         pollSCM('') // Enabling being build on Push
     }
