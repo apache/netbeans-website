@@ -87,7 +87,7 @@ pipeline {
                 dir('master-branch/netbeans.apache.org') {
                     sh 'chmod u+x ./gradlew'
                     sh './gradlew --version'
-                    sh './gradlew clean buildSite'
+                    sh './gradlew --no-daemon clean buildSite'
                 }
             }
         }
