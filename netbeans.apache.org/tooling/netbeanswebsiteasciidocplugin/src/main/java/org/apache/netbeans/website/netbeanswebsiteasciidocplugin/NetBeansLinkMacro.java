@@ -1,0 +1,91 @@
+package org.apache.netbeans.website.netbeanswebsiteasciidocplugin;
+
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.asciidoctor.ast.ContentNode;
+import org.asciidoctor.extension.InlineMacroProcessor;
+
+public class NetBeansLinkMacro extends InlineMacroProcessor {
+// very strict https only :p
+
+    List<String> dummyrules = new ArrayList<>(List.of(
+            "https://archive.apache.org/dist/",
+            "https://downloads.apache.org/netbeans",
+            "https://www.apache.org/",
+            "https://cwiki.apache.org/",
+            "https://www.youtube.com/",
+            "https://github.com/apache/netbeans",
+            "https://netbeans.apache.org"
+    ));
+
+    @Override
+    public Object process(ContentNode parent, String target, Map<String, Object> attributes) {
+        String content = "\n" + target + attributes + parent.getDocument().getAttributes().get("docfile");
+        Map<String, String> globalAttributes = (Map) parent.getDocument().getAttributes();
+        String fileName = globalAttributes.get("fileauditfolder");
+        Path acceptedPath = Paths.get(fileName + "/accepted.txt");
+        Path rejectedPath = Paths.get(fileName + "/url.txt");
+        Path newFilePathapidoc = Paths.get(fileName + "/apidocurl.txt");
+        Path newFilePathmacro = Paths.get(fileName + "/macrocurl.txt");
+        boolean apidoccheck = target.startsWith("http://bits.netbeans.org/") || target.startsWith("https://bits.netbeans.org/");
+        if (apidoccheck) {
+            // this should be empty in a while once we use macro PR #537
+            NetBeansWebSiteExtension.writeAndAppend(newFilePathapidoc, content);
+        } else {
+            // if it's start with macro list on special file
+            if (target.startsWith("{")) {
+                NetBeansWebSiteExtension.writeAndAppend(newFilePathmacro, content);
+                // if start with protocol  we scan for rules
+            } else if (target.startsWith("http") || target.startsWith("mailto")) {
+                boolean accepted = false;
+                // very basic rules
+                for (String dummyrule : dummyrules) {
+                    if (target.startsWith(dummyrule)) {
+                        accepted = true;
+                    }
+                }
+                if (accepted) {
+                    NetBeansWebSiteExtension.writeAndAppend(acceptedPath, content);
+                } else {
+                    NetBeansWebSiteExtension.writeAndAppend(rejectedPath, content);
+                }
+            } else {
+                boolean accepted = target.matches("[0-9a-zA-Z\\./].*");
+// internal to the site jbake should take care starting with Dev... starting with / or . 
+                if (accepted) {
+                    NetBeansWebSiteExtension.writeAndAppend(acceptedPath, content);
+                } else {
+                    NetBeansWebSiteExtension.writeAndAppend(rejectedPath, content);
+                }
+            }
+        }
+// return non modified
+        Map<String, Object> options = new HashMap<String, Object>();
+        options.put("type", ":link");
+        options.put("target", target);
+        return createPhraseNode(parent, "anchor", target, attributes, options);
+    }
+
+}
