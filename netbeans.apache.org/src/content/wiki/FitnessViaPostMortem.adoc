@@ -1,0 +1,168 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= FitnessViaPostMortem
+:jbake-type: wiki
+:jbake-tags: wiki, devfaq, needsreview
+:markup-in-source: verbatim,quotes,macros
+:jbake-status: published
+:syntax: true
+:description: How it works?
+:icons: font
+:source-highlighter: pygments
+:toc: left
+:toc-title:
+:experimental:
+
+
+This is a continuation of the
+xref:FitnessViaPartnership.adoc[FitnessViaPartnership] that enhances the
+original ideas with automatic postmortem identification and notification of
+problems. Done as part of xref:Fitness.adoc[performance work for 6.8].
+
+* Infrastructure: https://bz.apache.org/netbeans/show_bug.cgi?id=166023[IZ 166023]
+* Bugs reported with *perf-profileme* status board: link:https://bz.apache.org/netbeans/buglist.cgi?bug_file_loc_type=substring&bugidtype=include&chfieldto=Now&cmdtype=doit&emailassigned_to1=1&emailreporter2=1&emailtype1=substring&emailtype2=substring&field0-0-0=noop&keywords_type=anywords&long_desc_type=substring&order=Reuse%20same%20sort%20as%20last%20time&query_format=advanced&short_desc_type=substring&status_whiteboard=perf-profileme&status_whiteboard_type=substring&type0-0-0=noop[list]
+
+
+== How it works?
+
+image:notification_FitnessViaPostMortem.png[]
+
+* Detects that AWT thread is blocked for more than certain time (100ms in dev builds, 10s in final production build)
+* Starts self-sampling profiling
+* As soon as AWT thread is free:
+** stops the profiling
+** if the elapsed time is more than link:http://performance.netbeans.org/responsiveness/whatisresponsiveness.html[appropriate] (3s in dev builds, 20s in final production build), it displays a notification
+** the notification stays on for a minute, then it disappears
+* What are the user's options?
+** ignore the icon (disappears after a minute)
+** submit a bug report via xref:FitnessViaPostMortemAutoReport.adoc[FitnessViaPostMortemAutoReport]
+*¿ explore the content themselves (view data/show profiler data and work in editor as the dialog is modal)
+
+
+[[What_our_users_shall_do]]
+=== What our users shall do?
+
+
+[[Enabling_the_slowness_detector]]
+==== Enabling the slowness detector
+
+The slowness detector is enabled by default in development builds and beta builds. However, it is disabled by default in final releases in NetBeans, and in release candidates. To enable the slowness detector in the FCS and RC builds, it is necessary to enable assertions, i.e. run the IDE with the following switch:
+
+[source,bash,subs="{markup-in-source}"]
+----
+-J-ea
+----
+
+Alternatively, the `-J-ea` parameter can be added to the `netbeans_default_options` property in `etc/netbeans.conf`.
+
+
+[[Not_all_slowness_is_a_problem.]]
+==== Not all slowness is a problem.
+
+Sometimes it may be acceptable. For example if the system wakes up from hibernation, etc. In such case just ignore the report and close it.
+
+
+[[I_don.27t_care_about_slowness]]
+==== I don't care about slowness
+
+In case you are annoyed by the "slowness detector" you may disable it by providing additional properties when launching NetBeans. For example to report only blockages higher than 10s use:
+
+[source,bash,subs="{markup-in-source}"]
+----
+-J-Dorg.netbeans.core.TimeableEventQueue.report=10000
+----
+
+You can also increase the time when the sampling starts:
+
+[source,bash,subs="{markup-in-source}"]
+----
+
+-J-Dorg.netbeans.core.TimeableEventQueue.quantum=1000
+----
+
+Since 6.9 development time there is also _slowness detector_ on code completion. If it takes more than 2s to provide results, it starts self profiling and allows you to complain. You can adjust the time by specifying:
+
+[source,bash,subs="{markup-in-source}"]
+----
+
+-J-Dorg.netbeans.modules.editor.completion.slowness.report=10000
+----
+
+(to be included in 7.0beta2).
+
+
+[[Real_Slowness]]
+==== Real Slowness
+
+If you really noticed the slowness (e.g. blocked mouse, or keyboard input), then you can submit it for evaluation to xref:FitnessViaPostMortemAutoReport.adoc[FitnessViaPostMortemAutoReport] or you can evaluate the snapshot first and then submit it.
+
+To evaluate the snapshot follow these steps: click on the slowness notification icon in bottom right corner, click view data and click show profiler data. Snapshot is open in editor area and you can work with it as above dialog is modal are modal. 
+
+Thanks in advance for your help!
+
+
+[[Evaluating_Snapshot]]
+=== Evaluating Snapshot
+
+1. Important things are happening in AWT-Event threads. Explore what is happening there. 
+. If the snapshot ends in `Object.wait()` or while waiting on some lock, explore other threads to see who's blocking the evaluation
+
+[[Weird_Behaviour]]
+==== Weird Behaviour
+
+There are some things that can confuse those who evaluate the profiler snapshots taken by the slowness detector. Please be patient, the improvements are in the queue:
+
+* *Sum of time of all threads is wrong* - currently the time of all threads is summed up, which is wrong. We use sampling and we are measuring the real time, not CPU time. The sum for all threads shall be max of all thread times. Confusion among poor developers would be lowered.
+* *Object.wait() interpretation is almost impossible* - Just try to analyse dump from link:http://openide.netbeans.org/issues/show_bug.cgi?id=168536[IZ 168536] and find out why the AWT thread is blocked. Quite hard and some simplification is needed.
+* *Hotspots Tab Unusable* - most developers start understanding of a slowness problem by looking at Hotspots tab of the snapshot. However this is currently unusable as it primarily shows CLI Handler and XAWT-Dispatch threads as the biggest bottleneck (they are waiting for socketAccept or other I/O). This results in large confusion, useless close/reopen bug lifecycle stage, etc.
+* *Inaccurate Snapshots* - the accuracy of the snapshot's data depends on regular execution of the time (e.g. each 10ms a thread dump shall be taken). This may not be satisfied all the time, especially if the system is being awaken from hibernation, etc. This needs to be detected and indicated.
+
+We need help from profiler team to improve the snapshots themselves or simplify life of those who analyse them. Please, help our developers be more productive!
+
+
+[[Plan_to_Address_Weird_Behaviour]]
+==== Plan to Address Weird Behaviour
+
+* image:yes.png[] Have a meeting with profiler guys
+* image:yes.png[] 'Jarda': Write the plan
+* image:yes.png[] *native wait* - treat Object.wait and _link:[native.html[[native]_ state equally (e.g. zero execution time)
+* image:yes.png[] *two times* - output two times (execution time, wall clock time) into the .nps file
+* image:yes.png[] *display two times* - make sure the UI represents the two times in some columns
+* image:yes.png[] *no sum for threads* - the sum of all threads execution is incorrect (in sampling or on multicore CPUs), thus hide it
+* image:yes.png[] *JMX* - rewrite the sampler to JMX. This will open the door to possible use in VisualVM as well as provide more info about the real thread execution time
+* image:yes.png[] *overhead* is slightly less than 10% - _Jarda_: measure overhead of sampling (I ran the sieve of erastothenes for first 100000 numbers. Without self profiling 4.1s+-100ms with profiling 4.3ms+-100ms)
+* image:yes.png[] *inaccuracy*: compute average snapshot time and ignore intervals that are far (more than 30ms) from average. Potentially don't report these snapshots at all as a slowdown.
+
+Tentatively:
+
+* *collect wait info*: generate a subnode below Object.wait() or monitor enter(?) with a subtree of other threads activity during the blocked time
+* image:yes.png[] *format*: change the sampling format to be (more or less) GZip of stacktraces. Processing to tree structure would occur later. Done for NetBeans 6.9
+* xref:FitnessViaPostMortem.adoc[FitnessViaPostMortem]
+
+
+[NOTE]
+====
+
+The content in this page was kindly donated by Oracle Corp. to the Apache Software Foundation.
+
+This page was exported from link:http://wiki.netbeans.org/FitnessViaPostMortem[http://wiki.netbeans.org/FitnessViaPostMortem] , that was last modified by NetBeans user Pjiricka on 2011-04-06T15:24:36Z.
+
+This document was automatically converted to the AsciiDoc format on 2020-03-12, and needs to be reviewed.
+====

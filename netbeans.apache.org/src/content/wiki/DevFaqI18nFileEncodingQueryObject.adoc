@@ -1,0 +1,83 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= DevFaqI18nFileEncodingQueryObject
+:jbake-type: wiki
+:jbake-tags: wiki, devfaq, needsreview
+:jbake-status: published
+:keywords: Apache NetBeans wiki DevFaqI18nFileEncodingQueryObject
+:description: Apache NetBeans wiki DevFaqI18nFileEncodingQueryObject
+:toc: left
+:toc-title:
+:syntax: true
+
+== Project Encoding vs. File Encoding - What are the precedence rules used in NetBeans 6.x?
+
+NetBeans implements the FileEncodingQuery object (FEQ) to determine the language encoding for projects and files. The *FEQ* is an interface for obtaining information about which encoding should be used for reading from/writing to a particular file. It can be best defined as a _layer model_ that adheres to the following precedence rules (level of importance from top to bottom):
+
+* *file FEQ*
+* *project FEQ*
+* *fallback FEQ*
+
+For example: 
+
+1. When the client requests the FEQ for the encoding of some object, it first asks the file FEQ. E.g., when the file is XML or HTML, it looks inside the file and returns either the declared encoding attribute, otherwise `null`.  If the file FEQ is not `null`, the value is returned to the client, otherwise it continues:
+2. If the file resides within a project that has implemented the FEQ, a request is made for the project FEQ.  If the project FEQ is not `null`, the value is returned to the client, otherwise it continues:
+3. If neither the file FEQ nor project FEQ cannot provide any encoding information, the fallback FEQ is used. The fallback FEQ returns the language encoding used by the operating system (i.e. `Charset.defaultCharset()`).
+
+For JSP pages, the JSP parser is responsible for determining the encoding value. For example: if the file itself doesn't contain the encoding declaration, the parser looks in `web.xml`. If there is no declaration there either, it returns ISO-8859-1.
+
+=== What if the project encoding is not set (i.e. for projects that have not implemented the FEQ)?
+
+The fallback FEQ is applied (i.e. the encoding of the system locale).  This applies to imported projects and projects created in NetBeans versions 5.x and prior.
+
+*Note*: This does not have any impact on the global project encoding value, which is still used for the creation of new NetBeans 6.x projects, and is by default UTF-8. Nor does this affect the encoding value of previously created NetBeans 6.x projects created during the same session, or opened projects created from previous sessions.
+
+=== What project or file types have/have not implemented FEQ for NetBeans 6.x?
+
+*Project Types*
+
+* Most NetBeans 6.x project types have implemented FEQ (this includes Ruby and Rails projects).
+* The NetBeans Modules project type uses UTF-8 and it is not possible to change the encoding for this project type.
+* UML does not have a project encoding property for NetBeans 6.x, and uses the encoding of the system locale. For UML Java projects that have been reverse-engineered or have had their code generated, the FEQ is applied to query for file encoding. If no information is returned, the encoding of the system locale is used.
+
+*File Types*
+
+* The seeding of encoding for JSP, HTML, and XML files has been completed. For XML it has been completed for most XML-based file types that can be created using the New File wizard, but not for all XML files created by projects for internal data. Other XML files created and used by various projects (e.g. `web.xml`, `sun-config.xml`) still use UTF-8; it has currently not been decided whether these files should use the encoding applied to the value of the project encoding or not.
+* The Visual Web index page currently has the encoding value seeded according to the project encoding value.
+* Properties files have a special encoding defined which translates between escape sequences and real characters. During saving, all non-ASCII characters are translated to the corresponding `\u....` sequences and than the result is saved using encoding ISO-8859-1 (aka Latin 1). During loading, the decoding process is reverse - the file is first decoded using the ISO-8859-1 encoding and then it is parsed such that the `\u....` sequences are recognized and translated back to the corresponding Unicode characters. This special encoding cannot be changed.
+
+Applies to: Netbeans 6.x
+
+Platforms: All
+
+See also:
+xref:FaqI18nProjectEncoding.adoc[How do I set or modify the language encoding for a project?]
+
+== Apache Migration Information
+
+The content in this page was kindly donated by Oracle Corp. to the
+Apache Software Foundation.
+
+This page was exported from link:http://wiki.netbeans.org/DevFaqI18nFileEncodingQueryObject[http://wiki.netbeans.org/DevFaqI18nFileEncodingQueryObject] , 
+that was last modified by NetBeans user Vstejskal 
+on 2010-06-16T14:13:35Z.
+
+
+*NOTE:* This document was automatically converted to the AsciiDoc format on 2018-02-07, and needs to be reviewed.

@@ -1,0 +1,408 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= DevFaqExternalLibraries
+:jbake-type: wiki
+:jbake-tags: wiki, devfaq, needsreview
+:jbake-status: published
+:keywords: Apache NetBeans wiki DevFaqExternalLibraries
+:description: Apache NetBeans wiki DevFaqExternalLibraries
+:toc: left
+:toc-title:
+:syntax: true
+
+== How to store external libraries in the NetBeans Hg repository
+
+In the spirit of building on the shoulders of giants,
+NetBeans takes advantage of external libraries which are not developed on netbeans.org.
+Those libraries are either open-source software,
+or binary-only software but with liberal licenses.
+A few examples: Apache Tomcat; JUnit; JavaHelp (runtime);
+javac compiler; JSR-88 interface classes.
+
+For convenience, these libraries are stored
+in the same Hg repository as the source code under CDDL/GPL.
+They are placed in well-known places in the source tree.
+The license text is associated with the binary file
+to make it clear which terms and conditions the users/developers must agree to
+besides being compliant with the CDDL/GPL itself.
+Only source code covered by the CDDL/GPL (or BSD, in the case of samples)
+can be hosted in the `link:http://hg.netbeans.org/main/[http://hg.netbeans.org/main/]` repository.
+As the NetBeans Hg tree is growing, we need to initiate stricter rules
+and check that all external binary files have a correct associated license.
+There are also several recommendations
+on avoiding unnecessary additions of binary files into Hg.
+
+The build system will automatically check if all binary files under `<nbmodule>/external`
+are stored correctly with appropriate license and all required information.
+`<nbmodule>` means NetBeans project module, e.g. `external` is on same level as `nbproject`.
+*Failing to do so will result in a broken build!*
+
+Questions:
+
+* I need to store some binaries in my own VCS repository. Should I follow same rules as well? No, you do not have to. You can store your binaries under release/modules/ext/, more details are described in `harness/README`
+* My binary is not a library and I need to store it somewhere else. It has been also created under CDDL. Then you should update `nbbuild/antsrc/org/netbeans/nbbuild/extlibs/ignored-binaries`
+* How can I check all is all right? Run `ant verify-libs-and-licenses`
+
+Here are the rules NetBeans committers must follow when placing external libraries into NetBeans Hg:
+
+* Legal due diligence must be observed before using a new external library, to make sure that the library license is suitable for use in NetBeans.
+* All external binaries should be stored under a subdirectory named `<nbmodule>/external`, and nowhere else. (For the `contrib` repository, the path will be `contrib/<nbmodule>/external`.)
+* External binaries are versioned in Hg. xref:ExternalBinaries.adoc[ExternalBinaries] describes how the actual binary content is stored outside Hg, while the Hg repository actually tracks the SHA-1 hash of the binary. `ant download-selected-extbins` suffices to download all external binaries in a fresh checkout.
+* Each external binary should have a corresponding license file stored in the same directory as the binary itself. You will upload the binary itself through the Web form, but will add the license file directly to Mercurial (e.g. `hg add external/somelib-x.y.z-license.txt`).
+* The name of the binary must follow the convention `somelib-x.y.z.jar` or `somelib-x.y.z.zip` where `x.y.z` is the version number. The corresponding license file must be named `somelib-x.y.z-license.txt`.
+* All license files should be in UTF-8 encoding with appropriate line and paragraph breaks. The license file must end with a newline. Lines should not exceed 80 characters.
+* The license file should follow a specific format. Details below.
+
+=== License file format
+
+License files should be in the following format:
+
+[source,java]
+----
+
+Name: SomeLib
+Version: 1.2.3
+Description: Library for management of some blah blah blah.
+License: Apache_V20 [SeeNoteRegardingNormalizedNames]
+OSR: 1234 [OSRNumber,ReferToLFIPreviously;SunInternalLegal]
+Origin: http://www.xyz.org [WhereFile(s)WereDownloadedFrom]
+Files: xyz.jar, xyz-doc.zip, xyz-src.zip [Optional;SeeBelowForExplanation]
+Source: URL to source [MandatoryForLGPL,OtherwiseOptional]
+Comment: needed until NB runs on JDK 6+ [Optional:WhyIsThisLibraryHere]
+
+Use of SomeLib version 1.2.3 is governed by the terms of the license below:
+
+[TEXTOFTHELICENSE]
+----
+
+As hinted at above, the OSR field refers to a Sun-internal system.  Those contributing patches from outside of Sun can leave this field blank.  Also note that a single license file may cover multiple JAR files from the same project.  For example, if  your patch depends on a third-party library distributed under the same license as two JARs, you will only need one license file and can account for both of these JARs in its Files header. 
+
+If the `Files` header is not present, then a license `name-x.y.z-license.txt` must
+correspond to a binary `name-x.y.z.jar` or `name-x.y.z.zip`.
+If present, it should list the names of all binaries to which it corresponds.
+
+The header fields are read during the build process and removed.
+Therefore this information will not appear in the final build or NBMs.
+
+=== Template-based licenses
+
+If there is template-based license (like BSD one link:http://www.opensource.org/licenses/bsd-license.php[http://www.opensource.org/licenses/bsd-license.php]),
+e.g. the license file has several ad hoc places to be updated accordingly.
+The template itself should have the license file stored under `nbbuild/licenses`
+with well-defined tags <pre>*TAGNAME*</pre>; these tags will be replaced during the build.
+Template-based licenses stored along with the binary in Hg
+must have be in original form as they came with binary:
+
+Example BSD License, as it is stored in `nbbuild/licenses`:
+
+[source,java]
+----
+
+Copyright (c) '''YEAR''', '''OWNER'''
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright notice,
+      this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright notice,
+      this list of conditions and the following disclaimer in the documentation
+      and/or other materials provided with the distribution.
+    * Neither the name of '''ORGANIZATION''' nor the names of its contributors
+      may be used to endorse or promote products derived from this software
+      without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+----
+
+Example BSD License, as it is stored in Hg along with binary:
+
+[source,java]
+----
+
+Copyright (c) 2007, NetBeans
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright notice,
+      this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright notice,
+      this list of conditions and the following disclaimer in the documentation
+      and/or other materials provided with the distribution.
+    * Neither the name of NetBeans nor the names of its contributors
+      may be used to endorse or promote products derived from this software
+      without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+----
+
+=== NBM build, managing correct license for NBMs
+
+Required licenses should be listed in `project.properties`.
+(There still must be a license along with the binary in Hg.)
+The new entry will be called `extra.license.files`,
+where the license files will be relative to project basedir,
+e.g.
+
+[source,java]
+----
+
+extra.license.files=external/x-1.0-license.txt,external/y-2.0-license.txt
+----
+
+This will create an NBM with two extra licenses besides the usual CDDL.
+This also maintains compatibility with the current build system.
+
+As a convenient shortcut for the common case that you simply want to
+copy some files to the target cluster
+(but cannot use the `release` directory since third-party binaries are involved),
+you may use the newly introduced `release.*` Ant properties
+which should be specified in `project.properties`.
+Each key names a file in the source project;
+the value is a path in the target cluster.
+Any such pair will automatically:
+
+* Copy the source file to the cluster. (No need to override the `release` Ant target.)
+* Cause the target file to be included in the NBM file list. (No need to add to `extra.module.files`.)
+* In the case of `release.external/*` properties, cause the associated binary to be included in the NBM license. (No need to override the `nbm` Ant target or add to `extra.license.files`.)
+
+Example (from the `form` module):
+
+[source,java]
+----
+
+release.external/beansbinding-0.6.1.jar=modules/ext/beansbinding-0.6.1.jar
+release.external/beansbinding-0.6.1-doc.zip=docs/beansbinding-0.6.1-doc.zip
+----
+
+(Note: if you wish for the binary to be in the classpath of the module as a library,
+you will still need a `<class-path-extension>` in your `project.xml`.)
+You can also use a ZIP entry on the left side and it will be extracted from the ZIP
+to your cluster:
+
+[source,java]
+----
+
+release.external/stuff-1.0.zip!/stuff.jar=modules/ext/stuff-1.0.jar
+----
+
+=== Normalized names
+
+There will be a license repository under `nbbuild/licenses`
+where all licenses in use should be available.
+Each license type will be given a unique name: `Apache_V11`, `Apache_V20`, etc.
+This name must be referred to in the `License` field.
+This allows us to count licenses and file names and build a 3rd-party `README`
+as well as NBMs.
+Make sure that the license for a new binary is correctly included under `nbbuild/licenses`.
+If there is no existing license of the same type, it must be reviewed prior to committing.
+
+=== NetBeans Samples
+
+If a sample is created for NetBeans itself,
+it can be packaged into ZIP file and should not be in the `external/` folder.
+To ensure tests correctly skip over it,
+the owner must add an entry for the binary into `nbbuild/antsrc/org/netbeans/nbbuild/extlibs/ignored-binaries`
+and include a brief explanatory comment.
+
+Alternately, it may be preferable to keep the sample files unpacked directly in Hg,
+and create the ZIP during the module's build process
+(either directly into the cluster, or into `build/classes` for inclusion inside the module).
+This not only prevents tests from warning about it,
+but can make it easier to update minor parts of a sample
+and may make version control operations more pleasant.
+
+The sample itself must be covered by the BSD license;
+the license must be included in every file (excepting binaries such as icons).
+
+[source,java]
+----
+
+Copyright (c) <YEAR>, Sun Microsystems, Inc.
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or
+without modification, are permitted provided that the following
+conditions are met:
+
+* Redistributions of source code must retain the above
+  copyright notice, this list of conditions and the following 
+  disclaimer.
+* Redistributions in binary form must reproduce the above
+  copyright notice, this list of conditions and the following
+  disclaimer in the documentation and/or other materials
+  provided with the distribution.
+* Neither the name of Sun Microsystems, Inc. nor the names of
+  its contributors may be used to endorse or promote products
+  derived from this software without specific prior written
+  permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+DAMAGE. 
+----
+
+If sample is not created solely for NetBeans,
+e.g. bundled in a third-party product and covered by a separate license,
+it must follow the same rules as for any other binary library.
+
+-
+
+== Common mistakes
+
+A binary file has no associated license. (E.g. `xyz.jar` is missing `xyz-license.txt`.)
+
+A binary file has an associated license, but does not maintain the naming convention,
+or has typos. (E.g. `xyz.jar` with `xy-license.txt`.)
+
+Licenses are not pure text. (E.g. they contain HTML.)
+
+A binary file is duplicated in several places.
+Before adding a new library,
+please make sure that library is not already available in the Hg tree.
+If it is, check if the version there is suitable for you;
+if so, communicate with the owner regarding possible upgrades and/or available packages
+if they are not available.
+You might need to move the library to a parent cluster as well.
+If you do depend on such a third cluster,
+make sure your module is marked as eager, otherwise it will get disabled.
+
+The names of the binary and its license file will change when the binary is
+upgraded to a newer version. Update `project.properties`
+(or, less commonly, `build.xml`) to reflect this change.
+
+Before moving from my own repository to NetBeans Hg, I used `release/modules/ext/` for storing my binary libraries. They need to be moved into `external/` unless the library itself is covered by CDDL, build script, licenses etc., must be updated accordingly!
+
+How do I know if some other modules is relying on the source location of my external binaries?
+Answer: it's not hard to find out. For example, if you want to know who uses
+`httpserver/external`, try this (Unix / Bash syntax):
+
+[source,java]
+----
+
+cd nb-main
+for f in */{build.xml,nbproject/*.{properties,xml`; \
+  do fgrep -H httpserver/external $f; done
+----
+
+== Implementation work
+
+Interesting files from build:
+
+1. link:http://deadlock.netbeans.org/hudson/job/nbms-and-javadoc/lastStableBuild/artifact/nbbuild/build/generated/external-libraries.txt[Current license summary]
+2. link:http://deadlock.netbeans.org/hudson/job/nbms-and-javadoc/lastStableBuild/artifact/nbbuild/build/verifylibsandlicenses.xml[VerifyLibsAndLicenses test]
+3. link:http://deadlock.netbeans.org/hudson/job/nbms-and-javadoc/lastSuccessfulBuild/testReport/org.netbeans.nbbuild.extlibs/CreateLicenseSummary/[CreateLicenseSummary test]
+4. link:http://deadlock.netbeans.org/hudson/job/nbms-and-javadoc/lastSuccessfulBuild/testReport/org.netbeans.nbbuild/DeleteUnreferencedClusterFiles/[Unreferenced or overreferenced files]
+
+=== Static verification of Hg
+
+Part of regular build.
+Only pays attention to Hg-controlled files in the checkout,
+so can run on a built source tree without becoming confused.
+Writes results in JUnit format for easy browsing from Hudson.
+
+* Look for `*.jar` not in `*/external/` dirs (with some exceptions).
+* Every license file has at least mandatory headers.
+* Every license file has lines at most 80 characters long, etc.
+* For LGPL, must have `Source` header.
+* Check that every external `*.jar` or `*.zip` has a matching license. (Or it can be mentioned in `Files` header of some license.)
+* Every binary has a version number in name.
+* No binary occurs more than once, under any name (so check by CRC-32 or SHA-1 etc.). (Look inside ZIP files for nested JARs.)
+* Every license file's `License` field refers to something in `nbbuild/licenses`.
+* The file in `nbbuild/licenses` exactly matches the body of the license file. Whitespace-only changes are permitted, e.g. rewrapping lines to make them fit. For licenses with templates (e.g. BSD License) any tokens between two underscores can match whatever character sequence.
+
+=== Things done in IDE build
+
+Generate a third-party JAR &amp; license summary.
+Find every binary in the IDE build which is either
+present directly in some `*/external` dir
+or present inside a ZIP in some `*/external` dir.
+For every such binary, retrieve the license from `nbbuild/licenses`.
+Make a single document listing all of the binaries and licenses.
+
+Verify that no such binary is present in more than one place.
+
+Saved as `THIRDPARTYLICENSE-generated.txt` in development builds.
+
+=== Things done in NBM build
+
+`nbbuild/templates/projectized.xml` (netbeans.org modules only)
+will look up `extra.license.files` and use them in `Info.xml`.
+
+`release.*` properties honored (see above).
+
+=== Golden files
+
+`nbbuild/build/generated/external-libraries.txt` is generated
+directly from `external` dirs.
+
+Does not yet take account `extra.license.files` correctly.
+Also may not be a complete list of libraries.
+
+
+
+Applies to: NetBeans 6.8 and above
+
+== Apache Migration Information
+
+The content in this page was kindly donated by Oracle Corp. to the
+Apache Software Foundation.
+
+This page was exported from link:http://wiki.netbeans.org/DevFaqExternalLibraries[http://wiki.netbeans.org/DevFaqExternalLibraries] , 
+that was last modified by NetBeans user Jglick 
+on 2012-03-14T23:34:28Z.
+
+
+*NOTE:* This document was automatically converted to the AsciiDoc format on 2018-02-07, and needs to be reviewed.

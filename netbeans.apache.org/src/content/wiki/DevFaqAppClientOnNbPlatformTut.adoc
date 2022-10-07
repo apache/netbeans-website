@@ -1,0 +1,385 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= DevFaqAppClientOnNbPlatformTut
+:jbake-type: wiki
+:jbake-tags: wiki, devfaq, needsreview
+:jbake-status: published
+:keywords: Apache NetBeans wiki DevFaqAppClientOnNbPlatformTut
+:description: Apache NetBeans wiki DevFaqAppClientOnNbPlatformTut
+:toc: left
+:toc-title:
+:syntax: true
+
+== Java EE Application Client on top of the NetBeans Platform Tutorial
+
+=== Draft
+
+This is document currently has draft status
+
+This tutorial will show you how easy is to create an application client on top of the NetBeans Platform. It will be demonstrated on the example of Database Reader.
+
+=== Table of Contents
+
+* xref:DevFaqAppClientOnNbPlatformTut.adoc#Requirements[Requirements]
+* xref:DevFaqAppClientOnNbPlatformTut.adoc#InstallationAndConfiguration[Installation And Configuration]
+* xref:DevFaqAppClientOnNbPlatformTut.adoc#ProjectsCreation[Projects Creation]
+* xref:DevFaqAppClientOnNbPlatformTut.adoc#EnterpriseApplicationDevelopment[Enterprise Application Development]
+* xref:DevFaqAppClientOnNbPlatformTut.adoc#BuildScriptModifying[Build Script Modifying]
+* xref:DevFaqAppClientOnNbPlatformTut.adoc#GeneratingEntityClassesFromDatabase[Generating Entity Classes From Database]
+* xref:DevFaqAppClientOnNbPlatformTut.adoc#CreateSessionBean[Create Session Bean (stateless) with remote interface to communicate with persistence unit]
+* xref:DevFaqAppClientOnNbPlatformTut.adoc#ModifyApplicationClient[Modify the dbreader-ear-app-client Application Client module]
+* xref:DevFaqAppClientOnNbPlatformTut.adoc#NetBeansModulesDevelopment[NetBeans Modules Development]
+* xref:DevFaqAppClientOnNbPlatformTut.adoc#SetUpSuite[Set Up dbreader NetBeans Module Suite]
+* xref:DevFaqAppClientOnNbPlatformTut.adoc#SetUpModule[Set Up customers NetBeans Module]
+* xref:DevFaqAppClientOnNbPlatformTut.adoc#CreateWindowComponent[Create Window Component]
+* xref:DevFaqAppClientOnNbPlatformTut.adoc#WriteCustomersTopComponentLogic[Write Customers Top Component Logic]
+* xref:DevFaqAppClientOnNbPlatformTut.adoc#RunApplication[Run Application]
+* xref:DevFaqAppClientOnNbPlatformTut.adoc#DebugApplication[Debug Application]
+
+
+=== Requirements
+
+* link:http://java.sun.com/javase/downloads/index_jdk5.jsp[Java(TM) SE Development Kit 5.0]
+* link:http://www.netbeans.org/[NetBeans IDE 5.5.1] or later
+* NetBeans Platform 5.5.1 or later
+* link:https://glassfish.dev.java.net/public/downloadsindex.html[GlassFish v2] or later
+
+=== Installation And Configuration
+
+Install all of the required products (installation guides are available on the product's websites). When it'll be done we have to set up a few things. First of all please start NetBeans IDE 5.5.1 and register GlassFish v2. Right click on the Servers node in the Runtime tab and select Add server (choose Sun Java Application Server).
+
+image:addserver_DevFaqAppClientOnNbPlatformTut.png[]
+
+Now we need to register NetBeans Platform into IDE. It's in fact almost same as to add a new server. In menu Tools -> NetBeans Platform Manager click on a Add Platform button and pass through the wizard (as a new platform select downloaded NetBeans Platform 5.5.1).
+
+image:addplatform_DevFaqAppClientOnNbPlatformTut.png[]
+
+=== Projects Creation
+
+It's time to create all projects. We need NetBeans Module Suite project, NetBeans Module (added into your NetBeans Module Suite) project and Enterprise Application project with Application Client and EJB module included. Let's do it. First of all we create NetBeans Module Suite project. Call it dbreader. As used platform choose the new one what you registered before.
+
+image:createsuite1_DevFaqAppClientOnNbPlatformTut.png[]
+
+image:createsuite2_DevFaqAppClientOnNbPlatformTut.png[]
+
+Then create NetBeans Module Project. Call it customers. And check that you want to add it into your dbreader suite. All other options leave as default.
+
+image:createmodule_DevFaqAppClientOnNbPlatformTut.png[]
+
+Actually we have had NetBeans Modules created and now we have to create Java EE part. So let's create an Enterprise Application with Application Client and EJB module. Call it dbreader-ear. Include Application Client and EJB module. Exclude Web module. Also select Java EE 5 version and choose Sun Java Application Server as development server.
+
+image:createear1_DevFaqAppClientOnNbPlatformTut.png[]
+
+image:createear2_DevFaqAppClientOnNbPlatformTut.png[]
+
+Great ! You have successfully created all required projects. Now you should see something like this in Projects tab.
+
+image:projects_DevFaqAppClientOnNbPlatformTut.png[]
+
+=== Enterprise Application Development
+
+==== Build Script Modifying (5.5.x)
+
+We need to modify dbreader-ear build.xml script because the dbreader suite jnlp distro has to be packed into dbreader ear. Due to add these lines into dbreader-ear build.xml (instructions for 6.x are in the next part).
+
+[source,xml]
+----
+
+    <property name="dbreader.home" value="../"/>
+    
+    <target name="build-dbreader-jnlp">
+        <java classname="org.apache.tools.ant.Main" dir="${dbreader.home}" failonerror="true" fork="true">
+            <jvmarg value="-Dant.home=${ant.home}"/>
+            <arg value="build-jnlp"/>
+            <classpath path="${java.class.path}"/>
+        </java>
+    </target>
+    
+    <target name="pre-dist" depends="build-dbreader-jnlp">
+        <!-- dbreader.home must point to DatabaseReader Application home directory -->
+
+        <mkdir dir="${build.dir}/lib"/>
+        <copy todir="${build.dir}/lib">
+            <fileset dir="${dbreader.home}/build/jnlp/app" includes="*.jar" />
+            <fileset dir="${dbreader.home}/build/jnlp/branding" includes="*.jar" />
+            <fileset dir="${dbreader.home}/build/jnlp/netbeans" includes="*.jar" />
+        </copy>
+    </target>
+----
+
+You are able to access build.xml file in Files view.
+
+image:editearbuild1_DevFaqAppClientOnNbPlatformTut.png[]
+
+After editing you should see something like this.
+
+image:editearbuild2_DevFaqAppClientOnNbPlatformTut.png[]
+
+==== Build Script Modifying (6.x)
+
+[source,xml]
+----
+
+    <property name="dbreader.home" value="../"/>
+    
+    <target name="build-dbreader-jnlp">
+        <java classname="org.apache.tools.ant.Main" dir="${dbreader.home}" failonerror="true" fork="true">
+            <jvmarg value="-Dant.home=${ant.home}"/>
+            <arg value="build-jnlp"/>
+            <classpath path="${java.class.path}"/>
+        </java>
+    </target>
+    
+    <target name="pre-dist" depends="build-dbreader-jnlp">
+        <!-- dbreader.home must point to DatabaseReader Application home directory -->
+
+        <mkdir dir="${build.dir}/lib"/>
+        <copy todir="${build.dir}/lib">
+            <flattenmapper/>
+            <fileset dir="${dbreader.home}/build/jnlp/app" includes="**/*.jar" />
+            <fileset dir="${dbreader.home}/build/jnlp/branding" includes="**/*.jar" />
+            <fileset dir="${dbreader.home}/build/jnlp/netbeans" includes="**/*.jar" />
+        </copy> 
+    </target>
+----
+
+If you're not using Mac then also don't forget to exclude "Apple Application Menu" module (module suite project properties -> libraries -> PlatformX). Also make sure you're including only modules from platformX cluster.
+
+==== Generating Entity Classes From Database
+
+We have dbreader-ear project infrastructure prepared. Now we have to generate entity classes from sample database. Right click on dbreader-ear-ejb project in Project tab and select New -> Entity Classes From Database. In wizard chose as datasource jdbc/sample datasource and select CUSTOMER table.
+
+image:generateentity1_DevFaqAppClientOnNbPlatformTut.png[]
+
+On the next wizard panel type package for entity classes. Type db. Then Click on create persistence unit. Persistence unit dialog will appear. Click on Create. Now finish the wizard by clicking on the Finish button.
+
+image:generateentity2_DevFaqAppClientOnNbPlatformTut.png[]
+
+Now we have generated entity classes from jdbc/sample database. Under dbreader-ear-ejb project you can see generated classes.
+
+image:generateentity3_DevFaqAppClientOnNbPlatformTut.png[]
+
+==== Create Session Bean
+
+We need to create stateless session bean with remote interface to communicate with persistence unit. Create one and call it DataBean.
+
+image:createsession1_DevFaqAppClientOnNbPlatformTut.png[]
+
+When you have session bean created add business method called getData. You are able to do it by right clicking on the editor pane (in DataBean.java file opened) and select EJB Methods -> Add Business Method. Pass through the wizard and create getData method which returns <pre>java.util.List</pre>.
+
+image:createsession2_DevFaqAppClientOnNbPlatformTut.png[]
+
+Now use entity manager. Once again do a right click on the editor pane and select Persistence -> Use Entity Manager. Entity manager code is generated. Now implement getData method.
+
+[source,java]
+----
+
+    public List getData() {
+        //TODO implement getData
+        return em.createQuery("SELECT c FROM Customer c").getResultList();
+    }
+----
+
+After that you should see in editor (in DataBean.java file) something like this.
+
+image:createsession3_DevFaqAppClientOnNbPlatformTut.png[]
+
+==== Modify Application Client
+
+We prepared EJB module and now we have to implement functionality into dbreader-ear-app-client Application Client module. Open Main.java file in dbreader-ear-app-client project.
+
+image:modifyappclient1_DevFaqAppClientOnNbPlatformTut.png[]
+
+Now call your session bean DataBean. Right click on editor pane and select Enterprise Resources -> Call Enterprise Bean. In the dialog select your DataBean and click OK.
+
+image:modifyappclient2_DevFaqAppClientOnNbPlatformTut.png[]
+
+Now we need to implement main method and create getCustomers method. Before that add <dbreader_project_home>/build/jnlp/netbeans/boot.jar (or <dbreader_project_home>/build/jnlp/netbeans/org-netbeans-bootstrap/boot.jar in case of NetBeans 6.1) file on classpath. Do it by right clicking on dbreader-ear-app-client project and select Properties. There select Libraries and then click on Add JAR/Folder and in open file dialog select boot.jar file. Don't forget to uncheck the checkbox. We do not want to package this file with dbreader-ear-app-client module. Actually you have to run build-jnlp target on dbreader suite. Before that please perform step xref:DevFaqAppClientOnNbPlatformTut.adoc#SetUpSuite[Set Up Suite]. Then you can right click on dbreader project and select Build JNLP Application.
+
+image:modifyappclient3_DevFaqAppClientOnNbPlatformTut.png[]
+
+Implement main method by this code.
+
+[source,java]
+----
+
+    public static void main(String[] args) {
+        try {
+            String userDir = System.getProperty("user.home") + File.separator + ".dbreader";
+            org.netbeans.Main.main(new String[] {"--branding", "dbreader", "--userdir", userDir});
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+----
+
+Now create getCustomers static method.
+
+[source,java]
+----
+
+    public static List getCustomers() {
+        return dataBean.getData();
+    }
+----
+
+After doing this you should see something like this in editor pane.
+
+image:modifyappclient4_DevFaqAppClientOnNbPlatformTut.png[]
+
+Great ! We have finished development of the dbreader-ear Enterprise Application. Let's go to develop NetBeans Modules.
+
+=== NetBeans Modules Development
+
+==== Set Up Suite
+
+Now we set up the dbreader NetBeans module suite. We have to set it as standalone application and also we are able to change splash screen. Right click on dbreader project and select Properties. There select Application and then click on the Create Standalone Application.
+
+image:setupsuite1_DevFaqAppClientOnNbPlatformTut.png[]
+
+Also you are able to set up your own splash screen. Do it by same way and under the Application node in project Properties click on Splash Screen.
+
+image:setupsuite2_DevFaqAppClientOnNbPlatformTut.png[]
+
+==== Set Up Module
+
+Now we set up the customers NetBeans Module. We have to add dbreader-ear-ejb.jar, dbreader-ear-app-client.jar and javaee.jar on compile classpath. First of all set sources level of the module to 1.5. Right click on customers project and on the first panel select 1.5 for sources level.
+
+image:setupmodule1_DevFaqAppClientOnNbPlatformTut.png[]
+
+Open project.properties file from project tab.
+
+image:setupmodule2_DevFaqAppClientOnNbPlatformTut.png[]
+
+Add this code into project.properties file. Of course use your own path to dbreader and glassfish.
+
+[source,java]
+----
+
+cp.extra=\
+/home/marigan/temp/dbreader/dbreader-ear/dbreader-ear-ejb/dist/dbreader-ear-ejb.jar:\
+/home/marigan/temp/dbreader/dbreader-ear/dbreader-ear-app-client/dist/dbreader-ear-app-client.jar:\
+/home/marigan/apps/glassfish/lib/javaee.jar
+----
+
+After that you should see something like this in editor pane.
+
+image:setupmodule3_DevFaqAppClientOnNbPlatformTut.png[]
+
+==== Create Window Component
+
+Now we create a new window component which will serve as viewer for database data. Right click on customers project and select New -> Window Component. On the first wizard panel choose editor as Window Position and select Open on Application Start.
+
+image:createwindow1_DevFaqAppClientOnNbPlatformTut.png[]
+
+On the second panel specify component Class Name Prefix (use Customers) and finish the wizard.
+
+image:createwindow2_DevFaqAppClientOnNbPlatformTut.png[]
+
+After that you should see this in Project tab.
+
+image:createwindow3_DevFaqAppClientOnNbPlatformTut.png[]
+
+==== Write Customers Top Component Logic
+
+We have to write application logic for customers top component. Open CustomersTopComponent.java file in design mode and drag and drop a jTable component from palette into it.
+
+image:writelogic1_DevFaqAppClientOnNbPlatformTut.png[]
+
+Now switch into source view and modify constructor and add initData method.
+
+[source,java]
+----
+
+    private CustomersTopComponent() {
+        initComponents();
+        setName(NbBundle.getMessage(CustomersTopComponent.class, "CTL_CustomersTopComponent"));
+        setToolTipText(NbBundle.getMessage(CustomersTopComponent.class, "HINT_CustomersTopComponent"));
+//        setIcon(Utilities.loadImage(ICON_PATH, true));
+        
+        initData();
+    }
+    
+    private void initData() {
+        
+        List<Customer> data = Main.getCustomers();
+
+        Object[][] rows = new Object[data.size()][3];
+        int i = 0;
+
+        for (Customer c : data) {
+            rows[i][0] = c.getName();
+            rows[i][1] = c.getEmail();
+            rows[i++][2] = c.getPhone();
+        }
+
+        Object[] colums = {"Name", "E-mail", "Phone"};
+
+        jTable1.setModel(new DefaultTableModel(rows, colums));
+        
+    }
+----
+
+After that you should see something like this.
+
+image:writelogic2_DevFaqAppClientOnNbPlatformTut.png[]
+
+=== Run Application
+
+Great job !! Everything is done. Now you can run your application. Right click on dbreader-ear project and select Run Project. Wait a minute do build and glassfish to start. Enjoy your application :o)
+
+image:runapp_DevFaqAppClientOnNbPlatformTut.png[]
+
+=== Debug Application
+
+There of course comes a time when you need to debug your application. Debugging the server side is relatively easy: start Glassfish in Debug mode and simply "Attach" to it ('Attach Debugger...' from the 'Run' menu).
+
+Debugging the client side is a little harder. On NetBeans 6.1, simply right-clicking on the EAR project and select "Debug" doesn't seem to work. It fails with error messages saying that your classes from your other modules are not found on the classpath. Manually referring to them isn't sufficient either, because once you've done that the Ant debug script will complain about not finding classes belonging to the Platform modules you depend on.
+
+The simple solution is to add the following 2 Ant targets to your build.xml :
+
+[source,xml]
+----
+
+   <target name="Debug platform (Attach-debug)" description="Debug the platform, need to attach the debugger once the JVM is started"
+            depends="-debug-init-jvm,run"/>
+
+   <target name="-debug-init-jvm">
+        <property name="j2ee.appclient.jvmoptions.param" value="-agentlib:jdwp=transport=dt_socket,server=y,address=9009"/>
+    </target>
+----
+
+To run the "Debug platform (Attach-debug) target, right-click on the 'build.xml' file in the "Files" (can't see it from the "Project") view and select it from the "Run target" menu item. Once the JVM is started (the console stops scrolling but the program is still running), attach to the JVM just like when debugging the server.
+
+The idea is to call the already-existing "run" target, but specify arguments to be passed to the JVM when its launched. The above arguments will launch the JVM in debug mode, asking it to wait for a connection (default behavior) and the address will be 9009. You could even specify a different port number if you want to run Glassfish in debug mode at the same time (note that the debugger can only attach to one JVM at a time, so you have to detach from the client and then attach to the server).
+
+For more details about the JPDA debugging arguments, see link:http://java.sun.com/javase/6/docs/technotes/guides/jpda/conninv.html[here].
+
+== Apache Migration Information
+
+The content in this page was kindly donated by Oracle Corp. to the
+Apache Software Foundation.
+
+This page was exported from link:http://wiki.netbeans.org/DevFaqAppClientOnNbPlatformTut[http://wiki.netbeans.org/DevFaqAppClientOnNbPlatformTut] , 
+that was last modified by NetBeans user Newacct 
+on 2010-04-17T00:46:56Z.
+
+
+*NOTE:* This document was automatically converted to the AsciiDoc format on 2018-02-07, and needs to be reviewed.

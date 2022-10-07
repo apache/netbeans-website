@@ -1,0 +1,126 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= DevFaqMemoryLeaks
+:jbake-type: wiki
+:jbake-tags: wiki, devfaq, needsreview
+:jbake-status: published
+:keywords: Apache NetBeans wiki DevFaqMemoryLeaks
+:description: Apache NetBeans wiki DevFaqMemoryLeaks
+:toc: left
+:toc-title:
+:syntax: true
+
+== How can I fix memory leaks?
+
+The first problem is to identify what is the root problem causing memory to not be used effectively.
+The usual approach for this is to analyze the complete contents of memory when the problem appears, using one of a number of appropriate tools, and ideally then find a solution.
+
+Below are some hints on how to analyze the content of memory:
+
+=== `jmap` and built-in dumpers in JDK
+
+==== Obtain the dump.
+
+If the problem causes `OutOfMemoryError`, it is possible to customize the JVM to provide a memory dump automatically whenever an `OutOfMemoryError` is thrown.
+xref:FaqNetBeansAndOOME.adoc[FaqNetBeansAndOOME] describes what options can be used for this.
+If you are developing modules, it is a very good idea to set the option `-J-XX:+HeapDumpOnOutOfMemoryError`.
+
+If the memory leak is not so aggresive to fill all the available memory and cause an `OutOfMemoryError`, it is still possible to use `jmap` to generate the same dump.
+Running full GC before you create this dump can be a good idea as it can strip the size of dump file and remove some unimportant objects from the snapshot.
+You can do this by turning memory toolbar on (do a right click in toolbar area and check *Memory*).
+Repeating this several times can even collect large amounts of data held in various caches through soft or weak references and make it easier to browse the dump.
+
+==== Analyze the problem.
+
+Once you have the dump of the heap in a file, it is possible to open it using
+the NetBeans profiler.
+This has a number of analysis features and is integrated with the IDE, e.g. to browse sources.
+
+Alternately, you can use the JDK's tool `jhat`.
+It will start simple web server and you can use a web browser to see the data. 
+There are many functions starting with lists of classes with numbers of objects and their size, navigation between references,
+finding of reference chains from GC root to certain objects.
+JavaScript can be used to express more complex queries.
+
+=== Other tools
+
+INSANE is a home-grown tool that is useful for analysis of memory content and also can be used in automated tests - so once you have fixed a memory leak, you can write a test that will fail if the memory leak is ever recreated.
+`NbTestCase.assertGC` is all you need to know. See also xref:FitnessMemoryLeaks.adoc[FitnessMemoryLeaks].
+
+xref:FitnessViaTimersCounter.adoc[Timers/counters] module can be used to register objects of interest in the code, then inspect them during IDE run via Runtime Watches window.
+
+Advanced: link:http://www.opensolaris.org/os/community/dtrace/[DTrace] can be used to monitor object allocation and garbage collection. Nice article about using DTrace with the HotSpot provider: link:http://www.solarisinternals.com/wiki/index.php/DTrace_Topics_Java[Java and DTrace].
+
+=== Tips and tricks
+
+==== Common leaking objects
+
+There are some typical classes where it should be easily possible to tell
+what the appropriate number of their instances in memory should be,
+and if these are leaking there is a serious problem:
+
+* Projects - it means instances of all subclasses of `org.netbeans.api.project.Project`
+* Editors (or `TopComponent`s) - it can be useful to check for `org.openide.text.QuietEditorPane` instances to see if closed editors can release substantial part of associated memory. If the editor component is held it often means that associated editor support is held too linking to parsing data, sidebars providing versioning information and probably also project metadata. It is also possible to look for instance of `org.openide.windows.TopComponent` if there is some suspicion or better to search for its particular subclasses. Generally there will be always certain numbers of `TopComponent`s.
+* Documents - somewhat related to editors. An important class where you can start is `org.netbeans.modules.editor.NbEditorDocument`.
+* Top-level windows - undisposed dialogs can be a problem as these hold native resources that can be limited in the system.
+* `ClassLoader` - we need to be very careful and check that class loaders created dynamically during runtime can be GC'ed when they are no longer used. Without this the result is OOME signaling that perm gen area is full.
+* `CompilationInfo` (`java.source` module) - related to Java infrastructure. An important class where you can start is `com.sun.tools.javac.code.Symtab`, which is a singleton in a javac instance.
+
+==== Leaks vs. retained memory
+
+There are two different ways how memory can be wasted: leaks and improper retention of memory.
+
+_Leaks_ are cases when repeated invocation of certain activity creates new set of objects that cannot be reclaimed after
+activity is finished.
+The biggest problem is accumulation of these objects that leads to increased memory usage 
+and after a long enough time leads to `OutOfMemoryError`.
+The nature of this error is that it leaves data structures of an application in undefined state 
+so anything executed after this moment may lead to unexpected results.
+
+_Retained memory_ is memory occupied by objects that were created to serve some purpose but these objects
+are held longer than necessary.
+This may mean that some action has to be performed that flushes these objects or they will remain in memory until the end of the session.
+An example of the former is LRU caches (often holding last component in UI, files or projects).
+A common example of the latter is resources like parsed bundles or images statically referenced in classes that use them. 
+
+`-J-Dnetbeans.debug.heap` can make profiling easier as it more quickly releases references to collapsed nodes.
+
+If you have the *Timers* module enabled (normally it is in dev builds),
+click its button in the *Memory* toolbar
+to get a summary of interesting live objects and statistics.
+
+---
+Applies to: NetBeans 6.5 and above
+
+Platforms: All
+
+xref:Category:Performance:HowTo.adoc[Category:Performance:HowTo]
+
+== Apache Migration Information
+
+The content in this page was kindly donated by Oracle Corp. to the
+Apache Software Foundation.
+
+This page was exported from link:http://wiki.netbeans.org/DevFaqMemoryLeaks[http://wiki.netbeans.org/DevFaqMemoryLeaks] , 
+that was last modified by NetBeans user Jglick 
+on 2010-06-14T20:17:25Z.
+
+
+*NOTE:* This document was automatically converted to the AsciiDoc format on 2018-02-07, and needs to be reviewed.

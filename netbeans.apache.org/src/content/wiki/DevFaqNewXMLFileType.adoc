@@ -1,0 +1,274 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= DevFaqNewXMLFileType
+:jbake-type: wiki
+:jbake-tags: wiki, devfaq, needsreview
+:jbake-status: published
+:keywords: Apache NetBeans wiki DevFaqNewXMLFileType
+:description: Apache NetBeans wiki DevFaqNewXMLFileType
+:toc: left
+:toc-title:
+:syntax: true
+
+> I want to add some special
+
+> functionality to the initial handling of xml files with a xul extension, but
+
+> then allow users to use the existing NB functionality for editing,
+
+> validation etc.
+ 
+>
+
+> Did you solve this without patching?
+
+In 5.0, it can be done without a patch.  It does, however, require an 
+impl dependency on xml-core. I'd really like this to be simpler, and a 
+supported API.
+
+See below for issues with pre-release 6.0
+
+Anyway, here's how I do it for an xml flavor called SCXML:
+
+1. Register the xref:DevFaqDataLoader.adoc[loader] for text/xml mimetype
+
+
+[start=2]
+. The loader:
+
+[source,java]
+----
+
+import java.io.IOException;
+import org.netbeans.modules.xml.core.XMLDataLoader;
+import org.openide.filesystems.FileObject;
+import org.openide.loaders.DataObjectExistsException;
+import org.openide.loaders.MultiDataObject;
+import org.openide.loaders.UniFileLoader;
+import org.openide.util.NbBundle;
+
+public class ScxmlDataLoader extends UniFileLoader
+{
+   
+    public static final String REQUIRED_MIME = "application/scxml+xml";
+   
+    private static final long serialVersionUID = 1L;
+   
+    public ScxmlDataLoader()
+    {
+        super("com.nuance.tools.xhmi.ScxmlDataObject");
+    }
+   
+    protected String defaultDisplayName()
+    {
+        return NbBundle.getMessage(ScxmlDataLoader.class, "LBL_Scxml_loader_name");
+    }
+   
+    protected void initialize()
+    {
+        super.initialize();
+        getExtensions().addMimeType(REQUIRED_MIME);
+    }
+   
+    protected MultiDataObject createMultiObject(FileObject primaryFile) throws DataObjectExistsException, IOException
+    {
+        return new ScxmlDataObject(primaryFile, this);
+    }
+   
+    protected MultiDataObject.Entry createPrimaryEntry (MultiDataObject obj, FileObject primaryFile) {
+        return new XMLDataLoader.XMLFileEntry (obj, primaryFile); //adds smart templating
+    }
+   
+    protected String actionsContext()
+    {
+        return "Loaders/" + REQUIRED_MIME + "/Actions";
+    }
+}
+
+
+----
+
+
+
+
+[start=3]
+. The data object:
+
+[source,java]
+----
+
+import java.io.IOException;
+import org.netbeans.modules.xml.core.XMLDataObjectLook;
+import org.netbeans.modules.xml.core.cookies.DataObjectCookieManager;
+import org.netbeans.modules.xml.core.sync.DataObjectSyncSupport;
+import org.netbeans.modules.xml.core.sync.Synchronizator;
+import org.netbeans.modules.xml.core.text.TextEditorSupport;
+import org.netbeans.spi.xml.cookies.CheckXMLSupport;
+import org.netbeans.spi.xml.cookies.DataObjectAdapters;
+import org.netbeans.spi.xml.cookies.ValidateXMLSupport;
+import org.openide.filesystems.FileObject;
+import org.openide.loaders.DataObjectExistsException;
+import org.openide.loaders.MultiDataObject;
+import org.openide.nodes.CookieSet;
+import org.openide.nodes.Node;
+import org.openide.text.DataEditorSupport;
+import org.xml.sax.InputSource;
+
+public class ScxmlDataObject extends MultiDataObject implements 
+XMLDataObjectLook
+{
+    private transient final DataObjectCookieManager cookieManager;
+    private transient Synchronizator synchronizator;
+
+    public ScxmlDataObject(FileObject pf, ScxmlDataLoader loader) throws DataObjectExistsException, IOException {
+        super(pf, loader);
+        CookieSet cookies = getCookieSet();
+        cookieManager = new DataObjectCookieManager (this, cookies);
+
+        cookies.add((Node.Cookie) DataEditorSupport.create(this, getPrimaryEntry(), cookies));
+       
+        InputSource is = DataObjectAdapters.inputSource(this);
+        cookies.add(new CheckXMLSupport(is));
+        cookies.add(new ValidateXMLSupport(is));
+       
+        // editor support defines MIME type understood by EditorKits registry        
+        TextEditorSupport.TextEditorSupportFactory editorFactory =
+            new TextEditorSupport.TextEditorSupportFactory (this, org.netbeans.modules.xml.core.XMLDataObject.MIME_TYPE);
+        editorFactory.registerCookies (cookies);
+
+    }
+   
+    protected Node createNodeDelegate() {
+        return new ScxmlDataNode(this);
+    }
+   
+    ////////// XMLDataObjectLook interface /////////////////
+    public DataObjectCookieManager getCookieManager() {
+        return cookieManager;
+    }
+   
+    public synchronized Synchronizator getSyncInterface() {
+        if (synchronizator == null) {
+            synchronizator = new DataObjectSyncSupport (ScxmlDataObject.this);
+        }
+        return synchronizator;
+    }
+}
+
+----
+
+
+
+[start=4]
+. The layer file:
+
+[source,xml]
+----
+
+<filesystem>
+    <folder name="Loaders">
+        <folder name="application">
+            <folder name="scxml+xml">
+                <folder name="Actions">
+                    <file name="org-openide-actions-OpenAction.instance"/>
+                    <attr name="org-openide-actions-OpenAction.instance/org-openide-actions-FileSystemAction.instance" boolvalue="true"/>
+                    <file name="org-openide-actions-FileSystemAction.instance"/>
+                    <attr name="org-openide-actions-FileSystemAction.instance/sep-1.instance" boolvalue="true"/>
+                    <file name="sep-1.instance">
+                        <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
+                    </file>
+                    <attr name="sep-1.instance/org-openide-actions-CutAction.instance" boolvalue="true"/>
+                    <file name="org-openide-actions-CutAction.instance"/>
+                    <attr name="org-openide-actions-CutAction.instance/org-openide-actions-CopyAction.instance" boolvalue="true"/>
+                    <file name="org-openide-actions-CopyAction.instance"/>
+                    <attr name="org-openide-actions-CopyAction.instance/sep-2.instance" boolvalue="true"/>
+                    <file name="sep-2.instance">
+                        <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
+                    </file>
+                    <attr name="sep-2.instance/org-openide-actions-DeleteAction.instance" boolvalue="true"/>
+                    <file name="org-openide-actions-DeleteAction.instance"/>
+                    <attr name="org-openide-actions-DeleteAction.instance/org-openide-actions-RenameAction.instance" boolvalue="true"/>
+                    <file name="org-openide-actions-RenameAction.instance"/>
+                    <attr name="org-openide-actions-RenameAction.instance/sep-3.instance" boolvalue="true"/>
+                    <file name="sep-3.instance">
+                        <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
+                    </file>
+                    <attr name="sep-3.instance/org-openide-actions-SaveAsTemplateAction.instance" boolvalue="true"/>
+                    <file name="org-openide-actions-SaveAsTemplateAction.instance"/>
+                    <attr name="org-openide-actions-SaveAsTemplateAction.instance/sep-4.instance" boolvalue="true"/>
+                    <file name="sep-4.instance">
+                        <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
+                    </file>
+                    <attr name="sep-4.instance/org-openide-actions-ToolsAction.instance" boolvalue="true"/>
+                    <file name="org-openide-actions-ToolsAction.instance"/>
+                    <attr name="org-openide-actions-ToolsAction.instance/org-openide-actions-PropertiesAction.instance" boolvalue="true"/>
+                    <file name="org-openide-actions-PropertiesAction.instance"/>
+                </folder>
+            </folder>
+        </folder>
+    </folder>
+    <folder name="Services">
+        <folder name="MIMEResolver">
+            <file name="ScxmlResolver.xml" url="resources/ScxmlResolver.xml">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="com.nuance.tools.xhmi.Bundle"/>
+            </file>
+        </folder>
+    </folder>
+    <folder name="Templates">
+        <folder name="Other">
+            <file name="ScxmlTemplate.scxml" url="resources/ScxmlTemplate.scxml">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="com.nuance.tools.xhmi.Bundle"/>
+                <attr name="template" boolvalue="true"/>
+            </file>
+        </folder>
+    </folder>
+
+----
+
+
+
+[start=5]
+. the MIME resolver:
+
+[source,xml]
+----
+
+<MIME-resolver>
+    <file>
+        <ext name="scxml"/>
+        <resolver mime="application/scxml+xml"/>
+    </file>
+</MIME-resolver>
+
+----
+
+
+
+== Apache Migration Information
+
+The content in this page was kindly donated by Oracle Corp. to the
+Apache Software Foundation.
+
+This page was exported from link:http://wiki.netbeans.org/DevFaqNewXMLFileType[http://wiki.netbeans.org/DevFaqNewXMLFileType] , 
+that was last modified by NetBeans user Jtulach 
+on 2010-07-24T19:59:00Z.
+
+
+*NOTE:* This document was automatically converted to the AsciiDoc format on 2018-02-07, and needs to be reviewed.

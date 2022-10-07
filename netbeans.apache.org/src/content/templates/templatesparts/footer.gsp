@@ -74,7 +74,7 @@
             <h1><a href="/help/index.html">Get Help</a></h1>
             <ul>
               <li><a href="/help/index.html#documentation">Documentation</a></li>
-              <li><a href="/wiki/index.asciidoc">Wiki</a></li>
+              <li><a href="/wiki/index.html">Wiki</a></li>
               <li><a href="/help/index.html#support">Community Support</a></li>
               <li><a href="/help/commercial-support.html">Commercial Support</a></li>
             </ul>

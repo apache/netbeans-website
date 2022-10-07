@@ -1,0 +1,134 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= DevFaqModulesGeneral
+:jbake-type: wiki
+:jbake-tags: wiki, devfaq, needsreview
+:jbake-status: published
+:keywords: Apache NetBeans wiki DevFaqModulesGeneral
+:description: Apache NetBeans wiki DevFaqModulesGeneral
+:toc: left
+:toc-title:
+:syntax: true
+
+== What are the ways a module can influence the system?
+
+There are four basic ways a module can install configuration data or objects.
+Three of the ways are
+declarative (xref:DevFaqModulesDeclarativeVsProgrammatic.adoc[DevFaqModulesDeclarativeVsProgrammatic]); these mechanisms are preferred.
+
+If you are writing a module that has an API you want other modules to plug in to, you probably want to read xref:DevFaqWhenToUseWhatRegistrationMethod.adoc[DevFaqWhenToUseWhatRegistrationMethod].
+
+=== `@ServiceProvider`
+
+For global services, singletons and such, using this annotation is the preferred technique.
+
+What exactly you register is a contract between you and whatever module is providing the interface and will, presumably, do something with what you put there.
+What's really happening is that you are adding your implementation of this interface to the xref:DevFaqLookupDefault.adoc[default Lookup]. At build-time, registration files are generated into `META-INF/services` in your module's JAR file.  The default lookup (or JDK 6's link:http://java.sun.com/javase/6/docs/api/java/util/ServiceLoader.html[ServiceLoader]) knows how to read such files.  Typically the classes need to be public and have a public no-argument constructor.
+
+Any module can specify interfaces or classes that it would like other modules to implement and register instances of.  For example, the Project API module asks that each module that implements a _project type_ (the things you see in the New Project wizard in NetBeans) register their `ProjectFactory`s in default lookup.
+
+To get an instance of something registered this way, call
+
+[source,java]
+----
+
+TheInterface i = Lookup.getDefault().lookup(TheInterface.class);
+----
+
+If there might be more than one registered object of this type, you can get them all as follows:
+
+[source,java]
+----
+
+for (TheInterface i : Lookup.getDefault().lookupAll(TheInterface.class)) {...}
+----
+
+=== Registering objects in the System Filesystem
+
+The system filesystem (see xref:DevFaqSystemFilesystem.adoc[DevFaqSystemFilesystem]) allows for more detailed configuration when registering objects.
+It is a virtual filesystem composed of XML fragments (see xref:DevFaqModulesLayerFile.adoc[DevFaqModulesLayerFile])
+from modules in the system.
+The top layer of the system filesystem is `$USERDIR/config` which is where changes that are written at runtime are put.
+
+The system filesystem is composed of folders.  Some folders have special meanings to the system; which folders exist and are meaningful depends on which modules you have installed.
+For example, the core window system defines the folder `Menu/`, which contains one subfolder for each menu in the main window's menu bar.
+If you add a file to the folder `Menu/File` called `com-foo-mymodule-MyAction.instance`,
+an instance of `com.foo.mymodule.MyAction` will be created, and a menu item will be put on the menu for it.
+
+For more details on registering objects, defining an order in which they should appear, etc., see xref:DevFaqModulesLayerFile.adoc[DevFaqModulesLayerFile].
+In the short form, a module registers a layer by including a line in its manifest:
+
+[source,java]
+----
+
+OpenIDE-Module-Layer: com/foo/mymodule/resources/layer.xml
+----
+
+which points to an actual XML file by that name inside the module JAR file.  A layer file is an XML file defining a mini-filesystem:
+
+[source,xml]
+----
+
+<filesystem>
+    <folder name="SomeFolder">
+        <file name="SomeFile"/>
+    </folder>
+</filesystem>
+----
+
+More and more layer registrations can be made by using various source code annotations.
+If you use these exclusively, you will not need to declare a layer in your module's sources at all.
+
+=== Registering objects in the module's manifest
+
+Some types of objects used to be installed by adding a section to the module manifest.
+This is now deprecated.
+
+=== Programmatic registration - `ModuleInstall` classes
+
+The module system allows you to provide a `ModuleInstall` class, which runs some code during startup or when the module is loaded, and can run cleanup code when it is uninstalled or disabled.  This is the least desirable way to do things, because running code on startup means slowing down startup.
+Before you use such a class, be sure there is no declarative way to do what you're trying to do;
+see: xref:DevFaqModulesDeclarativeVsProgrammatic.adoc[DevFaqModulesDeclarativeVsProgrammatic]
+
+To have some code run on startup/installation/uninstallation/etc., add a line like the following to your module's manifest file:
+
+[source,java]
+----
+
+OpenIDE-Module-Install: org/netbeans/modules/paintcatcher/PaintCatcherModule.class
+----
+
+This line should be part of the group of lines at the top of the manifest, with no blank lines before it.  It is a pointer to a class file inside the module.  The class file must extend the class `org.openide.modules.ModuleInstall`.
+There is a wizard in the development support to create and register such a class for you.
+
+
+Applies to: NetBeans 6.7 and later
+
+== Apache Migration Information
+
+The content in this page was kindly donated by Oracle Corp. to the
+Apache Software Foundation.
+
+This page was exported from link:http://wiki.netbeans.org/DevFaqModulesGeneral[http://wiki.netbeans.org/DevFaqModulesGeneral] , 
+that was last modified by NetBeans user Jglick 
+on 2011-12-13T23:55:02Z.
+
+
+*NOTE:* This document was automatically converted to the AsciiDoc format on 2018-02-07, and needs to be reviewed.

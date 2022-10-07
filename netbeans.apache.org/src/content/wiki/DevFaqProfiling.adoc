@@ -1,0 +1,152 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= DevFaqProfiling
+:jbake-type: wiki
+:jbake-tags: wiki, devfaq, needsreview
+:jbake-status: published
+:keywords: Apache NetBeans wiki DevFaqProfiling
+:description: Apache NetBeans wiki DevFaqProfiling
+:toc: left
+:toc-title:
+:syntax: true
+
+== How can I profile NetBeans?
+
+There are many possibilities how to profile Java applications and that can be applied to NetBeans profiling.
+For different task it can be good to select different ways because each of them has its strengths and weaknesses.
+
+See also: xref:DevFaqMemoryLeaks.adoc[DevFaqMemoryLeaks]
+
+To be able to profile an application it is usually needed to start it with a modified command
+that typically adds some (JVMPI or JVMTI) libraries, some classes to (boot)classpath, specifies 
+options for profiling and often initializes profiling support before the application starts to run its code.
+
+=== NetBeans profiler
+
+The NB module development support is integrated with the NB Profiler.
+Just select a module and click *Profile* to start.
+
+_Want to cover some typical activities like:_
+
+* action execution (invoked from menu or by shortcut)
+* window/dialog opening/closing
+* use of editor including tracking what happens in background
+* startup
+
+=== Analyzer
+
+It is a sampling profiler working on Solaris and Linux (with limited functionality) that collects data during runtime.
+These data are later available for offline processing.
+
+It provides some capabilities that are not available in other Java profilers namely timeline view.
+This view shows timeline for each thread visualizing if the thread actually executes some code or not.
+
+==== Download and install Analyzer tool
+
+Performance Analyzer that is part of Sun Studio tools and can be downloaded
+from the link:http://developers.sun.com/sunstudio/downloads/express.jsp[developers' site].
+
+==== Run the Analyzer
+
+* Set the environment. `PATH` should contain `bin` directory of Analyzer installation. `LD_LIBRARY_PATH` should similarly contain `lib` dir (and also `/usr/lib/lwp` if you want to run it on Solaris 2.8). Optionally you can also set `MAN_PATH`. Set the `_NB_PROFILE_CMD`:
+[source,java]
+----
+
+export _NB_PROFILE_CMD='collect -p 1 -j on -S off -g NetBeans.erg  -y 38 -d /export/home/radim/analyzer
+----
+
+
+
+-p _num_ stands for sampling period (_on_, _hi_, _lo_ are also accepted), -j on turns on Java profiling, -y _num_ determines the signal to trigger profiling on/off. -y _num_,r means that profiling will be resumed at the begining. Use `man collect` to get detailed explanation of all options.
+
+* `mkdir /export/home/radim/analyzer` (It is only need first time. Next experiments will be added.)
+* Install &amp; start the IDE
+* Send signal 38 to Java process to start data collecting (`kill -38 $pid`). Or use another signal like PROF (this works well on Linux).
+* Perform the analyzed activity
+* Send the signal again to stop profiling (there can be more evaluated periods during one run).
+* Shut down the IDE.
+* Run the analyzer to evaluate the experiment in GUI environment: `analyzer /export/home/radim/analyzer/NetBeans.x.er`
+
+==== Profiling hints
+
+Startup: start with profiling enabled, send a signal when startup is completed. 
+When sampling every 1ms it takes 70 seconds instead of 40.
+
+=== Other tools
+
+Quite simple way how to measure time spent in some code is to wrap the code with 
+
+[source,java]
+----
+
+long t0 = System.nanoTime();
+try {
+  ... measured code
+} finally {
+  long t1 = System.nanoTime();
+  System.out.println("action took "+(t1-t0)/1000000+"ms");
+}
+----
+
+_JVMTI_ is powerful interface that allows to write custom libraries that will track behavior of application.
+
+link:http://www.opensolaris.org/os/community/dtrace/[DTrace] is a comprehensive dynamic tracing framework for the Solaris™ Operating Environment.
+It is one of the few tools that allows to track activities running deeply in the system and analyze the system.
+Because there are also probes provided by Java VM and function like `jstack` it is also possible to map 
+observed actions to parts of Java code in running application.
+
+=== Tips and trick
+
+Node pop-ups: interesting starting point is `o.o.awt.MouseUtils$PopupMouseAdapter.mousePressed()`
+
+=== How to measure performance/responsiveness?
+
+See link:http://performance.netbeans.org/responsiveness/whatisresponsiveness.html[What is UI responsiveness] for overview.
+
+Older link:http://performance.netbeans.org/[Performance] web page contains few links to documentation of one possible approach 
+how to measure and profile responsiveness. 
+This is based on use of modified event queue and patches classes from JDK.
+
+Recently we changed the support a bit to avoid modifications of core JDK's classes and and use small utility library 
+available in Hg.
+This is used in current automated testing and can be used for manual checks too.
+To run such test:
+
+1. Build `performance` project.
+2. Copy the JAR file to `netbeans/platform/core`
+3. Start the IDE with `-J-Dnetbeans.mainclass=org.netbeans.performance.test.guitracker.Main -J-Dguitracker.mainclass=org.netbeans.core.startup.Main`
+4. ... watch process output when you perform an action
+
+
+Applies to: NetBeans 6.5 and above
+
+xref:Category:Performance:HowTo.adoc[Category:Performance:HowTo]
+
+== Apache Migration Information
+
+The content in this page was kindly donated by Oracle Corp. to the
+Apache Software Foundation.
+
+This page was exported from link:http://wiki.netbeans.org/DevFaqProfiling[http://wiki.netbeans.org/DevFaqProfiling] , 
+that was last modified by NetBeans user Jglick 
+on 2010-06-14T20:22:39Z.
+
+
+*NOTE:* This document was automatically converted to the AsciiDoc format on 2018-02-07, and needs to be reviewed.

@@ -1,0 +1,91 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= DevFaqCreateExplorerPanel
+:jbake-type: wiki
+:jbake-tags: wiki, devfaq, needsreview
+:jbake-status: published
+:keywords: Apache NetBeans wiki DevFaqCreateExplorerPanel
+:description: Apache NetBeans wiki DevFaqCreateExplorerPanel
+:toc: left
+:toc-title:
+:syntax: true
+
+== How do I create a TopComponent to show an explorer view?
+
+xref:DevFaqExplorerViews.adoc[Explorer views ] are generic Swing components, not subclasses of xref:DevFaqWindowsTopComponent.adoc[TopComponent ], the Swing panel class that is used for top level components (tabs) in the main window.  So an explorer view component is added to a TopComponent, using the TopComponent as a Swing container for the view.
+
+A little bit of plumbing is needed to wire up an explorer view to the global xref:DevFaqWhatIsANode.adoc[Node ] selection so that xref:DevFaqTrackGlobalSelection.adoc[code that is sensitive to selection ] such as xref:DevFaqTrackingExplorerSelections.adoc[context sensitive actions ].  Basically you want the TopComponent to expose the selection in your xref:DevFaqExplorerViews.adoc[Explorer View ] so that when your view has focus, the global selection that affects everything will be whatever the user selects in your view.
+
+In olden times, there was a convenient class called ExplorerPanel (now in `org.openide.compat` ) which would do this for you;  due to a tragedy of being in the wrong package, it is now deprecated, but the required plumbing is not hard:
+
+[source,java]
+----
+
+public class MyView extends TopComponent implements ExplorerManager.Provider {
+    private final ExplorerManager manager = new ExplorerManager();
+    private final JComponent view = new BeanTreeView();
+    public MyView() {
+        setLayout (new BorderLayout());
+        add(view, BorderLayout.CENTER);
+        manager.setRootContext(someNode);
+
+        // Probably boilerplate (depends on what you are doing):
+        ActionMap map = getActionMap();
+        map.put(DefaultEditorKit.copyAction, ExplorerUtils.actionCopy(manager));
+        map.put(DefaultEditorKit.cutAction, ExplorerUtils.actionCut(manager));
+        map.put(DefaultEditorKit.pasteAction, ExplorerUtils.actionPaste(manager));
+        // This one is sometimes changed to say "false":
+        map.put("delete", ExplorerUtils.actionDelete(manager, true));
+        // Boilerplate:
+        associateLookup(ExplorerUtils.createLookup(manager, map));
+    }
+    // This is optional:
+    public boolean requestFocusInWindow() {
+        super.requestFocusInWindow();
+        // You will need to pick a view to focus:
+        return view.requestFocusInWindow();
+    }
+    // The rest is boilerplate.
+    public ExplorerManager getExplorerManager() {
+        return manager;
+    }
+    protected void componentActivated() {
+        ExplorerUtils.activateActions(manager, true);
+    }
+    protected void componentDeactivated() {
+        ExplorerUtils.activateActions(manager, false);
+    }
+}
+
+----
+
+The primary difference between the above code and ExplorerPanel is that ExplorerPanel automagically persisted paths from the selected nodes to the root, so that it could be deserialized on restart with the same selection it had before shutdown (assuming that selection still existed - this was never terribly robust).
+
+== Apache Migration Information
+
+The content in this page was kindly donated by Oracle Corp. to the
+Apache Software Foundation.
+
+This page was exported from link:http://wiki.netbeans.org/DevFaqCreateExplorerPanel[http://wiki.netbeans.org/DevFaqCreateExplorerPanel] , 
+that was last modified by NetBeans user Jtulach 
+on 2010-07-24T18:46:31Z.
+
+
+*NOTE:* This document was automatically converted to the AsciiDoc format on 2018-02-07, and needs to be reviewed.

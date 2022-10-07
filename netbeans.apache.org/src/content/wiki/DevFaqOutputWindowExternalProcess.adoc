@@ -1,0 +1,130 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= DevFaqOutputWindowExternalProcess
+:jbake-type: wiki
+:jbake-tags: wiki, devfaq, needsreview
+:jbake-status: published
+:keywords: Apache NetBeans wiki DevFaqOutputWindowExternalProcess
+:description: Apache NetBeans wiki DevFaqOutputWindowExternalProcess
+:toc: left
+:toc-title:
+:syntax: true
+
+== How do I route the output from an external process to the output window?
+
+*NetBeans 6.8 and up:* Use the External Execution API.  Implement a Callable which will actually start the process:
+
+[source,java]
+----
+
+private class ProcessLaunch implements Callable<Process> {
+  private final String[] commandLine;
+  public ProcessLaunch(String... commandLine) {
+    this.commandLine = commandLine;
+  }
+  public Process call() throws Exception {
+    ProcessBuilder pb = new ProcessBuilder(cmdline);
+    pb.directory(new File(System.getProperty("user.home"))); //NOI18N
+    pb.redirectErrorStream(true);
+    return pb.start();
+  }
+}
+----
+
+Create an ExecutionDescriptor:
+
+[source,java]
+----
+
+ExecutionDescriptor descriptor = new ExecutionDescriptor().controllable(true).frontWindow(true).
+  preExecution(new SomeRunnableToCallBeforeStart()).postExecution(new SomeRunnableToCallAfterExit());
+----
+
+The before and after runnables can be used to, say, update the user interface when the process starts and stops.
+
+Then actually launch your process.  Standard output and standard error (if you leave in the call to `redirectErrorStream(true)` above) output will be redirected to the output window, and the tab name in the Output Window will be what you specify below.  The variable `theCommandLineArguments` is an array of strings, just as you would pass to `Runtime.exec()` - the command-line to run whatever program you want to run.
+
+[source,java]
+----
+
+ExecutionService exeService = ExecutionService.newService(
+  new ProcessLaunch(theCommandLineArguments),
+  descriptor, "My Process");
+Future<Integer> exitCode = exeService.run();
+----
+
+(you can use the returned Future to wait for the process to exit and get its exit code - just don't do that in the Swing event thread).
+
+Applies to:  NetBeans 6.8 and up.
+xref:DevFaqOutputWindowExternalProcessNb67.adoc[How to do this in NetBeans 6.7 and older]
+
+== What about processes using the System.out/System.err?
+
+Sometimes we are using a third party package that we don't have access to its source or we don't want to modify.
+
+In this case you just need to redirect the system streams like this:
+
+[source,java]
+----
+
+private void redirectSystemStreams() {
+        out = new OutputStream() {
+
+            @Override
+            public void write(int i) throws IOException {
+                OutputHandler.output(outputName, String.valueOf((char) i));
+            }
+
+            @Override
+            public void write(byte[] bytes) throws IOException {
+                OutputHandler.output(outputName, new String(bytes));
+            }
+
+            @Override
+            public void write(byte[] bytes, int off, int len) throws IOException {
+                OutputHandler.output(outputName, new String(bytes, off, len));
+            }
+        };
+        System.setOut(new PrintStream(out, true));
+        System.setErr(new PrintStream(out, true));
+    }
+----
+
+OutputHandler is just a helper class that I've been using for a while. Feel free to use it. You need to add a dependency to I/O APIs package even if you don't use it to avoid run time issues. If you don't use it replace the OutputHandler calls for something like this:
+
+[source,java]
+----
+
+IOProvider.getDefault().getIO(name, false).getOut().println(mess);
+----
+
+The OutputHandler referenced above has been transformed into a plugin for easier use. See link:http://plugins.netbeans.org/plugin/39695/?show=true[here] for more details.
+
+== Apache Migration Information
+
+The content in this page was kindly donated by Oracle Corp. to the
+Apache Software Foundation.
+
+This page was exported from link:http://wiki.netbeans.org/DevFaqOutputWindowExternalProcess[http://wiki.netbeans.org/DevFaqOutputWindowExternalProcess] , 
+that was last modified by NetBeans user Javydreamercsw 
+on 2012-07-17T21:47:15Z.
+
+
+*NOTE:* This document was automatically converted to the AsciiDoc format on 2018-02-07, and needs to be reviewed.

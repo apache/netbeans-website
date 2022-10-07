@@ -1,0 +1,98 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= DevFaqInstanceDataObject
+:jbake-type: wiki
+:jbake-tags: wiki, devfaq, needsreview
+:jbake-status: published
+:keywords: Apache NetBeans wiki DevFaqInstanceDataObject
+:description: Apache NetBeans wiki DevFaqInstanceDataObject
+:toc: left
+:toc-title:
+:syntax: true
+
+== What are `*.instance` files?
+
+`*.instance` files represent an "instance", i.e. arbitrary Java object.
+
+An instance file typically says what class it is an instance of via its class name - for example,
+`com-foo-mymodule-MyObject.instance`.
+A `*.instance` file may create its instance from any Java class
+with a default constructor, or by calling a static method on a class.
+
+In NetBeans infrastructure, `*.instance` files result in `InstanceDataObject`s.
+`InstanceDataObject`s can supply `InstanceCookie`s,
+which in turn instantiate the object.
+So, code to actually get an instance of an object declared in the system filesystem  (xref:DevFaqSystemFilesystem.adoc[DevFaqSystemFilesystem]) would look like this (plus error checking):
+
+[source,java]
+----
+
+public static Object getTheObject(String pathInSystemFilesystem) throws Exception {
+    return DataObject.find(FileUtil.getConfigFile(pathInSystemFilesystem)).
+        getLookup().lookup(InstanceCookie.class).instanceCreate();
+}
+----
+
+(FileUtil.getConfigObject is available for this purpose in NB 7.1+.)
+
+A much easier way to get all instances of objects in a folder exists:
+
+[source,java]
+----
+
+for (WhatISaidToPutHere instance :
+        Lookups.forPath("MyFolder").lookupAll(WhatISaidToPutHere.class)) {
+    // ...
+}
+----
+
+Note that a default constructor is not required in an XML layer;  you can also use a static method, using the following syntax:
+
+[source,xml]
+----
+
+<file name="ObjectTypes.instance">
+  <attr name="instanceCreate" methodvalue="org.netbeans.core.ui.UINodes.createObjectTypes"/>
+  <attr name="instanceOf" stringvalue="org.openide.nodes.Node"/>
+</file>
+----
+
+(The `instanceOf` attribute is optional;
+it lets the system avoid instantiating your object just to see if it is assignable to `Node`.
+This is only useful in folders that contain objects of many different types mixed together,
+which is normally true only in the semi-deprecated `Services` folder:
+code looking for instances of one type only would rather not load everything.)
+
+See also: xref:DevFaqDotSettingsFiles.adoc[DevFaqDotSettingsFiles]
+
+
+Applies to: NetBeans 6.7 and later
+
+== Apache Migration Information
+
+The content in this page was kindly donated by Oracle Corp. to the
+Apache Software Foundation.
+
+This page was exported from link:http://wiki.netbeans.org/DevFaqInstanceDataObject[http://wiki.netbeans.org/DevFaqInstanceDataObject] , 
+that was last modified by NetBeans user Jglick 
+on 2011-12-13T23:58:07Z.
+
+
+*NOTE:* This document was automatically converted to the AsciiDoc format on 2018-02-07, and needs to be reviewed.
