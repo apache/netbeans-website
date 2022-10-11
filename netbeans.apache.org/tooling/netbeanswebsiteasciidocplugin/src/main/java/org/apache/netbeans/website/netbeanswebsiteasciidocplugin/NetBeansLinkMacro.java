@@ -37,18 +37,23 @@ public class NetBeansLinkMacro extends InlineMacroProcessor {
             "https://cwiki.apache.org/",
             "https://www.youtube.com/",
             "https://github.com/apache/netbeans",
-            "https://netbeans.apache.org"
+            "https://snapcraft.io/netbeans",
+            "https://lists.apache.org/",
+            "https://issues.apache.org/jira",
+            "https://codelerity.com",
+            "https://ci-builds.apache.org/"
     ));
 
     @Override
     public Object process(ContentNode parent, String target, Map<String, Object> attributes) {
-        String content = "\n" + target + attributes + parent.getDocument().getAttributes().get("docfile");
+        String content = "\n" + target + ";" + attributes + ";" + parent.getDocument().getAttributes().get("docfile");
         Map<String, String> globalAttributes = (Map) parent.getDocument().getAttributes();
-        String fileName = globalAttributes.get("fileauditfolder");
-        Path acceptedPath = Paths.get(fileName + "/accepted.txt");
-        Path rejectedPath = Paths.get(fileName + "/url.txt");
-        Path newFilePathapidoc = Paths.get(fileName + "/apidocurl.txt");
-        Path newFilePathmacro = Paths.get(fileName + "/macrocurl.txt");
+        String auditFolder = globalAttributes.get("fileauditfolder");
+        Path acceptedPath = Paths.get(auditFolder + "/accepted.txt");
+        Path rejectedPath = Paths.get(auditFolder + "/url.txt");
+        Path newFilePathapidoc = Paths.get(auditFolder + "/apidocurl.txt");
+        Path newFilePathmacro = Paths.get(auditFolder + "/macrocurl.txt");
+        Path xrefPath = Paths.get(auditFolder + "/linkthatmustbexref.txt");
         boolean apidoccheck = target.startsWith("http://bits.netbeans.org/") || target.startsWith("https://bits.netbeans.org/");
         if (apidoccheck) {
             // this should be empty in a while once we use macro PR #537
@@ -66,16 +71,20 @@ public class NetBeansLinkMacro extends InlineMacroProcessor {
                         accepted = true;
                     }
                 }
-                if (accepted) {
-                    NetBeansWebSiteExtension.writeAndAppend(acceptedPath, content);
+                if ((!target.startsWith("mailto") && !target.startsWith("https://lists.apache.org/")) && target.contains("netbeans.apache.org")) {
+                    NetBeansWebSiteExtension.writeAndAppend(xrefPath, content);
                 } else {
-                    NetBeansWebSiteExtension.writeAndAppend(rejectedPath, content);
+                    if (accepted) {
+                        NetBeansWebSiteExtension.writeAndAppend(acceptedPath, content);
+                    } else {
+                        NetBeansWebSiteExtension.writeAndAppend(rejectedPath, content);
+                    }
                 }
             } else {
                 boolean accepted = target.matches("[0-9a-zA-Z\\./].*");
 // internal to the site jbake should take care starting with Dev... starting with / or . 
                 if (accepted) {
-                    NetBeansWebSiteExtension.writeAndAppend(acceptedPath, content);
+                    NetBeansWebSiteExtension.writeAndAppend(xrefPath, content);
                 } else {
                     NetBeansWebSiteExtension.writeAndAppend(rejectedPath, content);
                 }

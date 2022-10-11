@@ -35,6 +35,7 @@ public class NetBeansWebSiteExtension implements ExtensionRegistry {
         JavaExtensionRegistry javaExtensionRegistry = asciidoctor.javaExtensionRegistry();
         javaExtensionRegistry.treeprocessor(NetBeansWebSiteTreeprocessor.class);
         javaExtensionRegistry.inlineMacro("link", NetBeansLinkMacro.class);
+        javaExtensionRegistry.inlineMacro("xref", NetBeansXrefMacro.class);
     }
 
     public static void writeAndAppend(Path newFilePath, String content) {
