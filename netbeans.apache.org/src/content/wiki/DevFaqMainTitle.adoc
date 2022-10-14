@@ -1,0 +1,121 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= DevFaqMainTitle
+:jbake-type: wiki
+:jbake-tags: wiki, devfaq, needsreview
+:jbake-status: published
+:keywords: Apache NetBeans wiki DevFaqMainTitle
+:description: Apache NetBeans wiki DevFaqMainTitle
+:toc: left
+:toc-title:
+:syntax: true
+
+By default, the main title shows the branding name plus the build number.
+
+For production deployment, it could be required to only show the branding name.
+
+There are several possible steps to achieve it:
+
+== Remove the build number
+
+The title of your application is located in a resource bundle:
+
+[source,java]
+----
+
+...\branding\modules\org-netbeans-core-windows.jar\org\netbeans\core\windows\view\ui\Bundle.properties
+----
+
+As of NetBeans 6.9, it is possible to use the xref:NewAndNoteWorthy#Branding_Editor.adoc[Branding Editor] to edit this resource.
+
+To remove the version number prior to 6.9, manually edit the file and remove existing {0} tokens:
+
+:: *CTL_MainWindow_Title=AppBrandingName {0}*
+:: *CTL_MainWindow_Title_No_Project=AppBrandingName {0}*
+
+so it will be as:
+
+:: *CTL_MainWindow_Title=AppBrandingName*
+:: *CTL_MainWindow_Title_No_Project=AppBrandingName*
+
+Build number will not show in the application main title.
+
+== Change main title at runtime
+
+Inside the ModuleInstaller class for the GUI module:
+
+[source,java]
+----
+
+@Override
+public void restored() {
+  // some other code may go here...
+   WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
+     @Override
+     public void run() {
+      JFrame mainFrame = (JFrame) WindowManager.getDefault().getMainWindow();
+      mainFrame.setTitle("Modified main title");
+     });
+   }
+  // some other code may go here...
+}
+----
+
+A word of caution related to porting existing Swing applications to NetBeans Platform.
+
+*This will not work!*
+
+[source,java]
+----
+
+@Override
+public void restored() {
+  // some other code may go here...
+   SwingUtilities.invokeLater(new Runnable(){
+     @Override
+     public void run() {
+      JFrame mainFrame = (JFrame) WindowManager.getDefault().getMainWindow();
+      mainFrame.setTitle("Modified main title");
+     });
+   }
+  // some other code may go here...
+}
+----
+
+Although it will not show any errors, *the main title will not be set!* in this case.
+
+== Other Options
+
+See also:
+
+* link:http://blogs.kiyut.com/tonny/2007/08/06/netbeans-platform-branding-and-version-info/[Branding version numbers using Ant]
+* xref:DevFaqVersionNumber.adoc[DevFaqVersionNumber]
+
+== Apache Migration Information
+
+The content in this page was kindly donated by Oracle Corp. to the
+Apache Software Foundation.
+
+This page was exported from link:http://wiki.netbeans.org/DevFaqMainTitle[http://wiki.netbeans.org/DevFaqMainTitle] , 
+that was last modified by NetBeans user Choces 
+on 2010-11-18T15:56:18Z.
+
+
+*NOTE:* This document was automatically converted to the AsciiDoc format on 2018-02-07, and needs to be reviewed.

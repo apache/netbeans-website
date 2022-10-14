@@ -1,0 +1,85 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= DevFaqCustomUpdateCenter
+:jbake-type: wiki
+:jbake-tags: wiki, devfaq, needsreview
+:jbake-status: published
+:keywords: Apache NetBeans wiki DevFaqCustomUpdateCenter
+:description: Apache NetBeans wiki DevFaqCustomUpdateCenter
+:toc: left
+:toc-title:
+:syntax: true
+
+== How can I use AutoUpdate to deploy updates and new modules for my application?
+
+An AutoUpdate server (also called an AutoUpdate Center or AUC) it not as complicated as it sounds.  It's just a server which contains a set of modules and an XML file that describes them all (the autoupdate XML descriptor).
+
+There are four main steps in setting up your AUC, all of which are quite simple:
+
+=== 1. Deciding where you will host it.
+
+This is typically just a Web server (Tomcat, Apache, etc.) which has a directory that's writable by you.  You will need to know how to map that directory to the URL which will be used to request the files you add there; for example, you might put a file `com-example-foo.nbm` in the `/var/www/html/mysite` directory and that will map to `link:http://www.example.com/mysite/com-example-foo.nbm[http://www.example.com/mysite/com-example-foo.nbm]`.
+
+=== 2. Creating your NBM files and autoupdate XML descriptor.
+
+Just right-click on your suite and choose "Create NBMs", or if you prefer the command line, type `ant nbms` from a command prompt in the root directory of your suite.  This will create an NBM file for every module in your suite and will also generate the autoupdate XML descriptor which describes each module.
+
+=== 3. Uploading your NBM files and autoupdate XML descriptor to the server.
+
+You can do this manually at first, but later you might wish to automate this using Ant's support for FTP or scp, or simply copy files via shares or NFS mounts.  Which method you choose will largely be dictated by what your Web server's operating system supports.
+
+=== 4. Making sure your application knows about it.
+
+*a) Using wizards*: 
+There is a wizard for this in recent versions of the NetBeans IDE.  Right-click on one of the modules in your suite (or add a new one, if you prefer) and choose New -> Other.  Select "Module development" in the dialog, choose "Update Center" and then click the Next button.  Specify the URL of the update center descriptor (i.e. the URL of the file you uploaded in step 3) and a display name of your choice, and then click Finish.
+
+*b) Using layer.xml*:
+
+[source,xml]
+----
+
+<folder name="Services">
+  <folder name="AutoupdateType">
+    <file name="my_update_center.instance">
+      <attr name="displayName" stringvalue="My Update Center" />
+      <attr name="enabled" boolvalue="true" />
+      <attr name="instanceCreate" methodvalue="org.netbeans.modules.autoupdate.updateprovider.AutoupdateCatalogFactory.createUpdateProvider" />
+      <attr name="instanceOf" stringvalue="org.netbeans.spi.autoupdate.UpdateProvider" />
+      <attr name="url" urlvalue="http://my_site.com/updates.xml" />
+    </file>
+  </folder>
+</folder>
+----
+
+(taken from mailinglist)
+
+*Note:* Whenever you need to deploy an update, be sure you have incremented the module's specification version number and then repeat steps 2 and 3 above.  Users should be able to easily install the updates you've published.  There is more xref:DevFaqImplementationDependency.adoc[explanation of module versioning and dependencies] elsewhere in this FAQ.
+
+== Apache Migration Information
+
+The content in this page was kindly donated by Oracle Corp. to the
+Apache Software Foundation.
+
+This page was exported from link:http://wiki.netbeans.org/DevFaqCustomUpdateCenter[http://wiki.netbeans.org/DevFaqCustomUpdateCenter] , 
+that was last modified by NetBeans user Markiewb 
+on 2012-12-05T20:07:49Z.
+
+
+*NOTE:* This document was automatically converted to the AsciiDoc format on 2018-02-07, and needs to be reviewed.

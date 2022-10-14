@@ -1,0 +1,109 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= DevFaqWhenLookup
+:jbake-type: wiki
+:jbake-tags: wiki, devfaq, needsreview
+:jbake-status: published
+:keywords: Apache NetBeans wiki DevFaqWhenLookup
+:description: Apache NetBeans wiki DevFaqWhenLookup
+:toc: left
+:toc-title:
+:syntax: true
+
+== When should I use Lookup in my own APIs?
+
+For most things in NetBeans coding, you will want to write normal Java code - if you need an object of a particular type, just call it.
+
+When you need to use any of the following patterns, Lookup can be helpful:
+
+=== System-level-decoupling
+
+You provide some interface. Some other module will actually implement the interface. You want modules to be able to use your API, without caring who implements it, just that some implementation is there. Example: The status line.
+
+[source,java]
+----
+
+StatusDisplayer.getDefault()
+
+----
+
+returns some implementation of StatusDisplayer. In NetBeans typically it is provided by the window system. But I once wrote an implementation that would instead hide the status bar and instead show the message in a translucent popup that appears over the main window. That would not have been possible if all code that wanted to display status messages was tied at compile-time to the implementation class provided by the window system.
+
+=== Designing an API for a not-well-defined problem space
+
+An example of this is Project.getLookup(). In the case of projects, when that API was designed, the only things that could be known for sure about a project were that:
+
+* A project is a directory
+* For any file, there will be zero or one projects that own that file 
+
+Designing a Project API that would provide for everything C/C++, Ruby, Java, DocBook, HTML, Web, J2EE, J2ME, etc. projects (this had been tried) would end up with something bloated and filled with functionality that any random client would never use - a very noisy, hard-to-use API. Since in that case the requirements were not and could not be known, the lookup pattern made it possible to create an API and let clients define additional APIs (like ClassPathProvider for Java projects, which would make no sense in a DocBook project), and provide client access to them through the project's Lookup.
+Granular decoupling
+
+The uses of Lookup in Node and TopComponent: Here, you have some API type. You make it available in the Lookup of files of a certain type. You don't necessarily know all the ways your UI will change in the future. Other modules want to add actions (to popup menus, toolbars, whatever) that can operate on your type. Those actions should be enabled whenever the selection contains one (or more) of your object. By writing actions sensitive to your type in the global selection lookup (Utilities.actionsGlobalContext()), no rewrite of those actions is required if, at some point, you write a new window component that shows, say, virtual files or some random tree of objects that contain your type.
+
+=== Mutable Capabilities
+
+You are designing an API for an object whose capabilities are actually mutable. Listening for a particular type in a Lookup is much less code, and much clearer, than defining a bunch of event types, listener classes and addThisListener(), addThatListener(). Example: In the Java Card modules, there is a class Card. A Card has a lookup. Now a card might be a physical device plugged into your computer. Or it might be a virtual card definition used by an emulator for testing. A virtual card has capabilities like Stop, Start and Resume. When you call StartCapability.start(), the StartCapability disappears from the Card's lookup and a StopCapability appears. But if it is a physical card, Start and Stop make no sense whatsoever - so for a real card they are not there. Other capabilities, such as PortProvider, which will tell you what TCP ports to use to send code to, attach a debugger to, etc., are present for both virtual cards and some real cards, if HTTP is the mechanism to deploy code to them - but other cards may have you run a native executable to deploy code and use no ports. So PortProvider is another optional capability.
+
+Note that you can add typing to Lookup-based APIs if you find it useful or it makes your API easier (with Find Usages or Javadoc) to use. In org.netbeans.modules.javacard.spi.Card, in fact, there is
+
+[source,java]
+----
+
+public <T extends ICardCapability> T getCapability(Class<T> type);
+
+----
+
+which delegates to Lookup but guarantees the return value is a subtype of something you can search on. I don't recommend that for all situations (part of the birth of Lookup was that Node.getCookie() returned something that implemented the marker interface Node.Cookie, and for things that wanted lookup-like functionality but had no connection to Nodes whatsoever, it made no sense to make them drag around a JAR with the Nodes API just for a marker interface). But in restricted situations, it can make an API more usable.
+
+=== Composable Objects
+
+Some NetBeans-based applications use Lookup as a mechanism to allow modules to plug in _aspects_ that are applied to existing objects.  For example, say you write an extensible Node whose display name is implemented as
+
+[source,java]
+----
+
+public String getDisplayName() {
+  return getLookup().lookup(Displayable.class).getDisplayName();
+}
+
+----
+
+Some other module can then contribute (most likely via a xref:DevFaqModulesLayerFile.adoc[layer file] and Lookups.forPath()) a Displayable for that object.  This is a rather extreme form of extensibility and can be hard to debug, but if you need it, Lookup can be used for that.
+
+=== Conclusion
+
+These cover most of the typical cases. If you're not doing something like these examples - if using Lookup adds complexity to your code without adding needed flexibility or future-proofing - then it's the wrong tool for the job.
+
+For a more detailed discussion, which this FAQ entry was assembled from, see link:http://netbeans.org/projects/platform/lists/dev/archive/2010-01/message/315[this thread on the dev@platform mailing list]
+
+See also: xref:DevFaqWhenToUseWhatRegistrationMethod.adoc[When To Use Various Declarative Registration Mechanisms]
+
+== Apache Migration Information
+
+The content in this page was kindly donated by Oracle Corp. to the
+Apache Software Foundation.
+
+This page was exported from link:http://wiki.netbeans.org/DevFaqWhenLookup[http://wiki.netbeans.org/DevFaqWhenLookup] , 
+that was last modified by NetBeans user Jtulach 
+on 2010-07-24T20:18:23Z.
+
+
+*NOTE:* This document was automatically converted to the AsciiDoc format on 2018-02-07, and needs to be reviewed.

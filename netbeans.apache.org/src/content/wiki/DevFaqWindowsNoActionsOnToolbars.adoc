@@ -1,0 +1,161 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= DevFaqWindowsNoActionsOnToolbars
+:jbake-type: wiki
+:jbake-tags: wiki, devfaq, needsreview
+:jbake-status: published
+:keywords: Apache NetBeans wiki DevFaqWindowsNoActionsOnToolbars
+:description: Apache NetBeans wiki DevFaqWindowsNoActionsOnToolbars
+:toc: left
+:toc-title:
+:syntax: true
+
+== I want to disable the popup menu on the toolbars in the main window. How do I do that?
+
+There is no canonical (or pretty) way to do this, but there is a hack you can do - it works in NetBeans 5.0, 5.5 and 6.x (and probably earlier versions but this wasn't tested).  
+
+Create the following `xref:DevFaqModulesStartupActions.adoc[ModuleInstall]` class (remember to add a reference to it in the module manifest, e.g. 
+
+[source,java]
+----
+
+OpenIDE-Module-Install: org/netbeans/modules/toolbarthing/Installer.class
+----
+
+If you are using 5.0's update 1 of module development support or later, you can just use New File > NetBeans Plug-In Modules > Module Installer):
+
+[source,java]
+----
+
+package org.netbeans.modules.toolbarthing;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.EventQueue;
+import java.awt.event.MouseListener;
+import java.util.ArrayList;
+import java.util.List;
+import javax.swing.JFrame;
+import javax.swing.JToolBar;
+import org.openide.modules.ModuleInstall;
+import org.openide.windows.WindowManager;
+public class Installer extends ModuleInstall implements Runnable {
+
+    public void restored() {
+         WindowManager.getDefault().invokeWhenUIReady(this);
+    }
+
+    public void run() {
+        JToolBar[] tb = findToolbars();
+        for (int i = 0; i < tb.length; i++) {
+            processToolbar (tb[I]);
+        }
+    }
+
+    private JToolBar[] findToolbars() {
+        List l = new ArrayList();
+        JFrame jf = (JFrame) WindowManager.getDefault().getMainWindow();
+        findToolbars (jf.getContentPane(), l);
+        JToolBar[[ | ]] tb = (JToolBar[[ | ]]) l.toArray(new JToolBar[L.size()]);
+        return tb;
+    }
+
+    private void findToolbars(Component c, List l) {
+        if (c instanceof JToolBar) {
+            l.add(c);
+        } else if (c instanceof Container) {
+            Component[] cc = ((Container) c).getComponents();
+            for (int i=0; i < cc.length; i++) {
+                findToolbars(cc[I], l);
+            }
+        }
+    }
+
+    private void processToolbar (JToolBar bar) {
+        MouseListener[] ml = bar.getMouseListeners();
+        for (int i = 0; i < ml.length; i++) {
+            if (ml[I].getClass().getName().indexOf("PopupListener") >= 0) {
+                bar.removeMouseListener (ml[I]);
+            }
+        }
+    }
+}
+----
+
+The above doesn't seems to work in 6.9.1. This is another similar module installer hack to achieve this:
+
+[source,java]
+----
+
+public class Installer extends ModuleInstall
+{
+
+  public void restored()
+  {
+    removeToolbarPopupMenu();
+  }
+
+  private void removeToolbarPopupMenu()
+  {
+    WindowManager.getDefault().invokeWhenUIReady(
+      new Runnable()
+      {
+        @Override
+        public void run()
+        {
+          removeAllPopupListeners(ToolbarPool.getDefault());
+        }
+      });
+  }
+
+  private static void removeAllPopupListeners(Component c)
+  {
+    if(c instanceof Container)
+    {
+      for(Component c2 : ((Container)c).getComponents())
+      {
+        for(MouseListener l : c2.getMouseListeners())
+        {
+          if(l.getClass().getName().contains("PopupListener"))
+          {
+            c2.removeMouseListener(l);
+            // Uncomment to obtain a similar console output
+            // Removing: org.openide.awt.ToolbarPool$PopupListener@1535ac from javax.swing.JPanel[...]
+            // Removing: org.openide.awt.ToolbarPool$PopupListener@1535ac from org.openide.awt.Toolbar[File,...]
+            //System.out.println("Removing: " + l + " from " + c2);
+          }
+        }
+        findToolbars(c2);
+      }
+    }
+  }
+}
+----
+
+== Apache Migration Information
+
+The content in this page was kindly donated by Oracle Corp. to the
+Apache Software Foundation.
+
+This page was exported from link:http://wiki.netbeans.org/DevFaqWindowsNoActionsOnToolbars[http://wiki.netbeans.org/DevFaqWindowsNoActionsOnToolbars] , 
+that was last modified by NetBeans user Adayth 
+on 2011-06-15T11:23:36Z.
+
+
+*NOTE:* This document was automatically converted to the AsciiDoc format on 2018-02-07, and needs to be reviewed.

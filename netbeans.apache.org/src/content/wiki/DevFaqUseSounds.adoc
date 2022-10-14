@@ -1,0 +1,219 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= DevFaqUseSounds
+:jbake-type: wiki
+:jbake-tags: wiki, devfaq, needsreview
+:jbake-status: published
+:keywords: Apache NetBeans wiki DevFaqUseSounds
+:description: Apache NetBeans wiki DevFaqUseSounds
+:toc: left
+:toc-title:
+:syntax: true
+
+This is quite straight forward. This is code from a module in SodBeans but its so simple that it is easier just to copy and paste the code.
+
+Add a dependency on 
+Create your module and add a file named SoundPlayer with this contents:
+
+[source,java]
+----
+
+package <your package>;
+
+import java.io.File;
+import org.openide.modules.InstalledFileLocator;
+
+/**
+ *
+ * @author Andreas Stefik, with code borrowed from the web
+ */
+public class SoundPlayer {
+
+    private static String soundFileRoot = "sound";
+    private static String codeNameBase = "<code name base>";
+    private static File root = null;
+    private static SoundPlayer player = null;
+
+    /**
+     * @return the soundFileRoot
+     */
+    public static String getSoundFileRoot() {
+        return soundFileRoot;
+    }
+
+    /**
+     * @param aSoundFileRoot the soundFileRoot to set
+     */
+    public static void setSoundFileRoot(String aSoundFileRoot) {
+        soundFileRoot = aSoundFileRoot;
+    }
+
+    /**
+     * @return the codeNameBase
+     */
+    public static String getCodeNameBase() {
+        return codeNameBase;
+    }
+
+    /**
+     * @param aCodeNameBase the codeNameBase to set
+     */
+    public static void setCodeNameBase(String aCodeNameBase) {
+        codeNameBase = aCodeNameBase;
+    }
+
+    private SoundPlayer() {
+        File file = InstalledFileLocator.getDefault().locate(
+                soundFileRoot, codeNameBase, false);
+        root = file;
+    }
+
+    public static synchronized SoundPlayer instance() {
+        root = InstalledFileLocator.getDefault().locate(
+                soundFileRoot, codeNameBase, false);
+        if (player == null) {
+            player = new SoundPlayer();
+        }
+        return player;
+    }
+
+    public void play(String name) {
+        ThreadedSound sound = new ThreadedSound();
+        File file = new File(root.getAbsolutePath() + "/" + name);
+        String path = file.getAbsolutePath();
+        sound.setSoundFile(path);
+        Thread thread = new Thread(sound);
+        thread.start();
+    }
+}
+
+----
+
+Create your module and add a file named ThreadedSound with this contents:
+
+[source,java]
+----
+
+package <your package>;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.sound.sampled.*;
+
+/**
+ *
+ * @author Andreas Stefik
+ */
+public class ThreadedSound implements Runnable {
+
+    private final int BUFFER_SIZE = 128000;
+    private AudioInputStream audioStream;
+    private AudioFormat audioFormat;
+    private SourceDataLine sourceLine;
+    private String soundFile = "";
+
+    @Override
+    public void run() {
+        play();
+    }
+
+    private void play() {
+        try {
+            File path = new File(getSoundFile());
+            audioStream = AudioSystem.getAudioInputStream(path);
+
+            audioFormat = audioStream.getFormat();
+
+            DataLine.Info info = new DataLine.Info(SourceDataLine.class, audioFormat);
+            try {
+                sourceLine = (SourceDataLine) AudioSystem.getLine(info);
+                sourceLine.open(audioFormat);
+            } catch (LineUnavailableException ex) {
+                Logger.getLogger(ThreadedSound.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (Exception ex) {
+                Logger.getLogger(SoundPlayer.class.getName()).log(Level.SEVERE, null, ex);
+            }
+
+
+            sourceLine.start();
+
+            int nBytesRead = 0;
+            byte[] abData = new byte[BUFFER_SIZE];
+            while (nBytesRead != -1) {
+                try {
+                    nBytesRead = audioStream.read(abData, 0, abData.length);
+                } catch (IOException ex) {
+                    Logger.getLogger(ThreadedSound.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                if (nBytesRead >= 0) {
+                    sourceLine.write(abData, 0, nBytesRead);
+                }
+            }
+
+            sourceLine.drain();
+            sourceLine.close();
+
+        } catch (UnsupportedAudioFileException ex) {
+            Logger.getLogger(ThreadedSound.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(ThreadedSound.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    /**
+     * @return the soundFile
+     */
+    public String getSoundFile() {
+        return soundFile;
+    }
+
+    /**
+     * @param soundFile the soundFile to set
+     */
+    public void setSoundFile(String soundFile) {
+        this.soundFile = soundFile;
+    }
+}
+
+----
+
+To use it just place the sound file in the appropriate folder and use:
+
+[source,java]
+----
+
+SoundPlayer.instance().play("<file name>");
+----
+
+To make your application talk, see xref:DevFaqMakeItTalk.adoc[DevFaqMakeItTalk]
+
+== Apache Migration Information
+
+The content in this page was kindly donated by Oracle Corp. to the
+Apache Software Foundation.
+
+This page was exported from link:http://wiki.netbeans.org/DevFaqUseSounds[http://wiki.netbeans.org/DevFaqUseSounds] , 
+that was last modified by NetBeans user Javydreamercsw 
+on 2011-09-19T21:46:28Z.
+
+
+*NOTE:* This document was automatically converted to the AsciiDoc format on 2018-02-07, and needs to be reviewed.

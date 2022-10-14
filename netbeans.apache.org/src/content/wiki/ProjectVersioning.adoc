@@ -1,0 +1,295 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= ProjectVersioning
+:jbake-type: wiki
+:jbake-tags: wiki, devfaq, needsreview
+:jbake-status: published
+:keywords: Apache NetBeans wiki ProjectVersioning
+:description: Apache NetBeans wiki ProjectVersioning
+:toc: left
+:toc-title:
+:syntax: true
+
+== Project Version Control Tutorial
+
+The paper describes how to write own project types, nodes and topcomponents that support version control actions.
+It applies to NetBeans 5.0 CVS support.
+
+There is sibling xref:VersioningSystemIntegration.adoc[Versioning System Integration] describing version control system integration providers development.
+
+=== Typical Requirements
+
+* Show context version control actions in project explorer
+* Put project under version control
+* Get latest version from repository
+* Inspect local changes
+* Commit local changes into repository
+* Search history
+
+* Badge logical node icon and name
+* Mark modified and conflicting files by icon
+* Enhance name by revision information
+
+=== Typical Solution
+
+==== Version Control Action Context
+
+All version control actions take working context from selected nodes. The context is taken from Node's lookup. The lookup is searched for:
+
+* Project
+* Sources.TYPE_GENERIC
+* NonRecursiveFolder
+* FileObject
+* DataObject
+
+The xref:VersionActionContext.adoc[VersionActionContext] algorithm is in link:http://javacvs.netbeans.org/source/browse/javacvs/cvsmodule/src/org/netbeans/modules/versioning/system/cvss/util/Utils.java?rev=1.41[org.netbeans.versioning.cvss.util.Util] class `getCurrentContext(), addFileObjects()` and `addProjectFiles()` methods.
+
+Sample:
+
+[source,java]
+----
+
+public class UMLNode extends AbtractNode {
+    private final FileObject fileObject;
+    public UMLNode(UMLModel.Element model) {
+         super(Lookups.singleton(model.getFileObject()));  // HERE
+         this.fileObject = model.getFileObject();
+         attachStatusListener(); // see bellow
+    }
+----
+
+It means that version control actions (e.g. in main menu) are enabled on any node that has properly populated lookup. Actions depends on version control system e.g. for CVS:
+
+* Import into repository (for unversioned)
+* Show changes
+* Update
+* Diff
+* Commit
+* Ignore
+* Search History
+* Tag
+* Switch to branch
+* Merge with branch
+* ...
+
+Note that the version control actions are smart enough to distinguish whether project is under version control or not and they appear respectively.
+
+*What if Action is not Enabled?*
+
+If client code does not access disk using `FileObject`
+(i.e. uses `java.io.File` instead) then actions are
+incorrecly enabled because in such case an internal status
+cache misses modifications events and reports original
+status.
+
+The client code should be rewritten to `FileObject` usage. In
+some cases helps `FileUtil.toFileObject(file).refresh()`.
+
+==== Presenting Version Control Actions in Popup Menu
+
+There is `org.openide.actions.FileSystemAction` framework action that presents version control actions.
+
+It means that any node that returns this action from popup menu construction code receives version control actions submenu.
+
+Sample getActions() code:
+
+[source,java]
+----
+
+    // still in UMLNode class
+    public Action[] getActions(boolean context) {
+        ArrayList<Action> actions = new ArrayList<Action>();
+        actions.add(SystemAction.get(OpenAction.class));
+        actions.add(SystemAction.get(RenameAction.class));
+        actions.add(SystemAction.get(FileSystemAction.class));  // HERE
+        actions.add(SystemAction.get(PropertiesAction.class));
+        return actions.toArray(new Action[0]);
+    }
+----
+
+Project nodes use special case registration that is specific for them
+(it allows version control support module to show actions that make sense
+on projects only such as _Update with Dependencies_ and
+_Import Project into Repository_).
+Your project nodes must honor contract link:http://javacvs.netbeans.org/nonav/issues/show_bug.cgi?id=57874[#57874].
+
+Sample getAction() code for Nodes representing project:
+
+[source,java]
+----
+
+    public Action[] getActions(boolean context) {
+        ArrayList<Action> actions = new ArrayList<Action>();
+        actions.add(SystemAction.get(OpenAction.class));
+        actions.add(SystemAction.get(RenameAction.class));
+
+        // honor 57874 contact
+        try {
+            Repository repository  = Repository.getDefault();
+            FileSystem sfs = repository.getDefaultFileSystem();
+            FileObject fo = sfs.findResource("Projects/Actions");  // NOI18N
+            if (fo != null) {
+                DataObject dobj = DataObject.find(fo);
+                FolderLookup actionRegistry = new FolderLookup((DataFolder)dobj);
+                Lookup.Template query = new Lookup.Template(Object.class);
+                Lookup lookup = actionRegistry.getLookup();
+                Iterator it = lookup.lookup(query).allInstances().iterator();
+                if (it.hasNext()) {
+                    actions.add(null);
+                }
+                while (it.hasNext()) {
+                    Object next = it.next();
+                    if (next instanceof Action) {
+                        actions.add(next);
+                    } else if (next instanceof JSeparator) {
+                        actions.add(null);
+                    }
+                 }
+            }
+        } catch (DataObjectNotFoundException ex) {
+            // data folder for exiting fileobject expected
+            ErrorManager.getDefault().notify(ex);
+        }
+        actions.add(SystemAction.get(PropertiesAction.class));
+        return actions.toArray(new Action[0]);
+    }
+----
+
+==== Annotating Logical Nodes
+
+Any explorer node that represents a (set of) file(s) can use `FileSystem.getStatus().annotateName(...)` annotation support to annotate icon, display name and HTML display name and then listen on changes using `org.openide.filesystems.FileStatusListener`.
+Note that for HTML annotations you have to cast to `FileSystem.HtmlStatus`.
+
+Sample code for a node supporting annotations (or subclass DataNode):
+
+[source,java]
+----
+
+    // still in UMLNode class
+
+    public String getDisplayName () {
+        String s = super.getDisplayName ();
+
+        try {
+            s = fileObject().getFileSystem().getStatus()
+            .annotateName(s, Collections.singleton(fileObject));
+        } catch (FileStateInvalidException e) {
+            // no fs, do nothing
+        }
+
+        return s;
+    }
+
+    public String getHtmlDisplayName() {
+         try {
+             FileSystem.Status stat = fileObject.getFileSystem().getStatus();
+             if (stat instanceof FileSystem.HtmlStatus) {
+                 FileSystem.HtmlStatus hstat = (FileSystem.HtmlStatus) stat;
+
+                 String result = hstat.annotateNameHtml (
+                     super.getDisplayName(), Collections.singleton(fileObject));
+
+                 //Make sure the super string was really modified
+                 if (!super.getDisplayName().equals(result)) {
+                     return result;
+                 }
+
+                 // TODO attach status listener at the FileSystem
+                 // and on change refire PROP_DISPLAY_NAME
+
+             }
+         } catch (FileStateInvalidException e) {
+             //do nothing and fall through
+         }
+         return super.getHtmlDisplayName();
+    }
+
+    public java.awt.Image getIcon (int type) {
+        java.awt.Image img = super.getIcon (type);
+
+        try {
+            img = model.getFileObject().getFileSystem().getStatus()
+            .annotateIcon(img, type, Collections.singleton(fileObject));
+        } catch (FileStateInvalidException e) {
+            // no fs, do nothing
+        }
+
+        return img;
+    }
+
+    public java.awt.Image getOpenedIcon (int type) {
+        java.awt.Image img = super.getIcon (type);
+
+        try {
+            img = model.getFileObject().getFileSystem().getStatus()
+            .annotateIcon(img, type, Collections.singleton(fileObject));
+        } catch (FileStateInvalidException e) {
+            // no fs, do nothing
+        }
+
+        return img;
+    }
+
+    private void attachStatusListener() {
+        FileSystem fs = fileObject.getFileSystem();
+        FileStatusListener l = FileUtil.weakFileStatusListener(new FileStatusListener() {
+            public void annotationChanged (FileStatusEvent ev) {
+                if (ev.hasChanged(fileObject)) {
+                    if (ev.isNameChange()) {
+                        fireDisplayNameChange(null, null);
+                    }
+                    if (ev.isIconChange()) {
+                        fireIconChange();
+                    }
+                }
+            }
+        }, fs);
+        fs.addFileStatusListener(l);
+    }
+}
+----
+
+==== The Annotating Pattern
+
+Filesystem annotation mechanism, mentioned above, can be used for setting HTML names to any visual element that can render HTML:
+
+* `new JLabel( htmlName )`
+* `TopComponent.setHtmlDisplayName( htmlName )`
+* `JComboBox.setRenderer( ... )`
+* `Node`
+* and others
+
+=== Summary
+
+The developer implementing new `org.openide.nodes.Node` subclass can easily add support for executing and presenting version control actions; and can use the filesystem status annotation mechanism to alter icon and display name.
+
+Since 5.0 there is no API that directly supports version control operations execution.
+
+== Apache Migration Information
+
+The content in this page was kindly donated by Oracle Corp. to the
+Apache Software Foundation.
+
+This page was exported from link:http://wiki.netbeans.org/ProjectVersioning[http://wiki.netbeans.org/ProjectVersioning] , 
+that was last modified by NetBeans user Newacct 
+on 2011-11-25T00:42:33Z.
+
+
+*NOTE:* This document was automatically converted to the AsciiDoc format on 2018-02-07, and needs to be reviewed.

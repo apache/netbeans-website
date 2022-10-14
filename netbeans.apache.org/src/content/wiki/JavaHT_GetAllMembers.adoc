@@ -1,0 +1,97 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= JavaHT_GetAllMembers
+:jbake-type: wiki
+:jbake-tags: wiki, devfaq, needsreview
+:jbake-status: published
+:keywords: Apache NetBeans wiki JavaHT_GetAllMembers
+:description: Apache NetBeans wiki JavaHT_GetAllMembers
+:toc: left
+:toc-title:
+:syntax: true
+
+== How do I Get All Methods/Fields/Constructors of a Class?
+
+* First, you need to be in a Javac context, see xref:JavaHT_GetIntoJavacContext.adoc[previous section] for more information.
+* Then, you need to find `javax.lang.model.element.TypeElement` you want to analyze. See `com.sun.source.tree.Trees.getElement(TreePath)` and `javax.lang.model.util.Elements.getTypeElement(String)`. You can get `Trees` and `Elements` from `org.netbeans.api.java.source.CompilationInfo`.
+* Finally, use `Element.getEnclosedElements()` to find out the elements enclosed by the class - for classes, this returns all members (methods, fields and inner classes) of the class. You can then use `ElementFilter` to filter out specific kind of member: methods, constructors, fields and inner classes.
+
+Example:
+
+[source,java]
+----
+
+protected void performAction(Node[] activatedNodes) {
+    DataObject dataObject = (DataObject) activatedNodes[0].getLookup().lookup(DataObject.class);
+    JavaSource js = JavaSource.forFileObject(dataObject.getPrimaryFile());
+
+    try {
+        js.runUserActionTask(new Task<CompilationController>() {
+            public void run(CompilationController parameter) throws IOException {
+                parameter.toPhase(Phase.ELEMENTS_RESOLVED);
+                new MemberVisitor(parameter).scan(parameter.getCompilationUnit(), null);
+            }
+        }, true);
+    } 
+    catch (IOException e) {
+        Logger.getLogger("global").log(Level.SEVERE, e.getMessage(), e);
+    }
+}
+
+private static class MemberVisitor extends TreePathScanner<Void, Void> {
+
+    private CompilationInfo info;
+
+    public MemberVisitor(CompilationInfo info) {
+        this.info = info;
+    }
+
+    @Override
+    public Void visitClass(ClassTree t, Void v) {
+        Element el = info.getTrees().getElement(getCurrentPath());
+
+
+        if (el == null) {
+            System.err.println("Cannot resolve class!");
+        } 
+        else {
+            TypeElement te = (TypeElement) el;
+            System.err.println("Resolved class: " + te.getQualifiedName().toString());
+            //XXX: only as an example, uses toString on element, which should be used only for debugging
+            System.err.println("enclosed methods: " + ElementFilter.methodsIn(te.getEnclosedElements()));
+            System.err.println("enclosed types: " + ElementFilter.typesIn(te.getEnclosedElements()));
+        }
+        return null;
+    }
+
+}
+----
+
+== Apache Migration Information
+
+The content in this page was kindly donated by Oracle Corp. to the
+Apache Software Foundation.
+
+This page was exported from link:http://wiki.netbeans.org/JavaHT[http://wiki.netbeans.org/JavaHT] GetAllMembers , 
+that was last modified by NetBeans user Javydreamercsw 
+on 2012-07-10T14:37:39Z.
+
+
+*NOTE:* This document was automatically converted to the AsciiDoc format on 2018-02-07, and needs to be reviewed.

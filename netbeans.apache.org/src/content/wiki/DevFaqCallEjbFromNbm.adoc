@@ -1,0 +1,128 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= DevFaqCallEjbFromNbm
+:jbake-type: wiki
+:jbake-tags: wiki, devfaq, needsreview
+:jbake-status: published
+:keywords: Apache NetBeans wiki DevFaqCallEjbFromNbm
+:description: Apache NetBeans wiki DevFaqCallEjbFromNbm
+:toc: left
+:toc-title:
+:syntax: true
+
+== How to call EJB from NetBeans module
+
+This How-To is based on link:https://glassfish.dev.java.net/javaee5/ejb/EJB_FAQ.html[GlassFish EJB Faq]
+
+=== How to call EJB from Java EE Application Client built on top of NetBeans Platform
+
+*Important:* Application Client must be created as it is described in xref:DevFaqAppClientOnNbPlatformTut.adoc[Java EE Application Client on top of the NetBeans Platform Tutorial] otherwise this will not work
+
+* create lookup method in some class in your module
+* add entry to `application-client.xml` in application client module
+
+==== Example
+
+* for following lookup method in some class from your module:
+[source,java]
+----
+
+protected mypkg.MySessionBeanRemote lookupMySessionBean() {
+    try {
+        javax.naming.Context c = new javax.naming.InitialContext();
+        return (mypkg.MySessionBeanRemote) c.lookup("java:comp/env/ejb/MySessionBean");
+    } catch(javax.naming.NamingException ne) {
+        java.util.logging.Logger.getLogger(getClass().getName()).log(java.util.logging.Level.SEVERE,"exception caught" ,ne);
+        throw new RuntimeException(ne);
+    }
+}
+----
+
+* there must be following entry in `application-client.xml`:
+[source,xml]
+----
+
+<ejb-ref>
+    <ejb-ref-name>ejb/MySessionBean</ejb-ref-name>
+    <ejb-ref-type>Session</ejb-ref-type>
+    <remote>mypkg.MySessionBeanRemote</remote>
+</ejb-ref>
+----
+
+=== How to call EJB from standalone module/NB platform based application
+
+==== Call EJB on GlassFish
+
+* ensure that $GLASSFISH_HOME/lib/appserv-rt.jar, $GLASSFISH_HOME/lib/appserv-ext.jar, $GLASSFISH_HOME/lib/appserv-deployment-client.jar, $GLASSFISH_HOME/lib/javaee.jar, $GLASSFISH_HOME/lib/jmxremote_optional.jar are on NB platform based *application's classpath* (startup classpath is not enough)
+* ensure that the same applies to jar with EJB interfaces and its helper classes
+* when using jars from GlassFish v1 or v1u1 - disable assertions (due to link:http://forums.java.net/jive/thread.jspa?forumID=56&threadID=16138&messageID=122831[bug] in GlassFish which should be fixed in GlassFish v2)
+* add org.omg.CORBA.ORBInitialHost and org.omg.CORBA.ORBInitialPort JVM options to application's startup JVM options
+* use lookup
+
+==== Example
+
+* add:
+[source,java]
+----
+
+run.args.extra=-J-da -J-Dorg.omg.CORBA.ORBInitialHost=localhost -J-Dorg.omg.CORBA.ORBInitialPort=3700 \
+               -cp:a $GLASSFISH_HOME/lib/appserv-rt.jar:$GLASSFISH_HOME/lib/appserv-ext.jar:\
+                     $GLASSFISH_HOME/lib/appserv-deployment-client.jar:$GLASSFISH_HOME/lib/javaee.jar:\
+                     $GLASSFISH_HOME/lib/jmxremote_optional.jar:someejb.jar
+----
+
+to module suite project.properties
+
+* add javaee.jar and jar with ejb interfaces to compile time dependencies for your module
+* create lookup method for your bean in some class in your module:
+[source,java]
+----
+
+// for EJB 3.0 bean
+protected mypkg.MyBeanRemote lookupMyBeanRemote30 throws NamingException {
+    javax.naming.Context ic = new javax.naming.InitialContext();
+    return (mypkg.MyBeanRemote) ic.lookup("mypkg.MyBeanRemote");
+}
+
+// for EJB 2.1 and/or earlier
+protected mypkg.MyBeanRemote lookupMyBeanRemote21 throws NamingException {
+    javax.naming.Context ic = new javax.naming.InitialContext();
+    Object remote = c.lookup("java:comp/env/ejb/MyBean");
+    mypkg.MyBeanRemoteHome rv = (mypkg.MyBeanRemoteHome) PortableRemoteObject.narrow(remote, mypkg.MyBeanRemoteHome.class);
+    return rv.create();
+}
+----
+
+
+Applies to: NetBeans 5.5, 6.0, 6.1
+
+Platforms: all
+
+== Apache Migration Information
+
+The content in this page was kindly donated by Oracle Corp. to the
+Apache Software Foundation.
+
+This page was exported from link:http://wiki.netbeans.org/DevFaqCallEjbFromNbm[http://wiki.netbeans.org/DevFaqCallEjbFromNbm] , 
+that was last modified by NetBeans user Admin 
+on 2009-11-06T15:37:04Z.
+
+
+*NOTE:* This document was automatically converted to the AsciiDoc format on 2018-02-07, and needs to be reviewed.

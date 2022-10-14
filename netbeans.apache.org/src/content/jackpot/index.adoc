@@ -1,0 +1,94 @@
+////
+     Licensed to the Apache Software Foundation (ASF) under one
+     or more contributor license agreements.  See the NOTICE file
+     distributed with this work for additional information
+     regarding copyright ownership.  The ASF licenses this file
+     to you under the Apache License, Version 2.0 (the
+     "License"); you may not use this file except in compliance
+     with the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing,
+     software distributed under the License is distributed on an
+     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+     KIND, either express or implied.  See the License for the
+     specific language governing permissions and limitations
+     under the License.
+////
+= Java Declarative Refactorings
+:jbake-type: page
+:jbake-tags: main
+:jbake-status: published
+:keywords: Apache NetBeans, Jackpot, refactoring, Java
+:icons: font
+:syntax: true
+:description: Java Declarative Hints
+:source-highlighter: pygments
+
+== Introduction
+
+Apache NetBeans provides language and tools to define custom Java refactorings,
+and run them on a specified source files, inside the NetBeans IDE, on command line,
+or using Apache Maven. Any standard Java "hint" may be run using these means as well.
+
+== Declarative Refactoring File
+
+The easiest way to define custom Java refactorings is to place then in a file with extension ".hint",
+and place the file into the `META-INF/upgrade` folder of the corresponding sources.
+Maven, the command line tools or NetBeans all look into this location for custom refactorings.
+
+For maven projects, this typically means placing the file into `src/main/resources/META-INF/upgrade/<name>.hint`.
+
+The format of the file is described xref:HintsFileFormat.adoc[here].
+
+== Using Maven to Run Declarative Refactorings
+
+To use run the declarative hints in a Maven project, add the tool to the build plugins in pom.xml:
+[source,java]
+----
+<plugin>
+    <groupId>org.apache.netbeans.modules.jackpot30</groupId>
+    <artifactId>jackpot30-maven-plugin</artifactId>
+    <version>13.0</version>
+</plugin>
+----
+
+And declare the hints in `.hint` files under `src/main/resources/META-INF/upgrade`, for example:
+
+.src/main/resources/META-INF/upgrade/convert.hint
+[source,java]
+----
+System.err.println($args$)
+=>
+System.out.println($args$)
+;;
+----
+
+To get warnings for the declarative hints, run `jackpot30:analyze`:
+----
+$ mvn -q jackpot30:analyze
+.../src/main/java/sample/sample/Test.java:14: warning: [convert] convert
+        System.err.println("args=" + args);
+                   ^
+----
+
+To apply the changes produced by the declarative hints, run `jackpot30:apply`:
+----
+$ mvn -q jackpot30:apply && git diff
+diff --git a/src/main/java/sample/sample/Test.java b/src/main/java/sample/sample/Test.java
+index a8465f2..c558be1 100644
+--- a/src/main/java/sample/sample/Test.java
++++ b/src/main/java/sample/sample/Test.java
+@@ -11,7 +11,7 @@ package sample.sample;
+  */
+ public class Test {
+     public static void main(String... args) {
+-        System.err.println("args=" + args);
++        System.out.println("args=" + args);
+         new Object() {
+             public String toString() { return super.toString(); }
+         };
+----
+
+Please note the changes will be applied directly to the working copy of the files.

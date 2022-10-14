@@ -1,0 +1,88 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= DevFaqRequestProcessorTask
+:jbake-type: wiki
+:jbake-tags: wiki, devfaq, needsreview
+:jbake-status: published
+:keywords: Apache NetBeans wiki DevFaqRequestProcessorTask
+:description: Apache NetBeans wiki DevFaqRequestProcessorTask
+:toc: left
+:toc-title:
+:syntax: true
+
+== How can I operation occasionally on a background thread, but reschedule it if something happens to delay it?
+
+There are a lot of reasons you might want to reschedule a background operation.  For example, you want to re-parse a file 3 seconds after the user stops typing, so you can show errors.  But at 2 seconds she starts typing again.  You don't want that task to run a second from now anymore.  You can either cancel the task, or even simpler, call `task.schedule(3000)` every time a key is pressed.  If it was already scheduled, it will be rescheduled for 3 seconds from now again.
+
+Or imagine you have the situation described in xref:DevFaqRequestProcessor.adoc[the FAQ about RequestProcessor.getDefault()] - a node for a file needs to read the file after it is created to mark itself if the file has errors.  `RequestProcessor.Task` makes this sort of thing easy.
+
+[source,java]
+----
+
+public class FooDataNode extends DataNode implements PropertyChangeListener, Runnable {
+  private boolean error;
+  private static final RequestProcessor THREAD_POOL = new RequestProcessor("FooDataNode processor", 1);
+  private final RequestProcessor.Task task = THREAD_POOL.create(this);
+
+  FooDataNode(FooDataObject obj) {
+    super(obj, Children.LEAF);
+    obj.addPropertyChangeListener(WeakListeners.propertyChange(this, obj));
+    task.schedule(100);
+  }
+
+  public void propertyChange(PropertyChangeEvent evt) {
+    DataObject obj = (DataObject) evt.getSource();
+    if (DataObject.PROP_MODIFIED.equals(evt.getPropertyName()) &amp;&amp; !obj.isModified()) { //file was saved
+      task.schedule(100);
+    }
+  }
+
+  @Override
+  public String getHtmlDisplayName() {
+    return error ? "<font color=\"!nb.errorForeground\">" + getDisplayName() : null;
+  }
+
+  public void run() {
+    boolean old = error;
+    error = doesTheFileHaveErrors();
+    if (old != error) {
+      fireDisplayNameChange(null, null);
+    }
+  }
+
+  private boolean doesTheFileHaveErrors() {
+    assert !EventQueue.isDispatchThread();
+    //parse the file here
+    return true; //whatever the value should be
+  }
+}
+----
+
+== Apache Migration Information
+
+The content in this page was kindly donated by Oracle Corp. to the
+Apache Software Foundation.
+
+This page was exported from link:http://wiki.netbeans.org/DevFaqRequestProcessorTask[http://wiki.netbeans.org/DevFaqRequestProcessorTask] , 
+that was last modified by NetBeans user Admin 
+on 2009-11-06T15:59:19Z.
+
+
+*NOTE:* This document was automatically converted to the AsciiDoc format on 2018-02-07, and needs to be reviewed.

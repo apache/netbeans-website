@@ -1,0 +1,55 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= DevFaqLookupCookie
+:jbake-type: wiki
+:jbake-tags: wiki, devfaq, needsreview
+:jbake-status: published
+:keywords: Apache NetBeans wiki DevFaqLookupCookie
+:description: Apache NetBeans wiki DevFaqLookupCookie
+:toc: left
+:toc-title:
+:syntax: true
+
+== What is the difference between getCookie(Class), SharedClassObject.get(Class) and Lookup.lookup(Class)?
+
+All of these are really historical variations on the same theme.  In all cases, you pass a `Class` object and get back null or an instance of that class.  You can see the progression in genericness:
+
+`SharedClassObject` is the oldest version of the Lookup pattern in NetBeans APIs, dating to circa 1997 (because of various performance issues, eventually all usages of `SharedClassObject` should be deprecated and removed from the APIs).  You'll see that form used in `SystemOption` for storing settings, and most of the singleton Action objects in the actions API.  All objects returned by it will be instances of `SharedClassObject`.
+
+`getCookie()` (circa 1999) is specific to xref:DevFaqWhatIsANode.adoc[Node]s and xref:DevFaqDataObject.adoc[DataObject]s.  It uses the same pattern, but all objects returned by it will implement the empty `Node.Cookie` marker interface.
+
+The down-side to both of the above is that they specify the return type.  In the case of `Node.Cookie`, in practice, this meant that anything that might possibly need to be provided by a `DataObject` or `Node` needed to implement this silly marker interface, forcing it to have a dependency on the Nodes API, or a wrapper Cookie class had to be created to provide the underlying object, which just added useless classes and noise.
+
+xref:DevFaqLookup.adoc[Lookup] is the most modern and generic version of this pattern, and probably the final one.  It offers two advantages:
+
+1. Its return type is `java.lang.Object`, so it can be used directly with anything
+2. Having objects _own_ a lookup rather than directly providing a `lookup(Class c)` method makes it easier to replace or proxy the Lookup of some object
+
+== Apache Migration Information
+
+The content in this page was kindly donated by Oracle Corp. to the
+Apache Software Foundation.
+
+This page was exported from link:http://wiki.netbeans.org/DevFaqLookupCookie[http://wiki.netbeans.org/DevFaqLookupCookie] , 
+that was last modified by NetBeans user Admin 
+on 2009-11-06T15:51:49Z.
+
+
+*NOTE:* This document was automatically converted to the AsciiDoc format on 2018-02-07, and needs to be reviewed.

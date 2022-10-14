@@ -1,0 +1,249 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= DevFaqNodeSelectAll
+:jbake-type: wiki
+:jbake-tags: wiki, devfaq, needsreview
+:jbake-status: published
+:keywords: Apache NetBeans wiki DevFaqNodeSelectAll
+:description: Apache NetBeans wiki DevFaqNodeSelectAll
+:toc: left
+:toc-title:
+:syntax: true
+
+== How do I select/deselect `Node`s?
+
+Applications which manage sets of data items often offer to users the capability of selecting and deselecting all the items currently on the screen with a single menu (or key shortcut). In some cases even a "Invert selection" option could be useful which selects all unselected nodes an vice versa.
+
+Implementing such a feature with the OpenIDE API is quite a simple task. We first define a subclass of SystemAction which listens for changes in the selection of the current  xref:DevFaqWindowsTopComponent.adoc[TopComponent ] and tracks the currently active ExplorerManager:
+
+[source,java]
+----
+
+public abstract class ExplorerManagerAction extends SystemAction
+  {
+    private ExplorerManager activeExplorerManager;
+
+    public ExplorerManagerAction()
+      {
+        TopComponent.getRegistry().addPropertyChangeListener(new PropertyChangeListener()
+          {
+            public void propertyChange (PropertyChangeEvent event)
+              {
+                if (TopComponent.Registry.PROP_ACTIVATED.equals(event.getPropertyName()))
+                  {
+                    Object value = event.getNewValue();
+
+                    if (value instanceof ExplorerManager.Provider)
+                      {
+                        activeExplorerManager = ((ExplorerManager.Provider)value).getExplorerManager();
+                        setEnabled(true);
+                      }
+
+                    else
+                      {
+                        activeExplorerManager = null;
+                        setEnabled(false);
+                      }
+                  }
+              }
+          });
+      }
+
+    final public void actionPerformed (ActionEvent actionEvent)
+      {
+        if (activeExplorerManager != null)
+          {
+            try
+              {
+                performAction(activeExplorerManager);
+              }
+            catch (PropertyVetoException e)
+              {
+                // ...
+              }
+          }
+      }
+
+    abstract protected void performAction (ExplorerManager explorerManager)
+      throws PropertyVetoException;
+
+    public HelpCtx getHelpCtx()
+      {
+        return HelpCtx.DEFAULT_HELP;
+      }
+
+    protected void initialize()
+      {
+        super.initialize();
+        putValue("noIconInMenu", Boolean.TRUE);
+      }
+
+    protected boolean asynchronous()
+      {
+        return false;
+      }
+  }
+
+----
+
+Now in order to implement the specific node selection actions we just have to subclass and provide a concrete implementation of the performAction() method which takes an ExplorerManager as parameter.
+
+For the "Select All" action we have:
+
+[source,java]
+----
+
+public final class SelectAllAction extends ExplorerManagerAction
+  {
+    protected void performAction (ExplorerManager explorerManager)
+      throws PropertyVetoException
+      {
+        explorerManager.setSelectedNodes(explorerManager.getRootContext().getChildren().getNodes());
+      }
+    public String getName()
+      {
+        return NbBundle.getMessage(SelectAllAction.class, "CTL_SelectAllAction");
+      }
+  }
+
+----
+
+For the "Deselect all" action we have:
+
+[source,java]
+----
+
+public final class DeselectAllAction extends ExplorerManagerAction
+  {
+    protected void performAction (ExplorerManager explorerManager)
+      throws PropertyVetoException
+      {
+        explorerManager.setSelectedNodes(new Node[0]);
+      }
+    public String getName()
+      {
+        return NbBundle.getMessage(DeselectAllAction.class, "CTL_DeselectAllAction");
+      }
+
+----
+
+At last for the "Invert selection" action we have:
+
+[source,java]
+----
+
+public final class InvertSelectionAction  extends ExplorerManagerAction
+  {
+    protected void performAction (ExplorerManager explorerManager)
+      throws PropertyVetoException
+      {
+        List nodes = new ArrayList(Arrays.asList(explorerManager.getRootContext().getChildren().getNodes()));
+        nodes.removeAll(Arrays.asList(explorerManager.getSelectedNodes()));
+        explorerManager.setSelectedNodes((Node[[ | ]])nodes.toArray(new Node[0]));
+      }
+    public String getName()
+      {
+        return NbBundle.getMessage(InvertSelectionAction.class, "CTL_InvertSelectionAction");
+      }
+  }
+
+----
+
+The above code for "Select All" and "Invert selection" only works for "flat" node structures with a root and a single level of children. For more complex structures we just need to replace explorerManager.getRootContext().getChildren().getNodes() with a piece of code that recursively explores the node tree contents.
+
+To complete our work, this is the XML code to put in the layer.xml in order to add actions in the menu, the toolbar and to define the proper key bindings:
+
+[source,java]
+----
+
+<!DOCTYPE filesystem PUBLIC "-//NetBeans//DTD Filesystem 1.1//EN" "http://www.netbeans.org/dtds/filesystem-1_1.dtd">
+<filesystem>
+    <!-- Declares the relevant actions. -->
+    <folder name="Actions">
+        <folder name="Select">
+            <file name="my-package-action-SelectAllAction.instance"/>
+            <file name="my-package-action-DeselectAllAction.instance"/>
+            <file name="my-package-action-InvertSelectionAction.instance"/>
+        </folder>
+    </folder>
+    <!-- Adds the actions to the Select main menu. -->
+    <folder name="Menu">
+        <folder name="Select">
+            <file name="my-package-action-SelectAllAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Select/my-package-action-SelectAllAction.instance"/>
+            </file>
+            <attr name="my-package-action-SelectAllAction.shadow/my-package-action-DeselectAllAction.shadow" boolvalue="true"/>
+            <file name="my-package-action-DeselectAllAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Select/my-package-action-DeselectAllAction.instance"/>
+            </file>
+            <attr name="my-package-action-DeselectAllAction.shadow/my-package-action-InvertSelectionAction.shadow" boolvalue="true"/>
+            <file name="my-package-action-InvertSelectionAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Select/my-package-action-InvertSelectionAction.instance"/>
+            </file>
+            <attr name="my-package-action-InvertSelectionAction.instance/it-tidalwave-bluemarine-catalog-tagstamper-action-separatorBefore.instance" boolvalue="true"/>
+        </folder>
+    </folder>
+    <!-- Declares the shortcuts. D- maps to "command" on Mac OS X and to "ctrl" on Linux and Windows. -->
+    <folder name="Shortcuts">
+        <file name="D-A.shadow">
+            <attr name="originalFile" stringvalue="Actions/Select/my-package-action-SelectAllAction.instance"/>
+        </file>
+        <file name="D-D.shadow">
+            <attr name="originalFile" stringvalue="Actions/Select/my-package-action-DeselectAllAction.instance"/>
+        </file>
+        <file name="D-I.shadow">
+            <attr name="originalFile" stringvalue="Actions/Select/my-package-action-InvertSelectionAction.instance"/>
+        </file>
+    </folder>
+    <!-- Adds the actions to the Select toolbar -->
+    <folder name="Toolbars">
+        <folder name="Select">
+            <file name="my-package-action-InvertSelectionAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Select/my-package-action-InvertSelectionAction.instance"/>
+            </file>
+            <attr name="my-package-action-InvertSelectionAction.shadow/my-package-action-DeselectAllAction.shadow" boolvalue="true"/>
+            <file name="my-package-action-DeselectAllAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Select/my-package-action-DeselectAllAction.instance"/>
+            </file>
+            <attr name="my-package-action-DeselectAllAction.shadow/my-package-action-SelectAllAction.shadow" boolvalue="true"/>
+            <file name="my-package-action-SelectAllAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Select/my-package-action-SelectAllAction.instance"/>
+            </file>
+        </folder>
+    </folder>
+</filesystem>
+
+----
+
+-- Main.fabriziogiudici - 06 Jul 2006
+
+xref:CategoryNeedCleanup.adoc[PENDING: Review/cleanup]
+
+== Apache Migration Information
+
+The content in this page was kindly donated by Oracle Corp. to the
+Apache Software Foundation.
+
+This page was exported from link:http://wiki.netbeans.org/DevFaqNodeSelectAll[http://wiki.netbeans.org/DevFaqNodeSelectAll] , 
+that was last modified by NetBeans user Jtulach 
+on 2010-07-24T19:16:47Z.
+
+
+*NOTE:* This document was automatically converted to the AsciiDoc format on 2018-02-07, and needs to be reviewed.
