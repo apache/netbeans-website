@@ -1,0 +1,645 @@
+
+
+<!doctype html>
+<html class="no-js" lang="en" dir="ltr">
+  
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>DevFaqWindowsInternals</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Apache NetBeans wiki DevFaqWindowsInternals">
+    <meta name="author" content="Apache NetBeans">
+    <meta name="keywords" content="Apache NetBeans wiki DevFaqWindowsInternals">
+    <meta name="generator" content="Apache NetBeans">
+    <link rel="stylesheet" href="/css/font-awesome.min.css">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/styles/default.min.css"> 
+    <link rel="stylesheet" href="/css/netbeans.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#ffc40d">
+    <meta name="theme-color" content="#ffffff">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700" rel="stylesheet"> 
+    <!--
+        Licensed to the Apache Software Foundation (ASF) under one
+        or more contributor license agreements.  See the NOTICE file
+        distributed with this work for additional information
+        regarding copyright ownership.  The ASF licenses this file
+        to you under the Apache License, Version 2.0 (the
+        "License"); you may not use this file except in compliance
+        with the License.  You may obtain a copy of the License at
+        http://www.apache.org/licenses/LICENSE-2.0
+        Unless required by applicable law or agreed to in writing,
+        software distributed under the License is distributed on an
+        "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+        KIND, either express or implied.  See the License for the
+        specific language governing permissions and limitations
+        under the License.
+    -->
+  </head>
+  <body>
+    
+
+<div class="title-bar" data-responsive-toggle="responsive-menu" data-hide-for="medium">
+    <button type="button" data-toggle="responsive-menu"><i style='font-size: 32px; color: #fff; padding: 8px' class='fa fa-bars'></i></button>
+    <div class="title-bar-title">Apache NetBeans</div>
+</div>
+<div class="top-bar" id="responsive-menu">
+    <div class='top-bar-left'>
+        <a class='title' href="/"><img src='/images/apache-netbeans.svg' style='padding: 8px; height: 48px;'></img> Apache NetBeans</a>
+    </div>
+    <div class="top-bar-right">
+        <ul class="vertical medium-horizontal menu" data-responsive-menu="drilldown medium-dropdown">
+            <li> <a href="/community/index.html">Community</a> </li>
+            <li> <a href="/participate/index.html">Participate</a> </li>
+            <li> <a href="https://blogs.apache.org/netbeans/">Blog</a></li>
+            <li> <a href="/help/index.html">Get Help</a> </li>
+            <li> <a href="https://plugins.netbeans.apache.org/">Plugins</a> </li>
+            <li> <a href="/download/index.html">Download</a> </li>
+        </ul>
+    </div>
+</div>
+
+
+    
+<!-- src/templates/news -->
+<section class="hero news alternate">
+    <div class='grid-container'>
+        <div class='cell'>
+            <div class="annotation">Latest release</div>
+            <h1>Apache NetBeans 15</h1>
+            <p><a class="button success" href="/download/nb15/">Download</a></p>
+        </div>
+    </div>
+</section>
+
+    <div class='grid-container main-content'>
+      
+<div class='aside' style='text-align: center; padding: 20px;'>
+    <a href="/wiki/index.asciidoc" title="Apache NetBeans WIKI">Apache NetBeans Wiki Index</a>
+    <p><b>Note:</b> These pages are being reviewed.</p>
+</div>
+
+      <div id="toc" class="toc">
+<div id="toctitle"></div>
+<ul class="sectlevel1">
+<li><a href="#_netbeans_window_system_what_happens_during_startup">NetBeans Window System - what happens during startup</a>
+<ul class="sectlevel2">
+<li><a href="#_the_three_and_a_half_models_model">The three and a half models model</a></li>
+<li><a href="#_the_window_system_startup_sequence">The Window System Startup Sequence</a></li>
+<li><a href="#_showingcreating_the_ui">Showing/creating the UI</a></li>
+</ul>
+</li>
+<li><a href="#_apache_migration_information">Apache Migration Information</a></li>
+</ul>
+</div>
+<div class="sect1">
+<h2 id="_netbeans_window_system_what_happens_during_startup">NetBeans Window System - what happens during startup</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Below is a blow-by-blow account of what actually goes on during NetBeans startup, put together by, well, reading the code.  It&#8217;s here as much for the author&#8217;s edification (if you read through it and document it, you understand it) as yours.</p>
+</div>
+<div class="sect2">
+<h3 id="_the_three_and_a_half_models_model">The three and a half models model</h3>
+<div class="paragraph">
+<p>The NetBeans window system is extremely defensively coded - one of the main goals of rewriting it for 3.6 was robustness in the face of components that throw exceptions, do evil things to other components, and so forth.  The way the robustness of the current system is achieved is by very cleanly separating the model of how the UI should be, the model of how the UI actually is and the AWT component hierarchy, which is a model of sorts itself, but cannot be relied upon, because in an extensible application any component may do something evil.  On top of this is the persistence model.</p>
+</div>
+<div class="paragraph">
+<p>UIs are hierarchical, with components inside containers inside other containers - so each model we&#8217;ll describe is hierarchical to represent this.  TopComponents (panels in tabbed container) get a little special handling because
+there&#8217;s a potential one-to-many relationship between TC&#8217;s and tabbed containers (an implication of winsys v1, where
+one component could live in more than one docking Mode (tabbed container) per workspace).</p>
+</div>
+<div class="paragraph">
+<p>So, the models (names made up for the purpose of this document):</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>The Persistent Model</strong> - <code>org.netbeans.core.windows.persistence</code> - these classes are really record types - classes with public fields that contain data read out of persisted XML describing the window system and written back to it.  These classes are instantiated at de-persistence and persistence time, and read and written, but are not used at runtime - they just provide the stored state of the system, and are used to construct the initial model of the window system at runtim</p>
+</li>
+<li>
+<p><strong>The Runtime State Model</strong> - this is the model of how the window system and all its components are <strong>supposed</strong> to be, based on persisted state and any changes made by calling methods (i.e. the user maximizes or closes a component) at runtime</p>
+</li>
+<li>
+<p><strong>The Runtime View Model</strong> - this is another set of model objects - <code>org.netbeans.core.windows.view</code> , each of which represents (and can manipulate) a UI component.  Each model object has a corresponding Accessor object which isa layer of indirection that connects it to the actual Component it models.</p>
+</li>
+<li>
+<p><strong>Snapshots</strong> (this is the 1/2 model) - a snapshot is an object that immutably captures the state of the Runtime State Model at a particular moment in time.  When a change has happened, a request to update the UI is enqueued.  When that request runs, it synchronizes the UI model with the state described in the snapshot (what&#8217;s open, what&#8217;s closed, what&#8217;s maximized, splitter positions, etc&#8230;&#8203;)</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Reading the source to the window system can be a little complicated, because there are multiple models of the same thing all being synchronized, and just about everything follows a chain of single-method-call methods back to <code>Central</code> or <code>WindowManagerImpl</code>.  Hence this document.</p>
+</div>
+<div class="paragraph">
+<p>In its essence, though it&#8217;s simple:  all changes in the window system simply mean synchronizing the two runtime models.  It&#8217;s only the number of classes that requires that make it look complex.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_the_window_system_startup_sequence">The Window System Startup Sequence</h3>
+<div class="paragraph">
+<p>Loading the window system is a distinct phase in NetBeans startup.  A set of model objects representing the window manager (data like SDI vs. MDI, frame size/location/state), its Modes (docking containers - bounds, contents), and references to `TopComponent`s by ID (not the components themselves, but unique String ids for them).</p>
+</div>
+<div class="paragraph">
+<p>Once all this is done, we&#8217;ll have a set of model objects representing all the persisted data.  Note that these model objects are <em>not</em> the ones used by the model of the window system at runtime, there are different classes for that.</p>
+</div>
+<div class="paragraph">
+<p>Here&#8217;s the load sequence:</p>
+</div>
+<div class="paragraph">
+<p><code>WindowSystemImpl</code></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>copy all TopComponent settings files aggressively to the userdir (BUG?  Probably needed this for the 3.5 project system, probably don&#8217;t now)</p>
+</li>
+<li>
+<p>checks its on the dispatch thread, and calls PersistenceHandler.getDefault().load()</p>
+</li>
+<li>
+<p>that calls PersistenceManager.getDefault().loadWindowSystem()</p>
+</li>
+<li>
+<p>that gets an XML parser</p>
+</li>
+<li>
+<p>the parser creates a WindowManagerConfig from data it finds in XML files. A <code>WindowManagerConfig</code> just has a lot of public fields from parsed data, that refers to other similar objects</p>
+</li>
+<li>
+<p><code>ModeConfig</code> - information about a docking container, placement, contents</p>
+</li>
+<li>
+<p><code>TcRefConfig</code> - references to a TopComponent by ID, no component there yet</p>
+</li>
+<li>
+<p><code>GroupConfig</code> - Refers to a Group of TopComponents (like form editor + its palettes)</p>
+</li>
+<li>
+<p><code>TcGroupConfig</code> - Reference to a TopComponent by a GroupConfig</p>
+</li>
+<li>
+<p><code>InternalConfig</code> - Just notes what version of the window system saved the date we loaded</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Now we&#8217;re back out in <code>PersistenceManager</code>. We:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Build a set of <code>TopComponent</code> ID&#8217;s in use (if a new component opens and it wants the same ID as an existing one, we append an integer to the ID string)</p>
+</li>
+<li>
+<p>Start listening on the folder for changes (i.e. a new module is installed and it has a persisted component that should be opened)</p>
+</li>
+<li>
+<p>Clear the reference to the parser</p>
+</li>
+<li>
+<p>Return the <code>WindowManagerConfig</code> to <code>PersistenceHandler</code></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Now we have a model for the contents of the window system as it was persisted&#8230;&#8203;</p>
+</div>
+<div class="paragraph">
+<p>Back in <code>PersistenceHandler.load()</code> now, we build the runtime model of the window system (note that except for deserializing `TopComponent`s, we&#8217;re not creating any components yet, we&#8217;re just creating model objects that will be represented by GUI components in the UI):</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Misc: get the large/small preferred toolbar icon size and store that on the WindowManagerImpl</p>
+</li>
+<li>
+<p>Get the list of TopComponent ids found in deserializing the window system</p>
+</li>
+<li>
+<p>Iterate the IDs</p>
+</li>
+<li>
+<p>for each, deserialize the TopComponent in question</p>
+</li>
+<li>
+<p>Set the "recent view list" on the WindowManager with the array of deserialized TopComponents.  This is used for ordering the components visited when the user Ctrl-Tabs between TopComponents</p>
+</li>
+<li>
+<p>Iterate all of the ModeConfigs</p>
+</li>
+<li>
+<p>for each, create a ModeImpl (note this is a model object, not a tabbed container)</p>
+</li>
+<li>
+<p>if the mode was active at shutdown last time, remember that fact in a local variable</p>
+</li>
+<li>
+<p>if the mode was persisted as maximized, remember that fact in a local variable</p>
+</li>
+<li>
+<p>Iterate all of the ModeImpls created</p>
+</li>
+<li>
+<p>initialize each one from the ModeConfig it was created for</p>
+</li>
+<li>
+<p>iterate all TcRefConfigs in the ModeConfig, extract some persisted data about the "previous mode" the TopComponent was in, and pass that data to the window system - this is so that sliding windows know where they should land if the user presses the "pin" button to put them in a tabbed container</p>
+</li>
+<li>
+<p>set the id of the selected TopComponent on the ModeImpl</p>
+</li>
+<li>
+<p>Iterate all the GroupConfigs loaded</p>
+</li>
+<li>
+<p>For each group, create a TcGroup object</p>
+</li>
+<li>
+<p>Add a mapping from GroupConfig.name to the tcGroup to a map held by PersistenceHandler (BUG?  Why should this data be kept here?  Nothing else keeps data <strong>in</strong> PersistenceManager - it means it can&#8217;t be collected - or I&#8217;m not seeing/understanding how it&#8217;s used)</p>
+</li>
+<li>
+<p>Iterate all the TcGroupConfigs (BUG: bad name - these are wrappers for TopComponent IDs)</p>
+</li>
+<li>
+<p>For each TcGroupConfig (PersistenceHanponent reference), add the ID into the list of IDs in the TcGroup</p>
+</li>
+<li>
+<p>Check the boolean open flag for the TcGroupConfig.  If true, it&#8217;s a component that, when opened, should open the entire group</p>
+</li>
+<li>
+<p>Check the boolean flag whether the TopComponent was closed explicitly by the user.  If true, when the group of components are all opened, leave that one closed</p>
+</li>
+<li>
+<p>Check the boolean flag whether the TopComponent was reopened explicitly by the user, and if so, ignore the result of the closed flag - add it to the list of ids that should open</p>
+</li>
+<li>
+<p>Add the TcGroup we created to the list held by the window manager</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Note the group handling code is a little different than the rest in terms of the way it&#8217;s modelled - this should probably be corrected - it appears that for some reason, PersistenceHandler holds the data for that, there is no corresponding model object for TC&#8217;s in a group (not necessarily bad, but inconsistent), and the data is passed to the window manager before its initialized (harmless, but odd).  On the other hand, it&#8217;s less complicated.</p>
+</div>
+<div class="paragraph">
+<p>We&#8217;re not done yet.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Next is a hotfix for issues <a href="http://www.netbeans.org/issues/show_bug.cgi?id=37188">37188</a> and <a href="http://www.netbeans.org/issues/show_bug.cgi?id=40237">40237</a> (which like all good hotfixes, was never replaced by a proper fix) - this calls componentShowing() on the component before it&#8217;s even in the AWT hierarchy</p>
+</li>
+<li>
+<p>Set the active (focused) Mode in the window manager from the field we saved earlier (BUG: this code seems to run earlier than it should, and the comment refers to the NetBeans 3.x project system, which persisted the entire window system out and loaded a new one in</p>
+</li>
+<li>
+<p>Set the maximized mode, if any, in the window manager from the field we saved earlier</p>
+</li>
+<li>
+<p>Compute the main window sizes for MDI and SDI mode, based on persisted data and current screen size, and set it  on the window manager</p>
+</li>
+<li>
+<p>Compute the editor area bounds and set it on the window manager</p>
+</li>
+<li>
+<p>Set the id of the toolbar configuration that&#8217;s active, based on persisted data</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>We now have a singleton instance of <code>WindowManagerImpl</code>, with its model fully initialized from persisted data (or a semi-sane default if de-persisting failed).  It will be available from <code>WindowManager.getDefault();</code></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_showingcreating_the_ui">Showing/creating the UI</h3>
+<div class="paragraph">
+<p>The next phase happens when setVisible(true) is called on the window system.  A thing to know here if you read the code is that all requests to do anything in the window system are funneled through one class called <code>Central</code> (yes, Central is the <em>God Object</em> anti-pattern).  So pretty much any method that you look at in the model objects will call back through a method in Central, sometimes to itself, sometimes to some other object.</p>
+</div>
+<div class="paragraph">
+<p>So&#8230;&#8203;</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>WindowManager.show()</code>:</p>
+</li>
+<li>
+<p>asserts we&#8217;re on the EDT</p>
+</li>
+<li>
+<p>installs the global KeyEventDispatcher on Swing&#8217;s KeyboardFocusManager to handle action bindings</p>
+</li>
+<li>
+<p>calls WindowManagerImpl.getInstance().setVisible(true) - that in turn checks that its a state change and calls</p>
+</li>
+<li>
+<p>Central.setVisible(true) which calls <code>DefaultModel.setVisible(true)</code> (this just stores the boolean value in a field)</p>
+</li>
+<li>
+<p>calls <code>ViewRequestor.scheduleRequest()</code> - enqueues a runnable that will set the window system&#8217;s visibility property to true, which</p>
+</li>
+<li>
+<p>* has a special check if it&#8217;s a visibility change request, and if so tries to run it immediately if on the EDT (semi-BUG: it will always be the EDT, unless the assertion is turned off)</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Now we&#8217;re into the runtime behavior of the window system - this system of enqueuing requests is how code that will change window system state operates:  A change is made to the model of the expected state of the window system, and the requested change is encoded in an object that will be processed in a subsequent event on the EQ.  ViewRequestor keeps a list of all pending changes, and coalesces changes to the same value.  When the request is processed, the state of the UI (open components, positions, splitter positions, everything) as described by the model is composed into a "snapshot", which is then used to set the necessary parameters on the UI components.</p>
+</div>
+<div class="paragraph">
+<p>But right now, we&#8217;re still just showing the window system, period.  Here&#8217;s what happens:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>ViewRequestor.processRequest()</code> gets called when the request runs.  It gets the array of all pending requests and clears the queue</p>
+</li>
+<li>
+<p>It iterates the <code>ViewRequests</code> that are enqueued</p>
+</li>
+<li>
+<p>For each, create a <code>ViewEvent</code> and add it to a list of events to be processed</p>
+</li>
+<li>
+<p>and passes that to <code>ViewRequestor.dispatchRequest</code>, which</p>
+</li>
+<li>
+<p>passes them to <code>DefaultView.changeGUI()</code>.  View is an interface representing the UI state of the entire window system.  It&#8217;s another set of model objects, this time modelling the state of the component.  For each model object (<code>ViewElement</code>, <code>ModeContainer</code>, <code>ModeView</code> are interfaces the winsys implements elsewhere&#8230;&#8203;), there is also an "accessor" object, which is what actually talks to the UI component.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><code>DefaultView.changeGUI</code> is what will actually modify the UI.  A <code>ViewEvent</code> is pretty much like a PropertyChangeEvent, with an old value and a new value, but with an integer type instead of a property name.  What it does:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Diff the last known showing set of <code>TopComponent`s and find any newly shown TC&#8217;s and call `componentShowing()</code> on them</p>
+</li>
+<li>
+<p>Iterate all the <code>ViewEvents</code> and see if any one is a visibility change for the entire window system (BUG? There is already special handling to dispatch such requests ahead of the queue - this seems to duplicate the work).  (BUG: Interestingly, this is the real source of the componentShowing() called twice bug that has the hotfix mentioned above - if the order of operations is switched here, that hack can be deleted.  Note if the request is a visibility change request, method returns after calling WindowSystemVisibilityChanged()).</p>
+</li>
+<li>
+<p>Iterate all the ViewEvents passed:</p>
+</li>
+<li>
+<p>for each, check the type, and for each type, cast the new value and old value to the proper types, and</p>
+</li>
+<li>
+<p>call a setter on the UI-view-model object that in turn should call something on the actual UI component</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>But we&#8217;re getting ahead of ourselves here - as you may have noticed above, if it&#8217;s a window system visibility request, we actually exit before we&#8217;ve gotten to iterating all the `ViewEvent`s the second time, to change component state and so forth.</p>
+</div>
+<div class="paragraph">
+<p>I should mention <code>ViewHierarchy</code> here - it&#8217;s not a very exciting class, but it&#8217;s the root model for the UI model objects, so when you have one of those <code>Accessor</code> objects for a <code>Mode</code> or a component in a mode, it&#8217;s where you get the corresponding model object whose setters will actually call the real UI component.</p>
+</div>
+<div class="paragraph">
+<p>So let&#8217;s go back to where we call <code>windowSystemVisibilityChanged()</code>.  What that does:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>First, we call <code>hierarchy.getMainWindow()</code> (now we&#8217;re actually touching GUI - the main window is a <code>JFrame</code> subclass, <code>MainWindow</code> - so this is the first time we&#8217;re really creating components, except for the `TopComponent`s we deserialized.  What that does:</p>
+</li>
+<li>
+<p>set the icon</p>
+</li>
+<li>
+<p>add a <code>WindowListener</code> that will call <code>LifecycleManager.exit()</code> on <code>WindowClosing</code>, and close menus if the window is deactivated</p>
+</li>
+<li>
+<p>set the menu bar (this calls a whole bunch of code that generates the menu from folders of actions in the system filesystem - we won&#8217;t cover it here)</p>
+</li>
+<li>
+<p>install the toolbar panel</p>
+</li>
+<li>
+<p>Install the statusbar (and check the special constant for putting it in the menubar for screen real estate freaks)</p>
+</li>
+<li>
+<p>Install a <code>JPanel</code> at <code>BorderLayout.CENTER</code>, called <code>desktopPanel</code>, which our window system will live in in MDI mode</p>
+</li>
+<li>
+<p>Install a hack listener on <code>MenuSelectionManager</code> to focus the main window if a menu is activated - this is SDI mode specific - you can invoke a menu by mnemonic but then the keyboard doesn&#8217;t work unless you send focus to the  main window - see <a href="http://www.netbeans.org/issues/show_bug.cgi?id=38810">issue #38810</a></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Now we&#8217;re back out in <code>DefaultView.windowSystemVisibilityChanged()</code>.  What we do now:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Set the toolbar configuration - this should actually cause the toolbars to be instantiated (there can be multiple toolbar configurations - it&#8217;s how the debugger changes the set of visible toolbars when you start it)</p>
+</li>
+<li>
+<p>Next, we go back to <code>MainWindow</code> by calling <code>hierarchy.getMainWindow().prepareWindow()</code>.  What that does:</p>
+</li>
+<li>
+<p>Calls back to <code>WindowManagerImpl</code> and gets the main window bounds (different calls for MDI and SDI).  We stored this value there when we loaded the window system data, from <code>WindowManagerConfig</code></p>
+</li>
+<li>
+<p>If not empty, set those bounds on the main window</p>
+</li>
+<li>
+<p>(BUG: there&#8217;s a bunch of weird consecutive log statements here that should be deleted)</p>
+</li>
+<li>
+<p>Next we call <code>hierarchy.setSplitModesVisible()</code>, which gets the root split pane of the split desktop layout, and recursively calls <code>setVisible(true)</code> on it and all its tabbed containers and `TopComponent`s</p>
+</li>
+<li>
+<p>Next we get the bitmask frame state we should have and call <code>Frame.setExtendedState()</code> with it on the main window</p>
+</li>
+<li>
+<p>Now we set the maximized <code>Mode</code>, if any, that we stored when de-persisting</p>
+</li>
+<li>
+<p>Then we call <code>hierarchy.updateDesktop()</code>.  This takes the root split pane and adds it to the "desktop" <code>JPanel</code> inside the main window</p>
+</li>
+<li>
+<p>Now we run some code to show all the frames for SDI mode windows, if any</p>
+</li>
+<li>
+<p>Next we set up the editor area, using a dummy panel in TDI mode if there are no open editors</p>
+</li>
+<li>
+<p>Update frame states for SDI windows, if any (BUG?: shouldn&#8217;t we do this before calling show() on them all?  Harmless since <code>show()</code> is asynchronous, but I&#8217;m not sure all AWT impls have to make it asynch) MKLEINT: On some (maybe all) platforms setting of frames states before it&#8217;s shown has no effect. In other words, you cannot open an initially maximized frame. You need to show it and maximize then.</p>
+</li>
+<li>
+<p>Set the main window title - using <code>WindowSystemAccessor.getProjectName()</code></p>
+</li>
+<li>
+<p>If the main window is maximized, run a hack that fakes the user resizing the window to its current size, passing that into the model (which will generate a synchronization <code>ViewRequest</code> and update splitters, etc. to proportional relative sizes)</p>
+</li>
+<li>
+<p>Get the activated mode, and tell it it&#8217;s activated (meaning focus should be sent to the <code>TopComponent</code> that should have focus, and <code>componentActivated()</code> will be called, etc.</p>
+</li>
+<li>
+<p>InvokeLater adding listeners to the main window for resize and mode changes (invokeLater it so that when the frame state changes that we called to initialize the frame state on startup don&#8217;t get processed as the user resizing the window and cause a storm of window system updates just because frame state changes in AWT are processed asynchronously - so we want to start listening only after things have settled down - see issues <a href="http://www.netbeans.org/issues/show_bug.cgi?id=39238">39238</a> and<a href="http://www.netbeans.org/issues/show_bug.cgi?id=37369">37369</a> (the fix for 37369 caused 39238)</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>MKLEINT: again this is a hacky workaround to the fact that one cannot prepare a maximized version of the frame before it&#8217;s shown.</p>
+</div>
+<div class="paragraph">
+<p>At this point we&#8217;ve got our main window up and ready to go.</p>
+</div>
+<div class="paragraph">
+<p>Obvious questions for those unfamiliar with the winsys:</p>
+</div>
+<div class="paragraph">
+<p>Q: So where do all the tabbed containers and split panes come from?  You didn&#8217;t mention those.</p>
+</div>
+<div class="paragraph">
+<p>A:  The actual implementations of <code>ViewElement</code> (things that own <code>ViewEvent`s), like `org.netbeans.core.windows.view.ModeView</code> actually create the UI components they talk to in their constructors</p>
+</div>
+<div class="paragraph">
+<p>Q: Why are <code>TopComponents</code> treated so differently and what&#8217;s this reference stuff in the de-persisting process?</p>
+</div>
+<div class="paragraph">
+<p>A: In the pre-3.5 window system, a component could be open in more than one tabbed container at the same time.  What???  It is because of workspaces, which we got rid of.  A workspace was a switchable window system configuration or set of windows.  The interface is still there, but there is only ever one workspace in the post 3.5 winsys.  So any given Mode, for legacy reasons, is not sole owner of a <code>TopComponent</code>, it just has a handle for one.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_apache_migration_information">Apache Migration Information</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The content in this page was kindly donated by Oracle Corp. to the
+Apache Software Foundation.</p>
+</div>
+<div class="paragraph">
+<p>This page was exported from <a href="http://wiki.netbeans.org/DevFaqWindowsInternals">http://wiki.netbeans.org/DevFaqWindowsInternals</a> ,
+that was last modified by NetBeans user Admin
+on 2009-11-06T16:05:52Z.</p>
+</div>
+<div class="paragraph">
+<p><strong>NOTE:</strong> This document was automatically converted to the AsciiDoc format on 2018-02-07, and needs to be reviewed.</p>
+</div>
+</div>
+</div>
+      
+<section class='tools'>
+    <ul class="menu align-center">
+        <li><a title="Facebook" href="https://www.facebook.com/NetBeans"><i class="fa fa-md fa-facebook"></i></a></li>
+        <li><a title="Twitter" href="https://twitter.com/netbeans"><i class="fa fa-md fa-twitter"></i></a></li>
+        <li><a title="Github" href="https://github.com/apache/netbeans"><i class="fa fa-md fa-github"></i></a></li>
+        <li><a title="YouTube" href="https://www.youtube.com/user/netbeansvideos"><i class="fa fa-md fa-youtube"></i></a></li>
+        <li><a title="Slack" href="https://tinyurl.com/netbeans-slack-signup/"><i class="fa fa-md fa-slack"></i></a></li>
+        <li><a title="Issues" href="https://github.com/apache/netbeans/issues"><i class="fa fa-mf fa-bug"></i></a></li>
+    </ul>
+    <ul class="menu align-center">
+        
+        <li><a href="https://github.com/apache/netbeans-website/blob/master/netbeans.apache.org/src/content/wiki/DevFaqWindowsInternals.adoc" title="See this page in github"><i class="fa fa-md fa-edit"></i> See this page in GitHub.</a></li>
+    </ul>
+</section>
+
+    </div>
+    
+
+    <div class='grid-container incubator-area' style='margin-top: 64px'>
+      <div class='grid-x grid-padding-x'>
+        <div class='large-auto cell text-center'>
+          <a href="https://www.apache.org/">
+            <img style="width: 320px" title="Apache Software Foundation" src="/images/asf_logo_wide.svg" />
+          </a>
+        </div>
+        <div class='large-auto cell text-center'>
+          <a href="https://www.apache.org/events/current-event.html">
+            <img style="width:234px; height: 60px;" title="Apache Software Foundation current event" src="https://www.apache.org/events/current-event-234x60.png"/>
+          </a>
+        </div>
+      </div>
+    </div>
+    <footer>
+      <div class="grid-container">
+        <div class="grid-x grid-padding-x">
+          <div class="large-auto cell">
+                    
+            <h1><a href="/about/index.html">About</a></h1>
+            <ul>
+              <li><a href="https://netbeans.apache.org/community/who.html">Who's Who</a></li>
+              <li><a href="https://www.apache.org/foundation/thanks.html">Thanks</a></li>
+              <li><a href="https://www.apache.org/foundation/sponsorship.html">Sponsorship</a></li>
+              <li><a href="https://www.apache.org/security/">Security</a></li>
+            </ul>
+          </div>
+          <div class="large-auto cell">
+            <h1><a href="/community/index.html">Community</a></h1>
+            <ul>
+              <li><a href="/community/mailing-lists.html">Mailing lists</a></li>
+              <li><a href="/community/committer.html">Becoming a committer</a></li>
+              <li><a href="/community/events.html">NetBeans Events</a></li>
+              <li><a href="https://www.apache.org/events/current-event.html">Apache Events</a></li>
+            </ul>
+          </div>
+          <div class="large-auto cell">
+            <h1><a href="/participate/index.html">Participate</a></h1>
+            <ul>
+              <li><a href="/participate/submit-pr.html">Submitting Pull Requests</a></li>
+              <li><a href="/participate/report-issue.html">Reporting Issues</a></li>
+              <li><a href="/participate/index.html#documentation">Improving the documentation</a></li>
+            </ul>
+          </div>
+          <div class="large-auto cell">
+            <h1><a href="/help/index.html">Get Help</a></h1>
+            <ul>
+              <li><a href="/help/index.html#documentation">Documentation</a></li>
+              <li><a href="/wiki/index.html">Wiki</a></li>
+              <li><a href="/help/index.html#support">Community Support</a></li>
+              <li><a href="/help/commercial-support.html">Commercial Support</a></li>
+            </ul>
+          </div>
+          <div class="large-auto cell">
+            <h1><a href="/download/index.html">Download</a></h1>
+            <ul>
+              <li><a href="/download/index.html">Releases</a></li>                    
+              <li><a href="https://plugins.netbeans.apache.org/">Plugins</a></li>
+              <li><a href="/download/index.html#source">Building from source</a></li>
+              <li><a href="/download/index.html#previous">Previous releases</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </footer>
+    <div class='footer-disclaimer'>
+      <div class="footer-disclaimer-content">
+        <p>Copyright &copy; 2017-2022 <a href="https://www.apache.org">The Apache Software Foundation</a>.</p>
+        <p>Licensed under the Apache <a href="https://www.apache.org/licenses/">license</a>, version 2.0</p>
+        <div style='max-width: 40em; margin: 0 auto'>
+          <p>Apache, Apache NetBeans, NetBeans, the Apache feather logo and the Apache NetBeans logo are trademarks of <a href="https://www.apache.org">The Apache Software Foundation</a>.</p>
+          <p>Oracle and Java are registered trademarks of Oracle and/or its affiliates.</p>
+          <p>The Apache NetBeans website conforms to the <a href="https://privacy.apache.org/policies/privacy-policy-public.html">Apache Software Foundation Privacy Policy</a></p>
+        </div>
+            
+      </div>
+    </div>
+
+
+    
+
+    <script src="/js/vendor/jquery-3.2.1.min.js"></script>
+    <script src="/js/vendor/what-input.js"></script>
+    <script src="/js/vendor/foundation.min.js"></script>
+    <script src="/js/vendor/jquery.colorbox-min.js"></script>
+    <script src="/js/netbeans.js"></script>
+    <script>
+
+       $(function(){ $(document).foundation(); });
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/highlight.min.js"></script>
+    <script>
+       $(document).ready(function() { $("pre code").each(function(i, block) { hljs.highlightBlock(block); }); }); 
+    </script>
+
+  </body>
+</html>
