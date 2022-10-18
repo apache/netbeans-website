@@ -91,6 +91,8 @@ public class NetBeansLinkMacro extends InlineMacroProcessor {
         Path rejectedURL = Paths.get(auditFolder + "/url.txt");
         Path apidocURL = Paths.get(auditFolder + "/apidocurl.txt");
         Path apioverURL = Paths.get(auditFolder + "/apiurl.txt");
+        Path apidocmediaURL = Paths.get(auditFolder + "/bitsmedia.txt");
+        Path apidocnightly = Paths.get(auditFolder + "/bitsnightly.txt");
         Path wikiMigration = Paths.get(auditFolder + "/wikimigration.txt");
         Path newFilePathmacro = Paths.get(auditFolder + "/macrocurl.txt");
         Path linkmustbexref = Paths.get(auditFolder + "/linkthatmustbexref.txt");
@@ -98,10 +100,15 @@ public class NetBeansLinkMacro extends InlineMacroProcessor {
         if (apidoccheck) {
             if (content.contains("overview-summary.html")) {
                 NetBeansWebSiteExtension.writeAndAppend(apioverURL, filename, content);
-            } else {
+            } else if (content.contains("/media")) {
                 // this should be empty in a while once we use macro PR #537
+                NetBeansWebSiteExtension.writeAndAppend(apidocmediaURL, filename, content);
+            } else if (content.contains("/nightly")) {
+                NetBeansWebSiteExtension.writeAndAppend(apidocnightly, filename, content);
+            } else {
                 NetBeansWebSiteExtension.writeAndAppend(apidocURL, filename, content);
             }
+
         } else {
             // if it's start with macro list on special file
             if (target.startsWith("{")) {
@@ -126,7 +133,9 @@ public class NetBeansLinkMacro extends InlineMacroProcessor {
                         if (target.startsWith("http://wiki.netbeans.org") && filename.contains(target.replace("http://wiki.netbeans.org", ""))) {
                             NetBeansWebSiteExtension.writeAndAppend(wikiMigration, filename, content);
                         } else {
-                            NetBeansWebSiteExtension.writeAndAppend(rejectedURL, filename, content);
+                            if (!filename.contains("404.adoc")) {
+                                NetBeansWebSiteExtension.writeAndAppend(rejectedURL, filename, content);
+                            }
                         }
                     }
                 }
