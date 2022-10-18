@@ -36,18 +36,24 @@ public class NetBeansXrefMacro extends InlineMacroProcessor {
         String filename = (String) parent.getDocument().getAttributes().get("docfile");
         String auditFolder = globalAttributes.get("fileauditfolder");
         Path wrongxreftarget = Paths.get(auditFolder + "/wrongXREF.txt");
-        if (!target.contains("adoc")) {
-            throw new IllegalStateException("CANNOT XREF:" + target + " in " + filename);
+        // 404 special as can be cast from relative place not only root
+        Path file404 = Paths.get(auditFolder + "/404.txt");
+        if (filename.contains("404.adoc")) {
+            NetBeansWebSiteExtension.writeAndAppend(file404, filename, target);
         } else {
-            String[] split = target.split("adoc");
-            Path resolve = Paths.get(filename).getParent().resolve(split[0] + "adoc");
-            if (!Files.exists(resolve)) {
-                NetBeansWebSiteExtension.writeAndAppend(wrongxreftarget, "XREF cannot find file" + resolve.toString() + " in " + filename + "\n");
-                //throw new IllegalStateException("XREF cannot find file" + resolve.toString());
+            if (!target.contains("adoc")) {
+                throw new IllegalStateException("CANNOT XREF:" + target + " in " + filename);
+            } else {
+                String[] split = target.split("adoc");
+                Path resolve = Paths.get(filename).getParent().resolve(split[0] + "adoc");
+                if (!Files.exists(resolve)) {
+                    NetBeansWebSiteExtension.writeAndAppend(wrongxreftarget, filename, resolve.toString());
+                    //throw new IllegalStateException("XREF cannot find file" + resolve.toString());
+                }
             }
         }
 // return non modified
-        Map<String, Object> options = new HashMap<String, Object>();
+        Map<String, Object> options = new HashMap<>();
         options.put("type", ":xref");
         options.put("target", target);
         return createPhraseNode(parent, "anchor", target, attributes, options);

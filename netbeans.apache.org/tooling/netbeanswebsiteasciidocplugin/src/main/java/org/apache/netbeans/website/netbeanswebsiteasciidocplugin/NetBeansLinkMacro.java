@@ -41,27 +41,39 @@ public class NetBeansLinkMacro extends InlineMacroProcessor {
             "https://lists.apache.org/",
             "https://issues.apache.org/jira",
             "https://codelerity.com",
-            "https://ci-builds.apache.org/"
+            "https://ci-builds.apache.org/",
+            "https://ci-builds.apache.org/",
+            "https://www.apache.org",
+            "mailto:commits@netbeans.apache.org",
+            "mailto:dev@netbeans.apache.org",
+            "https://www.facebook.com/NetBeans",
+            "http://wiki.apidesign.org",
+            "https://www.w3.org",
+            "https://wiki.php.net/",
+            "https://whimsy.apache.org/",
+            "https://wiki.apache.org/"
     ));
 
     @Override
     public Object process(ContentNode parent, String target, Map<String, Object> attributes) {
-        String content = "\n" + target + ";" + attributes + ";" + parent.getDocument().getAttributes().get("docfile");
+        String content = target + "," + attributes;
+        String filename = (String) parent.getDocument().getAttributes().get("docfile");
         Map<String, String> globalAttributes = (Map) parent.getDocument().getAttributes();
         String auditFolder = globalAttributes.get("fileauditfolder");
-        Path acceptedPath = Paths.get(auditFolder + "/accepted.txt");
-        Path rejectedPath = Paths.get(auditFolder + "/url.txt");
-        Path newFilePathapidoc = Paths.get(auditFolder + "/apidocurl.txt");
+        Path allowedURL = Paths.get(auditFolder + "/accepted.txt");
+        Path rejectedURL = Paths.get(auditFolder + "/url.txt");
+        Path apidocURL = Paths.get(auditFolder + "/apidocurl.txt");
+        Path wikiMigration = Paths.get(auditFolder + "/wikimigration.txt");
         Path newFilePathmacro = Paths.get(auditFolder + "/macrocurl.txt");
-        Path xrefPath = Paths.get(auditFolder + "/linkthatmustbexref.txt");
+        Path linkmustbexref = Paths.get(auditFolder + "/linkthatmustbexref.txt");
         boolean apidoccheck = target.startsWith("http://bits.netbeans.org/") || target.startsWith("https://bits.netbeans.org/");
         if (apidoccheck) {
             // this should be empty in a while once we use macro PR #537
-            NetBeansWebSiteExtension.writeAndAppend(newFilePathapidoc, content);
+            NetBeansWebSiteExtension.writeAndAppend(apidocURL, filename, content);
         } else {
             // if it's start with macro list on special file
             if (target.startsWith("{")) {
-                NetBeansWebSiteExtension.writeAndAppend(newFilePathmacro, content);
+                NetBeansWebSiteExtension.writeAndAppend(newFilePathmacro, filename, content);
                 // if start with protocol  we scan for rules
             } else if (target.startsWith("http") || target.startsWith("mailto")) {
                 boolean accepted = false;
@@ -72,26 +84,32 @@ public class NetBeansLinkMacro extends InlineMacroProcessor {
                     }
                 }
                 if ((!target.startsWith("mailto") && !target.startsWith("https://lists.apache.org/")) && target.contains("netbeans.apache.org")) {
-                    NetBeansWebSiteExtension.writeAndAppend(xrefPath, content);
+                    NetBeansWebSiteExtension.writeAndAppend(linkmustbexref, filename, content);
                 } else {
                     if (accepted) {
-                        NetBeansWebSiteExtension.writeAndAppend(acceptedPath, content);
+                        NetBeansWebSiteExtension.writeAndAppend(allowedURL, filename, content);
                     } else {
-                        NetBeansWebSiteExtension.writeAndAppend(rejectedPath, content);
+
+//
+                        if (target.startsWith("http://wiki.netbeans.org") && filename.contains(target.replace("http://wiki.netbeans.org", ""))) {
+                            NetBeansWebSiteExtension.writeAndAppend(wikiMigration, filename, content);
+                        } else {
+                            NetBeansWebSiteExtension.writeAndAppend(rejectedURL, filename, content);
+                        }
                     }
                 }
             } else {
                 boolean accepted = target.matches("[0-9a-zA-Z\\./].*");
 // internal to the site jbake should take care starting with Dev... starting with / or . 
                 if (accepted) {
-                    NetBeansWebSiteExtension.writeAndAppend(xrefPath, content);
+                    NetBeansWebSiteExtension.writeAndAppend(linkmustbexref, filename, content);
                 } else {
-                    NetBeansWebSiteExtension.writeAndAppend(rejectedPath, content);
+                    NetBeansWebSiteExtension.writeAndAppend(rejectedURL, filename, content);
                 }
             }
         }
 // return non modified
-        Map<String, Object> options = new HashMap<String, Object>();
+        Map<String, Object> options = new HashMap<>();
         options.put("type", ":link");
         options.put("target", target);
         return createPhraseNode(parent, "anchor", target, attributes, options);

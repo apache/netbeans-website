@@ -22,6 +22,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.asciidoctor.Asciidoctor;
@@ -38,7 +42,7 @@ public class NetBeansWebSiteExtension implements ExtensionRegistry {
         javaExtensionRegistry.inlineMacro("xref", NetBeansXrefMacro.class);
     }
 
-    public static void writeAndAppend(Path newFilePath, String content) {
+    public static void writeAndAppend(Path newFilePath, String adocsource, String issue) {
         if (Files.notExists(newFilePath)) {
             try {
                 Files.createDirectories(newFilePath.getParent());
@@ -48,10 +52,27 @@ public class NetBeansWebSiteExtension implements ExtensionRegistry {
             }
         }
         try {
-            Files.write(newFilePath, content.getBytes(), StandardOpenOption.APPEND);
+            List<String> allline = Files.readAllLines(newFilePath);
+            TreeMap<String, String> tm = new TreeMap<>();
+            tm.put(issue, adocsource);
+            for (String aline : allline) {
+                String[] split = aline.split(SEPARATOR);
+                if (tm.containsKey(split[0])) {
+                    tm.put(split[0], tm.get(split[0]) + "," + split[1]);
+                } else {
+                    tm.put(split[0], split[1]);
+                }
+            }
+            StringBuilder sb = new StringBuilder();
+            for (Map.Entry<String, String> entry : tm.entrySet()) {
+                sb.append(entry.getKey()).append(SEPARATOR).append(entry.getValue()).append("\n");
+            }
+            Files.write(newFilePath, sb.toString().getBytes(), StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
         } catch (IOException ex) {
             Logger.getLogger(NetBeansWebSiteTreeprocessor.class.getName()).log(Level.SEVERE, null, ex);
         }
+
     }
+    private static final String SEPARATOR = "::::";
 
 }

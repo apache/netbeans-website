@@ -74,9 +74,9 @@ public class NetBeansWebSiteTreeprocessor extends Treeprocessor {
     private void appendErrorReport(String line) {
         String asciidocfile = attributes.get("docfile");
         String fileName = attributes.get("fileauditfolder");
-        String content = ">>>" + asciidocfile + "<<< \n " + line + "\n";
+        String content = ">>>" + asciidocfile + "<<< " + line + "";
         Path newFilePath = Paths.get(fileName + "/plainhref.txt");
-        NetBeansWebSiteExtension.writeAndAppend(newFilePath, content);
+        NetBeansWebSiteExtension.writeAndAppend(newFilePath, asciidocfile, content);
     }
 
 }
