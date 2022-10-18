@@ -32,11 +32,13 @@ public class NetBeansLinkMacro extends InlineMacroProcessor {
 
     List<String> dummyrules = new ArrayList<>(List.of(
             "https://archive.apache.org/dist/",
-            "https://downloads.apache.org/netbeans",
+            "https://dist.apache.org/",
+            "https://downloads.apache.org/",
             "https://www.apache.org/",
             "https://cwiki.apache.org/",
             "https://www.youtube.com/",
             "https://github.com/apache/netbeans",
+            "https://github.com/",
             "https://snapcraft.io/netbeans",
             "https://lists.apache.org/",
             "https://issues.apache.org/jira",
@@ -51,25 +53,56 @@ public class NetBeansLinkMacro extends InlineMacroProcessor {
             "https://www.w3.org",
             "https://wiki.php.net/",
             "https://whimsy.apache.org/",
-            "https://wiki.apache.org/"
+            "https://wiki.apache.org/",
+            "https://dukescript.com",
+            "https://dzone.com/articles/",
+            "https://docs.oracle.com/",
+            //
+            "https://leanpub.com/nbp4beginners",
+            "https://link.springer.com/book/",
+            "https://www.amazon.com/",
+            "https://www.packtpub.com/", // seems not referencing the good book
+            //
+            "https://bz.apache.org/netbeans/",
+            "https://en.wikipedia.org/",
+            "https://openjdk.java.net/jeps/",
+            "https://search.maven.org/",
+            "https://openjfx.io/",
+            "https://ant.apache.org",
+            "https://archiva.apache.org",
+            "https://maven.apache.org",
+            "https://freemaker.apache.org",
+            //
+            "http://tdamir.blogspot.com/",
+            "http://blogs.kiyut.com/tonny",
+            "https://vieiro.net/",
+            //
+            "http://www.netbeans.org/ns",
+            "http://www.netbeans.org/dtds"
+            
     ));
 
     @Override
     public Object process(ContentNode parent, String target, Map<String, Object> attributes) {
-        String content = target + "," + attributes;
-        String filename = (String) parent.getDocument().getAttributes().get("docfile");
+        String content = target;
+        String filename = (String) parent.getDocument().getAttributes().get("docfile") + "," + attributes;
         Map<String, String> globalAttributes = (Map) parent.getDocument().getAttributes();
         String auditFolder = globalAttributes.get("fileauditfolder");
         Path allowedURL = Paths.get(auditFolder + "/accepted.txt");
         Path rejectedURL = Paths.get(auditFolder + "/url.txt");
         Path apidocURL = Paths.get(auditFolder + "/apidocurl.txt");
+        Path apioverURL = Paths.get(auditFolder + "/apiurl.txt");
         Path wikiMigration = Paths.get(auditFolder + "/wikimigration.txt");
         Path newFilePathmacro = Paths.get(auditFolder + "/macrocurl.txt");
         Path linkmustbexref = Paths.get(auditFolder + "/linkthatmustbexref.txt");
         boolean apidoccheck = target.startsWith("http://bits.netbeans.org/") || target.startsWith("https://bits.netbeans.org/");
         if (apidoccheck) {
-            // this should be empty in a while once we use macro PR #537
-            NetBeansWebSiteExtension.writeAndAppend(apidocURL, filename, content);
+            if (content.contains("overview-summary.html")) {
+                NetBeansWebSiteExtension.writeAndAppend(apioverURL, filename, content);
+            } else {
+                // this should be empty in a while once we use macro PR #537
+                NetBeansWebSiteExtension.writeAndAppend(apidocURL, filename, content);
+            }
         } else {
             // if it's start with macro list on special file
             if (target.startsWith("{")) {
@@ -102,7 +135,9 @@ public class NetBeansLinkMacro extends InlineMacroProcessor {
                 boolean accepted = target.matches("[0-9a-zA-Z\\./].*");
 // internal to the site jbake should take care starting with Dev... starting with / or . 
                 if (accepted) {
-                    NetBeansWebSiteExtension.writeAndAppend(linkmustbexref, filename, content);
+                    if (!filename.contains("404.adoc")) {
+                        NetBeansWebSiteExtension.writeAndAppend(linkmustbexref, filename, content);
+                    }
                 } else {
                     NetBeansWebSiteExtension.writeAndAppend(rejectedURL, filename, content);
                 }
