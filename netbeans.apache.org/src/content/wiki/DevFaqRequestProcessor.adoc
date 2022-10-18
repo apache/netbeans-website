@@ -33,7 +33,7 @@
 
 One of the most common threading bugs in NetBeans happens like this:
 
-* Someone needs to run a background operation, so they use [link:http://bits.netbeans.org/dev/javadoc/org-openide-util/org/openide/util/RequestProcessor.html#getDefault([http://bits.netbeans.org/dev/javadoc/org-openide-util/org/openide/util/RequestProcessor.html#getDefault(]) `RequestProcessor.getDefault()`, the global thread pool
+* Someone needs to run a background operation, so they use [link:https://bits.netbeans.org/dev/javadoc/org-openide-util/org/openide/util/RequestProcessor.html#getDefault([http://bits.netbeans.org/dev/javadoc/org-openide-util/org/openide/util/RequestProcessor.html#getDefault(]) `RequestProcessor.getDefault()`, the global thread pool
 * They don't realize that it is possible for either that code to be called repeatedly (by the user, in a loop or whatever)
 * The background work can take some time to run
 * A user notices that NetBeans is slow, takes a thread dump, and there are 40 background threads all doing the same thing at the same time
@@ -44,7 +44,7 @@ One of the most common threading bugs in NetBeans happens like this:
 
 `RequestProcessor.getDefault()` is useful for _one-off_ operations - you have some situation that happens once in a great while, and, say, while constructing some object, you need to do some work in the background;  that work will probably never need to be done again for the life of the Java VM.  That's a perfect case for `RequestProcessor.getDefault()`.
 
-Now here is the *anti-example*:  You are creating a `link:http://bits.netbeans.org/dev/javadoc/org-openide-nodes/org/openide/nodes/Node.html[Node]` that represents a file.  It needs to mark itself with an error badge and color its text in red if the file contains errors.  You can't read the file when you create the Node - that takes too long.  So when the node is created, it runs a background task to check its status, and updates its icon and display name after it has read the file.  Now imagine you did this with `RequestProcessor.getDefault()`.  What happens when the user expands a folder that contains 1000 of your files?  1000 threads get created, and the whole application gets very, very slow.  For that, you are much better off creating one new `RequestProcessor` and using it for all your nodes.  The FAQ entry about `xref:DevFaqRequestProcessorTask.adoc[RequestProcessor.Task]` shows how to do this correctly.
+Now here is the *anti-example*:  You are creating a `link:https://bits.netbeans.org/dev/javadoc/org-openide-nodes/org/openide/nodes/Node.html[Node]` that represents a file.  It needs to mark itself with an error badge and color its text in red if the file contains errors.  You can't read the file when you create the Node - that takes too long.  So when the node is created, it runs a background task to check its status, and updates its icon and display name after it has read the file.  Now imagine you did this with `RequestProcessor.getDefault()`.  What happens when the user expands a folder that contains 1000 of your files?  1000 threads get created, and the whole application gets very, very slow.  For that, you are much better off creating one new `RequestProcessor` and using it for all your nodes.  The FAQ entry about `xref:DevFaqRequestProcessorTask.adoc[RequestProcessor.Task]` shows how to do this correctly.
 
 If you create your own RequestProcessor, please always use a name. If you get a deadlock it makes debugging much easier.
 
