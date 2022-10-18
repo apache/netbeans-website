@@ -79,13 +79,12 @@ public class NetBeansLinkMacro extends InlineMacroProcessor {
             //
             "http://www.netbeans.org/ns",
             "http://www.netbeans.org/dtds"
-            
     ));
 
     @Override
     public Object process(ContentNode parent, String target, Map<String, Object> attributes) {
         String content = target;
-        String filename = (String) parent.getDocument().getAttributes().get("docfile") + "," + attributes;
+        String filename = NetBeansWebSiteExtension.githubize(parent.getDocument().getAttributes()) + "," + attributes;
         Map<String, String> globalAttributes = (Map) parent.getDocument().getAttributes();
         String auditFolder = globalAttributes.get("fileauditfolder");
         Path allowedURL = Paths.get(auditFolder + "/accepted.txt");

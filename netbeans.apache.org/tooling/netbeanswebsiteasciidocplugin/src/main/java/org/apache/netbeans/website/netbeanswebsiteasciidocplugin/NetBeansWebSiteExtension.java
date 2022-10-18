@@ -21,6 +21,7 @@ package org.apache.netbeans.website.netbeanswebsiteasciidocplugin;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,14 @@ public class NetBeansWebSiteExtension implements ExtensionRegistry {
         javaExtensionRegistry.treeprocessor(NetBeansWebSiteTreeprocessor.class);
         javaExtensionRegistry.inlineMacro("link", NetBeansLinkMacro.class);
         javaExtensionRegistry.inlineMacro("xref", NetBeansXrefMacro.class);
+    }
+
+    static String githubize(Map<String, Object> attributes) {
+
+        Path file = Paths.get((String) attributes.get("docfile"));
+        Path root = Paths.get((String) attributes.get("docdir"));
+        return "https://github.com/apache/netbeans-website/netbeans.apache.org/src/content/" + root.relativize(file).toString();
+        // throw new IllegalStateException();
     }
 
     public static void writeAndAppend(Path newFilePath, String adocsource, String issue) {
