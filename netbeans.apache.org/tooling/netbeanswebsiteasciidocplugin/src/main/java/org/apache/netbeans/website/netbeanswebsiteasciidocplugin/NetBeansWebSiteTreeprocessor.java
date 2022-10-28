@@ -48,13 +48,24 @@ public class NetBeansWebSiteTreeprocessor extends Treeprocessor {
             if (currentBlock instanceof Block) {
                 for (String line : ((Block) currentBlock).getLines()) {
                     // detect plain href
+                    String context = currentBlock.getContext();
                     if (line.contains("href=\"")) {
                         //case in listing
-                        String context = currentBlock.getContext();
+
                         if ("listing".equals(context)) {
                             // is ok to get href in listing
                         } else if ("pass".equals(context)) {
                             // is ok in passthrough block
+                        } else {
+                            appendErrorReport("NOK" + context + " " + line);
+                            log(new org.asciidoctor.log.LogRecord(
+                                    org.asciidoctor.log.Severity.ERROR,
+                                    currentBlock.getSourceLocation(),
+                                    attributes.get("docfile") + ">>>>" + line));
+                        }
+                    } else if (line.contains(" htt")) {
+                        if ("listing".equals(context)) {
+                            // is ok to get href in listing
                         } else {
                             appendErrorReport("NOK" + context + " " + line);
                             log(new org.asciidoctor.log.LogRecord(
@@ -75,7 +86,7 @@ public class NetBeansWebSiteTreeprocessor extends Treeprocessor {
         String asciidocfile = attributes.get("docfile");
         String fileName = attributes.get("fileauditfolder");
         String content = ">>>" + asciidocfile + "<<< " + line + "";
-        Path newFilePath = Paths.get(fileName + "/plainhref.txt");
+        Path newFilePath = Paths.get(fileName + "/plainhref");
         NetBeansWebSiteExtension.writeAndAppend(newFilePath, asciidocfile, content);
     }
 

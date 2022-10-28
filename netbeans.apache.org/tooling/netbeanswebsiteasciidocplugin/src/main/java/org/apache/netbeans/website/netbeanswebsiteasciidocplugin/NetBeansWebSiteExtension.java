@@ -23,8 +23,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -50,7 +52,8 @@ public class NetBeansWebSiteExtension implements ExtensionRegistry {
         // throw new IllegalStateException();
     }
 
-    public static void writeAndAppend(Path newFilePath, String adocsource, String issue) {
+    public static void writeAndAppend(Path filebase, String adocsource, String issue) {
+        Path newFilePath = filebase.resolveSibling(filebase.getFileName() + ".txt");
         if (Files.notExists(newFilePath)) {
             try {
                 Files.createDirectories(newFilePath.getParent());
@@ -76,11 +79,35 @@ public class NetBeansWebSiteExtension implements ExtensionRegistry {
                 sb.append(entry.getKey()).append(SEPARATOR).append(entry.getValue()).append("\n");
             }
             Files.write(newFilePath, sb.toString().getBytes(), StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
+            writeAndAppendHtml(filebase.resolveSibling(filebase.getFileName() + ".html"), tm);
         } catch (IOException ex) {
             Logger.getLogger(NetBeansWebSiteTreeprocessor.class.getName()).log(Level.SEVERE, null, ex);
         }
 
     }
+
+    static void writeAndAppendHtml(Path filePathhtml, TreeMap<String, String> tm) {
+        if (Files.notExists(filePathhtml)) {
+            try {
+                Files.createDirectories(filePathhtml.getParent());
+                Files.createFile(filePathhtml);
+            } catch (IOException ex) {
+                Logger.getLogger(NetBeansWebSiteTreeprocessor.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        try {
+            StringBuilder sb = new StringBuilder();
+            sb.append("<!doctype html><html><head></head><body>\n");
+            for (String entry : tm.keySet()) {
+                sb.append("<a href=\"").append(entry).append("\">").append(entry).append("</a><br>");
+            }
+            sb.append("</body></html>\n");
+            Files.write(filePathhtml, sb.toString().getBytes(), StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
+        } catch (IOException ex) {
+            Logger.getLogger(NetBeansWebSiteTreeprocessor.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
     private static final String SEPARATOR = "::::";
 
 }

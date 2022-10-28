@@ -31,15 +31,15 @@ public class NetBeansXrefMacro extends InlineMacroProcessor {
 
     @Override
     public Object process(ContentNode parent, String target, Map<String, Object> attributes) {
-        
+
         Map<String, String> globalAttributes = (Map) parent.getDocument().getAttributes();
         String filename = NetBeansWebSiteExtension.githubize(parent.getDocument().getAttributes());
         String filenamesane = (String) parent.getDocument().getAttributes().get("docfile");
         Path rootfile = Paths.get((String) parent.getDocument().getAttributes().get("docdir"));
         String auditFolder = globalAttributes.get("fileauditfolder");
-        Path wrongxreftarget = Paths.get(auditFolder + "/wrongXREF.txt");
+        Path wrongxreftarget = Paths.get(auditFolder + "/wrongXREF");
         // 404 special as can be cast from relative place not only root
-        Path file404 = Paths.get(auditFolder + "/404.txt");
+        Path file404 = Paths.get(auditFolder + "/404");
         if (filename.contains("404.adoc")) {
             NetBeansWebSiteExtension.writeAndAppend(file404, filename, target);
         } else {
@@ -48,7 +48,10 @@ public class NetBeansXrefMacro extends InlineMacroProcessor {
             } else {
                 String[] split = target.split("adoc");
                 Path resolve = Paths.get(filenamesane).getParent().resolve(split[0] + "adoc");
-                
+                if (filenamesane.contains("remotedev")) {
+                    System.err.println("--------------------------------------"+resolve.toString());
+                //throw new IllegalStateException("");
+                }
                 if (!Files.exists(resolve)) {
                     NetBeansWebSiteExtension.writeAndAppend(wrongxreftarget, filename, rootfile.relativize(resolve).toString());
                     //throw new IllegalStateException("XREF cannot find file" + resolve.toString());
@@ -61,5 +64,5 @@ public class NetBeansXrefMacro extends InlineMacroProcessor {
         options.put("target", target);
         return createPhraseNode(parent, "anchor", target, attributes, options);
     }
-    
+
 }

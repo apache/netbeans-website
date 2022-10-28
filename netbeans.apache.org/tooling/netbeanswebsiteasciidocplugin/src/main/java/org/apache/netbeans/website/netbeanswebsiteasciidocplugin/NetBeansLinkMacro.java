@@ -78,7 +78,8 @@ public class NetBeansLinkMacro extends InlineMacroProcessor {
             "https://vieiro.net/",
             //
             "http://www.netbeans.org/ns",
-            "http://www.netbeans.org/dtds"
+            "http://www.netbeans.org/dtds",
+            "https://netbeans.osuosl.org/"
     ));
 
     @Override
@@ -87,19 +88,21 @@ public class NetBeansLinkMacro extends InlineMacroProcessor {
         String filename = NetBeansWebSiteExtension.githubize(parent.getDocument().getAttributes()) + "," + attributes;
         Map<String, String> globalAttributes = (Map) parent.getDocument().getAttributes();
         String auditFolder = globalAttributes.get("fileauditfolder");
-        Path allowedURL = Paths.get(auditFolder + "/accepted.txt");
-        Path rejectedURL = Paths.get(auditFolder + "/url.txt");
-        Path apidocURL = Paths.get(auditFolder + "/apidocurl.txt");
-        Path apioverURL = Paths.get(auditFolder + "/apiurl.txt");
-        Path apidocmediaURL = Paths.get(auditFolder + "/bitsmedia.txt");
-        Path apidocnightly = Paths.get(auditFolder + "/bitsnightly.txt");
-        Path wikiMigration = Paths.get(auditFolder + "/wikimigration.txt");
-        Path newFilePathmacro = Paths.get(auditFolder + "/macrocurl.txt");
-        Path linkmustbexref = Paths.get(auditFolder + "/linkthatmustbexref.txt");
+        Path allowedURL = Paths.get(auditFolder + "/accepted");
+        Path rejectedURL = Paths.get(auditFolder + "/rejectedurl");
+        Path apidocURL = Paths.get(auditFolder + "/apidocurl");
+        Path apioverURL = Paths.get(auditFolder + "/apiurl");
+        Path apidocmediaURL = Paths.get(auditFolder + "/bitsmedia");
+        Path apidocnightly = Paths.get(auditFolder + "/bitsnightly");
+
+        Path wikiMigration = Paths.get(auditFolder + "/wikimigration");
+        Path newFilePathmacro = Paths.get(auditFolder + "/macrocurl");
+        Path linkmustbexref = Paths.get(auditFolder + "/linkthatmustbexref");
         boolean apidoccheck = target.startsWith("http://bits.netbeans.org/") || target.startsWith("https://bits.netbeans.org/");
         if (apidoccheck) {
             if (content.contains("overview-summary.html")) {
                 NetBeansWebSiteExtension.writeAndAppend(apioverURL, filename, content);
+
             } else if (content.contains("/media")) {
                 // this should be empty in a while once we use macro PR #537
                 NetBeansWebSiteExtension.writeAndAppend(apidocmediaURL, filename, content);
@@ -107,6 +110,7 @@ public class NetBeansLinkMacro extends InlineMacroProcessor {
                 NetBeansWebSiteExtension.writeAndAppend(apidocnightly, filename, content);
             } else {
                 NetBeansWebSiteExtension.writeAndAppend(apidocURL, filename, content);
+
             }
 
         } else {
@@ -114,7 +118,7 @@ public class NetBeansLinkMacro extends InlineMacroProcessor {
             if (target.startsWith("{")) {
                 NetBeansWebSiteExtension.writeAndAppend(newFilePathmacro, filename, content);
                 // if start with protocol  we scan for rules
-            } else if (target.startsWith("http") || target.startsWith("mailto")) {
+            } else if (target.startsWith("http") || target.startsWith("mailto") || target.startsWith("ftp")) {
                 boolean accepted = false;
                 // very basic rules
                 for (String dummyrule : dummyrules) {
@@ -123,7 +127,9 @@ public class NetBeansLinkMacro extends InlineMacroProcessor {
                     }
                 }
                 if ((!target.startsWith("mailto") && !target.startsWith("https://lists.apache.org/")) && target.contains("netbeans.apache.org")) {
-                    NetBeansWebSiteExtension.writeAndAppend(linkmustbexref, filename, content);
+                    if (!filename.contains("404.adoc")) {
+                        NetBeansWebSiteExtension.writeAndAppend(linkmustbexref, filename, content);
+                    }
                 } else {
                     if (accepted) {
                         NetBeansWebSiteExtension.writeAndAppend(allowedURL, filename, content);
