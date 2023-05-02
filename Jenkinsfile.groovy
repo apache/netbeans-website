@@ -58,11 +58,13 @@ pipeline {
                         ])
                     def gitCommit = masterBranch.GIT_COMMIT
                     def gitPreviousCommit = masterBranch.GIT_PREVIOUS_COMMIT
+                    def gitPreviousSuccessfulCommit = masterBranch.GIT_PREVIOUS_SUCCESSFUL_COMMIT
                     println("GIT_COMMIT:          ${gitCommit}")
                     println("GIT_PREVIOUS_COMMIT: ${gitPreviousCommit}")
+                    println("GIT_PREVIOUS_SUCCESSFUL_COMMIT: ${gitPreviousSuccessfulCommit}")
                     println("MASTER BRANCH      : ${masterBranch}")
                     // We want to rebuild the website when 'master' changes, not when 'asf-site' changes...
-                    if (gitCommit.equals(gitPreviousCommit)) {
+                    if (gitCommit.equals(gitPreviousSuccessfulCommit)) {
                         // vieiro/2020-07-25
                         // It seems there's no clean way to stop a build from a step without using exceptions and weird things.
                         // It seems "As a user I want to stop a build from a stage step" is not a user story jenkins authors had in mind.
