@@ -93,7 +93,7 @@
     </footer>
     <div class='footer-disclaimer'>
       <div class="footer-disclaimer-content">
-        <p>Copyright &copy; 2017-2022 <a href="https://www.apache.org">The Apache Software Foundation</a>.</p>
+        <p>Copyright &copy; 2017-2023 <a href="https://www.apache.org">The Apache Software Foundation</a>.</p>
         <p>Licensed under the Apache <a href="https://www.apache.org/licenses/">license</a>, version 2.0</p>
         <div style='max-width: 40em; margin: 0 auto'>
           <p>Apache, Apache NetBeans, NetBeans, the Apache feather logo and the Apache NetBeans logo are trademarks of <a href="https://www.apache.org">The Apache Software Foundation</a>.</p>
