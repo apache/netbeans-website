@@ -18,7 +18,6 @@
     under the License.
 
 */%>
-<div class='aside' style='text-align: center; padding: 20px;'>
-    <a href="/wiki/index.adoc" title="Apache NetBeans WIKI">Apache NetBeans Wiki Index</a>
-    <p><b>Note:</b> These pages are being reviewed.</p>
+<div class='aside' style='text-align: left; padding: 20px;'>
+    <a href="/wiki/index.hml" title="Apache NetBeans WIKI">Apache NetBeans Wiki Index</a>/<a href="/wiki/DevFaqIndex.html" title="Apache NetBeans NetBeans Developer FAQ WIKI">Apache NetBeans NetBeans Developer FAQ</a>
 </div>
