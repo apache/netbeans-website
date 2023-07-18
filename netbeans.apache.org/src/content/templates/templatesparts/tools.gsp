@@ -24,6 +24,7 @@
         <li><a title="Twitter" href="https://twitter.com/netbeans"><i class="fa fa-md fa-twitter"></i></a></li>
         <li><a title="Github" href="https://github.com/apache/netbeans"><i class="fa fa-md fa-github"></i></a></li>
         <li><a title="YouTube" href="https://www.youtube.com/user/netbeansvideos"><i class="fa fa-md fa-youtube"></i></a></li>
+        <li><a title="Atom Feed" href="https://netbeans.apache.org/blogs/atom"><i class="fa fa-mf fa-rss"></i></a></li>
         <li><a title="Slack" href="https://tinyurl.com/netbeans-slack-signup/"><i class="fa fa-md fa-slack"></i></a></li>
         <li><a title="Issues" href="https://github.com/apache/netbeans/issues"><i class="fa fa-mf fa-bug"></i></a></li>
     </ul>
