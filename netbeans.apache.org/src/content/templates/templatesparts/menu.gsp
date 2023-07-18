@@ -31,7 +31,7 @@
         <ul class="vertical medium-horizontal menu" data-responsive-menu="drilldown medium-dropdown">
             <li> <a href="/community/index.html">Community</a> </li>
             <li> <a href="/participate/index.html">Participate</a> </li>
-            <li> <a href="https://blogs.apache.org/netbeans/">Blog</a></li>
+            <li> <a href="/blogs/index.html">Blog</a></li>
             <li> <a href="/help/index.html">Get Help</a> </li>
             <li> <a href="https://plugins.netbeans.apache.org/">Plugins</a> </li>
             <li> <a href="/download/index.html">Download</a> </li>
