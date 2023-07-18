@@ -31,7 +31,7 @@
     <%include "templatesparts/news.gsp"%>
     <div class='grid-container main-content'>
       <h1 class="sect1">${content.title}</h1>
-      <time>${content.date}</time>
+      <div class="blogdate"><% out.print(content.date.format('EEEEE MMMM dd, YYYY')); %></div>
       ${content.body}
       <%include "templatesparts/tools.gsp"%>
     </div>
