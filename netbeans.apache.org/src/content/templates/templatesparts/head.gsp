@@ -28,6 +28,7 @@
     <meta name="keywords" content="${content.keywords}">
     <meta name="generator" content="Apache NetBeans">
     <link rel="stylesheet" href="/css/font-awesome.min.css">
+    <link rel="alternate" type="application/atom+xml" title="Apache NetBeans Blog" href="https://netbeans.apache.org/blogs/atom" />
     <% if (content.syntax) { %><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/styles/default.min.css"> <% } %>
     <link rel="stylesheet" href="/css/netbeans.css">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
