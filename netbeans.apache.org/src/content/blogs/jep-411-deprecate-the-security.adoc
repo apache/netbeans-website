@@ -1,0 +1,53 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= JEP 411: Deprecate the Security Manager for Removal (Part 1)
+:author: Geertjan Wielenga
+:revdate: 2021-04-16
+:jbake-type: post
+:jbake-tags: blogentry
+:jbake-status: published
+:keywords: Apache NetBeans blog index
+:description: Apache NetBeans blog index
+:toc: left
+:toc-title:
+:syntax: true
+
+
+
+In link:https://mail.openjdk.org/pipermail/security-dev/2021-April/025486.html[JEP 411, announcing the deprecation of java.lang.SecurityManager], one would hope that the use cases for which SecurityManager exists will be replaced by more modern APIs, before it is removed from the OpenJDK. Below is a partial list of use cases for which the SecurityManager is used by Apache NetBeans:
+
+* *checkExit.* Ability to prevent accidental invocations of System.exit is very important for any application that deals with other unknown libraries (as IDEs do). 
+  link:https://bugs.openjdk.java.net/browse/JDK-8199704[JDK-8199704] is filled for this, but there is no proposal for an API yet, so it is impossible to tell how the API will cover this use case. 
+  The current API allows, for example, to partially simulate the effect of System.exit, while it also allows to provide a user-understandable message when a real exit is rejected.
+* *Watching file system access.* In various places, both in production code and in tests, SecurityManager is used as a tool to receive notifications of file reading or writing. 
+  This is especially important in integration tests, to guarantee that code is never accessing disk, unless absolutely necessary (for performance reasons, among others). 
+  In principle, the WatchService could be used for these use cases. 
+  However, the WatchService is not guaranteed to work (e.g., due to OS restrictions), it cannot detect read-only access, and requires subscription to individual Paths. SecurityManager provides a more reliable way to monitor all filesystem access done by Java code.
+* *Warning or prevention of use of obsolete and/or dangerous idioms.* The SecurityManager is used to warn about the use of obsolete System properties (via checkPropertyAccess) and the use of`sun.misc.Unsafe unsupported APIs via checkMemberAccess.
+* *Identifying User Application Windows.* The showWindowWithoutWarningBanner permission is used to track which windows belong to which user's custom application (so that they can be closed when call to `System.exit` is intercepted).
+* *Misc.* There are also restrictions on potentially dangerous code, which are probably less important and link:https://mail.openjdk.java.net/pipermail/security-dev/2021-April/025495.html[are covered by Reinier's e-mail]. There are also few (probably) obsoleted workarounds.
+
+== Summary
+
+Apache NetBeans doesn't use java.lang.SecurityManager to guarantee security, but rather to gain additional insight into the JVM's behavior.
+
+Without having such insights, the IDE's user experience would be severely affected.
+
+It is to be hoped that replacement APIs are being designed and that they will be provided for evaluation before JEP-411 is integrated.
