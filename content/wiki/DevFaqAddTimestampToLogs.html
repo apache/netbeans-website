@@ -6,7 +6,7 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
-    <title>DevFaqAddTimestampToLogs</title>
+    <title>How Do I Add a Timestamp to the Logs?</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Apache NetBeans wiki DevFaqAddTimestampToLogs">
     <meta name="author" content="Apache NetBeans">
@@ -79,27 +79,31 @@
 </section>
 
     <div class='grid-container main-content'>
+      <h1 class="sect1">How Do I Add a Timestamp to the Logs?</h1>
+      
       
 <div class='aside' style='text-align: center; padding: 20px;'>
     <a href="/wiki/index.adoc" title="Apache NetBeans WIKI">Apache NetBeans Wiki Index</a>
     <p><b>Note:</b> These pages are being reviewed.</p>
 </div>
 
+      
       <div id="toc" class="toc">
 <div id="toctitle"></div>
 <ul class="sectlevel1">
-<li><a href="#_how_do_i_add_a_timestamp_to_the_logs">How Do I Add a Timestamp to the Logs?</a>
-<ul class="sectlevel2">
 <li><a href="#_caveats">Caveats</a></li>
-<li><a href="#_solution">Solution</a></li>
-<li><a href="#_final_notes">Final Notes</a></li>
+<li><a href="#_solution">Solution</a>
+<ul class="sectlevel2">
+<li><a href="#_step_1_establish_project_dependencies">Step 1. Establish Project Dependencies</a></li>
+<li><a href="#_step_2_create_the_custom_log_formatter">Step 2. Create the Custom Log Formatter</a></li>
+<li><a href="#_step_3_override_the_default_formatters">Step 3. Override the Default Formatters</a></li>
+<li><a href="#_step_4_configure_access_to_private_package">Step 4. Configure Access to Private Package</a></li>
 </ul>
 </li>
-<li><a href="#_apache_migration_information">Apache Migration Information</a></li>
+<li><a href="#_final_notes">Final Notes</a></li>
 </ul>
 </div>
-<div class="sect1">
-<h2 id="_how_do_i_add_a_timestamp_to_the_logs">How Do I Add a Timestamp to the Logs?</h2>
+<div id="preamble">
 <div class="sectionbody">
 <div class="paragraph">
 <p>This FAQ entry demonstrates how to prepend a timestamp to your log file entries. For example:</p>
@@ -111,19 +115,24 @@
 05:42:52.151 INFO [org.netbeans.core.startup.NbEvents]: Turning on modules: ....</code></pre>
 </div>
 </div>
-<div class="sect2">
-<h3 id="_caveats">Caveats</h3>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_caveats">Caveats</h2>
+<div class="sectionbody">
 <div class="paragraph">
 <p>The NetBeans Platform includes its own logging mechanism.  If you customize the logging through the use of the <em>java.util.logging.config.file</em> or <em>java.util.logging.config.class</em> property settings, then the native NetBeans logging mechanism is completely disabled, and either the default Java logging or your custom logging class is used instead.</p>
 </div>
 </div>
-<div class="sect2">
-<h3 id="_solution">Solution</h3>
+</div>
+<div class="sect1">
+<h2 id="_solution">Solution</h2>
+<div class="sectionbody">
 <div class="paragraph">
 <p>This solution shows how to customize the output from the native NetBeans log formatter (<em>NbFormatter</em>) by creating a new custom formatter that by prepends a timestamp to the log messages.  Note, using <em>NbFormatter</em> requires a private package reference to the <em>org-netbeans-core-startup</em> module.  This FAQ will also show how to establish the private package access.</p>
 </div>
-<div class="sect3">
-<h4 id="_step_1_establish_project_dependencies">Step 1. Establish Project Dependencies</h4>
+<div class="sect2">
+<h3 id="_step_1_establish_project_dependencies">Step 1. Establish Project Dependencies</h3>
 <div class="paragraph">
 <p>Include the a dependency on <strong>org-netbeans-core-startup</strong> in the project that will implement the custom formatter. In Maven, add following entry to the project POM:</p>
 </div>
@@ -138,8 +147,8 @@
 </div>
 </div>
 </div>
-<div class="sect3">
-<h4 id="_step_2_create_the_custom_log_formatter">Step 2. Create the Custom Log Formatter</h4>
+<div class="sect2">
+<h3 id="_step_2_create_the_custom_log_formatter">Step 2. Create the Custom Log Formatter</h3>
 <div class="paragraph">
 <p>Here&#8217;s an example of a custom <em>Formatter</em>.  It uses the NetBeans <em>NbFormatter</em> instance to obtain a formatted message from the <em>LogRecord</em>.  NbFormatter is a final class that exposes itself via a public static <em>FORMATTER</em> property. This solution simply prepends a timestamp, extracted from the LogRecord, to the formatted log message.</p>
 </div>
@@ -171,8 +180,8 @@ public class LogFormatter extends Formatter {
 </div>
 </div>
 </div>
-<div class="sect3">
-<h4 id="_step_3_override_the_default_formatters">Step 3. Override the Default Formatters</h4>
+<div class="sect2">
+<h3 id="_step_3_override_the_default_formatters">Step 3. Override the Default Formatters</h3>
 <div class="paragraph">
 <p>In a module <em>Installer</em> class, include the following code block in the restored method to replace the default formatters with the custom formatter:</p>
 </div>
@@ -195,8 +204,8 @@ public class LogFormatter extends Formatter {
 </div>
 </div>
 </div>
-<div class="sect3">
-<h4 id="_step_4_configure_access_to_private_package">Step 4. Configure Access to Private Package</h4>
+<div class="sect2">
+<h3 id="_step_4_configure_access_to_private_package">Step 4. Configure Access to Private Package</h3>
 <div class="paragraph">
 <p>In the project&#8217;s POM, edit the <strong>nbm-maven-plugin</strong> configuration to allow  private package access to <strong>org.netbeans.modules:org-netbeans-core-startup</strong> via an <strong>impl</strong> module dependency, for example:</p>
 </div>
@@ -220,31 +229,15 @@ public class LogFormatter extends Formatter {
 </div>
 </div>
 </div>
-<div class="sect2">
-<h3 id="_final_notes">Final Notes</h3>
+</div>
+<div class="sect1">
+<h2 id="_final_notes">Final Notes</h2>
+<div class="sectionbody">
 <div class="paragraph">
 <p>To leverage the NetBeans logging, you must disable any <em>java.util.logging.config.file</em> or <em>java.util.logging.config.class</em> property settings.  Check your application&#8217;s .conf file, and, in the application&#8217;s POM, check the <em>additionalArguments</em> entry.</p>
 </div>
 <div class="paragraph">
 <p>This example was tested with NetBeans 8.0 and JDK 8.</p>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_apache_migration_information">Apache Migration Information</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>The content in this page was kindly donated by Oracle Corp. to the
-Apache Software Foundation.</p>
-</div>
-<div class="paragraph">
-<p>This page was exported from <a href="http://wiki.netbeans.org/DevFaqAddTimestampToLogs">http://wiki.netbeans.org/DevFaqAddTimestampToLogs</a> ,
-that was last modified by NetBeans user Bdschubert
-on 2014-06-21T13:31:08Z.</p>
-</div>
-<div class="paragraph">
-<p><strong>NOTE:</strong> This document was automatically converted to the AsciiDoc format on 2018-02-07, and needs to be reviewed.</p>
 </div>
 </div>
 </div>

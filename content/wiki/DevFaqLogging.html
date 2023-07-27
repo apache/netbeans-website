@@ -6,7 +6,7 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
-    <title>DevFaqLogging</title>
+    <title>Using java.util.logging in NetBeans</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Apache NetBeans wiki DevFaqLogging">
     <meta name="author" content="Apache NetBeans">
@@ -79,27 +79,31 @@
 </section>
 
     <div class='grid-container main-content'>
+      <h1 class="sect1">Using java.util.logging in NetBeans</h1>
+      
       
 <div class='aside' style='text-align: center; padding: 20px;'>
     <a href="/wiki/index.adoc" title="Apache NetBeans WIKI">Apache NetBeans Wiki Index</a>
     <p><b>Note:</b> These pages are being reviewed.</p>
 </div>
 
+      
       <div id="toc" class="toc">
 <div id="toctitle"></div>
 <ul class="sectlevel1">
-<li><a href="#_using_java_util_logging_in_netbeans">Using java.util.logging in NetBeans</a>
-<ul class="sectlevel2">
 <li><a href="#_turning_logging_on_and_off">Turning Logging On and Off</a></li>
-<li><a href="#_how_to_write_logging_friendly_code">How to Write Logging Friendly Code</a></li>
-<li><a href="#_using_structured_logging_for_communication">Using Structured Logging for Communication</a></li>
+<li><a href="#_how_to_write_logging_friendly_code">How to Write Logging Friendly Code</a>
+<ul class="sectlevel2">
+<li><a href="#_handling_exceptions">Handling Exceptions</a></li>
+<li><a href="#_retain_nested_stacktraces_change_exception_type">Retain nested stacktraces / change exception type</a></li>
+<li><a href="#_logging_a_warning_and_debug_messages">Logging a warning and debug messages</a></li>
+<li><a href="#_annotate_exceptions">Annotate Exceptions</a></li>
 </ul>
 </li>
-<li><a href="#_apache_migration_information">Apache Migration Information</a></li>
+<li><a href="#_using_structured_logging_for_communication">Using Structured Logging for Communication</a></li>
 </ul>
 </div>
-<div class="sect1">
-<h2 id="_using_java_util_logging_in_netbeans">Using java.util.logging in NetBeans</h2>
+<div id="preamble">
 <div class="sectionbody">
 <div class="paragraph">
 <p>The logging system in NetBeans is based on the standard JDK&#8217;s java.util.logging and complies to it as much as possible. This document sumarizes the basic usecases and shall be treated as a guide for writing good NetBeans ready logging code. The info given here is valid for default configuration of the logger as it is used in NetBeans. However it is possible to fully replace the system by providing own logging properties as in any other JDK application. Then of course the behaviour may get completely different.</p>
@@ -113,8 +117,11 @@
 <div class="paragraph">
 <p>It is possible to use global logger but it is preferred to create named and shared instances of loggers. The latter has the advantage of finer control of what is going to be logged or not, as each named instance can be turned on/off individually by using a command line property.</p>
 </div>
-<div class="sect2">
-<h3 id="_turning_logging_on_and_off">Turning Logging On and Off</h3>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_turning_logging_on_and_off">Turning Logging On and Off</h2>
+<div class="sectionbody">
 <div class="paragraph">
 <p>As the logging system is completely JDK based, one can use the traditional properties of LogManager and customize logging completely by themselves.</p>
 </div>
@@ -137,10 +144,12 @@ LogManager.getLogManager().readConfiguration();</code></pre>
 <p>Of course this only works if the default NetBeans logger is in place. Sometimes however it may make sence to provide completely different logger. This can be done by one of two JDK standard properties: java.util.logging.config.file or java.util.logging.config.class as described at LogManager&#8217;s javadoc. If these properties are provide during the startup of the system, then the logging is fully dedicated to the configured custom loggers and of course no NetBeans standard configuration properties work.</p>
 </div>
 </div>
+</div>
+<div class="sect1">
+<h2 id="_how_to_write_logging_friendly_code">How to Write Logging Friendly Code</h2>
+<div class="sectionbody">
 <div class="sect2">
-<h3 id="_how_to_write_logging_friendly_code">How to Write Logging Friendly Code</h3>
-<div class="sect3">
-<h4 id="_handling_exceptions">Handling Exceptions</h4>
+<h3 id="_handling_exceptions">Handling Exceptions</h3>
 <div class="paragraph">
 <p>To handle an exception and send it to the log file (and possibly show a blinking icon to the user in bottom right corner of the main window):</p>
 </div>
@@ -186,8 +195,8 @@ try {
 <p>This code will present a dialog box with warning message extracted from the exception ex sometime in the "future" - e.g. when the AWT event queue is empty and can show the dialog. Use of notifyLater to plain notify is recommended in order to prevent deadlocks and starvations</p>
 </div>
 </div>
-<div class="sect3">
-<h4 id="_retain_nested_stacktraces_change_exception_type">Retain nested stacktraces / change exception type</h4>
+<div class="sect2">
+<h3 id="_retain_nested_stacktraces_change_exception_type">Retain nested stacktraces / change exception type</h3>
 <div class="paragraph">
 <p>To rethrow an exception use standard JDK&#8217;s Throwable.initCause(Throwable) method. It is going to be properly annotated and printed when sent to logger:</p>
 </div>
@@ -211,8 +220,8 @@ try {
 </div>
 </div>
 </div>
-<div class="sect3">
-<h4 id="_logging_a_warning_and_debug_messages">Logging a warning and debug messages</h4>
+<div class="sect2">
+<h3 id="_logging_a_warning_and_debug_messages">Logging a warning and debug messages</h3>
 <div class="paragraph">
 <p>Logging shall usually be done with a named loggers, as that allows proper turning on and off from the command line. To log something into the log file one should use Level.INFO or higher:</p>
 </div>
@@ -250,15 +259,17 @@ class Something {
 </div>
 </div>
 </div>
-<div class="sect3">
-<h4 id="_annotate_exceptions">Annotate Exceptions</h4>
+<div class="sect2">
+<h3 id="_annotate_exceptions">Annotate Exceptions</h3>
 <div class="paragraph">
 <p>There is an easy way how to annotate exceptions with localized and non-localized messages in NetBeans. One can use Exceptions.attachMessage or Exceptions.attachLocalizedMessage . The non-localized messages are guaranteed to be printed when one does ex.printStackTrace(), to extract associated localized message one can use Exceptions.findLocalizedMessage .</p>
 </div>
 </div>
 </div>
-<div class="sect2">
-<h3 id="_using_structured_logging_for_communication">Using Structured Logging for Communication</h3>
+</div>
+<div class="sect1">
+<h2 id="_using_structured_logging_for_communication">Using Structured Logging for Communication</h2>
+<div class="sectionbody">
 <div class="paragraph">
 <p>In spite of what one might think the JDK logging API is not just about sending textual messages to log files, but it can also be used as a communication channel between two pieces of the application that need to exchange structured data. What is even more interesting is that this kind of extended usage can coexist very well with the plain old good writing of messages to log files. This is all possible due to a very nice design of the single "logging record" - the LogRecord.</p>
 </div>
@@ -364,24 +375,6 @@ INFO: The sum is 45</code></pre>
 </div>
 <div class="paragraph">
 <p>From: <a href="https://bits.netbeans.org/dev/javadoc/org-openide-util/org/openide/util/doc-files/logging.html">Logging in NetBeans</a>.</p>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_apache_migration_information">Apache Migration Information</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>The content in this page was kindly donated by Oracle Corp. to the
-Apache Software Foundation.</p>
-</div>
-<div class="paragraph">
-<p>This page was exported from <a href="http://wiki.netbeans.org/DevFaqLogging">http://wiki.netbeans.org/DevFaqLogging</a> ,
-that was last modified by NetBeans user Cvdenzen
-on 2012-02-16T13:06:37Z.</p>
-</div>
-<div class="paragraph">
-<p><strong>NOTE:</strong> This document was automatically converted to the AsciiDoc format on 2018-02-07, and needs to be reviewed.</p>
 </div>
 </div>
 </div>
