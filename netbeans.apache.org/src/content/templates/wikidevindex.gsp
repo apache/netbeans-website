@@ -32,6 +32,7 @@
     <div class='grid-container main-content'>
       <h1 class="sect1">${content.title}</h1>
       <%include "templatesparts/wiki-devindexbread.gsp"%>
+      ${content.body}
       <%
 // order by wiki section on former wiki
 def sectionMap=['_getting_started':'Getting Started',
@@ -53,6 +54,7 @@ def sectionMap=['_getting_started':'Getting Started',
                 '_nodes_and_explorer':'Nodes and Explorer',
                 '_tasks_and_progressbar':'Tasks and Progressbar',
                 '_command_line_parsing':'Command Line Parsing',
+                '_threading':'Threading',
                 '_creating_a_custom_programming_language':'Creating a Custom Programming Language',
                 '_settings':'Settings',
                 '_window_system':'Window System',
@@ -98,9 +100,18 @@ for (asection in sectionMap) {
     for ( atag in tags ) {
         if ( atag.name=="devfaq") {
             for ( mydoc in atag.tagged_documents ) {
-                if ( mydoc.position!=null && mydoc.wikidevsection!=null && asection.key==mydoc.wikidevsection ) {
-                    sectionsubitm.put(mydoc.position.toInteger(),mydoc);
-                }
+                // wikidevsection and position may have space separated value length must match, by index mapping
+                if ( mydoc.position!=null && mydoc.wikidevsection!=null) { 
+                          String[] sections = mydoc.wikidevsection.split(" ");
+                          String[] positions = mydoc.position.split(" ");
+                          int i = 0;
+                          for (String section in sections) {
+                              if ( asection.key==section ) {
+                                  sectionsubitm.put(positions[i].toInteger(),mydoc);
+                              }
+                              i++;
+                          }
+                      }
             }
         }
     }
@@ -120,11 +131,7 @@ for (asection in sectionMap) {
     out.println('</div>');
 }
 
-      %>
-      <hr>
-       Manually edited
-      <hr>
-      ${content.body}
+      %>      
       <%include "templatesparts/tools.gsp"%>
     </div>
     <%include "templatesparts/footer.gsp"%>

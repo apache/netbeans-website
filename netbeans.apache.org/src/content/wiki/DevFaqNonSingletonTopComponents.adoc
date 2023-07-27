@@ -17,8 +17,8 @@
 //     under the License.
 //
 
-= DevFaqNonSingletonTopComponents
-:jbake-type: wiki
+= How can I change my TopComponent to not be a singleton (NB version up to 6.9)?
+:jbake-type: wikidev
 :jbake-tags: wiki, devfaq, needsreview
 :jbake-status: published
 :keywords: Apache NetBeans wiki DevFaqNonSingletonTopComponents
@@ -26,14 +26,14 @@
 :toc: left
 :toc-title:
 :syntax: true
+:wikidevsection: _window_system
+:position: 18
 include::../inc/database.adoc[]
 
 
-== How can I change my TopComponent to not be a singleton (NB version up to 6.9)?
-
 The "New Window Component" wizard in the NetBeans IDE generates a link:{wikipedia}Singleton_pattern[singleton] TopComponent.  That's fine for windows that there should only be one of.  Particularly if you are xref:DevFaqEditorTopComponent.adoc[creating some kind of editor], you will want to create multiple instances of your TopComponent.
 
-=== The really easy way
+== The really easy way
 
 If you have not already used the *New Window* template to create your TopComponent subclass, don't.
 
@@ -49,7 +49,7 @@ Instead, use _New > JPanel Form_.  Once the new JPanel is created, switch to the
 * `void writeProperties(Properties p)` - here we will call `p.put()` passing enough information to reconstruct your component on restart.  If we are editing a file, we might save the path to the file.  If we are viewing a URL, we might save the URL.  If we want to be particularly fastidious, we might save the scroll position, or what line the editor caret was on , or anything else useful to restore the state of our component.
 * `void readProperties(Properties p)` - here we will reading whatever keys we wrote out in `writeProperties` and (re)initializing the component to its pre-shutdown state.  This method will be called on startup to restore our component to its pre-shutdown state as best can be done.  If we were, say, editing a file that no longer exists, the appropriate thing to do is throw an exception.  
 
-=== If you already have a generated singleton TopComponent subclass
+== If you already have a generated singleton TopComponent subclass
 
 The good news is that you won't have to write any code -- you'll just have to delete some of the code that was generated for you.
 
@@ -88,7 +88,7 @@ Next we will need to delete the metadata that registers the component:
 * Look for an `<file>` registered in `Actions/Window`in the XML file.  It will be a `<file>` whose name is the munged fully-qualified class name of the `Action` you just deleted, e.g. `com-foo-MyWindowAction.instance`.  Delete the `<file>` entry for it
 * Look for `<file>` entry for a `.shadow` file in `Actions/Menu` in the XML, with its `originalFile` pointing to the file entry you just deleted.  Delete the `.shadow` `<file>` too.
 
-=== Creating And Opening Your TopComponents
+== Creating And Opening Your TopComponents
 
 Now that you have deleted the actions for your TopComponent, presumably they will be created some other way (for example, from a file's popup menu).  You can create new instances of your TopComponent, open them and give them focus as follows:
 
@@ -102,7 +102,7 @@ win.requestActive();
 
 If you wrote your persistence code correctly, your components will magically reopen on restart with no further work.
 
-=== What About PERSISTENCE_ALWAYS?
+== What About PERSISTENCE_ALWAYS?
 
 There is one other value you can return from `link:https://bits.netbeans.org/dev/javadoc/org-openide-windows/org/openide/windows/TopComponent.html#getPersistenceType()[TopComponent.getPersistenceType()]`.  That value is `TopComponent.PERSISTENCE_ALWAYS`.
 
@@ -119,12 +119,12 @@ While it is _legal_ to return this value from a non-singleton TopComponent, it i
 
 `PERSISTENCE_ALWAYS` is for singleton components that need to be remembered forever across restarts. Don't use it for non-singletons.
 
-=== If you do not have any persistence code, but your components are reopening on restart...
+== If you do not have any persistence code, but your components are reopening on restart...
 
 You are returning either `PERSISTENCE_ONLY_OPENED` or `PERSISTENCE_ALWAYS` from `getPersistenceType()`.  If there is no persistence code, but you _are_ returning one of these values, NetBeans will use plain old Java serialization to store and reload your component.
 
 Either use `PERSISTENCE_NEVER` or write persistence code as described above.  Serialization is slower and more fragile than proper persistence, and is never a good option for production code.
-
+////
 == Apache Migration Information
 
 The content in this page was kindly donated by Oracle Corp. to the
@@ -136,3 +136,4 @@ on 2012-09-18T10:54:57Z.
 
 
 *NOTE:* This document was automatically converted to the AsciiDoc format on 2018-02-07, and needs to be reviewed.
+////

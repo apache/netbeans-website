@@ -17,8 +17,8 @@
 //     under the License.
 //
 
-= DevFaqWhenToUseWhatRegistrationMethod
-:jbake-type: wiki
+= When do I use which registration method?
+:jbake-type: wikidev
 :jbake-tags: wiki, devfaq, needsreview
 :jbake-status: published
 :keywords: Apache NetBeans wiki DevFaqWhenToUseWhatRegistrationMethod
@@ -26,8 +26,9 @@
 :toc: left
 :toc-title:
 :syntax: true
+:wikidevsection: _when_there_are_multiple_ways_to_do_something
+:position: 2
 
-== When do I use which registration method?
 
 As described in xref:DevFaqModulesGeneral.adoc[DevFaqModulesGeneral], there are several different declarative registration mechanisms:
 
@@ -37,7 +38,7 @@ As described in xref:DevFaqModulesGeneral.adoc[DevFaqModulesGeneral], there are 
 
 If you are implementing some API from another module, that module should tell you what to do.  If it tells you something should be in the xref:DevFaqLookupDefault.adoc[default lookup], that means to use [link:https://bits.netbeans.org/dev/javadoc/org-openide-util-lookup/org/openide/util/lookup/ServiceProvider.html[http://bits.netbeans.org/dev/javadoc/org-openide-util-lookup/org/openide/util/lookup/ServiceProvider.html] `@ServiceProvider`] (see caveats in xref:DevFaqWaysToRegisterInDefaultLookup.adoc[DevFaqWaysToRegisterInDefaultLookup]).
 
-=== Deciding On A Registration Mechanism For Clients Of Your Module
+== Deciding On A Registration Mechanism For Clients Of Your Module
 
 If you are defining an xref:DevFaqApiSpi.adoc[SPI] in your module, and other modules will implement it and provide their own classes, provide a declarative (plain text, no code) way to register them.
 
@@ -67,7 +68,7 @@ Below are typical registration mechanisms and patterns, and when each is useful:
 |Define a single folder in the xref:DevFaqModulesLayerFile.adoc[system filesystem] where objects should be registered, and optionally a factory method which will create the object.  |<ol><li>Other modules are not really registering their own subclasses, they are registering files.  You want to read the files and create the objects in your code.</li><li>Other modules are registering objects;  however, there is useful metadata that can be used without ever creating the object.</li><li>Other modules are registering objects.  Creating those objects requires additional metadata which can be specified declaratively using xref:DevFaqFileAttributes.adoc[file attributes]</li></ol> |<ul><li>Define a static, public factory method which takes a `Map`.</li><li>Document that all registered files should list this factory method as their `instanceCreate` attribute (e.g. `<attr name=&quot;instanceCreate&quot; methodvalue=&quot;com.XClass.factoryMethod&quot; />`.</li><li>Find registered objects using `Lookups.forPath("path/to/my/folder")`).</li></ul>   |Examples for the cases defined under _When To Use It_: <ol><li>The `simple.project.templates` module defines a spec for using `.properties` files to list everything that should be created when the user wants a new project.  It does not need a special file type or object instances - it will read the file and make the object it needs.</li><li>The Services tab in the IDE allows objects to be registered, which are shown as nodes in its UI.  The icon and localized display name of these nodes can be declaratively specified as file attributes, so no classes need to be loaded until the first time the user selects one of these nodes.</li><li>As mentioned in 1., `simple.project.templates` defines a spec for describing a project template inside a regular `.properties` file.  The `javacard.project` module reads defines several template files. But ''it also needs to know what "flavor" of project (applet, web, library, etc.) each file defines, so that it will ask the user the right questions in the New Project Wizard.  It defines an additional file attribute to indicate what "flavor" of project a template represents.</li></ol> 
 |===
 
-=== Why Declarative Registration and Lazy Loading Is Important
+== Why Declarative Registration and Lazy Loading Is Important
 
 For best performance and scalability, avoid actually instantiating the objects other modules register until the first time your code needs to call them. Avoid programmatic registration mechanisms, and delay instantiating declaratively registered objects until they really need to be used. This is for several reasons:
 
@@ -115,6 +116,7 @@ MyNode=My Node
 
 This was a serious problem in older versions of the NetBeans IDE - for example, opening the Options dialog (which used to be a tree of Nodes and a property sheet - modules that had settings provided their own Node, and you changed settings by changing properties) - simply trying to paint it for the first time originally triggered loading, literally, thousands of classes from many different JAR files.
 
+////
 == Apache Migration Information
 
 The content in this page was kindly donated by Oracle Corp. to the
@@ -126,3 +128,4 @@ on 2010-06-14T22:27:08Z.
 
 
 *NOTE:* This document was automatically converted to the AsciiDoc format on 2018-02-07, and needs to be reviewed.
+////

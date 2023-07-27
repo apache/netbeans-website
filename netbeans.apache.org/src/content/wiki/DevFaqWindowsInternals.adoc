@@ -17,8 +17,8 @@
 //     under the License.
 //
 
-= DevFaqWindowsInternals
-:jbake-type: wiki
+= NetBeans Window System - what happens during startup
+:jbake-type: wikidev
 :jbake-tags: wiki, devfaq, needsreview
 :jbake-status: published
 :keywords: Apache NetBeans wiki DevFaqWindowsInternals
@@ -26,12 +26,12 @@
 :toc: left
 :toc-title:
 :syntax: true
-
-== NetBeans Window System - what happens during startup
+:wikidevsection: _window_system
+:position: 13
 
 Below is a blow-by-blow account of what actually goes on during NetBeans startup, put together by, well, reading the code.  It's here as much for the author's edification (if you read through it and document it, you understand it) as yours.
 
-=== The three and a half models model
+== The three and a half models model
 
 The NetBeans window system is extremely defensively coded - one of the main goals of rewriting it for 3.6 was robustness in the face of components that throw exceptions, do evil things to other components, and so forth.  The way the robustness of the current system is achieved is by very cleanly separating the model of how the UI should be, the model of how the UI actually is and the AWT component hierarchy, which is a model of sorts itself, but cannot be relied upon, because in an extensible application any component may do something evil.  On top of this is the persistence model.
 
@@ -50,7 +50,7 @@ Reading the source to the window system can be a little complicated, because the
 
 In its essence, though it's simple:  all changes in the window system simply mean synchronizing the two runtime models.  It's only the number of classes that requires that make it look complex.
 
-=== The Window System Startup Sequence
+== The Window System Startup Sequence
 
 Loading the window system is a distinct phase in NetBeans startup.  A set of model objects representing the window manager (data like SDI vs. MDI, frame size/location/state), its Modes (docking containers - bounds, contents), and references to `TopComponent`s by ID (not the components themselves, but unique String ids for them).
 
@@ -118,7 +118,7 @@ We're not done yet.
 
 We now have a singleton instance of `WindowManagerImpl`, with its model fully initialized from persisted data (or a semi-sane default if de-persisting failed).  It will be available from `WindowManager.getDefault();`
 
-=== Showing/creating the UI
+== Showing/creating the UI
 
 The next phase happens when setVisible(true) is called on the window system.  A thing to know here if you read the code is that all requests to do anything in the window system are funneled through one class called `Central` (yes, Central is the _God Object_ anti-pattern).  So pretty much any method that you look at in the model objects will call back through a method in Central, sometimes to itself, sometimes to some other object.
 
@@ -197,7 +197,7 @@ A:  The actual implementations of `ViewElement` (things that own `ViewEvent`s), 
 Q: Why are `TopComponents` treated so differently and what's this reference stuff in the de-persisting process?  
 
 A: In the pre-3.5 window system, a component could be open in more than one tabbed container at the same time.  What???  It is because of workspaces, which we got rid of.  A workspace was a switchable window system configuration or set of windows.  The interface is still there, but there is only ever one workspace in the post 3.5 winsys.  So any given Mode, for legacy reasons, is not sole owner of a `TopComponent`, it just has a handle for one.
-
+////
 == Apache Migration Information
 
 The content in this page was kindly donated by Oracle Corp. to the
@@ -209,3 +209,4 @@ on 2009-11-06T16:05:52Z.
 
 
 *NOTE:* This document was automatically converted to the AsciiDoc format on 2018-02-07, and needs to be reviewed.
+////
