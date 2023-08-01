@@ -20,6 +20,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
   <title type="html">Apache NetBeans</title>
   <subtitle type="html">Quickly and easily develop web, mobile and desktop applications with Java, JavaScript, HTML5, PHP, C/C++ and more. </subtitle>
+  <icon>https://netbeans.apache.org/favicon-32x32.png</icon>
   <id>https://netbeans.apache.org/blogs/atom</id>
   <link rel="self" type="application/atom+xml" href="https://netbeans.apache.org/blogs/atom" />
   <link rel="alternate" type="text/html" href="https://netbeans.apache.org/blogs/atom" />
@@ -29,7 +30,7 @@
    All published post, adoc file of :jbake-type: post will be on entry, need authors, date
   -->
   <entry>
-    <id>${post.noExtensionUri!post.uri}</id>
+    <id>${config.site_host}/${post.noExtensionUri!post.uri}</id>
     <title type="html"><#escape x as x?xml>${post.title}</#escape></title>
     <author><name>${post.author}</name></author>
     <link rel="alternate" type="text/html" href="${config.site_host}/${post.noExtensionUri!post.uri}"/>
