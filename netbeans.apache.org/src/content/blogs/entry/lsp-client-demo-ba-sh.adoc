@@ -1,0 +1,143 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= LSP Client demo - (ba)sh language server
+:author: Geertjan Wielenga 
+:revdate: 2019-08-17
+:jbake-type: post
+:jbake-tags: blogentry
+:jbake-status: published
+:keywords: NetBeans at Oracle Code One 2019
+:description: NetBeans at Oracle Code One 2019
+:toc: left
+:toc-title:
+:syntax: true
+
+
+
+Below is a scenario by Jan Lahoda, the creator of LSP integration for Apache NetBeans, for how to integrate the bash language server with Apache NetBeans, including syntax highlighting.
+
+
+== Setting Up
+
+. Install npm (and node.js). On Ubuntu, e.g., do "apt install npm", though something different will be needed on Mac OS X.
+. Create a directory in which we are going to work, have a terminal opened in that directory.
+. Install the bash-language-server:
++
+[source,console]
+----
+    npm install bash-language-server
+----
++
+On Mac OSX:
++
+[source,console]
+----
+    npm install bash-language-server --unsafe-perm
+----
++
+This will install the server into the current directory.
+. Try the bash server:
++
+[source,console]
+----
+    ./node_modules/bash-language-server/bin/main.js --help
+----
++
+You should see something like this:
++
+[source,console]
+----
+    Usage:
+      bash-language-server start
+      bash-language-server -h | --help
+      bash-language-server -v | --version
+----
+. Create a NetBeans module. Create a File Type (Module Development/File Type), mime type: text/sh, file extension: sh
+
+== Syntax Coloring via TextMate
+
+. Download the TextMate grammar file here, and put it alongside the newly created DataObject:
+  link:https://raw.githubusercontent.com/microsoft/vscode/master/extensions/shellscript/syntaxes/shell-unix-bash.tmLanguage.json[https://raw.githubusercontent.com/microsoft/vscode/master/extensions/shellscript/syntaxes/shell-unix-bash.tmLanguage.json]
+. Add "TextMate Lexer" as a dependency of the module.
+. Into the DataObject add this annotation:
++
+[source,java]
+----
+    @GrammarRegistration(grammar="shell-unix-bash.tmLanguage.json", mimeType="text/sh")
+----
++
+GrammarRegistration is:
++
+[source,java]
+----
+    import org.netbeans.modules.textmate.lexer.api.GrammarRegistration;
+----
+
+
+This should lead to syntax highlighted source for .sh bash files taken from the TextMate grammar file.
+
+== Language Support via the Language Server
+
+Next, we need to add language support using the language server.
+
+
+. Add "LSP Client" and "MIME Lookup API" as dependencies of the module.
+
+. Create a new class, ShellClient, in the module, put this into it, (replacing " " with the absolute path to "node_modules/bash-language-server"):
++
+[source,java]
+----
+    import java.io.IOException;
+    import org.netbeans.api.editor.mimelookup.MimeRegistration;
+    import org.netbeans.modules.lsp.client.spi.LanguageServerProvider;
+    import org.openide.util.Exceptions;
+    import org.openide.util.Lookup;
+
+    @MimeRegistration(mimeType="text/sh", service=LanguageServerProvider.class)
+    public class ShellClient implements LanguageServerProvider {
+
+       @Override
+       public LanguageServerDescription startServer(Lookup lkp) {
+           try {
+               Process p = new ProcessBuilder("/bin/main.js", "start").start();
+               return LanguageServerDescription.create(p.getInputStream(), p.getOutputStream(), p);
+           } catch (IOException ex) {
+               Exceptions.printStackTrace(ex);
+               return null;
+           }
+       }
+
+    }
+----
++
+You may need to explicitly call node in the above code, i.e., as follows:
++
+[source,java]
+----
+    Process p = new ProcessBuilder(
+            "/usr/local/bin/node", 
+            "/bin/main.js", 
+            "start").start();
+----
+. Build and start the module.
+
+
+
+Caveat: the language server is started only for files that are inside a project, so create (any) new project, and inside the project, put a shell file. E.g. copy "bin/netbeans" as "test.sh" into the project. Open it in the editor - there should be syntax highlighting, Navigator, and code completion should show something, etc.
