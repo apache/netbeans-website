@@ -1,0 +1,46 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= Why Does Apache NetBeans Need Its Own Parsers?
+:author: Geertjan Wielenga 
+:revdate: 2019-08-06
+:jbake-type: post
+:jbake-tags: blogentry
+:jbake-status: published
+:keywords: NetBeans at Oracle Code One 2019
+:description: NetBeans at Oracle Code One 2019
+:toc: left
+:toc-title:
+:syntax: true
+
+
+A question was asked on the link:https://lists.apache.org/thread/rdtcvc87pj1d8oj6qcwbm7bjkkr53m5s[Apache NetBeans mailing list]: "I was just curious about the theoretical aspect of parsing. Isn't there a unified parsing API, using ANTLR/lex/yacc which can parse any language given a grammar for it? Why do we use a different parsing implementation (like the Graal JS parser in this instance) when a unified approach will help us support lots of languages easily?"
+
+Tim Boudreau, involved in NetBeans from its earliest hours, responds, in the thread linked above:
+
+[quote,Tim]
+____
+First, in an IDE, you are *never* just "parsing". You are doing *a lot* with the results of the parse. An IDE doesn't have to just parse one file; it must also understand the context of the project that file lives in; how it relates to other files and those files interdependencies; multiple versions of languages; and the fact that the results of a parse do not map cleanly to a bunch of stuff an IDE would show you that would be useful. For example, say the caret is in a java method, and you want to find all other methods that call the one you're in and show the user a list of them. The amount of work that has to happen to answer that question is very, very large. To do that quickly enough to be useful, you need to do it ahead of time and have a bunch of indexing and caching software behind the scenes (all of which must be adapted to whatever the parser provides) so you can look it up when you need it. In short, a parser is kind of like a toilet seat by itself. You don't want to use it without a whole lot of plumbing attached to it.
+
+Second, while there are tools like ANTLR (version 4 of which is awesome, by the way), there is still a lot of code you have to write to interact with the results of a parse to do something useful beyond syntax coloring in an IDE. One of my side projects is tooling for NetBeans that *do* let you take an ANTLR grammar and auto generate a lot of the features a language plugin should have. Even with that almost completely declarative, you wind up needing a lot of code. One of the languages I'm testing it with is a simple language called YASL which lets you define javascript-like schemas with validation constraints (e.g., this field is a string, but it must be at least 7 characters and match this pattern; this is an integer number but it must be > 1 and less than 1000 - that sort of thing). All the parsing goodness in the world won't write hints that notice that, say, the maximum is less than the minimum in an integer constraint and offer to swap them. Someone has to write that by hand.
+
+Third, in an IDE with a 20 year history, a lot of parser generating technologies have come and gone - javacc, javacup, ANTLR, and good old hand-written lexers and parsers. Unifying them all would be an enormous amount of work, would break a lot of code that works just fine, and the end result would be - stuff we've already got, that already works, just with one-parser-generator-to-rule-them-all underneath. Other than prettiness, I don't know what problem that solves.
+
+So, all of this is to say: We use different parsing implementations because parsing is just a tiny piece of supporting a language, so it wouldn't make the hard parts easier enough to be worth it. And there will be new cool parser-generating technologies that come along, and it's good to be able to use them, rather than be married to one-parser-generator-to-rule-them-all and have this conversation again, when they come along.
+____
