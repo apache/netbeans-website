@@ -1,0 +1,96 @@
+// 
+//     Licensed to the Apache Software Foundation (ASF) under one
+//     or more contributor license agreements.  See the NOTICE file
+//     distributed with this work for additional information
+//     regarding copyright ownership.  The ASF licenses this file
+//     to you under the Apache License, Version 2.0 (the
+//     "License"); you may not use this file except in compliance
+//     with the License.  You may obtain a copy of the License at
+// 
+//       http://www.apache.org/licenses/LICENSE-2.0
+// 
+//     Unless required by applicable law or agreed to in writing,
+//     software distributed under the License is distributed on an
+//     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+//     KIND, either express or implied.  See the License for the
+//     specific language governing permissions and limitations
+//     under the License.
+//
+
+= Junit 5, Apache Ant, and Apache NetBeans
+:author: Geertjan Wielenga
+:revdate: 2019-01-27
+:jbake-type: post
+:jbake-tags: blogentry
+:jbake-status: published
+:keywords: Apache NetBeans blog index
+:description: Apache NetBeans blog index
+:toc: left
+:toc-title:
+:syntax: true
+:imagesdir: https://netbeans.apache.org
+
+
+
+Junit 5 is, architecturally, so different to previous versions, that it should really be called Jupiter, instead. 
+However, this is not a problem when you're using Maven, since Maven resolves all transitive dependencies for you, 
+and is link:https://github.com/apache/incubator-netbeans/pull/892[supported in that way from Apache NetBeans 10 onwards]. 
+Not so with Apache Ant, of course, where you need to set each and every JAR you need on a classpath of one form or another.
+
+That is not a pretty picture in the end, when compared to JUnit 4, where you had just that JAR, plus Hamcrest. 
+With JUnit 5, you need, in addition to `junit-jupiter-api`, `junit-jupiter-params`, and `junit-jupiter-engine`, 
+to also declare the transitive dependency `apiguardian-api`, while in the case of Apache Ant, you need to deal with the `link:https://ant.apache.org/manual/Tasks/junitlauncher.html[JUnitLauncher]`, 
+if you want to make use of the new `junitlauncher` Ant task, in addition to four other JARs, which need to be on Ant's classpath, 
+link:https://ant.apache.org/manual/Tasks/junitlauncher.html[as explained here].
+
+An alternative approach is to use `org.junit.platform.console.ConsoleLauncher`, link:https://junit.org/junit5/docs/current/user-guide/#running-tests-console-launcher[as shown here],
+which looks like this in my `build.xml`, i.e., it is named `test`, so that it will run automatically 
+at the end of the test run when the Test Project action is invoked:
+
+[source,xml]
+----
+<target name="test" depends="compile-test,-pre-test-run">
+    <java dir="${work.dir}" 
+          classpath="${run.test.classpath}"  
+          classname="org.junit.platform.console.ConsoleLauncher">
+        <arg value="--scan-classpath"/>
+        <arg line="--reports-dir build/test/results"/>
+    </java>
+    <junitreport todir="build/test/results">
+        <fileset dir="build/test/results">
+            <include name="TEST-*.xml"/>
+        </fileset>
+        <report format="frames" todir="build/test/results/html"/>
+    </junitreport>
+</target>
+----
+
+The above means that the `JUnit` tasks set by default in the `build-impl.xml` file will simply fail silently, 
+since I don't have JUnit 4 on my classpath. At the end of the process, the above will be run, `org.junit.platform.console.ConsoleLauncher` 
+will be found on my classpath, and then the JUnit 5 tests will be run.
+
+What is the advantage of the above over using `link:https://ant.apache.org/manual/Tasks/junitlauncher.html[JUnitLauncher]`? Well, `JUnitLauncher` has requirements relating to Ant's path, 
+which has advantages too, of course, i.e., simply set everything up once (which can also be done inside Apache NetBeans, 
+in the Ant tab in the Options window). But, for right now, I'd prefer to work with just one path, i.e., the application's path.
+
+image::blogs/entry/junit5.png[]
+
+
+Another downside is that, so far, the above solution doesn't integrate with the Test Results window, 
+though it does produce some nice reports via the `junitreport` task above, in the `build` folder.
+
+The key problem seems to me to be that the `JUnit` Ant task no longer exists in JUnit 5, 
+which was for Ant-based projects the basis of the integration with the Test Results window in Apache NetBeans. 
+If the `JUnit` task could continue to be used, in whatever way, that would solve a lot of the problems, though the question 
+of the many JARs needed on the classpath would remain. Maybe library providers should reach out to tools providers when
+putting these kinds of new solutions together, since the only reason that JUnit 5 now works with Maven in Apache NetBeans 
+is that Surefire is used, i.e., in the case of Maven the completely new approach JUnit has taken can simply be avoided there. 
+link:https://github.com/apache/incubator-netbeans/pull/892#issuecomment-423243085[Here is some relevant discussion] in Apache NetBeans GitHub, 
+and the link:https://junit.org/junit5/docs/current/user-guide/#launcher-api[Launcher API looks interesting].
+
+Probably the best solution for Ant users in Apache NetBeans would be to be able to continue to use JUnit 4, 
+rather than JUnit 5, since the latter is a total nightmare to set up in the context of Ant, as described above. 
+In the world of JUnit, "vintage" is the cool name they have for "legacy", and if you're using Ant at all, you're probably 
+best described as "vintage" and hence only having support for JUnit 4 is not a big deal for you. 
+However, not sure at all how that would work, we'd need to investigate how/if when JUnit tests are added to Maven projects, 
+JUnit 5 tests and dependencies would be set, while when adding JUnit tests to Ant projects JUnit 4 tests and dependencies would be set.
