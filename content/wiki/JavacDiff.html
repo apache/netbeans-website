@@ -6,11 +6,11 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
-    <title>[PHP] Conditional breakpoints and new Twig features</title>
+    <title>JavacDiff</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Apache NetBeans blog index">
+    <meta name="description" content="Quick Links to Turorials and Docs">
     <meta name="author" content="Apache NetBeans">
-    <meta name="keywords" content="Apache NetBeans blog index">
+    <meta name="keywords" content="null">
     <meta name="generator" content="Apache NetBeans">
     <link rel="stylesheet" href="/css/font-awesome.min.css">
     <link rel="alternate" type="application/atom+xml" title="Apache NetBeans Blog" href="https://netbeans.apache.org/blogs/atom" />
@@ -79,182 +79,235 @@
 </section>
 
     <div class='grid-container main-content'>
-      <h1 class="sect1">[PHP] Conditional breakpoints and new Twig features</h1>
-      <div class="blogdate">Thursday August 30, 2018</div>
+      
+<div class='aside' style='text-align: center; padding: 20px;'>
+    <a href="/wiki/index.html" title="Apache NetBeans WIKI">Apache NetBeans Wiki Index</a>
+    <p><b>Note:</b> These pages are being reviewed.</p>
+</div>
+
       <div id="toc" class="toc">
 <div id="toctitle"></div>
 <ul class="sectlevel1">
-<li><a href="#_debugger_conditional_breakpoints">Debugger: Conditional breakpoints</a>
-<ul class="sectlevel2">
-<li><a href="#_step_1_enable_a_breakpoint">Step 1: Enable a breakpoint</a></li>
-<li><a href="#_step_2_show_the_breakpoint_properties_dialog">Step 2: Show the Breakpoint Properties dialog</a></li>
-<li><a href="#_step_3_input_a_condition">Step 3: Input a condition</a></li>
-<li><a href="#_step_4_run_debug_project">Step 4: Run Debug Project</a></li>
+<li><a href="#_recompleting_symbols_from_sources">Recompleting Symbols from Sources</a></li>
+<li><a href="#_stable_annonymous_innerclass_numbers">Stable annonymous innerclass numbers</a></li>
+<li><a href="#_error_recovery">Error Recovery</a></li>
+<li><a href="#_cancellability">Cancellability</a></li>
+<li><a href="#_inferring_binary_names">Inferring Binary Names</a></li>
+<li><a href="#_support_for_reparsing_method_bodies">Support for Reparsing Method Bodies</a></li>
+<li><a href="#_repair">Repair</a></li>
+<li><a href="#_annotation_processing">Annotation Processing</a></li>
+<li><a href="#_ide_mode">Ide Mode</a></li>
+<li><a href="#_miscallenous">Miscallenous</a></li>
 </ul>
+</div>
+<div class="sect1">
+<h2 id="_recompleting_symbols_from_sources">Recompleting Symbols from Sources</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Consider the following usecase: let there be two classes, A and B available both in source code and (up-to-date) class files.
+These classes are interdependent (each refers to the other).
+Let there be a refactoring, that needs to work over both these files.
+The refactoring needs Trees (to access method bodies, to get offsets, etc), and these trees need to be attributed.</p>
+</div>
+<div class="paragraph">
+<p>There are the following ways for the refactoring to work:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>parse the source codes in two instances of javac (each time completing the other one from the class files). This does not require much memory (only needs memory to parse one file), but is quite slow.</p>
 </li>
-<li><a href="#_twig_code_completion_for_delimiters_brackets_and_quotes">Twig: Code completion for delimiters, brackets, and quotes</a></li>
-<li><a href="#_twig_palette_support">Twig: Palette support</a></li>
+<li>
+<p>create one instance of javac and parse both files in that instance - fast, but requires a memory to parse both/all the files, which is not reasonable in the IDE.</p>
+</li>
+<li>
+<p>create an instance of javac, parse A from sources, complete B from the classfile. After processing of file A is done, check the available memory and either parse the source code for B in the same instance of javac (if there is enough memory), or discard the old javac and create a new one for B. This allows to use the available memory to speed up the refactoring, but allows to perform it (slowly) in memory required to process one file. Unfortunately, the standard javac does not allow to recomplete a Symbol from sources (i.e. the Symbol was originally created from a class file and now we parse and attribute a file containing the same Symbol).</p>
+</li>
 </ul>
 </div>
-<div id="preamble">
-<div class="sectionbody">
 <div class="paragraph">
-<p>Hi all. Today, we will show you some new features which will be available in the <strong>next NetBeans version</strong>, maybe
-(NetBeans 10? NOTE: we cannot promise anything about release contents at the moment).</p>
+<p>Recompleting of Symbols is also used:</p>
 </div>
-<div class="paragraph">
-<p>First of all, if you would like to try new features, please build NetBeans yourself.</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code data-lang="console">git clone git@github.com:apache/incubator-netbeans.git
-cd incubator-netbeans
-ant -Dcluster.config=full
-(or ant -Dcluster.config=php)</code></pre>
-</div>
+<div class="ulist">
+<ul>
+<li>
+<p>when an API client asks for Tree for Symbol that was loaded from classfiles</p>
+</li>
+<li>
+<p>when Symbol originates from classfile without parameter names (debugging information), and parameter names are required. Source is parsed to fill in the parameter names.</p>
+</li>
+</ul>
 </div>
 <div class="paragraph">
-<p>You can find the start-up files in the nbbuild/netbeans/bin directory if the build succeeds. So please run it.</p>
+<p>The ability to recomplete a Symbol from source file is one of the most important part of the NetBeans fork/patch.</p>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_debugger_conditional_breakpoints">Debugger: Conditional breakpoints</h2>
+<h2 id="_stable_annonymous_innerclass_numbers">Stable annonymous innerclass numbers</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>You can stop the debugger if the context matches your condition.
-i.e. If the condition is true, the debugger stops on the breakpoint, otherwise, it does not stop there.</p>
-</div>
-<div class="paragraph">
-<p>I assume that you have already done the settings for debugging. (please see: <a href="../../wiki/HowToConfigureXDebug.html">HowToConfigureXDebug</a>)
-If xdebug doesn&#8217;t work, please ask someone via <a href="../../community/mailing-lists.html">Apache NetBeans mailing lists</a>. (Please don&#8217;t ask here.)</p>
-</div>
-<div class="paragraph">
-<p>Just in my case(Ubuntu 18.04):</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code data-lang="console">sudo apt install php-xdebug
-sudo vim /etc/php/7.2/mods-available/xdebug.ini
-
-# Change to the following
-zend_extension=xdebug.so
-xdebug.remote_enable=1
-xdebug.remote_autostart=1
-xdebug.idekey="netbeans-xdebug"</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Let&#8217;s try running with a sample code(index.php):</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code data-lang="php">&lt;!DOCTYPE html&gt;
-&lt;html&gt;
-&lt;head&gt;
-&lt;meta charset="UTF-8"&gt;
-&lt;title&gt;&lt;/title&gt;
-&lt;/head&gt;
-&lt;body&gt;
-&lt;?php
-    $array = ["foo", "bar", "baz", "qux"];
-    foreach ($array as $value) {
-        echo $value;
-    }
-?&gt;
-&lt;/body&gt;
-&lt;/html&gt;</code></pre>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_step_1_enable_a_breakpoint">Step 1: Enable a breakpoint</h3>
-<div class="paragraph">
-<p>You can enable it when you click a line number.</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="https://netbeans.apache.org/blogs/entry/php-conditional-breakpoints-and-new1.png" alt="php conditional breakpoints and new1">
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_step_2_show_the_breakpoint_properties_dialog">Step 2: Show the Breakpoint Properties dialog</h3>
-<div class="paragraph">
-<p>To show it, please right-click the breakpoint, then please click <span class="menuseq"><b class="menu">Breakpoint</b>&#160;<b class="caret">&#8250;</b> <b class="menuitem">Properties</b></span>.</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="https://netbeans.apache.org/blogs/entry/php-conditional-breakpoints-and-new2.png" alt="php conditional breakpoints and new2">
-</div>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="https://netbeans.apache.org/blogs/entry/php-conditional-breakpoints-and-new3.png" alt="php conditional breakpoints and new3">
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_step_3_input_a_condition">Step 3: Input a condition</h3>
-<div class="paragraph">
-<p>Please check "Condition" and input your condition to the combo box, then click the OK button.</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="https://netbeans.apache.org/blogs/entry/php-conditional-breakpoints-and-new4.png" alt="php conditional breakpoints and new4">
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_step_4_run_debug_project">Step 4: Run Debug Project</h3>
-<div class="paragraph">
-<p>Please click Debug &gt; Debug Project or the icon on the toolbar.</p>
-</div>
-<div class="paragraph">
-<p>In this case, the debugger stops on the breakpont if $value is "baz".</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="https://netbeans.apache.org/blogs/entry/php-conditional-breakpoints-and-new5.gif" alt="php conditional breakpoints and new5">
-</div>
-</div>
+<p>When a Scope is created, the corresponding Tree is duplicated and attributed. This may lead into incorrect Symbols created for anonymous innerclasses.
+It is necessary to ensure that the anonymous innerclass numbers will match the numbers that would be produced by a batch compiler.
+This needs to be ensured even in case when the Scope is created before the tree is attributed.</p>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_twig_code_completion_for_delimiters_brackets_and_quotes">Twig: Code completion for delimiters, brackets, and quotes</h2>
+<h2 id="_error_recovery">Error Recovery</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Twig editor supports code completion for delimeters( and ), brackets([, (, and {), and quotes(" and ').
-This feature is enabled by default.
-If you would like to disable, please uncheck the options (<span class="menuseq"><b class="menu">Tools</b>&#160;<b class="caret">&#8250;</b> <b class="submenu">Options</b>&#160;<b class="caret">&#8250;</b> <b class="submenu">Editor</b>&#160;<b class="caret">&#8250;</b> <b class="submenu">Code Completion</b>&#160;<b class="caret">&#8250;</b> <b class="menuitem">Language: Twig File</b></span>).</p>
+<p>While editing, the code in the editor contains compilation errors almost all the time. It is therefore unacceptable to loose e.g. code completion only because of a missing semicolon, or because of an (unrelated) unresolvable symbol.</p>
 </div>
-<div class="imageblock">
-<div class="content">
-<img src="https://netbeans.apache.org/blogs/entry/php-conditional-breakpoints-and-new6.png" alt="php conditional breakpoints and new6">
+<div class="paragraph">
+<p>The list of current changes includes (not an exhaustive list):</p>
 </div>
+<div class="ulist">
+<ul>
+<li>
+<p>JavacParser:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>a variable declaration tree is produced even for cases where variable declaration is not allowed, e.g. in then/else section of if. The tree is wrapped in an erroneous tree and an error is reported. Trees produced before this change were too confusing for some hints (NB bug #192561). Relates to parseStatement and parseBlockStatement(s).</p>
+</li>
+<li>
+<p>parseCompilationUnit is modified to handle multiple package clauses</p>
+</li>
+</ul>
 </div>
-<div class="imageblock">
-<div class="content">
-<img src="https://netbeans.apache.org/blogs/entry/php-conditional-breakpoints-and-new7.gif" alt="php conditional breakpoints and new7">
+</li>
+<li>
+<p>Attr:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>in "return &lt;expr&gt;" &lt;expr&gt; is always attributed, even for initializers and methods with return type void</p>
+</li>
+<li>
+<p>the last-resort symbol filler PostAttrAnalyzer is modified to dive into erroneous trees (NB bug #152334)</p>
+</li>
+</ul>
 </div>
+</li>
+<li>
+<p>Annotate:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>modified to always attribute the annotation&#8217;s attribute&#8217;s values, even if the annotation itself is unresolvable (i.e. "@Undefined(@Another)" will attribute also @Another).</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_twig_palette_support">Twig: Palette support</h2>
+<h2 id="_cancellability">Cancellability</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>You can show the palette window. Please click <span class="menuseq"><b class="menu">Window</b>&#160;<b class="caret">&#8250;</b> <b class="submenu">IDE Tools</b>&#160;<b class="caret">&#8250;</b> <b class="menuitem">Palette</b></span>.</p>
+<p>NetBeans need to be able to stop javac processing even inside one phase (parse/member enter/attribute).
+This is used e.g. when the user types into the editor, and the current instance of javac is already processing an obsolette source code.
+Then, there is no point in wasting time and memory in continuing the processing of the file.</p>
 </div>
-<div class="imageblock">
-<div class="content">
-<img src="https://netbeans.apache.org/blogs/entry/php-conditional-breakpoints-and-new8.png" alt="php conditional breakpoints and new8">
 </div>
+</div>
+<div class="sect1">
+<h2 id="_inferring_binary_names">Inferring Binary Names</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Consider file A.java, containing classes B and C, and file D.java, referencing B and C. If file D.java is being parsed (and class file for B and C do not exist yet), the javac is currently unable to locate file A.java. Yet, the IDE may have the information about the content of the A.java file. So, the problem is how to pass this information into the javac. ClassNamesForFileOraculum is currently used for this.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_support_for_reparsing_method_bodies">Support for Reparsing Method Bodies</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>If the user changes are contained only inside one method body, it is desirable to reparse only the body of the one method.
+This leads into faster reparse times and less garbage on the heap. The NetBeans' fork/patch contains support for reparsing methods bodies.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_repair">Repair</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>In the NetBeans' fork/patch, there is a new phase, Repair, running after Flow. For source code with compilation errors, this phase converts the "uncompilable" trees into "compilable" trees.</p>
 </div>
 <div class="paragraph">
-<p>That&#8217;s all for today. As always, please test it.
-If you find some issues or enhancements, please report them to JIRA
-(Components: php - Debugger, php - Twig). Thanks.</p>
+<p>New attributes are added to the classfiles to keep:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>error types (stripped from the trees during repair to obtain valid trees)</p>
+</li>
+<li>
+<p>parameters names, without depending on debug information</p>
+</li>
+<li>
+<p>annotations with RetentionPolicy.SOURCE</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_annotation_processing">Annotation Processing</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>In vanilla javac, new Symbols are created for classes/methods/fields in the sources for each annotation processing round. This is rewritten in the NetBeans' fork/patch to use the symbol recompleting. Symbols, once created, are used in all rounds on annotation processing and also for the final compilation. Annotation processing is also supported when completing symbols from sources. Exceptions thrown by annotation processors are logged, but do not stop the compilation.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_ide_mode">Ide Mode</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>A special option, "ideMode", has been introduced by the NetBean&#8217;s fork/patch to improve javac behavior in the following cases:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>when there is no java.lang package (i.e. no platform), vanilla javac stops with an error. In IDE mode, the compiler handles the situation more gracefully. - !May not be needed anymore.</p>
+</li>
+<li>
+<p>when loading 1.5+ classfile with sourcelevel &#8656;1.4, vanilla javac throws away any 1.5 information stored in the classfile. In IDE mode, this information is preserved.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_miscallenous">Miscallenous</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>small extensions to allow parsing and attributing a "standalone" statement, expression, etc. in the given context.</p>
+</li>
+<li>
+<p>small extensions to JavacTaskImpl to allow per-file per-phase parsing of multiple sources in the same instance of javac</p>
+</li>
+<li>
+<p>access restrictions loosened for a lot methods/classes (private&#8594;protected, etc.)</p>
+</li>
+<li>
+<p>inlineTags cache for ParamTagImpl and ThrowsTagImpl</p>
+</li>
+<li>
+<p>string folding is disabled (by "disableStringFolding" option) to so that concatenated strings are represented by full trees</p>
+</li>
+<li>
+<p>ToolProvider loads classes from context classloader</p>
+</li>
+<li>
+<p>TreeInfo.symbolFor works all trees that refer to a symbol</p>
+</li>
+</ul>
 </div>
 </div>
 </div>
@@ -271,7 +324,7 @@ If you find some issues or enhancements, please report them to JIRA
     </ul>
     <ul class="menu align-center">
         
-        <li><a href="https://github.com/apache/netbeans-website/blob/master/netbeans.apache.org/src/content/blogs/entry/php-conditional-breakpoints-and-new.adoc" title="See this page in github"><i class="fa fa-md fa-edit"></i> See this page in GitHub.</a></li>
+        <li><a href="https://github.com/apache/netbeans-website/blob/master/netbeans.apache.org/src/content/wiki/JavacDiff.adoc" title="See this page in github"><i class="fa fa-md fa-edit"></i> See this page in GitHub.</a></li>
     </ul>
 </section>
 

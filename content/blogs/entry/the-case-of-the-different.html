@@ -6,11 +6,11 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
-    <title>[ANNOUNCE] Apache NetBeans (incubating) 9.0 Beta released</title>
+    <title>The case of the different jsch 0.1.54 binaries</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Apache NetBeans 18 release">
+    <meta name="description" content="Apache NetBeans blog index">
     <meta name="author" content="Apache NetBeans">
-    <meta name="keywords" content="Apache NetBeans 18 release">
+    <meta name="keywords" content="Apache NetBeans blog index">
     <meta name="generator" content="Apache NetBeans">
     <link rel="stylesheet" href="/css/font-awesome.min.css">
     <link rel="alternate" type="application/atom+xml" title="Apache NetBeans Blog" href="https://netbeans.apache.org/blogs/atom" />
@@ -79,43 +79,59 @@
 </section>
 
     <div class='grid-container main-content'>
-      <h1 class="sect1">[ANNOUNCE] Apache NetBeans (incubating) 9.0 Beta released</h1>
-      <div class="blogdate">Friday February 16, 2018</div>
+      <h1 class="sect1">The case of the different jsch 0.1.54 binaries</h1>
+      <div class="blogdate">Wednesday October 04, 2017</div>
       <div class="paragraph">
-<p>The Apache NetBeans team is proud to announce the release of Apache NetBeans (incubating) 9.0 Beta.</p>
+<p>As part of the Apache NetBeans IP clearance we are combing through all the code and dependencies.</p>
 </div>
 <div class="paragraph">
-<p>Apache NetBeans 9.0 Beta (incubating) constitutes all the modules in the Apache NetBeans Git repo, which together provide the NetBeans Platform (i.e., the underlying application framework), which was released as Apache NetBeans 9.0 Alpha (incubating), as well as all the modules that provide the Java SE-related features of Apache NetBeans. In short, Apache NetBeans 9.0 Beta (incubating) is a full IDE for Java SE development.</p>
+<p>One interesting thing we bumped into was that the jsch 0.1.54 binary JAR we are using has a different hash (and size)
+than the binary JAR from Maven Central.</p>
 </div>
 <div class="paragraph">
-<p>See the below for the donation status of features that have not been donated to Apache yet, e.g., features for working with Java EE, JavaScript, PHP, C/C++, and more:</p>
+<p>The old hash is 0D7D8ABA0D11E8CD2F775F47CD3A6CFBF2837DA4, the new one is DA3584329A263616E277E15462B387ADDD1B208D.</p>
 </div>
 <div class="paragraph">
-<p><a href="https://cwiki.apache.org/confluence/display/NETBEANS/Apache+Transition">https://cwiki.apache.org/confluence/display/NETBEANS/Apache+Transition</a></p>
+<p>The binaries are 278,612 bytes vs 280,515 bytes in Maven Central.</p>
 </div>
 <div class="paragraph">
-<p>Note: Apache NetBeans (incubating) 9.0 Beta is primarily focused on IP clearance. Its functionality has not been tested&#8201;&#8212;&#8201;the NetCAT (NetBeans Community Acceptance Testing) process will begin now that Apache NetBeans (incubating) 9.0 Beta has been released. Watch this space for upcoming announcements about NetCAT. When NetCAT completes, we will vote on the final release of Apache NetBeans (incubating) 9.0.</p>
+<p>Our version is actually the same as the one found on <a href="http://www.jcraft.com/jsch/">http://www.jcraft.com/jsch/</a></p>
 </div>
 <div class="paragraph">
-<p>Details on Apache NetBeans (incubating) 9.0 Beta:</p>
+<p>Also, the Maven JAR is properly signed with the author&#8217;s CA7FA1F0 key.</p>
 </div>
 <div class="paragraph">
-<p><a href="https://cwiki.apache.org/confluence/display/NETBEANS/Apache+NetBeans+9.0+Beta">https://cwiki.apache.org/confluence/display/NETBEANS/Apache+NetBeans+9.0+Beta</a></p>
+<p>This is where it becomes clear that <a href="https://reproducible-builds.org/">reproducible builds</a> are important.
+You do not want to have to wonder why a binary differs, especially years later when you are doing a review. And this one is a library doing SSH!</p>
 </div>
 <div class="paragraph">
-<p>Download not available</p>
+<p>So, why the different binaries?</p>
 </div>
 <div class="paragraph">
-<p>Work is being done on bringing netbeans.org to Apache. In the meantime, refer to the below for all details related to Apache NetBeans:</p>
+<p>It seems the original JAR was compiled on Aug 30, 2016 with Java 1.4 (major version 48) while the Maven Central JAR was compiled
+Sep 3, 2016 with Java 5 (major version 49).</p>
 </div>
 <div class="paragraph">
-<p><a href="https://cwiki.apache.org/confluence/display/NETBEANS">https://cwiki.apache.org/confluence/display/NETBEANS</a></p>
+<p>The original JAR also concatenates strings using <code>StringBuffer</code> while the Maven Central JAR uses the newly introduced in 1.5 <code>StringBuilder</code>.
+Which should also be a bit faster since it&#8217;s not synchronized.</p>
 </div>
 <div class="paragraph">
-<p>On behalf of the Apache NetBeans PPMC</p>
+<p>Next, most of the cypher classes use some reflection via a <code>static java.lang.Class class$(java.lang.String)</code> method.</p>
 </div>
 <div class="paragraph">
-<p>Geertjan</p>
+<p>What is this? It&#8217;s just the way class literals worked in Java 1.4. //As explained here,
+In Java 5 the <code>ldc_w</code> instruction was introduced to load a <code>Class</code> object.</p>
+</div>
+<div class="paragraph">
+<p>In 1.4 the class literal was helped by the compiler by actually introducing the helper <code>Class class$(java.lang.String className)</code> method
+and replacing the <code>Person.class</code> with a <code>class$("Person")</code> call.</p>
+</div>
+<div class="paragraph">
+<p>It conclusion, it seems that excluding the Java 1.4 to Java 5 compiler changes, the two JARs are identical.
+With the Maven Central JAR even a bit better due to <code>StringBuilder</code> being used.</p>
+</div>
+<div class="paragraph">
+<p>There is no check so far that the sources do produce the specific JAR. This is an exercise left for the reader.</p>
 </div>
       
 <section class='tools'>
@@ -130,7 +146,7 @@
     </ul>
     <ul class="menu align-center">
         
-        <li><a href="https://github.com/apache/netbeans-website/blob/master/netbeans.apache.org/src/content/blogs/entry/announce-apache-netbeans-incubating-9.adoc" title="See this page in github"><i class="fa fa-md fa-edit"></i> See this page in GitHub.</a></li>
+        <li><a href="https://github.com/apache/netbeans-website/blob/master/netbeans.apache.org/src/content/blogs/entry/the-case-of-the-different.adoc" title="See this page in github"><i class="fa fa-md fa-edit"></i> See this page in GitHub.</a></li>
     </ul>
 </section>
 
