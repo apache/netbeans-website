@@ -23,8 +23,8 @@
     <div class='grid-container'>
         <div class='cell'>
             <div class="annotation">Latest release</div>
-            <h1>Apache NetBeans 18</h1>
-            <p><a class="button success" href="/download/nb18/">Download</a></p>
+            <h1>Apache NetBeans 19</h1>
+            <p><a class="button success" href="/download/nb19/">Download</a></p>
         </div>
     </div>
 </section>
