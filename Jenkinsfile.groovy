@@ -90,7 +90,7 @@ pipeline {
                     sh 'chmod u+x ./gradlew'
                     sh './gradlew --version'
                     sh './gradlew --stop'
-                    sh './gradlew --no-daemon --stacktrace clean buildSite'
+                    sh './gradlew --no-daemon --stacktrace --debug clean buildSite'
                 }
             }
         }
