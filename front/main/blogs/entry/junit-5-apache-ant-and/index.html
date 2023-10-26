@@ -1,0 +1,259 @@
+<!doctype html>
+<html class="no-js" lang="en" dir="ltr">
+    <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>Junit 5, Apache Ant, and Apache NetBeans</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Apache NetBeans blog index">
+    <meta name="author" content="Apache NetBeans">
+    <meta name="keywords" content="Apache NetBeans blog index">
+    <meta name="generator" content="Apache NetBeans">
+    <link rel="stylesheet" href="../../../../../_/css/font-awesome.min.css">
+    <link rel="alternate" type="application/atom+xml" title="Apache NetBeans Blog" href="https://netbeans.apache.org/blogs/atom" />
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/styles/default.min.css">
+    <link rel="stylesheet" href="../../../../../_/css/netbeans.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="../../../../../_/images/fav/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../../../../../_/images/fav/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../../../../_/images/fav/favicon-16x16.png">
+    <link rel="manifest" href="../../../../../_/images/fav/site.webmanifest">
+    <link rel="mask-icon" href="../../../../../_/images/fav/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#ffc40d">
+    <meta name="theme-color" content="#ffffff">
+    <link href="../../../../../_/css/font-open-sans.css" rel="stylesheet">
+    <!--
+        Licensed to the Apache Software Foundation (ASF) under one
+        or more contributor license agreements.  See the NOTICE file
+        distributed with this work for additional information
+        regarding copyright ownership.  The ASF licenses this file
+        to you under the Apache License, Version 2.0 (the
+        "License"); you may not use this file except in compliance
+        with the License.  You may obtain a copy of the License at
+        http://www.apache.org/licenses/LICENSE-2.0
+        Unless required by applicable law or agreed to in writing,
+        software distributed under the License is distributed on an
+        "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+        KIND, either express or implied.  See the License for the
+        specific language governing permissions and limitations
+        under the License.
+    -->
+  </head>
+  <body>
+    <div class="title-bar" data-responsive-toggle="responsive-menu" data-hide-for="medium">
+    <button type="button" data-toggle="responsive-menu"><i style='font-size: 32px; color: #fff; padding: 8px' class='fa fa-bars'></i></button>
+    <div class="title-bar-title">Apache NetBeans</div>
+</div>
+<div class="top-bar" id="responsive-menu">
+    <div class='top-bar-left'>
+        <a class='title' href="../../../../../index.html"><img src='../../../../../_/images/apache-netbeans.svg' style='padding: 8px; height: 48px;'></img> Apache NetBeans</a>
+    </div>
+    <div class="top-bar-right">
+        <ul class="vertical medium-horizontal menu" data-responsive-menu="drilldown medium-dropdown">
+            <li> <input id="search-input" type="text" placeholder="Search the docs"> </li>
+            <li> <a href="../../../../../front/main/community">Community</a> </li>
+            <li> <a href="../../../../../front/main/participate">Participate</a> </li>
+            <li> <a href="../../../../../front/main/blogs">Blog</a></li>
+            <li> <a href="../../../../../front/main/help">Get Help</a> </li>
+            <li> <a href="https://plugins.netbeans.apache.org/">Plugins</a> </li>
+            <li> <a href="../../../../../front/main/download">Download</a> </li>
+        </ul>
+    </div>
+</div>
+
+    <!-- src/templates/news -->
+<section class="hero news alternate">
+    <div class='grid-container'>
+        <div class='cell'>
+            <div class="annotation">Latest release</div>
+            <h1>Apache NetBeans 19</h1>
+            <p><a class="button success" href="../../../../../front/main/download/nb19">Download</a></p>
+        </div>
+    </div>
+</section>
+    <div class='grid-container main-content'>
+      <article class="doc">
+      <h1 class="sect1">Junit 5, Apache Ant, and Apache NetBeans</h1>
+      <div class="blogdate">Sunday January 27, 2019</div>
+      <div class="paragraph">
+<p>Junit 5 is, architecturally, so different to previous versions, that it should really be called Jupiter, instead.
+However, this is not a problem when you&#8217;re using Maven, since Maven resolves all transitive dependencies for you,
+and is <a href="https://github.com/apache/incubator-netbeans/pull/892">supported in that way from Apache NetBeans 10 onwards</a>.
+Not so with Apache Ant, of course, where you need to set each and every JAR you need on a classpath of one form or another.</p>
+</div>
+<div class="paragraph">
+<p>That is not a pretty picture in the end, when compared to JUnit 4, where you had just that JAR, plus Hamcrest.
+With JUnit 5, you need, in addition to <code>junit-jupiter-api</code>, <code>junit-jupiter-params</code>, and <code>junit-jupiter-engine</code>,
+to also declare the transitive dependency <code>apiguardian-api</code>, while in the case of Apache Ant, you need to deal with the <code><a href="https://ant.apache.org/manual/Tasks/junitlauncher.html">JUnitLauncher</a></code>,
+if you want to make use of the new <code>junitlauncher</code> Ant task, in addition to four other JARs, which need to be on Ant&#8217;s classpath,
+<a href="https://ant.apache.org/manual/Tasks/junitlauncher.html">as explained here</a>.</p>
+</div>
+<div class="paragraph">
+<p>An alternative approach is to use <code>org.junit.platform.console.ConsoleLauncher</code>, <a href="https://junit.org/junit5/docs/current/user-guide/#running-tests-console-launcher">as shown here</a>,
+which looks like this in my <code>build.xml</code>, i.e., it is named <code>test</code>, so that it will run automatically
+at the end of the test run when the Test Project action is invoked:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;target name="test" depends="compile-test,-pre-test-run"&gt;
+    &lt;java dir="${work.dir}"
+          classpath="${run.test.classpath}"
+          classname="org.junit.platform.console.ConsoleLauncher"&gt;
+        &lt;arg value="--scan-classpath"/&gt;
+        &lt;arg line="--reports-dir build/test/results"/&gt;
+    &lt;/java&gt;
+    &lt;junitreport todir="build/test/results"&gt;
+        &lt;fileset dir="build/test/results"&gt;
+            &lt;include name="TEST-*.xml"/&gt;
+        &lt;/fileset&gt;
+        &lt;report format="frames" todir="build/test/results/html"/&gt;
+    &lt;/junitreport&gt;
+&lt;/target&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The above means that the <code>JUnit</code> tasks set by default in the <code>build-impl.xml</code> file will simply fail silently,
+since I don&#8217;t have JUnit 4 on my classpath. At the end of the process, the above will be run, <code>org.junit.platform.console.ConsoleLauncher</code>
+will be found on my classpath, and then the JUnit 5 tests will be run.</p>
+</div>
+<div class="paragraph">
+<p>What is the advantage of the above over using <code><a href="https://ant.apache.org/manual/Tasks/junitlauncher.html">JUnitLauncher</a></code>? Well, <code>JUnitLauncher</code> has requirements relating to Ant&#8217;s path,
+which has advantages too, of course, i.e., simply set everything up once (which can also be done inside Apache NetBeans,
+in the Ant tab in the Options window). But, for right now, I&#8217;d prefer to work with just one path, i.e., the application&#8217;s path.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="../../../_images/blogs/entry/junit5.png" alt="junit5">
+</div>
+</div>
+<div class="paragraph">
+<p>Another downside is that, so far, the above solution doesn&#8217;t integrate with the Test Results window,
+though it does produce some nice reports via the <code>junitreport</code> task above, in the <code>build</code> folder.</p>
+</div>
+<div class="paragraph">
+<p>The key problem seems to me to be that the <code>JUnit</code> Ant task no longer exists in JUnit 5,
+which was for Ant-based projects the basis of the integration with the Test Results window in Apache NetBeans.
+If the <code>JUnit</code> task could continue to be used, in whatever way, that would solve a lot of the problems, though the question
+of the many JARs needed on the classpath would remain. Maybe library providers should reach out to tools providers when
+putting these kinds of new solutions together, since the only reason that JUnit 5 now works with Maven in Apache NetBeans
+is that Surefire is used, i.e., in the case of Maven the completely new approach JUnit has taken can simply be avoided there.
+<a href="https://github.com/apache/incubator-netbeans/pull/892#issuecomment-423243085">Here is some relevant discussion</a> in Apache NetBeans GitHub,
+and the <a href="https://junit.org/junit5/docs/current/user-guide/#launcher-api">Launcher API looks interesting</a>.</p>
+</div>
+<div class="paragraph">
+<p>Probably the best solution for Ant users in Apache NetBeans would be to be able to continue to use JUnit 4,
+rather than JUnit 5, since the latter is a total nightmare to set up in the context of Ant, as described above.
+In the world of JUnit, "vintage" is the cool name they have for "legacy", and if you&#8217;re using Ant at all, you&#8217;re probably
+best described as "vintage" and hence only having support for JUnit 4 is not a big deal for you.
+However, not sure at all how that would work, we&#8217;d need to investigate how/if when JUnit tests are added to Maven projects,
+JUnit 5 tests and dependencies would be set, while when adding JUnit tests to Ant projects JUnit 4 tests and dependencies would be set.</p>
+</div>
+      <section class='tools'>
+    <ul class="menu align-center">
+        <li><a title="Facebook" href="https://www.facebook.com/NetBeans"><i class="fa fa-md fa-facebook"></i></a></li>
+        <li><a title="Twitter" href="https://twitter.com/netbeans"><i class="fa fa-md fa-twitter"></i></a></li>
+        <li><a title="Github" href="https://github.com/apache/netbeans"><i class="fa fa-md fa-github"></i></a></li>
+        <li><a title="YouTube" href="https://www.youtube.com/user/netbeansvideos"><i class="fa fa-md fa-youtube"></i></a></li>
+        <li><a title="Atom Feed" href="https://netbeans.apache.org/blogs/atom"><i class="fa fa-mf fa-rss"></i></a></li>
+        <li><a title="Slack" href="https://tinyurl.com/netbeans-slack-signup/"><i class="fa fa-md fa-slack"></i></a></li>
+        <li><a title="Issues" href="https://github.com/apache/netbeans/issues"><i class="fa fa-mf fa-bug"></i></a></li>
+    </ul>
+    <ul class="menu align-center">
+        <li><a href="https://github.com/apache/netbeans-antora-site/edit/main/modules/ROOT/pages/blogs/entry/junit-5-apache-ant-and.adoc" title="See this page in github"><i class="fa fa-md fa-edit"></i> See this page in GitHub.</a></li>
+    </ul>
+</section>
+      </article>
+    </div>
+        <div class='grid-container incubator-area' style='margin-top: 64px'>
+      <div class='grid-x grid-padding-x'>
+        <div class='large-auto cell text-center'>
+          <a href="https://www.apache.org/">
+            <img style="width: 320px" title="Apache Software Foundation" src="../../../../../_/images/asf_logo_wide.svg" />
+          </a>
+        </div>
+        <div class='large-auto cell text-center'>
+          <a href="https://www.apache.org/events/current-event.html">
+            <img style="width:234px; height: 60px;" title="Apache Software Foundation current event" src="https://www.apache.org/events/current-event-234x60.png"/>
+          </a>
+        </div>
+      </div>
+    </div>
+    <footer>
+      <div class="grid-container">
+        <div class="grid-x grid-padding-x">
+          <div class="large-auto cell">
+            <h1><a href="../../../../../front/main/about">About</a></h1>
+            <ul>
+              <li><a href="../../../../../front/main/community/who">Who's Who</a></li>
+              <li><a href="https://www.apache.org/foundation/thanks.html">Thanks</a></li>
+              <li><a href="https://www.apache.org/foundation/sponsorship.html">Sponsorship</a></li>
+              <li><a href="https://www.apache.org/security/">Security</a></li>
+            </ul>
+          </div>
+          <div class="large-auto cell">
+            <h1><a href="../../../../../front/main/community">Community</a></h1>
+            <ul>
+              <li><a href="../../../../../front/main/community/mailing-lists">Mailing lists</a></li>
+              <li><a href="../../../../../front/main/community/committer">Becoming a committer</a></li>
+              <li><a href="../../../../../front/main/community/events">NetBeans Events</a></li>
+              <li><a href="https://www.apache.org/events/current-event.html">Apache Events</a></li>
+            </ul>
+          </div>
+          <div class="large-auto cell">
+            <h1><a href="../../../../../front/main/participate">Participate</a></h1>
+            <ul>
+              <li><a href="../../../../../front/main/participate/submit-pr">Submitting Pull Requests</a></li>
+              <li><a href="../../../../../front/main/participate/report-issue">Reporting Issues</a></li>
+              <li><a href="../../../../../front/main/participate/#documentation">Improving the documentation</a></li>
+            </ul>
+          </div>
+          <div class="large-auto cell">
+            <h1><a href="../../../../../front/main/help">Get Help</a></h1>
+            <ul>
+              <li><a href="../../../../../front/main/help/#documentation">Documentation</a></li>
+              <li><a href="../../../../../wiki/main/wiki">Wiki</a></li>
+              <li><a href="../../../../../front/main/help/#support">Community Support</a></li>
+              <li><a href="../../../../../front/main/help/commercial-support">Commercial Support</a></li>
+            </ul>
+          </div>
+          <div class="large-auto cell">
+            <h1><a href="../../../../../front/main/download">Download</a></h1>
+            <ul>
+              <li><a href="../../../../../front/main/download">Releases</a></li>                    
+              <li><a href="https://plugins.netbeans.apache.org/">Plugins</a></li>
+              <li><a href="../../../../../front/main/download/#_daily_builds_and_building_from_source">Building from source</a></li>
+              <li><a href="../../../../../front/main/download/#_older_releases">Previous releases</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </footer>
+    <div class='footer-disclaimer'>
+      <div class="footer-disclaimer-content">
+        <p>Copyright &copy; 2017-2023 <a href="https://www.apache.org">The Apache Software Foundation</a>.</p>
+        <p>Licensed under the Apache <a href="https://www.apache.org/licenses/">license</a>, version 2.0</p>
+        <div style='max-width: 40em; margin: 0 auto'>
+          <p>Apache, Apache NetBeans, NetBeans, the Apache feather logo and the Apache NetBeans logo are trademarks of <a href="https://www.apache.org">The Apache Software Foundation</a>.</p>
+          <p>Oracle and Java are registered trademarks of Oracle and/or its affiliates.</p>
+          <p>The Apache NetBeans website conforms to the <a href="https://privacy.apache.org/policies/privacy-policy-public.html">Apache Software Foundation Privacy Policy</a></p>
+        </div>
+      </div>
+    </div>
+
+    
+<script src="../../../../../_/js/vendor/lunr.js"></script>
+<script src="../../../../../_/js/search-ui.js" id="search-ui-script" data-site-root-path="../../../../.." data-snippet-length="100" data-stylesheet="../../../../../_/css/search.css"></script>
+<script async src="../../../../../search-index.js"></script>
+    <script src="../../../../../_/js/vendor/jquery-3.7.1.min.js"></script>
+    <script src="../../../../../_/js/vendor/what-input.js"></script>
+    <script src="../../../../../_/js/vendor/foundation.min.js"></script>
+    <script src="../../../../../_/js/vendor/jquery.colorbox-min.js"></script>
+    <script src="../../../../../_/js/netbeans.js"></script>
+    <script>
+       $(function(){ $(document).foundation(); });
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/highlight.min.js"></script>
+    <script>
+      $(document).ready(function() { $("pre code").each(function(i, block) { hljs.highlightBlock(block); }); });
+    </script>
+  </body>
+</html>

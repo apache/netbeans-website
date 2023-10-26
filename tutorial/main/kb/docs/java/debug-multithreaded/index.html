@@ -1,0 +1,687 @@
+<!doctype html>
+<html class="no-js" lang="en" dir="ltr">
+    <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>Debugging Multi-threaded Applications in NetBeans IDE</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Debugging Multi-threaded Applications in NetBeans IDE - Apache NetBeans">
+    <meta name="author" content="Apache NetBeans">
+    <meta name="keywords" content="Apache NetBeans, Tutorials, Debugging Multi-threaded Applications in NetBeans IDE">
+    <meta name="generator" content="Apache NetBeans">
+    <link rel="stylesheet" href="../../../../../../_/css/font-awesome.min.css">
+    <link rel="alternate" type="application/atom+xml" title="Apache NetBeans Blog" href="https://netbeans.apache.org/blogs/atom" />
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/styles/default.min.css">
+    <link rel="stylesheet" href="../../../../../../_/css/netbeans.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="../../../../../../_/images/fav/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../../../../../../_/images/fav/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../../../../../_/images/fav/favicon-16x16.png">
+    <link rel="manifest" href="../../../../../../_/images/fav/site.webmanifest">
+    <link rel="mask-icon" href="../../../../../../_/images/fav/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#ffc40d">
+    <meta name="theme-color" content="#ffffff">
+    <link href="../../../../../../_/css/font-open-sans.css" rel="stylesheet">
+    <!--
+        Licensed to the Apache Software Foundation (ASF) under one
+        or more contributor license agreements.  See the NOTICE file
+        distributed with this work for additional information
+        regarding copyright ownership.  The ASF licenses this file
+        to you under the Apache License, Version 2.0 (the
+        "License"); you may not use this file except in compliance
+        with the License.  You may obtain a copy of the License at
+        http://www.apache.org/licenses/LICENSE-2.0
+        Unless required by applicable law or agreed to in writing,
+        software distributed under the License is distributed on an
+        "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+        KIND, either express or implied.  See the License for the
+        specific language governing permissions and limitations
+        under the License.
+    -->
+  </head>
+  <body>
+    <div class="title-bar" data-responsive-toggle="responsive-menu" data-hide-for="medium">
+    <button type="button" data-toggle="responsive-menu"><i style='font-size: 32px; color: #fff; padding: 8px' class='fa fa-bars'></i></button>
+    <div class="title-bar-title">Apache NetBeans</div>
+</div>
+<div class="top-bar" id="responsive-menu">
+    <div class='top-bar-left'>
+        <a class='title' href="../../../../../../index.html"><img src='../../../../../../_/images/apache-netbeans.svg' style='padding: 8px; height: 48px;'></img> Apache NetBeans</a>
+    </div>
+    <div class="top-bar-right">
+        <ul class="vertical medium-horizontal menu" data-responsive-menu="drilldown medium-dropdown">
+            <li> <input id="search-input" type="text" placeholder="Search the docs"> </li>
+            <li> <a href="../../../../../../front/main/community">Community</a> </li>
+            <li> <a href="../../../../../../front/main/participate">Participate</a> </li>
+            <li> <a href="../../../../../../front/main/blogs">Blog</a></li>
+            <li> <a href="../../../../../../front/main/help">Get Help</a> </li>
+            <li> <a href="https://plugins.netbeans.apache.org/">Plugins</a> </li>
+            <li> <a href="../../../../../../front/main/download">Download</a> </li>
+        </ul>
+    </div>
+</div>
+
+    <!-- src/templates/news -->
+<section class="hero news alternate">
+    <div class='grid-container'>
+        <div class='cell'>
+            <div class="annotation">Latest release</div>
+            <h1>Apache NetBeans 19</h1>
+            <p><a class="button success" href="../../../../../../front/main/download/nb19">Download</a></p>
+        </div>
+    </div>
+</section>
+    <div class='grid-container main-content tutorial'>
+      <article class="doc">
+      <h1 class="sect0">Debugging Multi-threaded Applications in NetBeans IDE</h1>
+            <div class="sectionbody">
+              <div class="admonitionblock note">
+                <table>
+                  <tbody><tr>
+                  <td class="icon"><i class="fa icon-note" title="Note"></i></td>
+                  <td class="content">This tutorial needs a review. 
+                     You can <a href="https://github.com/apache/netbeans-antora-tutorials/edit/main/modules/ROOT/pages/kb/docs/java/debug-multithreaded.adoc" title="Edit this tutorial in github">edit it in GitHub </a>
+                     following these <a href="../../../../../../tutorial/main/kb/docs/contributing">contribution guidelines.</a></td>
+                  </tr></tbody>
+                </table>
+              </div>
+            </div>
+      <div id="toc" class="toc">
+<div id="toctitle"></div>
+<ul class="sectlevel1">
+<li><a href="#_downloading_the_sample_projects">Downloading the Sample Projects</a></li>
+<li><a href="#_opening_the_projects">Opening the Projects</a>
+<ul class="sectlevel2">
+<li><a href="#_running_the_gallery_project">Running the Gallery Project</a></li>
+<li><a href="#_running_the_deadlock_project">Running the Deadlock Project</a></li>
+</ul>
+</li>
+<li><a href="#_debugging_the_sample_projects">Debugging the Sample Projects</a>
+<ul class="sectlevel2">
+<li><a href="#_suspending_threads">Suspending Threads</a></li>
+<li><a href="#_switching_threads">Switching Threads</a></li>
+<li><a href="#_detecting_deadlocks">Detecting Deadlocks</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>This document describes how to use the Debugging window in NetBeans IDE to debug multi-threaded applications. The tutorial also demonstrate how to use the IDE to detect deadlocks in an application.</p>
+</div>
+<div class="paragraph">
+<p>The Debugging window simplifies the debugging process by integrating into one window the information about debugging sessions, application threads and thread call stacks. The Debugging window enables you to easily see the status of application threads and suspend and resume any of the threads in the session.</p>
+</div>
+<div class="paragraph">
+<p>This tutorial uses two sample projects to demonstrate how to work with the Debugging window. To complete this tutorial you first download and open the projects Gallery and Deadlock.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+To follow this tutorial, you need the  <a href="https://netbeans.org/projects/samples/downloads/download/Samples/Java/debugging-samples.zip">Gallery Project and Deadlock Project</a>.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_downloading_the_sample_projects"><a class="anchor" href="#_downloading_the_sample_projects"></a>Downloading the Sample Projects</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>You can download the sample projects used in this tutorial in the following ways.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Download <a href="https://netbeans.org/projects/samples/downloads/download/Samples/Java/debugging-samples.zip">a zip archive of the finished project</a>.</p>
+</li>
+<li>
+<p>Checkout the project sources from the NetBeans Samples by performing the following steps:</p>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Choose Team &gt; Subversion &gt; Checkout from the main menu.</p>
+</li>
+<li>
+<p>In the Checkout dialog box, enter the following Repository URL:
+ <code><a href="https://svn.netbeans.org/svn/samples~samples-source-code" class="bare">https://svn.netbeans.org/svn/samples~samples-source-code</a></code>
+Click Next.</p>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Click Browse to open the Browse Repository Folders dialog box.</p>
+</li>
+<li>
+<p>Expand the root node and select <strong>samples/java/debugging-samples</strong>. Click OK.</p>
+</li>
+<li>
+<p>Specify the Local Folder for the sources (the local folder must be empty).</p>
+</li>
+<li>
+<p>Click Finish.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>When you click Finish, the IDE initializes the local folder as a Subversion repository and checks out the project sources.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Click Open Project in the dialog that appears when checkout is complete.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p><strong>Note.</strong> For more about checking out sources with Subversion, see the section on <a href="../../ide/subversion/#settingUp" class="xref page">Setting up Subversion</a> in the <a href="../../ide/subversion/" class="xref page">Guide to Subversion in NetBeans IDE</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_opening_the_projects"><a class="anchor" href="#_opening_the_projects"></a>Opening the Projects</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>In this tutorial you will use two applications to demonstrate the IDE&#8217;s support for debugging multi-threaded applications. In this exercise you will open and then run the two projects in the IDE. After you run the projects you will then proceed to debug each of the projects.</p>
+</div>
+<div class="sect2">
+<h3 id="_running_the_gallery_project"><a class="anchor" href="#_running_the_gallery_project"></a>Running the Gallery Project</h3>
+<div class="paragraph">
+<p>The Gallery application is a simple Java Swing application that plays animated images. The application has two buttons that enable you to add and remove animated images. In this exercise you run the Gallery application.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Download and expand the <a href="https://netbeans.org/projects/samples/downloads/download/Samples/Java/debugging-samples.zip">+ <code>debugging-samples.zip</code> +</a> archive to your local system.</p>
+</li>
+<li>
+<p>Choose File &gt; Open from the main menu.</p>
+</li>
+<li>
+<p>Locate and select the Gallery project in the debugging-samples directory. Click Open.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>When you click Open the IDE opens and displays the project in the Projects window. If you expand the project node in the Projects window you can see that the project is a simple Java Swing application.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Right-click the project node and choosing Run to launch the Gallery application.</p>
+</li>
+<li>
+<p>In the Gallery application, click 'More' to add images and click 'Less' to remove images.</p>
+</li>
+</ol>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="../../../../_images/kb/docs/java/debugging-gallery-app.png" alt="debugging gallery app">
+</div>
+<div class="title">Figure 1. Gallery application</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Close the Gallery application window.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>The Gallery project is a simple multi-threaded application that you will debug in this tutorial.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_running_the_deadlock_project"><a class="anchor" href="#_running_the_deadlock_project"></a>Running the Deadlock Project</h3>
+<div class="paragraph">
+<p>The Deadlock application contains a  <code>main</code>  method that starts a thread that runs for 500000 milliseconds. The  <code>main</code>  method starts two threads that print to the Output window when they finish.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Choose File &gt; Open from the main menu.</p>
+</li>
+<li>
+<p>Locate and select the Deadlock project in the debugging-samples directory. Click Open.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>When you click Open the IDE opens and displays the project in the Projects window. If you expand the project node in the Projects window you can see that the project is a simple Java application.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Right-click the project node and choosing Run to launch the Deadlock application.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>When you click Run, the Output window opens and displays the following output.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">run:
+Application started
+MyThread2 successfully finished.
+MyThread1 successfully finished</code></pre>
+</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Allow the application to end normally (five minutes).</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>When the Deadlock application ends you will see the following in the Output window.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">Main thread finished</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The Deadlock project is a simple Java application with two threads. When you debug the application you will create a deadlock to illustrate how the IDE can help you detect deadlocks.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_debugging_the_sample_projects"><a class="anchor" href="#_debugging_the_sample_projects"></a>Debugging the Sample Projects</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The Gallery project is a simple Java Swing application that displays animated images. You add and remove the images by clicking buttons in the application. Clicking the 'More' button starts a new thread that displays and animates an image. Clicking the 'Less' button stops the most recent thread, stopping the animation and removing the image.</p>
+</div>
+<div class="sect2">
+<h3 id="_suspending_threads"><a class="anchor" href="#_suspending_threads"></a>Suspending Threads</h3>
+<div class="paragraph">
+<p>In this exercise you start debugging the Gallery application and add some images to start some application threads. When you start a debugging session the IDE opens the Debugging window in the left pane of the IDE. The Debugging window displays a list of the threads in the session.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Right-click the Gallery project in the Projects window and choose Debug.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>When you click Debug, the IDE starts the Gallery application and opens the default debugging windows. The IDE automatically opens the Debugging window in the left side of the main window and opens the Debugger Console in the Output window.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Click 'More' three times in the Gallery application to start three threads displaying animated images.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>If you look in the Debugging window you can see that a new thread was started for each animation.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="../../../../_images/kb/docs/java/debugging-start.png" alt="debugging start">
+</div>
+<div class="title">Figure 2. Debugging window</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Suspend two of the threads by clicking the 'Suspend thread' button to the right of the thread in the Debugging window.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>When a thread is suspended, the icon for the thread changes to indicate the new state. You can expand the thread node to view the thread&#8217;s call stack. You can right-click items in the Debugging window to open a pop-up menu with debug commands.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="../../../../_images/kb/docs/java/debugging-start-suspend.png" alt="debugging start suspend">
+</div>
+<div class="title">Figure 3. Debugging window with two suspended threads</div>
+</div>
+<div class="paragraph">
+<p>If you look at the Gallery application you can see that when you suspended the threads the animation for those threads stopped.</p>
+</div>
+<div class="paragraph">
+<p>The Debugging window enables you to quickly view and change the status of threads in the session. By default the Debugging window displays the Resume and Suspend buttons in the right side of the window. You can hide the buttons and further customize the display of the Debugging window by using the toolbar at the bottom of the Debugging window. If you are running multiple debugging sessions you can use the drop down list at the top of the Debugging window to choose which session is displayed in the window.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="../../../../_images/kb/docs/java/debugging-window-toolbar.png" alt="debugging window toolbar">
+</div>
+<div class="title">Figure 4. Debugging window toolbar</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_switching_threads"><a class="anchor" href="#_switching_threads"></a>Switching Threads</h3>
+<div class="paragraph">
+<p>This exercise demonstrates what happens when you are stepping through an application and a different application thread hits a breakpoint. In this exercise you will set a method breakpoint and start stepping through the application. While you are stepping through the application you will start a new thread that will also hit the breakpoint. The IDE informs you when this occurs by displaying a notification in the Debugging window. You will then switch between threads.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>In the Gallery application window, click 'Less' or 'More' until only two or three of the animations are displayed in the window.</p>
+</li>
+<li>
+<p>In the Projects window of the IDE, expand the  <code>gallery</code>  package and double-click  <code>Gallery.java</code>  to open the file in the editor.</p>
+</li>
+<li>
+<p>Insert a method breakpoint in  <code>Gallery.java</code>  at the beginning of the  <code>run</code>  method by clicking in the left margin at line 175.</p>
+</li>
+<li>
+<p>Click 'More' in the Gallery application to start a new thread that will hit the method breakpoint.</p>
+</li>
+<li>
+<p>Click Step Over (F8) and start stepping through the method until the Program Counter reaches line 191.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>You can see that the Program Counter in the margin of the editor indicates your position as you step through the method.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Click 'More' in the Gallery application to start a new thread that will hit the method breakpoint.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>When the new thread hits the method breakpoint a New Breakpoint Hit notification appears in the Debugging window that informs you that another thread hit a breakpoint while you were stepping through the method.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="../../../../_images/kb/docs/java/debugging-newbreakpointhit.png" alt="debugging newbreakpointhit">
+</div>
+<div class="title">Figure 5. New Breakpoint Hit notification</div>
+</div>
+<div class="paragraph">
+<p>When you are stepping through a thread and a breakpoint is hit in another thread, the IDE gives you the option to switch to the other thread or continue stepping through the current thread. You can click the arrow button in the New Breakpoint Hit notification to switch to the thread that encountered the breakpoint. You can switch to the new thread at any time by selecting the thread in the notice window. Stepping through the current breakpoint thread resumes the current thread but the status of other application threads remains unchanged.</p>
+</div>
+<div class="paragraph">
+<p><strong>Note.</strong> If you look in the Debugging window you can see that the current thread (Thread_Jirka) is indicated by a green bar in the margin. The thread that invoked the notification by hitting the breakpoint (Thread_Roman) is indicated by a yellow bar and the thread icon indicates that the thread is suspended by a breakpoint.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="../../../../_images/kb/docs/java/debugging-current-suspended.png" alt="debugging current suspended">
+</div>
+<div class="title">Figure 6. New Breakpoint Hit notification</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Click the arrow in the New Breakpoint Hit notification to switch the current thread to the new thread (Thread_Roman).</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>When you switch to the new thread you can see the following:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>The program counter moves to the position at line 175 in the new current thread (Thread_Roman).</p>
+</li>
+<li>
+<p>A 'suspended thread' annotation is now visible in the margin at line 191 indicating that a thread (Thread_Jirka) is suspended at that line.</p>
+</li>
+</ul>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="../../../../_images/kb/docs/java/debugging-editor-suspendedannot.png" alt="debugging editor suspendedannot">
+</div>
+<div class="title">Figure 7. Editor showing debugging annotations</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Click Step Over a few times to step through the new current thread (Thread_Roman).</p>
+</li>
+<li>
+<p>Right-click the 'suspended thread' annotation in the editor margin and choose Set as Current Thread &gt; Thread_Jirka to switch back to the suspended thread.</p>
+</li>
+</ol>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="../../../../_images/kb/docs/java/debugging-editor-setcurrent.png" alt="debugging editor setcurrent">
+</div>
+<div class="title">Figure 8. Editor showing Set as Current Thread pop-up</div>
+</div>
+<div class="paragraph">
+<p>Alternatively, you can invoke the Current Thread Chooser (Alt+Shift+T; Ctrl+Shift+T on Mac) and switch to any of the application threads.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="../../../../_images/kb/docs/java/debugging-thread-chooser.png" alt="debugging thread chooser">
+</div>
+<div class="title">Figure 9. Gallery application</div>
+</div>
+<div class="paragraph">
+<p>When you switch back to Thread_Jirka, the suspended thread annotation appears next to the line where Thread_Roman was suspended. You can resume Thread_Roman by clicking Resume in the Debugging window.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="../../../../_images/kb/docs/java/debugging-editor-suspendedannot2.png" alt="debugging editor suspendedannot2">
+</div>
+<div class="title">Figure 10. Editor showing debugging annotations</div>
+</div>
+<div class="paragraph">
+<p>The Debugging window enables you to very precisely view and control thread states. The debugger manages application threads to simplify the debugging workflow and to prevent the debugging process from creating deadlocks. In this exercise you saw the following behavior when debugging an application in the IDE.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>When a thread hits a breakpoint only the breakpoint thread is suspended.</p>
+</li>
+<li>
+<p>When stepping through the application, the current thread is not affected when other application threads hit breakpoints.</p>
+</li>
+<li>
+<p>Stepping only resumes the current thread. When the step is completed only the current thread is suspended.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>You can quit the Gallery application. In the next exercise you will debug the Deadlock application and use the IDE to help you detect a deadlock.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_detecting_deadlocks"><a class="anchor" href="#_detecting_deadlocks"></a>Detecting Deadlocks</h3>
+<div class="paragraph">
+<p>The IDE can help you identify potential deadlock situations by automatically searching for deadlocks among all suspended threads. When a deadlock is detected, the IDE displays a notification in the Debugging window and identifies the involved threads.</p>
+</div>
+<div class="paragraph">
+<p>To demonstrate the IDE&#8217;s deadlock detection, you will run the sample Deadlock project in the debugger and create a deadlock situation.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Expand the  <code>myapplication</code>  package and open  <code>Thread1.java</code>  and  <code>Thread2.java</code>  in the source editor.</p>
+</li>
+<li>
+<p>Set a breakpoint in  <code>Thread1.java</code>  at line 20 and in  <code>Thread2.java</code>  at line 20</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>To set the breakpoint, click in the margin of the source editor next to the line where you want to set the breakpoint. The breakpoint annotation appears in the left margin next to the line. If you open the Breakpoints window (Alt-Shift-5; Ctrl+Shift+5 on Mac) you can see that the two breakpoints are set and enabled.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="../../../../_images/kb/docs/java/debug-deadlock-setbkpt.png" alt="debug deadlock setbkpt">
+</div>
+<div class="title">Figure 11. Editor showing breakpoint set at line 20</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Right-click the Deadlock project in the Projects window and choose Debug.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>The  <code>main</code>  method will run the two threads, and both threads will be suspended at one of the breakpoints. You can see the threads suspended by the breakpoints in the Debugging window.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>In the Debugging Window, resume the suspended threads ( <code>MyThread1</code>  and  <code>MyThread2</code> ) by clicking the Resume buttons to the right of the suspended threads in the Debugging window.</p>
+</li>
+</ol>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="../../../../_images/kb/docs/java/debug-deadlock-resume.png" alt="debug deadlock resume">
+</div>
+<div class="title">Figure 12. Resuming suspended threads in the Debugging window</div>
+</div>
+<div class="paragraph">
+<p>Resuming the threads  <code>MyThread1</code>  and  <code>MyThread2</code>  will create the deadlock state.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Choose Debug\Check for Deadlock from the main menu to check the suspended threads for deadlocks.</p>
+</li>
+</ol>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="../../../../_images/kb/docs/java/debug-deadlock-detected.png" alt="debug deadlock detected">
+</div>
+<div class="title">Figure 13. Resuming suspended threads in the Debugging window</div>
+</div>
+<div class="paragraph">
+<p>If you check the application for deadlocks and a deadlock is detected, a message appears in the Debugging Window informing you about the deadlock. You can see that the threads in deadlock are indicated with a red bar in the left margin of the Debugging window.</p>
+</div>
+<div class="paragraph">
+<p>This tutorial was a basic introduction to some of the debugging features in the IDE. The Debugging window enables you to easily suspend and resume threads when debugging an application. This can be extremely helpful when you are debugging multi-threaded applications.</p>
+</div>
+</div>
+</div>
+</div>
+      <section class='tools'>
+    <ul class="menu align-center">
+        <li><a title="Facebook" href="https://www.facebook.com/NetBeans"><i class="fa fa-md fa-facebook"></i></a></li>
+        <li><a title="Twitter" href="https://twitter.com/netbeans"><i class="fa fa-md fa-twitter"></i></a></li>
+        <li><a title="Github" href="https://github.com/apache/netbeans"><i class="fa fa-md fa-github"></i></a></li>
+        <li><a title="YouTube" href="https://www.youtube.com/user/netbeansvideos"><i class="fa fa-md fa-youtube"></i></a></li>
+        <li><a title="Atom Feed" href="https://netbeans.apache.org/blogs/atom"><i class="fa fa-mf fa-rss"></i></a></li>
+        <li><a title="Slack" href="https://tinyurl.com/netbeans-slack-signup/"><i class="fa fa-md fa-slack"></i></a></li>
+        <li><a title="Issues" href="https://github.com/apache/netbeans/issues"><i class="fa fa-mf fa-bug"></i></a></li>
+    </ul>
+    <ul class="menu align-center">
+        <li><a href="https://github.com/apache/netbeans-antora-tutorials/edit/main/modules/ROOT/pages/kb/docs/java/debug-multithreaded.adoc" title="See this page in github"><i class="fa fa-md fa-edit"></i> See this page in GitHub.</a></li>
+    </ul>
+</section>
+      </article>
+    </div>
+        <div class='grid-container incubator-area' style='margin-top: 64px'>
+      <div class='grid-x grid-padding-x'>
+        <div class='large-auto cell text-center'>
+          <a href="https://www.apache.org/">
+            <img style="width: 320px" title="Apache Software Foundation" src="../../../../../../_/images/asf_logo_wide.svg" />
+          </a>
+        </div>
+        <div class='large-auto cell text-center'>
+          <a href="https://www.apache.org/events/current-event.html">
+            <img style="width:234px; height: 60px;" title="Apache Software Foundation current event" src="https://www.apache.org/events/current-event-234x60.png"/>
+          </a>
+        </div>
+      </div>
+    </div>
+    <footer>
+      <div class="grid-container">
+        <div class="grid-x grid-padding-x">
+          <div class="large-auto cell">
+            <h1><a href="../../../../../../front/main/about">About</a></h1>
+            <ul>
+              <li><a href="../../../../../../front/main/community/who">Who's Who</a></li>
+              <li><a href="https://www.apache.org/foundation/thanks.html">Thanks</a></li>
+              <li><a href="https://www.apache.org/foundation/sponsorship.html">Sponsorship</a></li>
+              <li><a href="https://www.apache.org/security/">Security</a></li>
+            </ul>
+          </div>
+          <div class="large-auto cell">
+            <h1><a href="../../../../../../front/main/community">Community</a></h1>
+            <ul>
+              <li><a href="../../../../../../front/main/community/mailing-lists">Mailing lists</a></li>
+              <li><a href="../../../../../../front/main/community/committer">Becoming a committer</a></li>
+              <li><a href="../../../../../../front/main/community/events">NetBeans Events</a></li>
+              <li><a href="https://www.apache.org/events/current-event.html">Apache Events</a></li>
+            </ul>
+          </div>
+          <div class="large-auto cell">
+            <h1><a href="../../../../../../front/main/participate">Participate</a></h1>
+            <ul>
+              <li><a href="../../../../../../front/main/participate/submit-pr">Submitting Pull Requests</a></li>
+              <li><a href="../../../../../../front/main/participate/report-issue">Reporting Issues</a></li>
+              <li><a href="../../../../../../front/main/participate/#documentation">Improving the documentation</a></li>
+            </ul>
+          </div>
+          <div class="large-auto cell">
+            <h1><a href="../../../../../../front/main/help">Get Help</a></h1>
+            <ul>
+              <li><a href="../../../../../../front/main/help/#documentation">Documentation</a></li>
+              <li><a href="../../../../../../wiki/main/wiki">Wiki</a></li>
+              <li><a href="../../../../../../front/main/help/#support">Community Support</a></li>
+              <li><a href="../../../../../../front/main/help/commercial-support">Commercial Support</a></li>
+            </ul>
+          </div>
+          <div class="large-auto cell">
+            <h1><a href="../../../../../../front/main/download">Download</a></h1>
+            <ul>
+              <li><a href="../../../../../../front/main/download">Releases</a></li>                    
+              <li><a href="https://plugins.netbeans.apache.org/">Plugins</a></li>
+              <li><a href="../../../../../../front/main/download/#_daily_builds_and_building_from_source">Building from source</a></li>
+              <li><a href="../../../../../../front/main/download/#_older_releases">Previous releases</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </footer>
+    <div class='footer-disclaimer'>
+      <div class="footer-disclaimer-content">
+        <p>Copyright &copy; 2017-2023 <a href="https://www.apache.org">The Apache Software Foundation</a>.</p>
+        <p>Licensed under the Apache <a href="https://www.apache.org/licenses/">license</a>, version 2.0</p>
+        <div style='max-width: 40em; margin: 0 auto'>
+          <p>Apache, Apache NetBeans, NetBeans, the Apache feather logo and the Apache NetBeans logo are trademarks of <a href="https://www.apache.org">The Apache Software Foundation</a>.</p>
+          <p>Oracle and Java are registered trademarks of Oracle and/or its affiliates.</p>
+          <p>The Apache NetBeans website conforms to the <a href="https://privacy.apache.org/policies/privacy-policy-public.html">Apache Software Foundation Privacy Policy</a></p>
+        </div>
+      </div>
+    </div>
+
+    
+<script src="../../../../../../_/js/vendor/lunr.js"></script>
+<script src="../../../../../../_/js/search-ui.js" id="search-ui-script" data-site-root-path="../../../../../.." data-snippet-length="100" data-stylesheet="../../../../../../_/css/search.css"></script>
+<script async src="../../../../../../search-index.js"></script>
+    <script src="../../../../../../_/js/vendor/jquery-3.7.1.min.js"></script>
+    <script src="../../../../../../_/js/vendor/what-input.js"></script>
+    <script src="../../../../../../_/js/vendor/foundation.min.js"></script>
+    <script src="../../../../../../_/js/vendor/jquery.colorbox-min.js"></script>
+    <script src="../../../../../../_/js/netbeans.js"></script>
+    <script>
+       $(function(){ $(document).foundation(); });
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/highlight.min.js"></script>
+    <script>
+      $(document).ready(function() { $("pre code").each(function(i, block) { hljs.highlightBlock(block); }); });
+    </script>
+  </body>
+</html>

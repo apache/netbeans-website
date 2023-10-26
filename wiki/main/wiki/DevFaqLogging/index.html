@@ -1,0 +1,479 @@
+<!doctype html>
+<html class="no-js" lang="en" dir="ltr">
+    <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>Using java.util.logging in NetBeans</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Apache NetBeans wiki DevFaqLogging">
+    <meta name="author" content="Apache NetBeans">
+    <meta name="keywords" content="Apache NetBeans wiki DevFaqLogging">
+    <meta name="generator" content="Apache NetBeans">
+    <link rel="stylesheet" href="../../../../_/css/font-awesome.min.css">
+    <link rel="alternate" type="application/atom+xml" title="Apache NetBeans Blog" href="https://netbeans.apache.org/blogs/atom" />
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/styles/default.min.css">
+    <link rel="stylesheet" href="../../../../_/css/netbeans.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="../../../../_/images/fav/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../../../../_/images/fav/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../../../_/images/fav/favicon-16x16.png">
+    <link rel="manifest" href="../../../../_/images/fav/site.webmanifest">
+    <link rel="mask-icon" href="../../../../_/images/fav/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#ffc40d">
+    <meta name="theme-color" content="#ffffff">
+    <link href="../../../../_/css/font-open-sans.css" rel="stylesheet">
+    <!--
+        Licensed to the Apache Software Foundation (ASF) under one
+        or more contributor license agreements.  See the NOTICE file
+        distributed with this work for additional information
+        regarding copyright ownership.  The ASF licenses this file
+        to you under the Apache License, Version 2.0 (the
+        "License"); you may not use this file except in compliance
+        with the License.  You may obtain a copy of the License at
+        http://www.apache.org/licenses/LICENSE-2.0
+        Unless required by applicable law or agreed to in writing,
+        software distributed under the License is distributed on an
+        "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+        KIND, either express or implied.  See the License for the
+        specific language governing permissions and limitations
+        under the License.
+    -->
+  </head>
+  <body>
+    <div class="title-bar" data-responsive-toggle="responsive-menu" data-hide-for="medium">
+    <button type="button" data-toggle="responsive-menu"><i style='font-size: 32px; color: #fff; padding: 8px' class='fa fa-bars'></i></button>
+    <div class="title-bar-title">Apache NetBeans</div>
+</div>
+<div class="top-bar" id="responsive-menu">
+    <div class='top-bar-left'>
+        <a class='title' href="../../../../index.html"><img src='../../../../_/images/apache-netbeans.svg' style='padding: 8px; height: 48px;'></img> Apache NetBeans</a>
+    </div>
+    <div class="top-bar-right">
+        <ul class="vertical medium-horizontal menu" data-responsive-menu="drilldown medium-dropdown">
+            <li> <input id="search-input" type="text" placeholder="Search the docs"> </li>
+            <li> <a href="../../../../front/main/community">Community</a> </li>
+            <li> <a href="../../../../front/main/participate">Participate</a> </li>
+            <li> <a href="../../../../front/main/blogs">Blog</a></li>
+            <li> <a href="../../../../front/main/help">Get Help</a> </li>
+            <li> <a href="https://plugins.netbeans.apache.org/">Plugins</a> </li>
+            <li> <a href="../../../../front/main/download">Download</a> </li>
+        </ul>
+    </div>
+</div>
+
+    <!-- src/templates/news -->
+<section class="hero news alternate">
+    <div class='grid-container'>
+        <div class='cell'>
+            <div class="annotation">Latest release</div>
+            <h1>Apache NetBeans 19</h1>
+            <p><a class="button success" href="../../../../front/main/download/nb19">Download</a></p>
+        </div>
+    </div>
+</section>
+    <div class='grid-container main-content'>
+      <article class="doc">
+      <h1 class="sect1">Using java.util.logging in NetBeans</h1>
+      <div class='aside' style='text-align: center; padding: 20px;'>
+    <a href="../../../../wiki/main/wiki" title="Apache NetBeans WIKI">Apache NetBeans Wiki Index</a>
+    <p><b>Note:</b> These pages are being reviewed.</p>
+</div>
+      <div id="toc" class="toc">
+<div id="toctitle"></div>
+<ul class="sectlevel1">
+<li><a href="#_turning_logging_on_and_off">Turning Logging On and Off</a></li>
+<li><a href="#_how_to_write_logging_friendly_code">How to Write Logging Friendly Code</a>
+<ul class="sectlevel2">
+<li><a href="#_handling_exceptions">Handling Exceptions</a></li>
+<li><a href="#_retain_nested_stacktraces_change_exception_type">Retain nested stacktraces / change exception type</a></li>
+<li><a href="#_logging_a_warning_and_debug_messages">Logging a warning and debug messages</a></li>
+<li><a href="#_annotate_exceptions">Annotate Exceptions</a></li>
+</ul>
+</li>
+<li><a href="#_using_structured_logging_for_communication">Using Structured Logging for Communication</a></li>
+</ul>
+</div>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>The logging system in NetBeans is based on the standard JDK&#8217;s java.util.logging and complies to it as much as possible. This document sumarizes the basic usecases and shall be treated as a guide for writing good NetBeans ready logging code. The info given here is valid for default configuration of the logger as it is used in NetBeans. However it is possible to fully replace the system by providing own logging properties as in any other JDK application. Then of course the behaviour may get completely different.</p>
+</div>
+<div class="paragraph">
+<p>Rather than printing raw exceptions to the console or implementing custom debug or logging facililities, code may use the Logger to access logging in a higher-level fashion. This way the logging messages can be dynamically turned on and off by single switch on command line or even during runtime.</p>
+</div>
+<div class="paragraph">
+<p>Another important thing is to chain stack traces to exceptions using Throwable.initCause(Throwable), permitting you to throw an exception of a type permitted by your API signature while safely encapsulating the root cause of the problem (in terms of other nested exceptions). Code should use Logger.log(Level.SEVERE, msg, exception) rather than directly printing caught exceptions, to make sure nested annotations are not lost and to allow pluged in handlers of logging to process the exceptions.</p>
+</div>
+<div class="paragraph">
+<p>It is possible to use global logger but it is preferred to create named and shared instances of loggers. The latter has the advantage of finer control of what is going to be logged or not, as each named instance can be turned on/off individually by using a command line property.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_turning_logging_on_and_off"><a class="anchor" href="#_turning_logging_on_and_off"></a>Turning Logging On and Off</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>As the logging system is completely JDK based, one can use the traditional properties of LogManager and customize logging completely by themselves.</p>
+</div>
+<div class="paragraph">
+<p>However there is a simpler way how to enable logging of an named logger. Just start NetBeans with -J-Dname.of.the.Logger.level=100 or any other number and all the log Levels with higher or equal value will immediatelly be enabled and handled by the system.</p>
+</div>
+<div class="paragraph">
+<p>It is possible to turn the logging dynamically when the application is running. It is enough to just:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">System.setProperty("name.of.the.Logger.level", "100");
+LogManager.getLogManager().readConfiguration();</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>and logging state for the "name.of.the.Logger" is changed. The first line in the above code snippet changes the global properties and the second one asks the system to refresh the configuration of all loggers in the system.</p>
+</div>
+<div class="paragraph">
+<p>Of course this only works if the default NetBeans logger is in place. Sometimes however it may make sence to provide completely different logger. This can be done by one of two JDK standard properties: java.util.logging.config.file or java.util.logging.config.class as described at LogManager&#8217;s javadoc. If these properties are provide during the startup of the system, then the logging is fully dedicated to the configured custom loggers and of course no NetBeans standard configuration properties work.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_how_to_write_logging_friendly_code"><a class="anchor" href="#_how_to_write_logging_friendly_code"></a>How to Write Logging Friendly Code</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_handling_exceptions"><a class="anchor" href="#_handling_exceptions"></a>Handling Exceptions</h3>
+<div class="paragraph">
+<p>To handle an exception and send it to the log file (and possibly show a blinking icon to the user in bottom right corner of the main window):</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">private static final Logger logger = Logger.getLogger(ThisClass.class.getName());
+try {
+    foo.doSomething();
+} catch (IOException ioe) {
+    logger.log(Level.SEVERE, null, ioe);
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>WARNING behaves the same way by default.</p>
+</div>
+<div class="paragraph">
+<p>If the exception is not important, and by default shall not be shown or logged at all one can use the Level.FINE, Level.FINER or Level.FINEST:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">try {
+    foo.doSomething();
+} catch (IOException ioe) {
+    logger.log(Level.FINE, "msg", ioe);
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The easiest way to make sure an exception is reported to the user is to use the dialog API with a code like this:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">try {
+  // some operations
+} catch (Exception ex) {
+  NotifyDescriptor.Exception e = new NotifyDescriptor.Exception(ex);
+  DialogDisplayer.getDefault().notifyLater(e);
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This code will present a dialog box with warning message extracted from the exception ex sometime in the "future" - e.g. when the AWT event queue is empty and can show the dialog. Use of notifyLater to plain notify is recommended in order to prevent deadlocks and starvations</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_retain_nested_stacktraces_change_exception_type"><a class="anchor" href="#_retain_nested_stacktraces_change_exception_type"></a>Retain nested stacktraces / change exception type</h3>
+<div class="paragraph">
+<p>To rethrow an exception use standard JDK&#8217;s Throwable.initCause(Throwable) method. It is going to be properly annotated and printed when sent to logger:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">public void doSomething() throws IOException {
+    try {
+        doSomethingElse();
+    } catch (IllegalArgumentException iae) {
+        IOException ioe = new IOException("did not work: " + iae);
+        ioe.initCause(iae);
+        throw ioe;
+    }
+}
+// ...
+try {
+    foo.doSomething();
+} catch (IOException ioe) {
+    logger.log(Level.WARNING, null, ioe);
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_logging_a_warning_and_debug_messages"><a class="anchor" href="#_logging_a_warning_and_debug_messages"></a>Logging a warning and debug messages</h3>
+<div class="paragraph">
+<p>Logging shall usually be done with a named loggers, as that allows proper turning on and off from the command line. To log something into the log file one should use Level.INFO or higher:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">private static final Logger LOG =
+    Logger.getLogger("org.netbeans.modules.foo");
+
+public void doSomething(String arg) {
+    if (arg.length() == 0) {
+        LOG.warning("doSomething called on empty string");
+        return;
+    }
+    // ...
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>For writing debugging messages it is also better to have a named logger, but the important difference is to use Level.FINE and lower severity levels:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package org.netbeans.modules.foo;
+
+class FooModule {
+    public static final Logger LOG =
+        Logger.getLogger("org.netbeans.modules.foo");
+}
+// ...
+class Something {
+    public void doSomething(String arg) {
+        FooModule.LOG.log(Level.FINER, "Called doSomething with arg {0}", arg);
+    }
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_annotate_exceptions"><a class="anchor" href="#_annotate_exceptions"></a>Annotate Exceptions</h3>
+<div class="paragraph">
+<p>There is an easy way how to annotate exceptions with localized and non-localized messages in NetBeans. One can use Exceptions.attachMessage or Exceptions.attachLocalizedMessage . The non-localized messages are guaranteed to be printed when one does ex.printStackTrace(), to extract associated localized message one can use Exceptions.findLocalizedMessage .</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_using_structured_logging_for_communication"><a class="anchor" href="#_using_structured_logging_for_communication"></a>Using Structured Logging for Communication</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>In spite of what one might think the JDK logging API is not just about sending textual messages to log files, but it can also be used as a communication channel between two pieces of the application that need to exchange structured data. What is even more interesting is that this kind of extended usage can coexist very well with the plain old good writing of messages to log files. This is all possible due to a very nice design of the single "logging record" - the LogRecord.</p>
+</div>
+<div class="paragraph">
+<p>Well written structured logging shall use the "localized" message approach and thus assign to all its LogRecords a ResourceBundle and use just a key to the bundle as the actually logged message. This is a good idea anyway, as it speeds up logging, because if the message is not going to be needed, the final string is not concatenated at all. However this would not be very powerful logging, so another important thing is to provide parameters to the LogRecord via its setParameters method. This, in combination with the MessageFormat used when the final logger is composing the logged message, further delay&#8217;s the concatenations of strings. Morevoer it allows the advanced communication described above - e.g. there can be another module consumming the message which can directly get access to live objects and processes them in any way.</p>
+</div>
+<div class="paragraph">
+<p>Here is an example of the program that uses such structured logging:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">public static void main(String[] args) {
+    ResourceBundle rb = ResourceBundle.getBundle("your.package.Log");
+
+    int sum = 0;
+    for (int i = 0; i &lt; 10; i++) {
+        LogRecord r = new LogRecord(Level.INFO, "MSG_Add");
+        r.setResourceBundle(rb);
+        r.setParameters(new Object[] { sum, i });
+        Logger.global.log(r);
+        sum += i;
+    }
+
+    LogRecord r = new LogRecord(Level.INFO, "MSG_Result");
+    r.setResourceBundle(rb);
+    r.setParameters(new Object[] { sum });
+    Logger.global.log(r);
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Of course the two keys has to be reasonably defined in the Log.properties bundle:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java"># {0} - current sum
+# {1} - add
+MSG_Add=Going to add {1} to {0}
+
+
+# {0} - final sum
+MSG_Result=The sum is {0}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>When executed with logging on, this example is going to print the expected output with the right messages and well substituted values:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">INFO: Going to add 0 to 0
+INFO: Going to add 1 to 0
+INFO: Going to add 2 to 1
+INFO: Going to add 3 to 3
+INFO: Going to add 4 to 6
+INFO: Going to add 5 to 10
+INFO: Going to add 6 to 15
+INFO: Going to add 7 to 21
+INFO: Going to add 8 to 28
+INFO: Going to add 9 to 36
+INFO: The sum is 45</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This not surprising behaviour, still however it is one of the most efficient because the text Going to add X to Y is not constructed by the code itself, but by the logger, and only if really needed. So the descrbied logging style is useful of its own, however the interesting part is that one can now write following code and intercept behaviour of one independent part of code from another one:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">public class Test extends Handler {
+    private int add;
+    private int sum;
+    private int allAdd;
+
+    public void publish(LogRecord record) {
+        if ("MSG_Add".equals(record.getMessage())) {
+            add++;
+            allAdd += ((Integer)record.getParameters()[1]).intValue();
+        }
+        if ("MSG_Result".equals(record.getMessage())) {
+            sum++;
+        }
+    }
+    public void flush() {
+        Logger.global.info("There was " + add + " of adds and " + sum + " of sum outputs, all adding: " + allAdd);
+    }
+    public void close() { flush(); }
+
+    static {
+        Logger.global.addHandler(new Test());
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The basic trick is to register own Handler and thus get access to provided LogRecords and process them in any custom way, possibly pretty different than just printing the strings to log files. Of course, this is only possible because the handler understand the generic names of logged messages - e.g. MSG_Add and MSG_Result and knows the format of their arguments, it can do the analysis, and output:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">INFO: There was 10 of adds and 1 of sum outputs, all adding: 45</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Indeed a structural logging can achive much more than shown in this simplistic example. Moreover it seems to be one of the most effective ways for logging, so it is highly recommended to use it where possible.</p>
+</div>
+<div class="paragraph">
+<p>From: <a href="https://bits.netbeans.org/dev/javadoc/org-openide-util/org/openide/util/doc-files/logging.html">Logging in NetBeans</a>.</p>
+</div>
+</div>
+</div>
+      <section class='tools'>
+    <ul class="menu align-center">
+        <li><a title="Facebook" href="https://www.facebook.com/NetBeans"><i class="fa fa-md fa-facebook"></i></a></li>
+        <li><a title="Twitter" href="https://twitter.com/netbeans"><i class="fa fa-md fa-twitter"></i></a></li>
+        <li><a title="Github" href="https://github.com/apache/netbeans"><i class="fa fa-md fa-github"></i></a></li>
+        <li><a title="YouTube" href="https://www.youtube.com/user/netbeansvideos"><i class="fa fa-md fa-youtube"></i></a></li>
+        <li><a title="Atom Feed" href="https://netbeans.apache.org/blogs/atom"><i class="fa fa-mf fa-rss"></i></a></li>
+        <li><a title="Slack" href="https://tinyurl.com/netbeans-slack-signup/"><i class="fa fa-md fa-slack"></i></a></li>
+        <li><a title="Issues" href="https://github.com/apache/netbeans/issues"><i class="fa fa-mf fa-bug"></i></a></li>
+    </ul>
+    <ul class="menu align-center">
+        <li><a href="https://github.com/apache/netbeans-antora-wiki/edit/main/modules/ROOT/pages/wiki/DevFaqLogging.adoc" title="See this page in github"><i class="fa fa-md fa-edit"></i> See this page in GitHub.</a></li>
+    </ul>
+</section>
+      </article>
+    </div>
+        <div class='grid-container incubator-area' style='margin-top: 64px'>
+      <div class='grid-x grid-padding-x'>
+        <div class='large-auto cell text-center'>
+          <a href="https://www.apache.org/">
+            <img style="width: 320px" title="Apache Software Foundation" src="../../../../_/images/asf_logo_wide.svg" />
+          </a>
+        </div>
+        <div class='large-auto cell text-center'>
+          <a href="https://www.apache.org/events/current-event.html">
+            <img style="width:234px; height: 60px;" title="Apache Software Foundation current event" src="https://www.apache.org/events/current-event-234x60.png"/>
+          </a>
+        </div>
+      </div>
+    </div>
+    <footer>
+      <div class="grid-container">
+        <div class="grid-x grid-padding-x">
+          <div class="large-auto cell">
+            <h1><a href="../../../../front/main/about">About</a></h1>
+            <ul>
+              <li><a href="../../../../front/main/community/who">Who's Who</a></li>
+              <li><a href="https://www.apache.org/foundation/thanks.html">Thanks</a></li>
+              <li><a href="https://www.apache.org/foundation/sponsorship.html">Sponsorship</a></li>
+              <li><a href="https://www.apache.org/security/">Security</a></li>
+            </ul>
+          </div>
+          <div class="large-auto cell">
+            <h1><a href="../../../../front/main/community">Community</a></h1>
+            <ul>
+              <li><a href="../../../../front/main/community/mailing-lists">Mailing lists</a></li>
+              <li><a href="../../../../front/main/community/committer">Becoming a committer</a></li>
+              <li><a href="../../../../front/main/community/events">NetBeans Events</a></li>
+              <li><a href="https://www.apache.org/events/current-event.html">Apache Events</a></li>
+            </ul>
+          </div>
+          <div class="large-auto cell">
+            <h1><a href="../../../../front/main/participate">Participate</a></h1>
+            <ul>
+              <li><a href="../../../../front/main/participate/submit-pr">Submitting Pull Requests</a></li>
+              <li><a href="../../../../front/main/participate/report-issue">Reporting Issues</a></li>
+              <li><a href="../../../../front/main/participate/#documentation">Improving the documentation</a></li>
+            </ul>
+          </div>
+          <div class="large-auto cell">
+            <h1><a href="../../../../front/main/help">Get Help</a></h1>
+            <ul>
+              <li><a href="../../../../front/main/help/#documentation">Documentation</a></li>
+              <li><a href="../../../../wiki/main/wiki">Wiki</a></li>
+              <li><a href="../../../../front/main/help/#support">Community Support</a></li>
+              <li><a href="../../../../front/main/help/commercial-support">Commercial Support</a></li>
+            </ul>
+          </div>
+          <div class="large-auto cell">
+            <h1><a href="../../../../front/main/download">Download</a></h1>
+            <ul>
+              <li><a href="../../../../front/main/download">Releases</a></li>                    
+              <li><a href="https://plugins.netbeans.apache.org/">Plugins</a></li>
+              <li><a href="../../../../front/main/download/#_daily_builds_and_building_from_source">Building from source</a></li>
+              <li><a href="../../../../front/main/download/#_older_releases">Previous releases</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </footer>
+    <div class='footer-disclaimer'>
+      <div class="footer-disclaimer-content">
+        <p>Copyright &copy; 2017-2023 <a href="https://www.apache.org">The Apache Software Foundation</a>.</p>
+        <p>Licensed under the Apache <a href="https://www.apache.org/licenses/">license</a>, version 2.0</p>
+        <div style='max-width: 40em; margin: 0 auto'>
+          <p>Apache, Apache NetBeans, NetBeans, the Apache feather logo and the Apache NetBeans logo are trademarks of <a href="https://www.apache.org">The Apache Software Foundation</a>.</p>
+          <p>Oracle and Java are registered trademarks of Oracle and/or its affiliates.</p>
+          <p>The Apache NetBeans website conforms to the <a href="https://privacy.apache.org/policies/privacy-policy-public.html">Apache Software Foundation Privacy Policy</a></p>
+        </div>
+      </div>
+    </div>
+
+    
+<script src="../../../../_/js/vendor/lunr.js"></script>
+<script src="../../../../_/js/search-ui.js" id="search-ui-script" data-site-root-path="../../../.." data-snippet-length="100" data-stylesheet="../../../../_/css/search.css"></script>
+<script async src="../../../../search-index.js"></script>
+    <script src="../../../../_/js/vendor/jquery-3.7.1.min.js"></script>
+    <script src="../../../../_/js/vendor/what-input.js"></script>
+    <script src="../../../../_/js/vendor/foundation.min.js"></script>
+    <script src="../../../../_/js/vendor/jquery.colorbox-min.js"></script>
+    <script src="../../../../_/js/netbeans.js"></script>
+    <script>
+       $(function(){ $(document).foundation(); });
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/highlight.min.js"></script>
+    <script>
+      $(document).ready(function() { $("pre code").each(function(i, block) { hljs.highlightBlock(block); }); });
+    </script>
+  </body>
+</html>
