@@ -42,19 +42,48 @@ For maven projects, this typically means placing the file into `src/main/resourc
 
 The format of the file is described xref:HintsFileFormat.adoc[here].
 
-== Using Maven to Run Declarative Refactorings
+== Using Maven to Run Declarative Refactorings or Standard Java Hints
 
-To use run the declarative hints in a Maven project, add the tool to the build plugins in pom.xml:
-[source,java]
+To use the declarative hints or standard Java hints in a Maven project, either for verification,
+or for transformation, add the tool to the build plugins in pom.xml:
+[source,xml]
 ----
 <plugin>
     <groupId>org.apache.netbeans.modules.jackpot30</groupId>
     <artifactId>jackpot30-maven-plugin</artifactId>
-    <version>13.0</version>
+    <version>20.0</version>
 </plugin>
 ----
 
-And declare the hints in `.hint` files under `src/main/resources/META-INF/upgrade`, for example:
+Configuration can be specified like this:
+[source,xml]
+----
+<plugin>
+    <groupId>org.apache.netbeans.modules.jackpot30</groupId>
+    <artifactId>jackpot30-maven-plugin</artifactId>
+    <version>20.0</version>
+    <configuration>
+         <hint>SizeReplaceableByIsEmpty</hint>
+         <failOnWarnings>true</failOnWarnings>
+    </configuration>
+</plugin>
+----
+
+Supported configuration options are:
+
+- `hint`: the hint or hints that should be invoked. Can either be a comma-separated list of `@SuppressWarnings` keys of hints to invoke, or the display name of the hint to invoke,
+- `configuration`: a configuration file (from NetBeans) specifying which hints should be run,
+- `failOnWarnings`: when `true`, and any warning will be printed, the build will fail.
+
+Supported goals are:
+
+- `jackpot30:analyze`: run the hints, and print warnings produce by them possible failing the build, as specified,
+- `jackpot30:apply`: run the hints, and apply the primary proposed changes on each place where the hint would produce a warning. Please note this will be applied directly into the working copy of the files,
+- `jackpot30:list`: list the support standard and custom Java hints.
+
+=== Using Custom Declarative Hints
+
+It is possible to declare custom hints in `.hint` files under `src/main/resources/META-INF/upgrade`, for example:
 
 .src/main/resources/META-INF/upgrade/convert.hint
 [source,java]
@@ -65,7 +94,7 @@ System.out.println($args$)
 ;;
 ----
 
-To get warnings for the declarative hints, run `jackpot30:analyze`:
+When there is no more specific configuration (like using `hint`), these will be used when `jackpot30:analyze` is run:
 ----
 $ mvn -q jackpot30:analyze
 .../src/main/java/sample/sample/Test.java:14: warning: [convert] convert
@@ -73,7 +102,7 @@ $ mvn -q jackpot30:analyze
                    ^
 ----
 
-To apply the changes produced by the declarative hints, run `jackpot30:apply`:
+Changes will also be applied on `jackpot30:apply`:
 ----
 $ mvn -q jackpot30:apply && git diff
 diff --git a/src/main/java/sample/sample/Test.java b/src/main/java/sample/sample/Test.java
