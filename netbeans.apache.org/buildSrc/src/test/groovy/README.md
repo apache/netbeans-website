@@ -1,1 +1,0 @@
-Put any build sources tests here. This file is a placeholder for git to keep the structure.
