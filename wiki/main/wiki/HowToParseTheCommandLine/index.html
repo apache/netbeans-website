@@ -77,28 +77,127 @@
     <a href="../../../../wiki/main/wiki" title="Apache NetBeans WIKI">Apache NetBeans Wiki Index</a>
     <p><b>Note:</b> These pages are being reviewed.</p>
 </div>
-      <div id="toc" class="toc">
-<div id="toctitle"></div>
-<ul class="sectlevel1">
-<li><a href="#_apache_migration_information">Apache Migration Information</a></li>
+      <div class="paragraph">
+<p>A new features since NetBeans Platform 6 is <a href="https://bits.netbeans.org/dev/javadoc/org-netbeans-modules-sendopts/overview-summary.html">the ability to parse the command line</a>.</p>
+</div>
+<div class="paragraph">
+<p>So, let’s try to parse the command line to automatically open a document when the NetBeans Platform starts up. The example below uses the Sketsa SVG Editor as an example:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Create an object that inherits from <a href="https://bits.netbeans.org/dev/javadoc/org-netbeans-modules-sendopts/org/netbeans/spi/sendopts/OptionProcessor.html">OptionProcessor</a>:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">      public class SketsaOptionProcessor extends OptionProcessor {
+
+          private Option openOption = Option.defaultArguments();
+          private Option openOption2 = Option.additionalArguments(
+                                                      'o', "open");
+
+          @Override
+          public Set getOptions() {
+              HashSet set = new HashSet();
+              set.add(openOption);
+              set.add(openOption2);
+              return set;
+          }
+
+          @Override
+          public void process(Env env, Map values)
+                              throws CommandException {
+              List&lt;string&gt; filenameList = new ArrayList&lt;string&gt;();
+              Object obj = values.get(openOption);
+              if (obj != null) {
+                  filenameList.addAll(Arrays.asList((String[]) obj));
+              }
+              obj = values.get(openOption2);
+              if (obj != null) {
+                  filenameList.addAll(Arrays.asList((String[]) obj));
+              }
+
+              for (int i = 0; i &amp;lt; filenameList.size(); i++) {
+                  File file = new File(filenameList.get(i));
+                  if (!file.isAbsolute()) {
+                      file = new File(env.getCurrentDirectory(),
+                           filenameList.get(i));
+                  }
+
+                  //System.out.println(file.toString());
+
+                  try {
+                      DataObject data = DataObject.find(
+                          FileUtil.toFileObject(file));
+                      OpenCookie cookie = data.getCookie(OpenCookie.class);
+                      cookie.open();
+                  } catch (OutOfMemoryError ex) {
+                      String msg = Application.getMessage(
+                             "MSG_OutOfMemoryError.Text");
+                      NotifyDescriptor nd = new NotifyDescriptor.Message(
+                              msg,
+                              NotifyDescriptor.ERROR_MESSAGE);
+                      DialogDisplayer.getDefault().notify(nd);
+                  } catch (Exception ex) {
+                      NotifyDescriptor nd = new NotifyDescriptor.Message(
+                              ex.getMessage(),
+                              NotifyDescriptor.ERROR_MESSAGE);
+                      DialogDisplayer.getDefault().notify(nd);
+                  }
+              }
+          }</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The important parts here are the two overidden methods "getOptions()" and "process(Env,Map)". The getOptions indicate which command line you want to capture, in this case we want to capture defaultArgument and -open some_file or -o some_file. So the following will work:</p>
+</div>
+</li>
 </ul>
 </div>
-<div class="sect1">
-<h2 id="_apache_migration_information"><a class="anchor" href="#_apache_migration_information"></a>Apache Migration Information</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>The content in this page was kindly donated by Oracle Corp. to the
-Apache Software Foundation.</p>
+<div class="listingblock">
+<div class="content">
+<pre>      sketsa artwork.svg
+      sketsa --open artwork.svg
+      sketsa -o artwork.svg</pre>
 </div>
-<div class="paragraph">
-<p>This page was exported from <a href="http://wiki.netbeans.org/">http://wiki.netbeans.org/</a> ,
-that was last modified by NetBeans user
-on .</p>
 </div>
 <div class="paragraph">
-<p><strong>NOTE:</strong> This document was automatically converted to the AsciiDoc format on 2018-02-07, and needs to be reviewed.</p>
+<p>+
+* Since the OptionProcessor is a service or lookup, so we need to register it somewhere. We register it in META-INF services by adding following annotation to the processor class implementation:</p>
+</div>
+<div class="paragraph">
+<p>+</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@ServiceProvider(service=OptionProcessor.class)
+public class SketsaOptionProcessor extends OptionProcessor {
+// trimmed
+}</code></pre>
 </div>
 </div>
+<div class="paragraph">
+<p>+
+This indicates generates appropriate META-INF/services/org.netbeans.spi.sendopts.OptionProcessor file during compilation.</p>
+</div>
+<div class="paragraph">
+<p>+
+* Compile and build the project. Now the NetBeans Platform application is able to parse command line arguments.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Resources</p>
+</li>
+<li>
+<p><a href="https://bits.netbeans.org/dev/javadoc/org-netbeans-modules-sendopts/index.html?org/netbeans/spi/sendopts/OptionProcessor.html">OptionProcessor</a></p>
+</li>
+<li>
+<p><a href="../../../../front/main/blogs/geertjan/invoke_an_action_from_the/" class="xref page">Invoke an Action from the NetBeans Command Line</a></p>
+</li>
+<li>
+<p><a href="../../../../front/main/blogs/geertjan/how_to_open_a_project/" class="xref page">How to Open a Project from the Command Line</a></p>
+</li>
+</ul>
 </div>
       <section class='tools'>
     <ul class="menu align-center">
