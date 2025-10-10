@@ -1628,7 +1628,6 @@
 <li><a href="#_nodeaction">NodeAction</a></li>
 <li><a href="#_roll_your_own">Roll your own</a></li>
 <li><a href="#_deprecated_cookieaction">Deprecated CookieAction</a></li>
-<li><a href="#_not_yet_official_spi_actions">Not-Yet-Official spi.actions</a></li>
 </ul>
 </div>
 <div id="preamble">
@@ -1639,7 +1638,7 @@
 <div class="ulist">
 <ul>
 <li>
-<p>An action may be created and shown in a menu, toolbar or popup menu.</p>
+<p>An action may be created and shown in a menu, toolbar or popup menu -or with no UI and only triggered via a keyboard shortcut</p>
 </li>
 <li>
 <p>While it is visible on-screen, the selected file (or whatever) can change.</p>
@@ -1705,7 +1704,7 @@
 <h2 id="_roll_your_own"><a class="anchor" href="#_roll_your_own"></a>Roll your own</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>The following is relatively simple and affords a way to perform whatever enablement logic you like (<code>NodeAction</code> can do that too, but this might be a little more straightforward and your code doesn&#8217;t have to worry about nodes at all: <a href="../DevFaqWhatIsANode/" class="xref page">DevFaqWhatIsANode</a>).  To understand how this works, see <a href="../DevFaqTrackGlobalSelection/" class="xref page">DevFaqTrackGlobalSelection</a>:</p>
+<p>The following is relatively simple and affords a way to perform whatever enablement logic you like (<code>NodeAction</code> can do that too, but this might be a little more straightforward and your code doesn&#8217;t have to worry about nodes at all: <a href="../DevFaqWhatIsANode/" class="xref page">DevFaqWhatIsANode</a>).</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -1759,6 +1758,87 @@
 }</code></pre>
 </div>
 </div>
+<div class="paragraph">
+<p>Let&#8217;s register the above action and see how it works.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@ActionID(category = "foocat", id = "org.fooaction")
+@ActionRegistration(displayName = "not_used", lazy = false)  // displayName useless if lazy is false
+@ActionReferences(
+        {
+            @ActionReference(path = "Menu/Edit", position = 100),  // add an entry in the app-level edit menu
+            @ActionReference(path = "Shortcuts", name = "O-Z"),    // action can be directly run with alt-Z
+            @ActionReference(path = "Actions/Popupmenu", position = 3)   // add a menu entry in a contextual popup menu
+        })
+public class FooAction extends AbstractAction implements LookupListener, ContextAwareAction {
+...</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>When the Netbeans platform application is started:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>a <code>FooAction</code> instance is created automatically using the no-arg constructor when the edit menu is created</p>
+</li>
+<li>
+<p>the same instance is reused and associated to the alt-Z shortcut</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>As there can be many actions in a platform app, the constructors must be lightweight. That&#8217;s why we start listening to the <code>Lookup.Result</code> only when the menu item is about to be displayed.</p>
+</div>
+<div class="paragraph">
+<p>To further optimize application startup time, you should register your action with <code>lazy=true</code> whenever possible (see limitations in the <code>@ActionRegistration</code> javadoc). In lazy instanciation mode the <code>displayName</code> value (and other optional parameters) is used to build the action menu item, and the <code>FooAction</code> instance is created only when the menu entry (or keyboard shortcut) is actually selected by user.</p>
+</div>
+<div class="paragraph">
+<p>The <code>FooAction</code> no-arg constructor uses the global selection context (<a href="../DevFaqTrackGlobalSelection/" class="xref page">DevFaqTrackGlobalSelection</a>), i.e. action will be enabled only when <code>Whatever</code> instances are present in the lookup of the focused <code>TopComponent</code>.</p>
+</div>
+<div class="paragraph">
+<p><code>FooAction</code> also implements <code>ContextAwareAction</code>. This is used by methods <code>Utilities.actionsForPath()</code> and <code>Actions.actionsToPopup()</code> when building a contextual popup menu, for example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">List&lt;? extends Action&gt; actions = Utilities.actionsForPath("Actions/Popupmenu");
+Lookup context = myEditorTopComponent.getLookup();
+JPopupMenu popupmenu = Utilities.actionsToPopup(actions, context);</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In our case <code>actionsToPopup()</code> will find our FooAction_instance and, because it&#8217;s a <code>ContextAwareAction</code>, will create a menu item based on the the return value of FooAction_instance <code>createContextAwareInstance(context)</code>. The return value must be considered as a transient instance because a new <code>FooAction</code> instance is created each time the popup menu is built (i.e. if the transient instance needs to listen to a shared object, you should probably use a <code>WeakListener</code>).</p>
+</div>
+<div class="paragraph">
+<p>Note that even if <code>FooAction</code> does not implement <code>ContextAwareAction</code>, different <code>Utilities.actionsForPath()</code> calls might return different <code>FooAction</code> instances if there is no strong reference on these instances.</p>
+</div>
+<div class="paragraph">
+<p>If you need to enforce <code>FooAction</code> as a singleton, it&#8217;s possible to register a static factory method instead of the class:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">public class FooAction extends AbstractAction implements LookupListener {
+
+  private FooAction INSTANCE;
+  @ActionID(category = "foocat", id = "org.fooaction")
+  @ActionRegistration(displayName = "not_used", lazy = false)  // displayName useless if lazy is false
+  @ActionReferences(
+          {
+              @ActionReference(path = "Menu/Edit", position = 100),  // add an entry in the app-level edit menu
+              @ActionReference(path = "Shortcuts", name = "O-Z"),    // action can be directly run with alt-Z
+              @ActionReference(path = "Actions/Popupmenu", position = 3)   // add a menu entry in a contextual popup menu
+          })
+  public static FooAction getInstance() {
+        if (INSTANCE == null) {
+            INSTANCE = new FooAction();
+        }
+        return INSTANCE;
+  }
+}
+...</code></pre>
+</div>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -1772,47 +1852,6 @@
 </div>
 <div class="paragraph">
 <p>Being an older class, under the hood it is using <a href="../DevFaqLookupCookie/" class="xref page">Node.getCookie()</a>, so your action will only be sensitive to things actually returned by that method - in other words, only objects that implement the marker interface <code>Node.Cookie</code> can work here.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_not_yet_official_spi_actions"><a class="anchor" href="#_not_yet_official_spi_actions"></a>Not-Yet-Official spi.actions</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>This module is part of the platform as of 6.8, but has not yet become official API (and nobody seems to be willing to make it stable API, so judge your own decisions based on this fact).  Nonetheless it is there, it is not changing and straightforward to use.  The example below opens a visual editor window if an instance of RAFDataObject is selected and has a RandomAccessFile in its lookup:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">public final class CustomOpenAction extends org.netbeans.spi.actions.Single&lt;RAFDataObject&gt;
- {
-    public CustomOpenAction() {
-      super(RAFDataObject.class, "Open", null);
-    }
-    @Override
-    protected void actionPerformed(RAFDataObject target) {
-      //If an editor is already open, just give it focus
-      for (TopComponent tc : TopComponent.getRegistry().getOpened()) {
-        if (tc instanceof RAFEditor &amp;amp;&amp;amp; tc.getLookup().lookup(RAFDataObject.class) == target) {
-          tc.requestActive();
-          return;
-        }
-      }
-      //Nope, need a new editor
-      TopComponent editorWindow = null;
-      editorWindow = new RAFEditor(target);
-      editorWindow.open();
-      editorWindow.requestActive();
-    }
-    @Override
-    protected boolean isEnabled(RAFDataObject target) {
-      //Make sure there really is a file on disk
-      return target.getLookup().lookup(RandomAccessFile.class) != null;
-    }
-  }</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Use <code>ContextAction</code> instead of <code>Single</code> to create actions that operate on multi-selections.</p>
 </div>
 </div>
 </div>
